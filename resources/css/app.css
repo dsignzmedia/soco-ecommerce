@@ -1,0 +1,140 @@
+@import 'tailwindcss';
+
+@source '../../vendor/laravel/framework/src/Illuminate/Pagination/resources/views/*.blade.php';
+@source '../../storage/framework/views/*.php';
+@source '../**/*.blade.php';
+@source '../**/*.js';
+
+@theme {
+    --font-sans: 'Instrument Sans', ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji',
+        'Segoe UI Symbol', 'Noto Color Emoji';
+}
+
+:root {
+    --blue: #0b3d91;
+    --gold: #f2b705;
+    --gray: #f5f6fa;
+    --text: #1f2633;
+}
+
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+body {
+    font-family: 'Inter', 'Instrument Sans', ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    color: var(--text);
+    background: var(--gray);
+    line-height: 1.5;
+}
+
+header {
+    background: #fff;
+    padding: 1rem 2rem;
+    border-bottom: 1px solid #e1e5ee;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+header nav a {
+    margin: 0 0.75rem;
+    text-decoration: none;
+    color: var(--text);
+    font-weight: 500;
+}
+
+.hero {
+    background: linear-gradient(120deg, var(--blue), #142b6f);
+    color: #fff;
+    padding: 3rem 2rem;
+    text-align: center;
+}
+
+.section {
+    background: #fff;
+    margin: 1.5rem 2rem;
+    padding: 2rem;
+    border-radius: 12px;
+    box-shadow: 0 10px 25px rgba(31, 38, 51, 0.08);
+}
+
+.section h2 {
+    font-size: 1.25rem;
+    margin-bottom: 1rem;
+    color: var(--blue);
+}
+
+.grid-4 {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1rem;
+}
+
+.card {
+    background: var(--gray);
+    border-radius: 10px;
+    padding: 1rem;
+}
+
+.profile-header {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    flex-wrap: wrap;
+}
+
+.profile-img {
+    width: 72px;
+    height: 72px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 3px solid var(--gold);
+}
+
+.status-timeline {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 1rem;
+    gap: 0.5rem;
+}
+
+.status-timeline span {
+    flex: 1;
+    text-align: center;
+    font-size: 0.85rem;
+    position: relative;
+}
+
+.status-timeline span::before {
+    content: '';
+    display: block;
+    width: 16px;
+    height: 16px;
+    margin: 0 auto 0.35rem;
+    border-radius: 50%;
+    background: var(--gray);
+    border: 2px solid var(--blue);
+}
+
+.status-timeline span.active::before {
+    background: var(--gold);
+}
+
+button {
+    background: var(--blue);
+    color: #fff;
+    padding: 0.65rem 1.5rem;
+    border: none;
+    border-radius: 50px;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+button.secondary {
+    background: transparent;
+    color: var(--blue);
+    border: 1px solid var(--blue);
+}
