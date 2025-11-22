@@ -11,5 +11,15 @@ class HomeController extends Controller
     {
         return view('frontend.index');
     }
+
+    public function getStarted()
+    {
+        return view('frontend.get-started');
+    }
+
+    public function aboutUs()
+    {
+        return view('frontend.about-us');
+    }
 }
 

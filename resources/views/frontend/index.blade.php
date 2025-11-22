@@ -20,7 +20,7 @@
 
                 </li>
                 <li>
-                    <a href="#">About Us</a>
+                    <a href="{{ route('frontend.about-us') }}">About Us</a>
                 </li>
                 <li class="menu-item-has-children">
                     <a href="#">Services</a>
@@ -113,8 +113,7 @@
                                     </ul> -->
                                 </li>
                                 <li>
-                                    <a href="#">About Us</a>
-                                    <!-- <a>About Us</a> -->
+                                    <a href="{{ route('frontend.about-us') }}">About Us</a>
                                 </li>
                                 <li class="menu-item-has-children">
                                     <a href="#">Services</a>
@@ -146,7 +145,7 @@
                         </div>
                     </div>
                     <div class="col-auto d-none d-xl-block">
-                        <a href="#" class="vs-btn sideMenuToggler">Shop Now</a>
+                        <a href="{{ route('frontend.get-started') }}" class="vs-btn">Shop Now</a>
                     </div>
                 </div>
             </div>
@@ -161,8 +160,7 @@
 
         <!-- Slide 1-->
         <div class="ls-slide" data-ls="duration:12000; transition2d:5;">
-            <img width="1920" height="770" src="{{ asset('assets/img/hero/hero_crop.png') }}" class="ls-bg" alt="bg"
-                decoding="async">
+            
             <ls-layer
                 style="font-size:36px; color:#000; stroke:#000; stroke-width:0px; text-align:left; font-style:normal; text-decoration:none; text-transform:none; font-weight:400; letter-spacing:0px; border-style:solid; background-position:0% 0%; background-repeat:no-repeat; background-clip:border-box; overflow:visible; width:255px; height:255px; border-width:60px 60px 60px 60px; border-color:#FFD600; border-radius:50% 50% 50% 50%; top:126px; left:740px; z-index:4; -webkit-background-clip:border-box;"
                 class="ls-l ls-hide-tablet ls-hide-phone ls-text-layer" data-ls="static:forever;">
@@ -190,7 +188,7 @@
             <div style="font-size:30px; color:#000; stroke:#000; stroke-width:0px; text-align:center; font-style:normal; text-decoration:none; text-transform:none; font-weight:400; letter-spacing:0px; background-position:0% 0%; background-repeat:no-repeat; background-clip:border-box; overflow:visible; left:100%; top:494px; font-family:'Poppins', sans-serif; width:711px; margin-left:-877px; -webkit-background-clip:border-box;"
                 class="ls-l ls-hide-tablet ls-hide-phone ls-html-layer"
                 data-ls="offsetyin:100; delayin:700; easingin:easeOutQuint; offsetyout:100; easingout:easeOutQuint;">
-                <a href="#" class="vs-btn">Shop Now</a>
+                <a href="{{ route('frontend.get-started') }}" class="vs-btn">Shop Now</a>
             </div>
             <h1 style="font-size:90px; stroke:#000; stroke-width:0px; text-align:center; font-style:normal; text-decoration:none; text-transform:none; font-weight:600; letter-spacing:0px; background-position:0% 0%; background-repeat:no-repeat; background-clip:border-box; overflow:visible; font-family:'Poppins', sans-serif; line-height:90px; color:#ffffff; top:141px; left:50%; width:1200px; -webkit-background-clip:border-box;"
                 class="ls-l ls-hide-desktop ls-hide-phone ls-text-layer"
@@ -209,7 +207,7 @@
             <div style="font-size:30px; color:#000; stroke:#000; stroke-width:0px; text-align:center; font-style:normal; text-decoration:none; text-transform:none; font-weight:400; letter-spacing:0px; background-position:0% 0%; background-repeat:no-repeat; background-clip:border-box; overflow:visible; left:50%; top:495px; font-family:'Poppins', sans-serif; width:1200px; margin-left:0px; -webkit-background-clip:border-box;"
                 class="ls-l ls-hide-desktop ls-hide-phone ls-html-layer"
                 data-ls="offsetyin:100; delayin:700; easingin:easeOutQuint; offsetyout:100; easingout:easeOutQuint;">
-                <a href="#" class="vs-btn">Shop Now</a>
+                <a href="{{ route('frontend.get-started') }}" class="vs-btn">Shop Now</a>
             </div>
             <h1 style="font-size:110px; stroke:#000; stroke-width:0px; text-align:center; font-style:normal; text-decoration:none; text-transform:none; font-weight:600; letter-spacing:0px; background-position:0% 0%; background-repeat:no-repeat; background-clip:border-box; overflow:visible; font-family:'Poppins', sans-serif; line-height:110px; color:#ffffff; top:113px; left:50%; width:1200px; -webkit-background-clip:border-box;"
                 class="ls-l ls-hide-desktop ls-hide-tablet ls-text-layer"
@@ -224,7 +222,7 @@
             <div style="font-size:30px; color:#000; stroke:#000; stroke-width:0px; text-align:center; font-style:normal; text-decoration:none; text-transform:none; font-weight:400; letter-spacing:0px; background-position:0% 0%; background-repeat:no-repeat; background-clip:border-box; overflow:visible; left:50%; top:430px; font-family:'Poppins', sans-serif; width:1200px; margin-left:0px; -webkit-background-clip:border-box;"
                 class="ls-l ls-hide-desktop ls-hide-tablet ls-html-layer"
                 data-ls="offsetyin:100; delayin:700; easingin:easeOutQuint; offsetyout:100; easingout:easeOutQuint;">
-                <a href="#" class="vs-btn">Shop Now</a>
+                <a href="{{ route('frontend.get-started') }}" class="vs-btn">Shop Now</a>
             </div>
         </div>
 

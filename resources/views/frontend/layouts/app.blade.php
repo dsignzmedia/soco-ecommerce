@@ -45,6 +45,130 @@
     <!-- Theme Custom CSS -->
     <link rel="stylesheet" href="{{ asset('assets/css/style.css') }}">
 
+    <style>
+        html,
+        body {
+            height: 100%;
+            background-color: #f8f5ff;
+        }
+
+        .vs-hero-wrapper {
+            margin: 0 !important;
+            padding: 0 !important;
+            min-height: 100vh;
+            position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background-image: url('{{ asset('assets/img/hero/hero_crop.png') }}');
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
+        }
+
+        .vs-hero-wrapper .ls-wp-container,
+        .vs-hero-wrapper .ls-outer-container,
+        .vs-hero-wrapper .ls-inner-container,
+        .vs-hero-wrapper .ls-slide,
+        .vs-hero-wrapper .ls-slide-backgrounds {
+            min-height: 100vh !important;
+            height: 100vh !important;
+            width: 100% !important;
+            max-width: 100% !important;
+        }
+
+        .vs-hero-wrapper .ls-slide .ls-bg {
+            position: absolute !important;
+            top: 0;
+            left: 0;
+            width: 100% !important;
+            height: 100% !important;
+            object-fit: cover;
+        }
+
+        .hero-overlay {
+            position: relative;
+            transform: none;
+            background: rgba(73, 13, 89, 0.88);
+            color: #fff;
+            text-align: center;
+            padding: 3rem;
+            border-radius: 48px;
+            width: min(90%, 720px);
+            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.25);
+        }
+
+        .hero-overlay h1 {
+            font-size: clamp(2rem, 5vw, 3.5rem);
+            font-weight: 600;
+            line-height: 1.2;
+            margin-bottom: 1rem;
+        }
+
+        .hero-overlay .hero-subtitle {
+            text-transform: uppercase;
+            letter-spacing: 0.3em;
+            font-size: 0.85rem;
+            margin-bottom: 0.75rem;
+            color: #ffd6f4;
+        }
+
+        .hero-overlay .hero-text {
+            font-size: 1rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .hero-overlay .hero-btn {
+            padding-inline: 2.5rem;
+        }
+
+        @media (max-width: 776px) {
+            .hero-overlay {
+                width: 90%;
+                padding: 2rem 1.5rem;
+                border-radius: 32px;
+            }
+
+            .hero-overlay .hero-btn {
+                display: inline-block;
+                width: 100%;
+            }
+        }
+
+        @media (max-width: 776px) {
+            .vs-hero-wrapper {
+                padding-top: 0;
+                padding-bottom: 0;
+                overflow: hidden;
+                flex-direction: column;
+                min-height: 60vh;
+            }
+
+            .vs-hero-wrapper .ls-wp-container,
+            .vs-hero-wrapper .ls-outer-container,
+            .vs-hero-wrapper .ls-inner-container,
+            .vs-hero-wrapper .ls-slide,
+            .vs-hero-wrapper .ls-slide-backgrounds {
+                min-height: 60vh !important;
+                height: 60vh !important;
+            }
+
+            .vs-hero-wrapper .ls-wp-container,
+            .vs-hero-wrapper .ls-wp-container .ls-wrapper,
+            .vs-hero-wrapper .ls-wp-container .ls-slide,
+            .vs-hero-wrapper .ls-wp-container .ls-bg {
+                width: 100% !important;
+                border-radius: 0 !important;
+                margin: 0 !important;
+            }
+
+            .vs-hero-wrapper .ls-l {
+                left: 50% !important;
+                transform: translateX(-50%);
+            }
+        }
+    </style>
+
 </head>
 
 <body>
@@ -62,7 +186,7 @@
                         <h3 class="h4 mb-0 text-white"><img src="{{ asset('assets/img/icon/check-list.svg') }}"
                                 alt="icon" class="me-2"> Shop Your School's Uniforms in One Place</h3>
                     </div>
-                    <div class="col-lg-auto"><a href="#" class="vs-btn">Shop Now</a></div>
+                    <div class="col-lg-auto"><a href="{{ route('frontend.get-started') }}" class="vs-btn">Shop Now</a></div>
                 </div>
             </div>
         </div>
@@ -115,7 +239,7 @@
                                 <ul class="menu">
                                     <li><a href="{{ route('frontend.index') }}">Home</a></li>
                                     <li><a href="#">Return/Exchange Policy</a></li>
-                                    <li><a href="#">About Us</a></li>
+                                    <li><a href="{{ route('frontend.about-us') }}">About Us</a></li>
                                     <li><a href="#"> Privacy Policy </a></li>
                                     <li><a href="#">Services</a></li>
                                     <li><a href="#">Shipping Policy</a></li>
