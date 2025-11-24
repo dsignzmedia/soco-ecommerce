@@ -60,7 +60,7 @@
                             </div>
                             <div class="d-flex gap-2">
                                 <button type="button" class="vs-btn flex-fill add-to-cart-btn" data-product-id="{{ $product['id'] }}" data-profile-id="{{ $selectedProfile['id'] ?? '' }}">
-                                    <i class="fas fa-shopping-cart me-2"></i> Add to Cart
+                                    <i class="far fa-shopping-cart"></i> Add to Cart
                                 </button>
                                 @if(isset($selectedProfile) && $selectedProfile)
                                     <a href="{{ route('frontend.parent.store', ['profile_id' => $selectedProfile['id']]) }}" class="vs-btn flex-fill" style="background-color: #dc3545; border: none;">

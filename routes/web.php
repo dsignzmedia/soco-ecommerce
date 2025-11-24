@@ -7,6 +7,9 @@ use App\Http\Controllers\Front\AuthController;
 Route::get('/', [HomeController::class, 'index'])->name('frontend.index');
 Route::get('/get-started', [HomeController::class, 'getStarted'])->name('frontend.get-started');
 Route::get('/about-us', [HomeController::class, 'aboutUs'])->name('frontend.about-us');
+Route::get('/services', [HomeController::class, 'services'])->name('frontend.services');
+Route::get('/contact', [HomeController::class, 'contact'])->name('frontend.contact');
+Route::get('/faq', [HomeController::class, 'faq'])->name('frontend.faq');
 
 // Parent Authentication Routes
 Route::get('/parent/login', [AuthController::class, 'parentLogin'])->name('frontend.parent.login');
@@ -25,6 +28,7 @@ Route::post('/parent/remove-from-cart', [AuthController::class, 'removeFromCart'
 Route::get('/parent/checkout', [AuthController::class, 'checkoutPage'])->name('frontend.parent.checkout');
 Route::post('/parent/checkout', [AuthController::class, 'processCheckout'])->name('frontend.parent.process-checkout');
 Route::post('/parent/save-address', [AuthController::class, 'saveAddress'])->name('frontend.parent.save-address');
+Route::post('/parent/update-address/{addressId}', [AuthController::class, 'updateAddress'])->name('frontend.parent.update-address');
 Route::post('/parent/delete-address/{addressId}', [AuthController::class, 'deleteAddress'])->name('frontend.parent.delete-address');
 Route::get('/parent/orders', [AuthController::class, 'orders'])->name('frontend.parent.orders');
 Route::get('/parent/track-order/{orderId}', [AuthController::class, 'trackOrder'])->name('frontend.parent.track-order');

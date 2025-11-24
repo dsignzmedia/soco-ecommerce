@@ -77,7 +77,6 @@
                                             </div>
                                         @endforeach
                                     </div>
-                                    <input type="hidden" name="selected_address" id="selected_address" value="{{ count($savedAddresses) > 0 ? '0' : '' }}">
                                 @else
                                     <!-- No Address Found -->
                                     <div class="text-center py-4 mb-3" id="noAddressContainer">
@@ -173,34 +172,36 @@
 let formSubmitted = false;
 
 // Ensure selected address is set before form submission
-document.getElementById('checkoutForm').addEventListener('submit', function(e) {
-    // Set default address if none selected
-    const selectedAddressInput = document.getElementById('selected_address');
-    if (!selectedAddressInput.value || selectedAddressInput.value === '') {
-        const checkedRadio = document.querySelector('input[name="address_radio"]:checked');
-        if (checkedRadio) {
-            selectedAddressInput.value = checkedRadio.value;
+const checkoutForm = document.getElementById('checkoutForm');
+if (checkoutForm) {
+    checkoutForm.addEventListener('submit', function(e) {
+        const selectedAddressInput = document.getElementById('selected_address');
+        if (selectedAddressInput && (!selectedAddressInput.value || selectedAddressInput.value === '')) {
+            const checkedRadio = document.querySelector('input[name="address_radio"]:checked');
+            if (checkedRadio) {
+                selectedAddressInput.value = checkedRadio.value;
+            }
         }
-    }
-    
-    // Prevent double submission
-    if (formSubmitted) {
-        e.preventDefault();
-        return false;
-    }
-    formSubmitted = true;
-    
-    const submitBtn = document.getElementById('placeOrderBtn');
-    if (submitBtn) {
-        submitBtn.disabled = true;
-        submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i> Processing...';
-    }
-    
-    // Allow form to submit normally - don't prevent default
-});
+        
+        if (formSubmitted) {
+            e.preventDefault();
+            return false;
+        }
+        formSubmitted = true;
+        
+        const submitBtn = document.getElementById('placeOrderBtn');
+        if (submitBtn) {
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i> Processing...';
+        }
+    });
+}
 
 function selectSavedAddress(index) {
-    document.getElementById('selected_address').value = index;
+    const selectedAddressInput = document.getElementById('selected_address');
+    if (selectedAddressInput) {
+        selectedAddressInput.value = index;
+    }
     document.getElementById('address_radio_' + index).checked = true;
     
     // Update card styling
@@ -215,7 +216,10 @@ function selectSavedAddress(index) {
 }
 
 function setSelectedAddress(index) {
-    document.getElementById('selected_address').value = index;
+    const selectedAddressInput = document.getElementById('selected_address');
+    if (selectedAddressInput) {
+        selectedAddressInput.value = index;
+    }
     selectSavedAddress(index);
 }
 

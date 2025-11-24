@@ -5,30 +5,27 @@
 
 <section class="space-top space-extra-bottom" style="background-color: #f8f5ff;">
     <div class="container">
-        <!-- Page Header -->
-        <div class="row mb-4">
-            <div class="col-12">
-                <h2 class="h3 mb-0">My Orders</h2>
+        <div class="row">
+            <div class="col-lg-3 mb-4">
+                @include('frontend.dashboard.partials.account-sidebar')
             </div>
-        </div>
+            <div class="col-lg-9">
+                <div class="row mb-4">
+                    <div class="col-12">
+                        <h2 class="h3 mb-0">My Orders</h2>
+                    </div>
+                </div>
 
-        <!-- Success Message -->
-        @if(session('success'))
-            <div class="row mb-4">
-                <div class="col-12">
+                @if(session('success'))
                     <div class="alert alert-success alert-dismissible fade show" role="alert">
                         <i class="fas fa-check-circle me-2"></i>{{ session('success') }}
                         <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
                     </div>
-                </div>
-            </div>
-        @endif
+                @endif
 
-        @if(count($orders) > 0)
-            <div class="row">
-                @foreach($orders as $order)
-                    <div class="col-12 mb-4">
-                        <div class="card shadow-sm rounded-4 border-0" style="background-color: #ffffff;">
+                @if(count($orders) > 0)
+                    @foreach($orders as $order)
+                        <div class="card shadow-sm rounded-4 border-0 mb-4" style="background-color: #ffffff;">
                             <div class="card-body p-4">
                                 <!-- Order Header -->
                                 <div class="d-flex justify-content-between align-items-start mb-4 pb-3 border-bottom">
@@ -92,19 +89,19 @@
                                 </div>
                             </div>
                         </div>
+                    @endforeach
+                @else
+                    <div class="card shadow-sm rounded-4 border-0" style="background-color: #ffffff;">
+                        <div class="card-body text-center py-5">
+                            <i class="fas fa-shopping-bag fa-5x text-muted mb-3"></i>
+                            <h4 class="mb-3">No orders yet</h4>
+                            <p class="text-muted mb-4">You haven't placed any orders yet.</p>
+                            <a href="{{ route('frontend.parent.dashboard') }}" class="vs-btn">Go to Dashboard</a>
+                        </div>
                     </div>
-                @endforeach
+                @endif
             </div>
-        @else
-            <div class="card shadow-sm rounded-4 border-0" style="background-color: #ffffff;">
-                <div class="card-body text-center py-5">
-                    <i class="fas fa-shopping-bag fa-5x text-muted mb-3"></i>
-                    <h4 class="mb-3">No orders yet</h4>
-                    <p class="text-muted mb-4">You haven't placed any orders yet.</p>
-                    <a href="{{ route('frontend.parent.dashboard') }}" class="vs-btn">Go to Dashboard</a>
-                </div>
-            </div>
-        @endif
+        </div>
     </div>
 </section>
 @endsection

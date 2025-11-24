@@ -3,74 +3,85 @@
 @section('content')
 @include('frontend.partials.header')
 
-<section class="vs-product-wrapper product-details space-top space-extra-bottom" style="background-color: #f8f5ff;">
+<!--==============================
+    Breadcumb
+============================== -->
+<div class="breadcumb-wrapper " data-bg-src="{{ asset('assets/img/contact/Background.png') }}">
+    <div class="container z-index-common">
+        <div class="breadcumb-content">
+            <h1 class="breadcumb-title">{{ $product['name'] ?? 'Product Details' }}</h1>
+            <p class="breadcumb-text">{{ Str::limit($product['description'] ?? 'Explore Product Details, Reviews, And Specifications', 80) }}</p>
+            <div class="breadcumb-menu-wrap">
+                <ul class="breadcumb-menu">
+                    <li><a href="{{ route('frontend.index') }}">Home</a></li>
+                    <li><a href="{{ route('frontend.parent.dashboard', ['student_id' => $selectedProfile['id'] ?? '']) }}">Parent Dashboard</a></li>
+                    <li><a href="{{ route('frontend.parent.store', ['profile_id' => $selectedProfile['id'] ?? '']) }}">Store</a></li>
+                    <li>{{ Str::limit($product['name'] ?? 'Product Details', 30) }}</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+
+<section class="vs-product-wrapper product-details space-top space-extra-bottom" style="background-color: #ffffff;">
     <div class="container">
         <div class="row gx-60">
             <!-- Left: Product Images -->
             <div class="col-lg-6">
-                <div class="product-image-gallery">
-                    <!-- Thumbnail Images (Left Side) -->
-                    <div class="product-thumbnails-vertical">
+                <div class="product-big-img vs-carousel" data-slide-show="1" data-fade="true" data-asnavfor=".product-thumb-slide">
                         @php
                             $productImages = $product['images'] ?? [$product['image'] ?? asset('assets/img/product/product1-1.png')];
                         @endphp
                         @foreach($productImages as $index => $image)
-                            <div class="thumb-item {{ $index === 0 ? 'active' : '' }}" data-image="{{ $image }}" onmouseenter="changeMainImage('{{ $image }}')">
+                        <div class="img">
                                 <img src="{{ $image }}" alt="{{ $product['name'] }} - Image {{ $index + 1 }}">
                             </div>
                         @endforeach
                     </div>
-                    
-                    <!-- Main Image -->
-                    <div class="product-big-img">
-                        <div class="main-image-container">
-                            <img id="mainProductImage" src="{{ $product['image'] ?? asset('assets/img/product/product1-1.png') }}" alt="{{ $product['name'] }}">
+                <div class="product-thumb-slide row vs-carousel" data-slide-show="4" data-md-slide-show="4" data-sm-slide-show="3" data-xs-slide-show="3" data-asnavfor=".product-big-img">
+                    @foreach($productImages as $index => $image)
+                        <div class="col-3">
+                            <div class="thumb">
+                                <img src="{{ $image }}" alt="{{ $product['name'] }} - Image {{ $index + 1 }}">
                         </div>
-                        
-                        <!-- Action Buttons (Centered Below Image) -->
-                        <div class="product-actions-center-wrapper">
-                            <div class="product-actions-center">
-                                <form action="{{ route('frontend.parent.add-to-cart') }}" method="POST" id="addToCartForm" class="d-inline-block me-2">
-                                    @csrf
-                                    <input type="hidden" name="product_id" value="{{ $product['id'] }}">
-                                    <input type="hidden" name="profile_id" value="{{ $selectedProfile['id'] }}">
-                                    <input type="hidden" name="size" id="cart-size" required>
-                                    <input type="hidden" name="quantity" id="cart-quantity" value="1" required>
-                                    <button type="submit" class="vs-btn" style="background-color: #ff6b35; min-width: 180px;">
-                                        <i class="far fa-shopping-cart"></i> Add to Cart
-                                    </button>
-                                </form>
-                                
-                                <form action="{{ route('frontend.parent.buy-now') }}" method="POST" id="buyNowForm" class="d-inline-block">
-                                    @csrf
-                                    <input type="hidden" name="product_id" value="{{ $product['id'] }}">
-                                    <input type="hidden" name="profile_id" value="{{ $selectedProfile['id'] }}">
-                                    <input type="hidden" name="size" id="buy-now-size" required>
-                                    <input type="hidden" name="quantity" id="buy-now-quantity" value="1" required>
-                                    <button type="submit" class="vs-btn" style="background-color: #dc3545; min-width: 180px;" id="buy-now-btn" disabled>
-                                        <i class="fas fa-bolt"></i> Buy Now
-                                    </button>
-                                </form>
                             </div>
-                        </div>
-                    </div>
+                    @endforeach
                 </div>
             </div>
 
             <!-- Right: Product Information -->
             <div class="col-lg-6 align-self-center">
                 <div class="product-about">
+                    <p class="product-price">
+                        ₹{{ number_format($product['price']) }}
+                        @if(isset($product['original_price']) && $product['original_price'] > $product['price'])
+                            <del>₹{{ number_format($product['original_price']) }}</del>
+                        @endif
+                    </p>
+                    
                     <h2 class="product-title">{{ $product['name'] }}</h2>
                     
-                    <p class="product-price">₹{{ number_format($product['price']) }}</p>
-                    <p class="text-muted small mb-4">Inclusive of all Taxes</p>
+                    <div class="product-rating">
+                        <div class="star-rating" role="img" aria-label="Rated 5.00 out of 5">
+                            <span style="width:100%">Rated <strong class="rating">5.00</strong> out of 5 based on <span class="rating">5</span> customer rating</span>
+                        </div>
+                        <span>(13)</span>
+                    </div>
 
+                    <p class="product-text">{{ $product['description'] ?? 'Premium quality product with excellent craftsmanship and attention to detail. We think your skin should look and refreshed matter Nourish your outer inner beauty with our essential oil infused beauty products.' }}</p>
+
+                    @php
+                        $defaultSize = isset($product['sizes']) && count($product['sizes']) > 0 ? $product['sizes'][0] : 'Standard';
+                    @endphp
                     <form action="{{ route('frontend.parent.add-to-cart') }}" method="POST" id="addToCartForm">
                         @csrf
                         <input type="hidden" name="product_id" value="{{ $product['id'] }}">
                         <input type="hidden" name="profile_id" value="{{ $selectedProfile['id'] }}">
+                        <input type="hidden" name="size" id="cart-size" value="{{ $defaultSize }}" required>
+                        <input type="hidden" name="quantity" id="cart-quantity" value="1" required>
                         
                         <!-- Size Selection -->
+                        @if(isset($product['sizes']) && count($product['sizes']) > 0)
                         <div class="mb-4">
                             <div class="d-flex align-items-center gap-2 mb-2">
                                 <label class="form-label fw-bold mb-0">Size:</label>
@@ -79,199 +90,239 @@
                             <div class="d-flex gap-2 flex-wrap">
                                 @foreach($product['sizes'] as $size)
                                     <label class="size-option">
-                                        <input type="radio" name="size" value="{{ $size }}" required>
+                                        <input type="radio" name="size" value="{{ $size }}" {{ $loop->first ? 'checked' : '' }} required>
                                         <span>{{ $size }}</span>
                                     </label>
                                 @endforeach
                             </div>
                         </div>
+                        @endif
 
-                        <!-- Quantity Selection -->
-                        <div class="mb-4">
-                            <label class="form-label fw-bold mb-2">Quantity:</label>
-                            <select name="quantity" id="quantity" class="form-select" style="max-width: 150px;" required>
-                                @for($i = 1; $i <= 10; $i++)
-                                    <option value="{{ $i }}" {{ $i === 1 ? 'selected' : '' }}>{{ $i }}</option>
-                                @endfor
-                            </select>
+                        <!-- Actions -->
+                        <div class="actions">
+                            <div class="quantity">
+                                <label for="quantity" class="screen-reader-text">Quantity:</label>
+                                <button type="button" class="quantity-minus qty-btn"><i class="fal fa-minus"></i></button>
+                                <input type="number" id="quantity" class="qty-input" step="1" min="1" max="100" name="quantity" value="1" title="Qty">
+                                <button type="button" class="quantity-plus qty-btn"><i class="fal fa-plus"></i></button>
                         </div>
-
+                            <button type="submit" class="vs-btn">Add to Cart</button>
+                            <a href="#" class="icon-btn"><i class="far fa-heart"></i></a>
+                        </div>
                     </form>
 
-                    <!-- Description -->
-                    <div class="product-description mt-4">
-                        <h5 class="mb-3">Description</h5>
-                        <p class="product-text">{{ $product['description'] ?? 'Premium quality product with excellent craftsmanship and attention to detail.' }}</p>
+                    <div class="product-getway">
+                        <span class="getway-title">GUARANTEED SAFE CHECKOUT:</span>
+                        <img src="{{ asset('assets/img/widget/cards-2.png') }}" alt="cards">
+                    </div>
+
+                    <div class="product_meta">
+                        @if(isset($product['sku']))
+                            <span class="sku_wrapper">SKU: <span class="sku">#{{ $product['sku'] }}</span></span>
+                        @endif
+                        @if(isset($product['category']))
+                            <span class="posted_in"><span class="category-label">Category:</span> <span class="category-value">{{ str_replace('_', ' ', $product['category']) }}</span></span>
+                        @endif
+                        @if(isset($product['tags']) && count($product['tags']) > 0)
+                            <span>Tags: 
+                                @foreach($product['tags'] as $tag)
+                                    <a href="#" rel="tag">{{ $tag }}</a>
+                                @endforeach
+                            </span>
+                        @endif
                     </div>
                 </div>
             </div>
         </div>
 
-        <!-- Related Products Section -->
-        @if(isset($relatedProducts) && count($relatedProducts) > 0)
+        <!-- Reviews Section -->
             <div class="row mt-5">
                 <div class="col-12">
-                    <h2 class="mb-4">Related Products</h2>
-                    <div class="title-divider1 mb-4"></div>
-                    <div class="row g-4">
-                        @foreach($relatedProducts as $relatedProduct)
-                            <div class="col-md-6 col-lg-4 col-xl-3">
-                                <div class="vs-product product-style1 h-100">
-                                    <div class="product-img-wrapper">
-                                        <div class="product-badge">
-                                            @if($relatedProduct['type'] === 'authorized')
-                                                AUTHORIZED
-                                            @elseif($relatedProduct['type'] === 'optional')
-                                                OPTIONAL
-                                            @elseif($relatedProduct['type'] === 'merchandised')
-                                                MERCHANDISED
-                                            @else
-                                                BACK TO SCHOOL
-                                            @endif
+                <h2>Reviews</h2>
+                <div class="title-divider1"></div>
+                <div class="woocommerce-Reviews">
+                    <div class="vs-comments-wrap">
+                        <ul class="comment-list">
+                            <li class="review vs-comment-item">
+                                <div class="vs-post-comment">
+                                    <div class="comment-avater">
+                                        <img src="{{ asset('assets/img/author/Author1.png') }}" alt="Comment Author">
                                         </div>
-                                        <div class="product-img">
-                                            <a href="{{ route('frontend.parent.product-detail', ['productId' => $relatedProduct['id'], 'profile_id' => $selectedProfile['id']]) }}">
-                                                @if(isset($relatedProduct['image']) && $relatedProduct['image'])
-                                                    <img src="{{ $relatedProduct['image'] }}" alt="{{ $relatedProduct['name'] }}" class="w-100">
-                                                @else
-                                                    <img src="{{ asset('assets/img/product/product1-1.png') }}" alt="{{ $relatedProduct['name'] }}" class="w-100">
-                                                @endif
-                                            </a>
+                                    <div class="comment-content">
+                                        <h4 class="name h4">Mark Jack</h4>
+                                        <span class="commented-on"><i class="fal fa-calendar-alt"></i>22 April, 2023</span>
+                                        <div class="review-rating">
+                                            <div class="star-rating" role="img" aria-label="Rated 5.00 out of 5">
+                                                <span style="width: 100%">Rated <strong class="rating">5.00</strong> out of 5 based on <span class="rating">1</span> customer rating</span>
                                         </div>
                                     </div>
-                                    <div class="product-content">
-                                        <span class="product-price">₹{{ number_format($relatedProduct['price']) }}</span>
-                                        <h3 class="product-title">
-                                            <a class="text-inherit" href="{{ route('frontend.parent.product-detail', ['productId' => $relatedProduct['id'], 'profile_id' => $selectedProfile['id']]) }}">
-                                                {{ $relatedProduct['name'] }}
-                                            </a>
-                                        </h3>
-                                        <div class="actions">
-                                            <a href="{{ route('frontend.parent.product-detail', ['productId' => $relatedProduct['id'], 'profile_id' => $selectedProfile['id']]) }}" class="vs-btn">
-                                                <i class="far fa-shopping-cart"></i>Shop Now
-                                            </a>
+                                        <p class="text">Lorem ipsum dolor sit amet,  elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum</p>
                                         </div>
+                                    </div>
+                            </li>
+                            <li class="review vs-comment-item">
+                                <div class="vs-post-comment">
+                                    <div class="comment-avater">
+                                        <img src="{{ asset('assets/img/author/Author2.png') }}" alt="Comment Author">
+                                </div>
+                                    <div class="comment-content">
+                                        <h4 class="name h4">John Deo</h4>
+                                        <span class="commented-on"><i class="fal fa-calendar-alt"></i>26 April, 2023</span>
+                                        <div class="review-rating">
+                                            <div class="star-rating" role="img" aria-label="Rated 5.00 out of 5">
+                                                <span style="width:80%">Rated <strong class="rating">5.00</strong> out of 5 based on <span class="rating">1</span> customer rating</span>
+                            </div>
+                    </div>
+                                        <p class="text">The purpose of lorem ipsum is to create a natural looking block of text  that doesn't distract from the layout. A practice not without controversy, laying out pages with meaningless filler text can be very useful when the focus is meant to be on design, not content.</p>
+                </div>
+            </div>
+                            </li>
+                            <li class="review vs-comment-item">
+                                <div class="vs-post-comment">
+                                    <div class="comment-avater">
+                                        <img src="{{ asset('assets/img/author/Comment Author.png') }}" alt="Comment Author">
+                        </div>
+                                    <div class="comment-content">
+                                        <h4 class="name h4">Tara sing</h4>
+                                        <span class="commented-on"><i class="fal fa-calendar-alt"></i>26 April, 2023</span>
+                                        <div class="review-rating">
+                                            <div class="star-rating" role="img" aria-label="Rated 5.00 out of 5">
+                                                <span style="width:100%">Rated <strong class="rating">4.00</strong> out of 5 based on <span class="rating">1</span> customer rating</span>
+                                </div>
+                                    </div>
+                                        <p class="text">The passage experienced a surge in 1960s when Letraset used it on their dry-transfer sheets, and again during the 90s as desktop publishers bundled the text with their software. Today it's seen all around the web; on templates, websites, and stock designs. Use our generator</p>
+                                </div>
+                            </div>
+                            </li>
+                        </ul>
+                                </div>
+                                    </div>
+
+                <!-- Comment Form -->
+                <div class="vs-comment-form review-form">
+                    <div id="respond" class="comment-respond">
+                        <div class="form-title">
+                            <h3 class="blog-inner-title">Post Review</h3>
+                        </div>
+                        <div class="row">
+                            <div class="form-group rating-select">
+                                <label>Your Rating</label>
+                                <p class="stars">
+                                    <span>
+                                        <a class="star-1" href="#">1</a>
+                                        <a class="star-2" href="#">2</a>
+                                        <a class="star-3" href="#">3</a>
+                                        <a class="star-4" href="#">4</a>
+                                        <a class="star-5" href="#">5</a>
+                                    </span>
+                                        </p>
+                                    </div>
+                            <div class="col-md-6 form-group">
+                                <input type="text" class="form-control" placeholder="Complete Name">
+                                </div>
+                            <div class="col-md-6 form-group">
+                                <input type="email" class="form-control" placeholder="Email Address">
+                            </div>
+                            <div class="col-12 form-group">
+                                <textarea class="form-control" placeholder="Review"></textarea>
+                                </div>
+                            <div class="col-12 form-group mb-0">
+                                <button class="vs-btn">Post Review</button>
                                     </div>
                                 </div>
                             </div>
-                        @endforeach
+                                </div>
+                                    </div>
+                                </div>
+
+        <!-- Related Products Section -->
+        @php
+            $relatedProductsList = $relatedProducts ?? ($allProducts ?? []);
+            // If no products available, create sample products for display
+            if(count($relatedProductsList) == 0) {
+                $productImages = [
+                    asset('assets/img/product_images/Image1.png'),
+                    asset('assets/img/product_images/Image2.png'),
+                    asset('assets/img/product_images/Image3.png'),
+                    asset('assets/img/product_images/Image4.png'),
+                    asset('assets/img/product_images/Image5.png'),
+                    asset('assets/img/product_images/Image6.png'),
+                    asset('assets/img/product_images/Image7.png'),
+                    asset('assets/img/product_images/Image8.png'),
+                ];
+                $relatedProductsList = [
+                    ['id' => 1, 'name' => 'The Bubblegum Toy', 'price' => 560, 'original_price' => 700, 'image' => $productImages[0]],
+                    ['id' => 2, 'name' => 'Table Harmoni Play', 'price' => 480, 'original_price' => null, 'image' => $productImages[1]],
+                    ['id' => 3, 'name' => 'Tommy Speak Head', 'price' => 620, 'original_price' => 750, 'image' => $productImages[2]],
+                    ['id' => 4, 'name' => 'Queen Radio Home', 'price' => 450, 'original_price' => null, 'image' => $productImages[3]],
+                ];
+            } else {
+                // Update existing related products to use product_images if they have old image paths
+                foreach($relatedProductsList as &$product) {
+                    if(isset($product['image']) && strpos($product['image'], 'product1-') !== false) {
+                        // Replace old product images with random product_images
+                        $productImages = [
+                            asset('assets/img/product_images/Image1.png'),
+                            asset('assets/img/product_images/Image2.png'),
+                            asset('assets/img/product_images/Image3.png'),
+                            asset('assets/img/product_images/Image4.png'),
+                            asset('assets/img/product_images/Image5.png'),
+                            asset('assets/img/product_images/Image6.png'),
+                            asset('assets/img/product_images/Image7.png'),
+                            asset('assets/img/product_images/Image8.png'),
+                        ];
+                        $product['image'] = $productImages[array_rand($productImages)];
+                    }
+                }
+                unset($product);
+            }
+            $relatedProductsList = array_slice($relatedProductsList, 0, 4); // Show max 4 products
+        @endphp
+        <div class="row mt-5">
+            <div class="col-12">
+                <h2>Related Products</h2>
+                <div class="title-divider1"></div>
+                <div class="row vs-carousel" data-slide-show="4" data-lg-slide-show="3" data-md-slide-show="2">
+                    @foreach($relatedProductsList as $relatedProduct)
+                        <div class="col-md-6 col-lg-3 col-xl-3">
+                            <div class="vs-product product-style1">
+                                <div class="product-img">
+                                    <a href="{{ route('frontend.parent.product-detail', ['productId' => $relatedProduct['id'], 'profile_id' => $selectedProfile['id'] ?? '']) }}">
+                                        @if(isset($relatedProduct['image']) && $relatedProduct['image'])
+                                            <img src="{{ $relatedProduct['image'] }}" alt="{{ $relatedProduct['name'] }}" class="w-100">
+                                        @else
+                                            <img src="{{ asset('assets/img/product_images/Image1.png') }}" alt="{{ $relatedProduct['name'] }}" class="w-100">
+                                        @endif
+                                    </a>
+                            </div>
+                                <div class="product-content">
+                                    <span class="product-price">
+                                        ₹{{ number_format($relatedProduct['price'] ?? 0) }}
+                                        @if(isset($relatedProduct['original_price']) && $relatedProduct['original_price'] > ($relatedProduct['price'] ?? 0))
+                                            <del>₹{{ number_format($relatedProduct['original_price']) }}</del>
+                                        @endif
+                                    </span>
+                                    <h3 class="product-title">
+                                        <a class="text-inherit" href="{{ route('frontend.parent.product-detail', ['productId' => $relatedProduct['id'], 'profile_id' => $selectedProfile['id'] ?? '']) }}">
+                                            {{ $relatedProduct['name'] }}
+                                        </a>
+                                    </h3>
+                                    <div class="star-rating" role="img" aria-label="Rated 5.00 out of 5">
+                                        <span style="width:100%">Rated <strong class="rating">5.00</strong> out of 5</span>
+                                </div>
+                                    <div class="actions">
+                                        <a href="{{ route('frontend.parent.product-detail', ['productId' => $relatedProduct['id'], 'profile_id' => $selectedProfile['id'] ?? '']) }}" class="vs-btn">
+                                            <i class="far fa-shopping-cart"></i>Add to Cart
+                                        </a>
+                                        <a href="#" class="icon-btn"><i class="far fa-heart"></i></a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    @endforeach
                     </div>
                 </div>
             </div>
-        @endif
-
-        <!-- FAQ Section -->
-        <section class="space-extra-bottom mt-5">
-            <div class="container">
-                <div class="row gx-80">
-                    <div class="col-lg-12 align-self-center">
-                        <div class="title-area text-center text-lg-start">
-                            <span class="sec-subtitle">Clear Your Doubts</span>
-                            <h2 class="sec-title">Frequently Asked Questions</h2>
-                        </div>
-                        <div class="accordion accordion-style1 faq-two-column" id="faqVersion1">
-                            <div class="accordion-item active">
-                                <div class="accordion-header" id="headingOne1">
-                                    <button class="accordion-button" type="button" data-bs-toggle="collapse"
-                                        data-bs-target="#collapseOne1" aria-expanded="true" aria-controls="collapseOne1">
-                                        How can I contact customer support?
-                                    </button>
-                                </div>
-                                <div id="collapseOne1" class="accordion-collapse collapse show"
-                                    aria-labelledby="headingOne1" data-bs-parent="#faqVersion1">
-                                    <div class="accordion-body">
-                                        <p>You can reach us via email at hello@theskoolstore.com or call us at +91
-                                            9994878486. Our support team is happy to assist you!</p>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="accordion-item">
-                                <div class="accordion-header" id="headingTwo1">
-                                    <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse"
-                                        data-bs-target="#collapseTwo1" aria-expanded="false" aria-controls="collapseTwo1">
-                                        What payment methods do you accept?
-                                    </button>
-                                </div>
-                                <div id="collapseTwo1" class="accordion-collapse collapse" aria-labelledby="headingTwo1"
-                                    data-bs-parent="#faqVersion1">
-                                    <div class="accordion-body">
-                                        <p>We accept online payments via credit/debit cards, UPI, net banking, and other
-                                            secure payment options. </p>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="accordion-item">
-                                <div class="accordion-header" id="headingThree1">
-                                    <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse"
-                                        data-bs-target="#collapseThree1" aria-expanded="false"
-                                        aria-controls="collapseThree1">
-                                        How do I choose the correct size?
-                                    </button>
-                                </div>
-                                <div id="collapseThree1" class="accordion-collapse collapse" aria-labelledby="headingThree1"
-                                    data-bs-parent="#faqVersion1">
-                                    <div class="accordion-body">
-                                        <p>
-                                            Each product page includes a size chart to help you select the perfect fit. If
-                                            you're unsure, refer to the explanation video provided for each garment.
-
-                                        </p>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="accordion-item">
-                                <div class="accordion-header" id="headingFour1">
-                                    <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse"
-                                        data-bs-target="#collapseFour1" aria-expanded="false" aria-controls="collapseFour1">
-                                        What if my school is not listed on the website?
-                                    </button>
-                                </div>
-                                <div id="collapseFour1" class="accordion-collapse collapse" aria-labelledby="headingFour1"
-                                    data-bs-parent="#faqVersion1">
-                                    <div class="accordion-body">
-                                        <p>
-                                            We currently have uniforms available only for listed schools. However, we are
-                                            continuously expanding our collection, so stay tuned!
-                                        </p>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="accordion-item">
-                                <div class="accordion-header" id="headingFive1">
-                                    <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse"
-                                        data-bs-target="#collapseFive1" aria-expanded="false" aria-controls="collapseFive1">
-                                        How do I know if my order was placed successfully?
-                                    </button>
-                                </div>
-                                <div id="collapseFive1" class="accordion-collapse collapse" aria-labelledby="headingFive1"
-                                    data-bs-parent="#faqVersion1">
-                                    <div class="accordion-body">
-                                        <p>Enrolment Events are like open days or open weeks at Busy Bees. It's a chance for
-                                            you to visit your local nursery, take a look around, and see some of exciting
-                                            activities in action. </p>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="accordion-item">
-                                <div class="accordion-header" id="headingSix1">
-                                    <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse"
-                                        data-bs-target="#collapseSix1" aria-expanded="false" aria-controls="collapseSix1">
-                                        How do I find my school's uniform?
-                                    </button>
-                                </div>
-                                <div id="collapseSix1" class="accordion-collapse collapse" aria-labelledby="headingSix1"
-                                    data-bs-parent="#faqVersion1">
-                                    <div class="accordion-body">
-                                        <p>Simply enter your school name in the search bar, and you'll see the authorized
-                                            and optional products available.</p>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </section>
     </div>
 </section>
 
@@ -304,57 +355,61 @@
 </div>
 
 <style>
-    .product-image-gallery {
-        display: flex;
-        gap: 15px;
-        align-items: flex-start;
-    }
-
-    .product-thumbnails-vertical {
-        display: flex;
-        flex-direction: column;
-        gap: 10px;
-        width: 100px;
-        flex-shrink: 0;
-    }
-
+    /* Product Image Carousel */
     .product-big-img {
-        flex: 1;
+        margin-bottom: 15px;
     }
 
-    .main-image-container {
+    .product-big-img .img {
+        width: 100%;
+        height: 500px;
         background-color: #f8f5ff;
         border-radius: 12px;
-        padding: 20px;
-        min-height: 500px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
         overflow: hidden;
-        position: relative;
+        padding: 0;
+        margin: 0;
+        border: 2px solid #e0d5f0;
     }
 
-    .main-image-container img {
-        max-width: 100%;
-        max-height: 500px;
-        width: auto;
-        height: auto;
-        object-fit: contain;
-    }
-
-    .product-actions-center-wrapper {
-        background-color: #ffffff;
-        padding: 20px;
+    .product-big-img .img img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        display: block;
         border-radius: 12px;
-        margin-top: 20px;
     }
 
-    .product-actions-center {
+    .product-thumb-slide {
+        margin: 0 -5px;
+    }
+
+    .product-thumb-slide .col-3 {
+        padding: 0 5px;
+    }
+
+    .product-thumb-slide .thumb {
+        width: 100%;
+        height: 100px;
+        border: 2px solid #e0d5f0;
+        border-radius: 8px;
+        overflow: hidden;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        background-color: #f8f5ff;
         display: flex;
-        gap: 10px;
-        flex-wrap: wrap;
-        justify-content: center;
         align-items: center;
+        justify-content: center;
+    }
+
+    .product-thumb-slide .thumb img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+    }
+
+    .product-thumb-slide .thumb:hover,
+    .product-thumb-slide .thumb.active {
+        border-color: #490D59;
     }
 
     .title-divider1 {
@@ -369,7 +424,7 @@
         position: relative;
         overflow: hidden;
         border-radius: 30px 30px 0 0;
-        background-color: #f8f5ff;
+        background-color: #ffffff;
     }
 
     .product-badge {
@@ -393,7 +448,7 @@
         display: flex;
         align-items: center;
         justify-content: center;
-        background-color: #f8f5ff;
+        background-color: #ffffff;
     }
 
     .product-img img {
@@ -409,13 +464,13 @@
         height: 100%;
         border: 3px solid var(--theme-color2, #e0d5f0);
         border-radius: 30px;
-        transition: all ease 0.4s;
+        transition: border-color ease 0.4s, box-shadow ease 0.4s;
         overflow: hidden;
+        position: relative;
     }
 
     .vs-product.product-style1:hover {
         border-color: var(--theme-color, #490D59);
-        transform: translateY(-5px);
         box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
     }
 
@@ -456,49 +511,19 @@
     .actions {
         margin-top: auto;
         display: flex;
-        justify-content: center;
+        align-items: center;
+        gap: 10px;
     }
 
     .product-style1 .vs-btn {
-        background-color: var(--vs-secondary-color, #e0d5f0);
-        padding: 17px 26px;
-        width: 100%;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-    }
-
-    .product-style1 .vs-btn:after,
-    .product-style1 .vs-btn:before {
-        background-color: var(--theme-color, #490D59);
+        flex: 1;
     }
 
     .product-style1 .vs-btn i {
-        margin-right: 10px;
+        margin-right: 8px;
+        font-size: 14px;
     }
 
-    .thumb-item {
-        width: 100px;
-        height: 100px;
-        border: 2px solid #e0d5f0;
-        border-radius: 8px;
-        overflow: hidden;
-        cursor: pointer;
-        transition: all 0.3s ease;
-        background-color: #ffffff;
-    }
-
-    .thumb-item img {
-        width: 100%;
-        height: 100%;
-        object-fit: cover;
-    }
-
-    .thumb-item:hover,
-    .thumb-item.active {
-        border-color: #490D59;
-        transform: scale(1.05);
-    }
 
     .size-option {
         position: relative;
@@ -551,7 +576,9 @@
         background-color: #ffffff;
         padding: 30px;
         border-radius: 12px;
-        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+        box-shadow: none;
+        border: none;
+        outline: none;
     }
 
     .product-title {
@@ -565,120 +592,523 @@
         font-size: 32px;
         font-weight: 600;
         color: #dc3545;
-        margin-bottom: 5px;
+        margin-bottom: 15px;
+    }
+
+    .product-price del {
+        font-size: 24px;
+        color: #999;
+        margin-left: 10px;
+        font-weight: 400;
+    }
+
+    .product-rating {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        margin-bottom: 20px;
+    }
+
+    .product-rating .star-rating {
+        margin-bottom: 0;
+        font-size: 14px;
+        line-height: 1.2;
+        position: relative;
+        display: inline-block;
+        overflow: hidden;
+    }
+
+    .product-rating .star-rating span {
+        display: block;
+        position: relative;
+        height: 1em;
+        line-height: 1;
+        font-size: 1em;
+        width: 5.4em;
+        font-family: star;
+        color: #ffb900;
+    }
+
+    .product-rating .star-rating span:before {
+        content: "\f005\f005\f005\f005\f005";
+        font-family: "Font Awesome 5 Free";
+        font-weight: 900;
+        color: #ffb900;
+        font-size: 14px;
+        letter-spacing: 2px;
+        position: absolute;
+        left: 0;
+        top: 0;
+        width: 100%;
+    }
+
+    .product-rating .star-rating span strong,
+    .product-rating .star-rating span {
+        font-size: 0;
+        line-height: 0;
+        color: transparent;
+        overflow: hidden;
+    }
+
+    .product-rating .star-rating .rating {
+        display: none;
+    }
+
+    .product-rating > span {
+        color: #666;
+        font-size: 14px;
+        display: inline-block;
+        margin-left: 5px;
     }
 
     .product-text {
         color: #666;
         line-height: 1.6;
-        margin-bottom: 0;
+        margin-bottom: 25px;
+    }
+
+    /* Quantity Buttons */
+    .quantity {
+        display: flex;
+        align-items: center;
+        border: 1px solid #ffffff;
+        border-radius: 8px;
+        overflow: hidden;
+        background-color: #ffffff;
+    }
+
+    .qty-btn {
+        width: 40px;
+        height: 50px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background-color: #ffffff;
+        border: none;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        color: #333;
+    }
+
+    .qty-btn:hover {
+        background-color: #490D59;
+        color: #ffffff;
+    }
+
+    .qty-input {
+        width: 60px;
+        height: 50px;
+        border: none;
+        text-align: center;
+        font-size: 16px;
+        font-weight: 600;
+        padding: 0;
+        background-color: #ffffff;
+    }
+
+    .qty-input:focus {
+        outline: none;
+        border: none;
+        box-shadow: none;
+    }
+    
+    .quantity:focus,
+    .quantity:focus-within {
+        outline: none;
+        border: 1px solid #ffffff;
+        box-shadow: none;
+    }
+    
+    .product-about:focus,
+    .product-about:focus-within {
+        outline: none;
+        border: none;
+        box-shadow: none;
+    }
+
+    .screen-reader-text {
+        position: absolute;
+        clip: rect(1px, 1px, 1px, 1px);
+        width: 1px;
+        height: 1px;
+        overflow: hidden;
     }
 
     .actions {
         display: flex;
+        align-items: center;
         gap: 10px;
+        margin-bottom: 30px;
     }
 
-    .vs-btn {
-        flex: 1;
+    /* Product Getway */
+    .product-getway {
+        margin-bottom: 25px;
+        padding-top: 25px;
+    }
+
+    .getway-title {
+        display: block;
+        font-size: 12px;
+        font-weight: 600;
+        color: #666;
+        margin-bottom: 10px;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+    .product-getway img {
+        max-width: 100%;
+        height: auto;
+    }
+
+    /* Product Meta */
+    .product_meta {
+        display: flex;
+            flex-direction: column;
+        gap: 10px;
+        font-size: 14px;
+        color: #666;
+        padding-top: 20px;
+    }
+
+    .product_meta span {
+        display: block;
+    }
+
+    .product_meta .category-label {
+        color: #dc3545;
+    }
+
+    .product_meta .category-value {
+        color: #000000;
+    }
+
+    .product_meta a {
+        color: #490D59;
+        text-decoration: none;
+        margin-left: 5px;
+    }
+
+    .product_meta a:hover {
+        text-decoration: underline;
+    }
+
+    .sku {
+        font-weight: 600;
+        color: #333;
     }
 
     @media (max-width: 991px) {
-        .product-image-gallery {
+        .product-big-img .img {
+            height: 400px;
+            padding: 0;
+        }
+
+        .product-big-img .img img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .actions {
+            flex-wrap: wrap;
+        }
+
+        .actions .vs-btn {
+            width: 100%;
+        }
+    }
+
+    /* Reviews Section Styles */
+    .woocommerce-Reviews {
+        margin-bottom: 40px;
+    }
+
+    .vs-comments-wrap {
+        margin-bottom: 40px;
+    }
+
+    .comment-list {
+        list-style: none;
+        padding: 0;
+        margin: 0;
+    }
+
+    .vs-comment-item {
+        margin-bottom: 30px;
+        padding-bottom: 0;
+    }
+
+    .vs-comment-item:last-child {
+        margin-bottom: 0;
+    }
+
+    .vs-post-comment {
+        display: flex;
+        gap: 20px;
+    }
+
+    .comment-avater {
+            flex-shrink: 0;
+        width: 80px;
+        height: 80px;
+        border-radius: 50%;
+        overflow: hidden;
+    }
+
+    .comment-avater img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+    }
+
+    .comment-content {
+        flex: 1;
+    }
+
+    .comment-content .name {
+        font-size: 18px;
+        font-weight: 600;
+        color: #333;
+        margin-bottom: 8px;
+    }
+
+    .commented-on {
+        display: flex;
+        align-items: center;
+        gap: 5px;
+        color: #999;
+        font-size: 14px;
+        margin-bottom: 12px;
+    }
+
+    .commented-on i {
+        font-size: 14px;
+    }
+
+    .review-rating {
+        margin-bottom: 15px;
+    }
+
+    .review-rating .star-rating {
+        margin-bottom: 0;
+        font-size: 14px;
+        line-height: 1.2;
+        position: relative;
+        display: inline-block;
+        overflow: hidden;
+    }
+
+    .review-rating .star-rating span {
+        display: block;
+        position: relative;
+        height: 1em;
+        line-height: 1;
+        font-size: 1em;
+        width: 5.4em;
+        font-family: star;
+        color: #ffb900;
+    }
+
+    .review-rating .star-rating span:before {
+        content: "\f005\f005\f005\f005\f005";
+        font-family: "Font Awesome 5 Free";
+        font-weight: 900;
+        color: #ffb900;
+        font-size: 14px;
+        letter-spacing: 2px;
+        position: absolute;
+        left: 0;
+        top: 0;
+        width: 100%;
+    }
+
+    .review-rating .star-rating span strong,
+    .review-rating .star-rating span {
+        font-size: 0;
+        line-height: 0;
+        color: transparent;
+        overflow: hidden;
+    }
+
+    .review-rating .star-rating .rating {
+        display: none;
+    }
+
+    .comment-content .text {
+        color: #666;
+        line-height: 1.6;
+        margin-bottom: 0;
+    }
+
+    /* Review Form Styles */
+    .vs-comment-form {
+        margin-top: 40px;
+        padding: 30px;
+        background-color: #ffffff;
+        border-radius: 12px;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+    }
+
+    .form-title {
+        margin-bottom: 25px;
+    }
+
+    .blog-inner-title {
+        font-size: 24px;
+        font-weight: 600;
+        color: #333;
+        margin-bottom: 0;
+    }
+
+    .rating-select {
+        margin-bottom: 20px;
+    }
+
+    .rating-select label {
+        display: block;
+        font-weight: 600;
+        color: #333;
+        margin-bottom: 10px;
+    }
+
+    .stars {
+        margin: 0;
+    }
+
+    .stars span {
+        display: flex;
+        gap: 5px;
+    }
+
+    .stars a {
+        color: #ddd;
+        font-size: 20px;
+        text-decoration: none;
+        transition: color 0.3s ease;
+    }
+
+    .stars a:hover,
+    .stars a.active {
+        color: #ffb900;
+    }
+
+    .form-group {
+        margin-bottom: 20px;
+    }
+
+    .form-control {
+        width: 100%;
+        padding: 12px 15px;
+        border: 2px solid #e0d5f0;
+        border-radius: 8px;
+        font-size: 14px;
+        transition: all 0.3s ease;
+    }
+
+    .form-control:focus {
+        outline: none;
+        border-color: #490D59;
+        box-shadow: 0 0 0 3px rgba(73, 13, 89, 0.1);
+    }
+
+    .form-control::placeholder {
+        color: #999;
+    }
+
+    textarea.form-control {
+        min-height: 120px;
+        resize: vertical;
+    }
+
+    @media (max-width: 767px) {
+        .vs-post-comment {
             flex-direction: column;
         }
 
-        .product-thumbnails-vertical {
-            flex-direction: row;
-            width: 100%;
-            overflow-x: auto;
-            order: 2;
-        }
-
-        .product-big-img {
-            order: 1;
-        }
-
-        .thumb-item {
-            flex-shrink: 0;
-        }
-
-        .main-image-container {
-            min-height: 400px;
-        }
-
-        .main-image-container img {
-            max-height: 400px;
-        }
-
-        .product-actions-center {
-            justify-content: center;
+        .comment-avater {
+            width: 60px;
+            height: 60px;
         }
     }
 </style>
 
 <script>
-    function changeMainImage(imageSrc) {
-        const mainImage = document.getElementById('mainProductImage');
-        if (mainImage) {
-            mainImage.src = imageSrc;
-        }
-        
-        // Update active thumbnail
-        document.querySelectorAll('.thumb-item').forEach(thumb => {
-            thumb.classList.remove('active');
-            if (thumb.getAttribute('data-image') === imageSrc) {
-                thumb.classList.add('active');
-            }
-        });
-    }
-
-
-    // Enable Buy Now button when size is selected
     document.addEventListener('DOMContentLoaded', function() {
         const sizeInputs = document.querySelectorAll('input[name="size"]');
-        const buyNowBtn = document.getElementById('buy-now-btn');
-        const buyNowSize = document.getElementById('buy-now-size');
+        const cartSizeInput = document.getElementById('cart-size');
         const quantityInput = document.getElementById('quantity');
-        const buyNowQuantity = document.getElementById('buy-now-quantity');
+        const quantityMinus = document.querySelector('.quantity-minus');
+        const quantityPlus = document.querySelector('.quantity-plus');
         const addToCartForm = document.getElementById('addToCartForm');
+        const cartQuantity = document.getElementById('cart-quantity');
 
-        // Sync quantity from dropdown
-        if (quantityInput) {
-            quantityInput.addEventListener('change', function() {
-                buyNowQuantity.value = this.value;
+        // Quantity +/- buttons
+        if (quantityMinus && quantityInput) {
+            quantityMinus.addEventListener('click', function() {
+                let currentValue = parseInt(quantityInput.value) || 1;
+                if (currentValue > 1) {
+                    quantityInput.value = currentValue - 1;
+                    if (cartQuantity) cartQuantity.value = quantityInput.value;
+                }
             });
         }
 
-        // Enable/disable Buy Now and update hidden fields based on size selection
+        if (quantityPlus && quantityInput) {
+            quantityPlus.addEventListener('click', function() {
+                let currentValue = parseInt(quantityInput.value) || 1;
+                const maxValue = parseInt(quantityInput.getAttribute('max')) || 100;
+                if (currentValue < maxValue) {
+                    quantityInput.value = currentValue + 1;
+                    if (cartQuantity) cartQuantity.value = quantityInput.value;
+                }
+            });
+        }
+
+        // Update cart quantity when input changes
+        if (quantityInput && cartQuantity) {
+            quantityInput.addEventListener('change', function() {
+                let value = parseInt(this.value) || 1;
+                const min = parseInt(this.getAttribute('min')) || 1;
+                const max = parseInt(this.getAttribute('max')) || 100;
+                
+                if (value < min) value = min;
+                if (value > max) value = max;
+                
+                this.value = value;
+                cartQuantity.value = value;
+            });
+        }
+
+        // Update cart size when size is selected
+        if (sizeInputs.length > 0) {
+            if (cartSizeInput && !cartSizeInput.value) {
+                cartSizeInput.value = sizeInputs[0].value;
+            }
         sizeInputs.forEach(input => {
             input.addEventListener('change', function() {
-                if (this.checked) {
-                    const sizeValue = this.value;
-                    buyNowSize.value = sizeValue;
-                    document.getElementById('cart-size').value = sizeValue;
-                    buyNowBtn.disabled = false;
+                    if (this.checked && cartSizeInput) {
+                        cartSizeInput.value = this.value;
                 }
             });
         });
+        } else if (cartSizeInput && !cartSizeInput.value) {
+            cartSizeInput.value = 'Standard';
+        }
 
-        // Update buy now size when add to cart form size changes
+        // Form submission validation
+        if (addToCartForm) {
         addToCartForm.addEventListener('submit', function(e) {
             const selectedSize = document.querySelector('input[name="size"]:checked');
-            if (!selectedSize) {
+                if (sizeInputs.length > 0 && !selectedSize) {
                 e.preventDefault();
                 alert('Please select a size');
                 return false;
             }
-            document.getElementById('cart-size').value = selectedSize.value;
-        });
-
-        // Sync quantity from dropdown to both forms
-        if (quantityInput) {
-            quantityInput.addEventListener('change', function() {
-                const qtyValue = this.value;
-                buyNowQuantity.value = qtyValue;
-                document.getElementById('cart-quantity').value = qtyValue;
+                if (cartQuantity) {
+                    cartQuantity.value = quantityInput ? quantityInput.value : 1;
+                }
             });
         }
     });

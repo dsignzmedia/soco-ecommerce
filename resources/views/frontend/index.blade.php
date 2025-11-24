@@ -1,12 +1,6 @@
 @extends('frontend.layouts.app')
 
 @section('content')
-<div class="preloader  ">
-    <button class="vs-btn preloaderCls">Cancel Preloader </button>
-    <div class="preloader-inner">
-        <div class="loader"></div>
-    </div>
-</div>
 <div class="vs-menu-wrapper">
     <div class="vs-menu-area text-center">
         <button class="vs-menu-toggle"><i class="fal fa-times"></i></button>
@@ -22,13 +16,8 @@
                 <li>
                     <a href="{{ route('frontend.about-us') }}">About Us</a>
                 </li>
-                <li class="menu-item-has-children">
-                    <a href="#">Services</a>
-                    <!-- <ul class="sub-menu">
-                        <li><a href="class.html">Class Style 1</a></li>
-                        <li><a href="class-2.html">Class Style 2</a></li>
-                        <li><a href="class-details.html">Class Details</a></li>
-                    </ul> -->
+                <li>
+                    <a href="{{ route('frontend.services') }}">Services</a>
                 </li>
                 <li class="menu-item-has-children">
                     <a href="#">FAQ</a>
@@ -115,20 +104,21 @@
                                 <li>
                                     <a href="{{ route('frontend.about-us') }}">About Us</a>
                                 </li>
-                                <li class="menu-item-has-children">
-                                    <a href="#">Services</a>
+                                <li>
+                                    <a href="{{ route('frontend.services') }}">Services</a>
+                                </li>
 
                                 </li>
                                 <li class="menu-item-has-children">
                                     <!-- <a href="blog.html">Blog</a> -->
-                                    <a href="#">FAQ</a>
+                                    <a href="{{ route('frontend.faq') }}">FAQ</a>
 
 
                                 </li>
                                 <li class="menu-item-has-children mega-menu-wrap">
                                     <!-- <a href="#">Pages</a> -->
 
-                                    <a href="#">Contact Us</a>
+                                    <a href="{{ route('frontend.contact') }}">Contact Us</a>
 
                                 </li>
                                 <!-- <li>
@@ -145,7 +135,7 @@
                         </div>
                     </div>
                     <div class="col-auto d-none d-xl-block">
-                        <a href="{{ route('frontend.get-started') }}" class="vs-btn">Shop Now</a>
+                        <a href="{{ route('frontend.get-started') }}" class="vs-btn">Login</a>
                     </div>
                 </div>
             </div>
@@ -165,27 +155,27 @@
                 style="font-size:36px; color:#000; stroke:#000; stroke-width:0px; text-align:left; font-style:normal; text-decoration:none; text-transform:none; font-weight:400; letter-spacing:0px; border-style:solid; background-position:0% 0%; background-repeat:no-repeat; background-clip:border-box; overflow:visible; width:255px; height:255px; border-width:60px 60px 60px 60px; border-color:#FFD600; border-radius:50% 50% 50% 50%; top:126px; left:740px; z-index:4; -webkit-background-clip:border-box;"
                 class="ls-l ls-hide-tablet ls-hide-phone ls-text-layer" data-ls="static:forever;">
             </ls-layer>
-            <div style="font-size:36px; stroke:#000; stroke-width:0px; text-align:left; font-style:normal; text-decoration:none; text-transform:none; font-weight:400; letter-spacing:0px; background-position:0% 0%; background-repeat:no-repeat; background-clip:border-box; overflow:visible; width:711px; height:410px; left:312px; top:213px; background-color:#490D59; border-radius:213px 206px 50px 213px; z-index:5; -webkit-background-clip:border-box;"
+            <div style="font-size:36px; stroke:#000; stroke-width:0px; text-align:left; font-style:normal; text-decoration:none; text-transform:none; font-weight:400; letter-spacing:0px; background-position:0% 0%; background-repeat:no-repeat; background-clip:border-box; overflow:visible; width:1296px; height:410px; left:312px; top:213px; background-color:#490D59; border-radius:213px 206px 50px 213px; z-index:5; -webkit-background-clip:border-box;"
                 class="ls-l ls-hide-tablet ls-hide-phone ls-text-layer" data-ls="static:forever;"></div>
             <div style="font-size:36px; stroke:#000; stroke-width:0px; text-align:left; font-style:normal; text-decoration:none; text-transform:none; font-weight:400; letter-spacing:0px; background-position:0% 0%; background-repeat:no-repeat; background-clip:border-box; opacity:0.9; overflow:visible; width:1200px; height:600px; left:350px; top:76px; background-color:#490D59; border-radius:213px 206px 50px 213px; z-index:5; -webkit-background-clip:border-box;"
                 class="ls-l ls-hide-desktop ls-hide-phone ls-text-layer" data-ls="static:forever;"></div>
             <div style="font-size:36px; stroke:#000; stroke-width:0px; text-align:left; font-style:normal; text-decoration:none; text-transform:none; font-weight:400; letter-spacing:0px; background-position:0% 0%; background-repeat:no-repeat; background-clip:border-box; opacity:0.9; overflow:visible; width:1300px; height:700px; left:50%; top:33px; background-color:#490D59; border-radius:213px 206px 50px 213px; z-index:5; -webkit-background-clip:border-box;"
                 class="ls-l ls-hide-desktop ls-hide-tablet ls-text-layer" data-ls="static:forever;"></div>
-            <h1 style="font-size:60px; stroke:#000; stroke-width:0px; text-align:center; font-style:normal; text-decoration:none; text-transform:none; font-weight:600; letter-spacing:0px; background-position:0% 0%; background-repeat:no-repeat; background-clip:border-box; overflow:visible; font-family:'Poppins', sans-serif; line-height:60px; color:#ffffff; top:284px; left:312px; width:711px; -webkit-background-clip:border-box;"
+            <h1 style="font-size:60px; stroke:#000; stroke-width:0px; text-align:center; font-style:normal; text-decoration:none; text-transform:none; font-weight:600; letter-spacing:0px; background-position:0% 0%; background-repeat:no-repeat; background-clip:border-box; overflow:visible; font-family:'Poppins', sans-serif; line-height:60px; color:#ffffff; top:284px; left:312px; width:1296px; -webkit-background-clip:border-box;"
                 class="ls-l ls-hide-tablet ls-hide-phone ls-text-layer"
                 data-ls="offsetxin:-100; delayin:200; easingin:easeOutQuint; offsetxout:-100; easingout:easeOutQuint;">
                 All Your School
             </h1>
-            <h1 style="font-size:60px; stroke:#000; stroke-width:0px; text-align:center; font-style:normal; text-decoration:none; text-transform:none; font-weight:600; letter-spacing:0px; background-position:0% 0%; background-repeat:no-repeat; background-clip:border-box; overflow:visible; font-family:'Poppins', sans-serif; line-height:60px; color:#ffffff; top:361px; left:312px; width:711px; -webkit-background-clip:border-box;"
+            <h1 style="font-size:60px; stroke:#000; stroke-width:0px; text-align:center; font-style:normal; text-decoration:none; text-transform:none; font-weight:600; letter-spacing:0px; background-position:0% 0%; background-repeat:no-repeat; background-clip:border-box; overflow:visible; font-family:'Poppins', sans-serif; line-height:60px; color:#ffffff; top:361px; left:312px; width:1296px; -webkit-background-clip:border-box;"
                 class="ls-l ls-hide-tablet ls-hide-phone ls-text-layer"
                 data-ls="offsetxin:100; delayin:300; easingin:easeOutQuint; offsetxout:100; easingout:easeOutQuint;">
                 Essenials in One Place
             </h1>
-            <p style="font-size:18px; stroke:#000; stroke-width:0px; text-align:center; font-style:normal; text-decoration:none; text-transform:none; font-weight:400; letter-spacing:0px; background-position:0% 0%; background-repeat:no-repeat; background-clip:border-box; overflow:visible; font-family:'Roboto', sans-serif; color:#ffffff; width:711px; left:312px; top:438px; -webkit-background-clip:border-box;"
+            <p style="font-size:18px; stroke:#000; stroke-width:0px; text-align:center; font-style:normal; text-decoration:none; text-transform:none; font-weight:400; letter-spacing:0px; background-position:0% 0%; background-repeat:no-repeat; background-clip:border-box; overflow:visible; font-family:'Roboto', sans-serif; color:#ffffff; width:1296px; left:312px; top:438px; -webkit-background-clip:border-box;"
                 class="ls-l ls-hide-tablet ls-hide-phone ls-text-layer"
                 data-ls="offsetyin:100; delayin:500; easingin:easeOutQuint; offsetyout:100; easingout:easeOutQuint;">
                 Shop specific school uniforms and accessories with ease and trust.</p>
-            <div style="font-size:30px; color:#000; stroke:#000; stroke-width:0px; text-align:center; font-style:normal; text-decoration:none; text-transform:none; font-weight:400; letter-spacing:0px; background-position:0% 0%; background-repeat:no-repeat; background-clip:border-box; overflow:visible; left:100%; top:494px; font-family:'Poppins', sans-serif; width:711px; margin-left:-877px; -webkit-background-clip:border-box;"
+            <div style="font-size:30px; color:#000; stroke:#000; stroke-width:0px; text-align:center; font-style:normal; text-decoration:none; text-transform:none; font-weight:400; letter-spacing:0px; background-position:0% 0%; background-repeat:no-repeat; background-clip:border-box; overflow:visible; left:312px; top:494px; width:1296px; font-family:'Poppins', sans-serif; -webkit-background-clip:border-box;"
                 class="ls-l ls-hide-tablet ls-hide-phone ls-html-layer"
                 data-ls="offsetyin:100; delayin:700; easingin:easeOutQuint; offsetyout:100; easingout:easeOutQuint;">
                 <a href="{{ route('frontend.get-started') }}" class="vs-btn">Shop Now</a>
@@ -232,7 +222,7 @@
 </section><!--==============================
 About Area
 ==============================-->
-<section class=" space-top space-extra-bottom">
+<section class=" space-top space-extra-bottom" style="background-color: #ffffff;">
     <div class="container">
         <div class="row gx-70 align-items-center">
 
@@ -392,7 +382,7 @@ Service Area
 </div>
 
 </div>
-<section class=" space-extra-bottom">
+<section class=" space-top space-extra-bottom" style="background-color: #ffffff;">
     <div class="container">
         <div class="row gx-80">
 

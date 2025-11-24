@@ -6,9 +6,6 @@
 <section class="filter-section">
     <div class="filter-card">
         <form id="uniformFilterForm">
-            @if(isset($profile) && $profile)
-                <input type="hidden" name="_method" value="PUT">
-            @endif
             <div class="filter-group">
                 <label class="filter-label" for="schoolName">School Name</label>
                 <div class="autocomplete-wrapper">

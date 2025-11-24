@@ -3,7 +3,26 @@
 @section('content')
 @include('frontend.partials.header')
 
-<section class="vs-product-wrapper space-top space-extra-bottom" style="background-color: #f8f5ff;">
+<!--==============================
+    Breadcumb
+============================== -->
+<div class="breadcumb-wrapper " data-bg-src="{{ asset('assets/img/contact/Background.png') }}">
+    <div class="container z-index-common">
+        <div class="breadcumb-content">
+            <h1 class="breadcumb-title">Our Products</h1>
+            <p class="breadcumb-text">Browse Our Wide Selection Of Premium School Uniforms And Accessories</p>
+            <div class="breadcumb-menu-wrap">
+                <ul class="breadcumb-menu">
+                    <li><a href="{{ route('frontend.index') }}">Home</a></li>
+                    <li><a href="{{ route('frontend.parent.dashboard', ['student_id' => $selectedProfile['id'] ?? '']) }}">Parent Dashboard</a></li>
+                    <li>Our Products</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+
+<section class="vs-product-wrapper space-top space-extra-bottom" style="background-color: #ffffff;">
     <div class="container">
         <!-- Page Header -->
         <div class="row mb-4">
@@ -30,7 +49,12 @@
         <div class="row">
             <!-- Left Sidebar Filters -->
             <div class="col-lg-3 mb-4 mb-lg-0">
-                <div class="filter-sidebar">
+                <div class="d-lg-none mb-3">
+                    <button class="vs-btn w-100" id="toggleFilters">
+                        <i class="fas fa-sliders-h me-2"></i> <span>Show Filters</span>
+                    </button>
+                </div>
+                <div class="filter-sidebar" id="filterSidebar">
                     <div class="filter-header">
                         <i class="fas fa-filter me-2"></i>
                         <h5 class="mb-0">Filters</h5>
@@ -106,44 +130,57 @@
                 
                 <div class="row justify-content-center" id="productsContainer">
                     @foreach($allProducts as $product)
-                        <div class="col-md-6 col-lg-4 col-xl-3 product-item" 
+                        <div class="col-md-6 col-lg-4 col-xl-4 product-item" 
                              data-product-type="{{ $product['type'] }}"
                              data-product-name="{{ strtolower($product['name']) }}"
                              data-product-category="{{ $product['category'] ?? 'regular_uniforms' }}">
-                            <div class="vs-product product-style1 h-100">
-                                <div class="product-img-wrapper">
-                                    <div class="product-badge">
-                                        @if($product['type'] === 'authorized')
-                                            AUTHORIZED
-                                        @elseif($product['type'] === 'optional')
-                                            OPTIONAL
-                                        @elseif($product['type'] === 'merchandised')
-                                            MERCHANDISED
+                            <div class="vs-product product-style1 product-card-clickable" 
+                                 data-product-url="{{ route('frontend.parent.product-detail', ['productId' => $product['id'], 'profile_id' => $selectedProfile['id']]) }}">
+                                <div class="product-img">
+                                    <a href="{{ route('frontend.parent.product-detail', ['productId' => $product['id'], 'profile_id' => $selectedProfile['id']]) }}" target="_blank">
+                                        @if(isset($product['image']) && $product['image'])
+                                            <img src="{{ $product['image'] }}" alt="{{ $product['name'] }}" class="w-100">
                                         @else
-                                            BACK TO SCHOOL
+                                            <img src="{{ asset('assets/img/product/product1-1.png') }}" alt="{{ $product['name'] }}" class="w-100">
                                         @endif
-                                    </div>
-                                    <div class="product-img">
-                                        <a href="{{ route('frontend.parent.product-detail', ['productId' => $product['id'], 'profile_id' => $selectedProfile['id']]) }}">
-                                            @if(isset($product['image']) && $product['image'])
-                                                <img src="{{ $product['image'] }}" alt="{{ $product['name'] }}" class="w-100">
-                                            @else
-                                                <img src="{{ asset('assets/img/product/product1-1.png') }}" alt="{{ $product['name'] }}" class="w-100">
-                                            @endif
-                                        </a>
-                                    </div>
+                                    </a>
                                 </div>
                                 <div class="product-content">
-                                    <span class="product-price">₹{{ number_format($product['price']) }}</span>
+                                    <span class="product-price">
+                                        ₹{{ number_format($product['price']) }}
+                                        @if(isset($product['original_price']) && $product['original_price'] > $product['price'])
+                                            <del>₹{{ number_format($product['original_price']) }}</del>
+                                        @endif
+                                    </span>
                                     <h3 class="product-title">
-                                        <a class="text-inherit" href="{{ route('frontend.parent.product-detail', ['productId' => $product['id'], 'profile_id' => $selectedProfile['id']]) }}">
+                                        <a class="text-inherit" href="{{ route('frontend.parent.product-detail', ['productId' => $product['id'], 'profile_id' => $selectedProfile['id']]) }}" target="_blank">
                                             {{ $product['name'] }}
                                         </a>
                                     </h3>
+                                    <div class="star-rating" role="img" aria-label="Rated 5.00 out of 5">
+                                        <span style="width:100%">Rated <strong class="rating">5.00</strong> out of 5</span>
+                                    </div>
                                     <div class="actions">
-                                        <a href="{{ route('frontend.parent.product-detail', ['productId' => $product['id'], 'profile_id' => $selectedProfile['id']]) }}" class="vs-btn">
-                                            <i class="far fa-shopping-cart"></i>Shop Now
-                                        </a>
+                                        @if(isset($selectedProfile) && $selectedProfile)
+                                            @php
+                                                $defaultSize = $product['sizes'][0] ?? 'Standard';
+                                            @endphp
+                                            <form action="{{ route('frontend.parent.add-to-cart') }}" method="POST" class="add-to-cart-form">
+                                                @csrf
+                                                <input type="hidden" name="product_id" value="{{ $product['id'] }}">
+                                                <input type="hidden" name="profile_id" value="{{ $selectedProfile['id'] }}">
+                                                <input type="hidden" name="size" value="{{ $defaultSize }}">
+                                                <input type="hidden" name="quantity" value="1">
+                                                <button type="submit" class="vs-btn w-100">
+                                                    <i class="far fa-shopping-cart"></i>Add to Cart
+                                                </button>
+                                            </form>
+                                        @else
+                                            <a href="{{ route('frontend.parent.dashboard') }}" class="vs-btn flex-fill">
+                                                <i class="far fa-shopping-cart"></i>Select Profile
+                                            </a>
+                                        @endif
+                                        <a href="#" class="icon-btn"><i class="far fa-heart"></i></a>
                                     </div>
                                 </div>
                             </div>
@@ -156,6 +193,19 @@
                         <p class="text-muted">No products found in this category.</p>
                     </div>
                 @endif
+
+                <!-- Pagination -->
+                <div class="vs-pagination">
+                    <a href="#" class="pagi-btn">Prev</a>
+                    <ul>
+                        <li><a href="#">1</a></li>
+                        <li><a href="#">2</a></li>
+                        <li><a href="#">3</a></li>
+                        <li><a href="#">...</a></li>
+                        <li><a href="#">12</a></li>
+                    </ul>
+                    <a href="#" class="pagi-btn">next</a>
+                </div>
             </div>
         </div>
     </div>
@@ -301,21 +351,16 @@
     }
 
     /* Product Card Styles */
-    .product-img-wrapper {
+    .product-img {
         position: relative;
         overflow: hidden;
         border-radius: 30px 30px 0 0;
-        background-color: #f8f5ff;
-    }
-
-    .product-img {
+        background-color: #ffffff;
         width: 100%;
         height: 280px;
-        overflow: hidden;
         display: flex;
         align-items: center;
         justify-content: center;
-        background-color: #f8f5ff;
     }
 
     .product-img img {
@@ -325,34 +370,31 @@
         padding: 15px;
     }
 
-    .product-badge {
-        position: absolute;
-        top: 10px;
-        right: 10px;
-        background-color: #000000;
-        color: #ffffff;
-        padding: 5px 12px;
-        font-size: 11px;
-        font-weight: 600;
-        letter-spacing: 0.5px;
-        z-index: 2;
-        border-radius: 4px;
-    }
-
     .vs-product.product-style1 {
         display: flex;
         flex-direction: column;
-        height: 100%;
         border: 3px solid var(--theme-color2, #e0d5f0);
         border-radius: 30px;
         transition: all ease 0.4s;
         overflow: hidden;
+        background-color: #ffffff;
     }
 
     .vs-product.product-style1:hover {
         border-color: var(--theme-color, #490D59);
         transform: translateY(-5px);
-        box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+        box-shadow: none;
+    }
+
+    .product-card-clickable {
+        cursor: pointer;
+        position: relative;
+    }
+
+    .product-card-clickable .actions,
+    .product-card-clickable .actions * {
+        position: relative;
+        z-index: 10;
     }
 
     .product-content {
@@ -372,6 +414,13 @@
         line-height: 1;
     }
 
+    .product-price del {
+        font-size: 18px;
+        color: #999;
+        margin-left: 8px;
+        font-weight: 400;
+    }
+
     .product-title {
         font-size: 16px;
         margin-bottom: 12px;
@@ -389,19 +438,107 @@
         color: #490D59;
     }
 
+    .star-rating {
+        margin-bottom: 12px;
+        font-size: 14px;
+        line-height: 1.2;
+        position: relative;
+        display: inline-block;
+        background: none !important;
+        padding: 0 !important;
+        border: none !important;
+        box-shadow: none !important;
+    }
+
+    .star-rating span {
+        display: block;
+        color: transparent;
+        font-size: 0;
+        background: none !important;
+        padding: 0 !important;
+        border: none !important;
+        box-shadow: none !important;
+        position: relative;
+        width: auto;
+        height: auto;
+        line-height: 0;
+    }
+
+    .star-rating span:before {
+        content: "\f005\f005\f005\f005\f005";
+        font-family: "Font Awesome 5 Free";
+        font-weight: 900;
+        color: #ffb900;
+        font-size: 14px;
+        letter-spacing: 2px;
+        background: none !important;
+        display: block;
+        line-height: 1;
+        position: relative;
+        z-index: 1;
+    }
+
+    .star-rating span strong {
+        font-size: 0;
+        line-height: 0;
+        color: transparent;
+        width: 0;
+        height: 0;
+        overflow: hidden;
+        display: none;
+    }
+    
+    .star-rating span {
+        display: block;
+        position: relative;
+        height: 1em;
+        line-height: 1;
+        width: 5.4em;
+    }
+
+    .star-rating .rating {
+        display: none;
+    }
+
     .actions {
         margin-top: auto;
         display: flex;
-        justify-content: center;
+        align-items: center;
+        gap: 10px;
     }
 
     .product-style1 .vs-btn {
         background-color: var(--vs-secondary-color, #e0d5f0);
         padding: 17px 26px;
-        width: 100%;
+        flex: 1;
         display: flex;
         align-items: center;
         justify-content: center;
+    }
+
+    .actions .icon-btn {
+        width: 50px;
+        height: 50px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background-color: #ffffff;
+        border: 1px solid #ddd;
+        border-radius: 50%;
+        color: #333;
+        text-decoration: none;
+        transition: all 0.3s ease;
+        flex-shrink: 0;
+    }
+
+    .actions .icon-btn:hover {
+        background-color: #490D59;
+        border-color: #490D59;
+        color: #ffffff;
+    }
+
+    .actions .icon-btn i {
+        font-size: 16px;
     }
 
     .product-style1 .vs-btn:after,
@@ -411,6 +548,15 @@
 
     .product-style1 .vs-btn i {
         margin-right: 10px;
+    }
+
+    .actions form {
+        flex: 1;
+    }
+
+    .actions form .vs-btn {
+        width: 100%;
+        justify-content: center;
     }
 
     .product-item {
@@ -426,6 +572,53 @@
         .filter-sidebar {
             position: relative;
             top: 0;
+            display: none;
+            margin-bottom: 20px;
+            border: 2px solid #e0d5f0;
+        }
+
+        .filter-sidebar.active {
+            display: block;
+            animation: fadeIn 0.3s ease;
+        }
+
+        .filter-section {
+            margin-bottom: 15px;
+        }
+
+        .product-img {
+            height: 240px;
+        }
+    }
+
+    @media (max-width: 575px) {
+        .product-img {
+            height: 200px;
+            border-radius: 20px 20px 0 0;
+        }
+
+        .product-content {
+            padding: 16px;
+        }
+
+        .actions {
+            flex-direction: column;
+        }
+
+        .actions .icon-btn {
+            width: 45px;
+            height: 45px;
+        }
+    }
+
+    @keyframes fadeIn {
+        from {
+            opacity: 0;
+            transform: translateY(-10px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
         }
     }
 </style>
@@ -516,6 +709,36 @@ document.addEventListener('DOMContentLoaded', function() {
         searchInput.value = '';
         this.style.display = 'none';
         filterProducts();
+    });
+
+    const filterSidebar = document.getElementById('filterSidebar');
+    const toggleFiltersBtn = document.getElementById('toggleFilters');
+
+    if (toggleFiltersBtn && filterSidebar) {
+        toggleFiltersBtn.addEventListener('click', function() {
+            filterSidebar.classList.toggle('active');
+            const label = this.querySelector('span');
+            if (filterSidebar.classList.contains('active')) {
+                label.textContent = 'Hide Filters';
+            } else {
+                label.textContent = 'Show Filters';
+            }
+        });
+    }
+
+    // Make product cards clickable
+    document.querySelectorAll('.product-card-clickable').forEach(card => {
+        card.addEventListener('click', function(e) {
+            // Don't navigate if clicking on buttons or links
+            if (e.target.closest('.actions') || e.target.closest('a')) {
+                return;
+            }
+            
+            const productUrl = this.getAttribute('data-product-url');
+            if (productUrl) {
+                window.open(productUrl, '_blank');
+            }
+        });
     });
 });
 </script>
