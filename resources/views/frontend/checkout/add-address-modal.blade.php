@@ -4,6 +4,7 @@
         <div class="modal-content" style="border-radius: 12px; z-index: 10000; position: relative;">
             <div class="modal-header border-0 pb-0" style="position: relative;">
                 <h5 class="modal-title w-100 text-center" id="addAddressModalLabel" style="font-weight: 600; font-size: 1.25rem;">Add New Address</h5>
+                <input type="hidden" id="editingAddressIndex" value="">
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close" style="position: absolute; right: 15px; top: 15px; background-color: #dc3545; opacity: 1; border-radius: 50%; width: 30px; height: 30px; padding: 0;">
                     <span aria-hidden="true" style="color: #ffffff; font-size: 1.2rem;">&times;</span>
                 </button>
@@ -79,13 +80,19 @@
                                 </button>
                             </div>
                             <input type="hidden" name="address_type" id="modal_address_type" value="home">
+                            
+                            <!-- Custom Address Type Input (shown only when "others" is selected) -->
+                            <div id="customAddressTypeContainer" style="display: none; margin-top: 15px;">
+                                <label for="modal_custom_address_type" class="form-label">Enter Address Type Name <span class="text-danger">*</span></label>
+                                <input type="text" class="form-control" id="modal_custom_address_type" name="custom_address_type" placeholder="e.g., Work, Vacation Home, etc.">
+                            </div>
                         </div>
                     </div>
                 </form>
             </div>
             <div class="modal-footer border-0 pt-0">
-                <button type="button" class="btn" style="background-color: #000000; color: #ffffff; border: none; border-radius: 8px; padding: 10px 30px;" data-bs-dismiss="modal">Cancel</button>
-                <button type="button" class="btn" style="background-color: #28a745; color: #ffffff; border: none; border-radius: 8px; padding: 10px 30px;" onclick="saveNewAddress()">Add Address</button>
+                <button type="button" class="btn" style="background-color: #000000; color: #ffffff; border: none; border-radius: 8px; padding: 10px 30px;" data-bs-dismiss="modal" onclick="resetAddressModal()">Cancel</button>
+                <button type="button" class="btn" style="background-color: #28a745; color: #ffffff; border: none; border-radius: 8px; padding: 10px 30px;" onclick="saveNewAddress()" id="saveAddressBtn">Add Address</button>
             </div>
         </div>
     </div>
@@ -108,6 +115,50 @@ function selectModalAddressType(type) {
             btn.style.borderColor = '#28a745';
         }
     });
+    
+    // Show/hide custom address type input
+    const customContainer = document.getElementById('customAddressTypeContainer');
+    const customInput = document.getElementById('modal_custom_address_type');
+    if (type === 'others') {
+        customContainer.style.display = 'block';
+        customInput.required = true;
+    } else {
+        customContainer.style.display = 'none';
+        customInput.required = false;
+        customInput.value = '';
+    }
+}
+
+function resetAddressModal() {
+    // Reset form
+    document.getElementById('newAddressForm').reset();
+    
+    // Reset address type to home
+    selectedAddressType = 'home';
+    document.getElementById('modal_address_type').value = 'home';
+    document.getElementById('editingAddressIndex').value = '';
+    
+    // Reset modal title and button
+    document.getElementById('addAddressModalLabel').textContent = 'Add New Address';
+    document.getElementById('saveAddressBtn').textContent = 'Add Address';
+    
+    // Reset button styles
+    document.querySelectorAll('#addAddressModal .address-type-btn').forEach(btn => {
+        if (btn.dataset.type === 'home') {
+            btn.style.backgroundColor = '#28a745';
+            btn.style.color = '#ffffff';
+            btn.style.borderColor = '#28a745';
+        } else {
+            btn.style.backgroundColor = '#ffffff';
+            btn.style.color = '#28a745';
+            btn.style.borderColor = '#28a745';
+        }
+    });
+    
+    // Hide custom address type input
+    document.getElementById('customAddressTypeContainer').style.display = 'none';
+    document.getElementById('modal_custom_address_type').required = false;
+    document.getElementById('modal_custom_address_type').value = '';
 }
 
 function saveNewAddress() {
@@ -117,8 +168,29 @@ function saveNewAddress() {
         return;
     }
     
-    // Submit via AJAX to save address
-    fetch('{{ route("frontend.parent.save-address") }}', {
+    // Validate custom address type if "others" is selected
+    const customAddressType = selectedAddressType === 'others' ? document.getElementById('modal_custom_address_type').value.trim() : null;
+    if (selectedAddressType === 'others' && !customAddressType) {
+        alert('Please enter a custom address type name.');
+        document.getElementById('modal_custom_address_type').focus();
+        return;
+    }
+    
+    // Check if editing or adding
+    const editingIndex = document.getElementById('editingAddressIndex').value;
+    const isEditing = editingIndex !== '';
+    
+    // Determine the URL
+    let url;
+    if (isEditing) {
+        // Build the update URL with the address index
+        url = '/parent/update-address/' + editingIndex;
+    } else {
+        url = '{{ route("frontend.parent.save-address") }}';
+    }
+    
+    // Submit via AJAX to save/update address
+    fetch(url, {
         method: 'POST',
         headers: {
             'X-CSRF-TOKEN': '{{ csrf_token() }}',
@@ -136,6 +208,7 @@ function saveNewAddress() {
             pincode: document.getElementById('modal_pincode').value,
             landmark: document.getElementById('modal_landmark').value,
             address_type: selectedAddressType,
+            custom_address_type: customAddressType,
         })
     })
     .then(response => response.json())
@@ -145,8 +218,10 @@ function saveNewAddress() {
             const modal = bootstrap.Modal.getInstance(document.getElementById('addAddressModal'));
             modal.hide();
             
-            // Reload page to show new address
+            // Reload page to show updated address
             location.reload();
+        } else {
+            alert(data.message || 'Error saving address. Please try again.');
         }
     })
     .catch(error => {
@@ -175,4 +250,24 @@ function saveNewAddress() {
     z-index: 10520 !important;
 }
 </style>
+
+<script>
+// Reset modal when opened for adding (not editing)
+document.addEventListener('DOMContentLoaded', function() {
+    const modal = document.getElementById('addAddressModal');
+    if (modal) {
+        modal.addEventListener('show.bs.modal', function() {
+            // Only reset if not editing
+            const editingIndex = document.getElementById('editingAddressIndex');
+            if (editingIndex && !editingIndex.value) {
+                resetAddressModal();
+            }
+        });
+        
+        modal.addEventListener('hidden.bs.modal', function() {
+            resetAddressModal();
+        });
+    }
+});
+</script>
 

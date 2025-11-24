@@ -4,9 +4,27 @@
 @include('frontend.partials.header')
 
 <!--==============================
+    Breadcumb
+============================== -->
+<div class="breadcumb-wrapper " data-bg-src="{{ asset('assets/img/contact/Background.png') }}">
+    <div class="container z-index-common">
+        <div class="breadcumb-content">
+            <h1 class="breadcumb-title">About Us</h1>
+            <p class="breadcumb-text">Learn More About Our Mission, Values, And Commitment To Quality Education</p>
+            <div class="breadcumb-menu-wrap">
+                <ul class="breadcumb-menu">
+                    <li><a href="{{ route('frontend.index') }}">Home</a></li>
+                    <li>About Us</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!--==============================
   About Content Section
 ==============================-->
-<section class="space space-top">
+<section class="space space-top" style="background-color: #ffffff;">
     <div class="container">
         <div class="row align-items-center gx-60 gy-30">
             <div class="col-lg-6">

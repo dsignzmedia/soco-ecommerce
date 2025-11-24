@@ -5,6 +5,8 @@ namespace App\Http\Controllers\Front;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\File;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Validation\ValidationException;
 
 class AuthController extends Controller
 {
@@ -298,36 +300,49 @@ class AuthController extends Controller
 
     public function storeProfile(Request $request)
     {
-        // Validate the request
-        $request->validate([
-            'student_name' => 'required|string|max:255',
-            'school_name' => 'required|string|max:255',
-            'grade' => 'required|string',
-            'section' => 'required|string|max:10',
-            'gender' => 'required|in:male,female',
-        ]);
+        try {
+            $validated = $request->validate([
+                'student_name' => 'required|string|max:255',
+                'school_name' => 'required|string|max:255',
+                'grade' => 'required|string',
+                'section' => 'required|string|max:10',
+                'gender' => 'required|in:male,female',
+            ]);
+        } catch (ValidationException $e) {
+            if ($request->expectsJson()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Please fix the highlighted fields and try again.',
+                    'errors' => $e->errors(),
+                ], 422);
+            }
 
-        // Get existing profiles from session
+            throw $e;
+        }
+
         $profiles = session('student_profiles', []);
-        
-        // Create new profile
+
         $profile = [
             'id' => count($profiles) + 1,
-            'student_name' => $request->student_name,
-            'school_name' => $request->school_name,
-            'grade' => $request->grade,
-            'section' => $request->section,
-            'gender' => $request->gender,
+            'student_name' => $validated['student_name'],
+            'school_name' => $validated['school_name'],
+            'grade' => $validated['grade'],
+            'section' => $validated['section'],
+            'gender' => $validated['gender'],
             'created_at' => now()->toDateTimeString(),
         ];
 
-        // Add to profiles array
         $profiles[] = $profile;
-
-        // Store in session
         session(['student_profiles' => $profiles]);
 
-        // Redirect to dashboard
+        if ($request->expectsJson()) {
+            return response()->json([
+                'success' => true,
+                'message' => 'Student profile created successfully!',
+                'profile_id' => $profile['id'],
+            ]);
+        }
+
         return redirect()->route('frontend.parent.dashboard', ['student_id' => $profile['id']])
             ->with('success', 'Student profile created successfully!');
     }
@@ -347,13 +362,25 @@ class AuthController extends Controller
 
     public function updateProfile(Request $request, $profileId)
     {
-        $request->validate([
-            'student_name' => 'required|string|max:255',
-            'school_name' => 'required|string|max:255',
-            'grade' => 'required|string',
-            'section' => 'required|string|max:10',
-            'gender' => 'required|in:male,female',
-        ]);
+        try {
+            $validated = $request->validate([
+                'student_name' => 'required|string|max:255',
+                'school_name' => 'required|string|max:255',
+                'grade' => 'required|string',
+                'section' => 'required|string|max:10',
+                'gender' => 'required|in:male,female',
+            ]);
+        } catch (ValidationException $e) {
+            if ($request->expectsJson()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Please fix the highlighted fields and try again.',
+                    'errors' => $e->errors(),
+                ], 422);
+            }
+
+            throw $e;
+        }
 
         $profiles = session('student_profiles', []);
         $index = null;
@@ -366,23 +393,38 @@ class AuthController extends Controller
         }
         
         if ($index === null) {
+            if ($request->expectsJson()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Profile not found.',
+                ], 404);
+            }
+
             return redirect()->route('frontend.parent.dashboard')
                 ->with('error', 'Profile not found.');
         }
         
-        // Update profile
         $profiles[$index] = [
             'id' => (int)$profileId,
-            'student_name' => $request->student_name,
-            'school_name' => $request->school_name,
-            'grade' => $request->grade,
-            'section' => $request->section,
-            'gender' => $request->gender,
+            'student_name' => $validated['student_name'],
+            'school_name' => $validated['school_name'],
+            'grade' => $validated['grade'],
+            'section' => $validated['section'],
+            'gender' => $validated['gender'],
             'created_at' => $profiles[$index]['created_at'] ?? now()->toDateTimeString(),
+            'updated_at' => now()->toDateTimeString(),
         ];
         
         session(['student_profiles' => $profiles]);
         
+        if ($request->expectsJson()) {
+            return response()->json([
+                'success' => true,
+                'message' => 'Student profile updated successfully!',
+                'profile_id' => (int)$profileId,
+            ]);
+        }
+
         return redirect()->route('frontend.parent.dashboard', ['student_id' => $profileId])
             ->with('success', 'Student profile updated successfully!');
     }
@@ -408,6 +450,49 @@ class AuthController extends Controller
         
         return redirect()->route('frontend.parent.dashboard')
             ->with('success', 'Student profile deleted successfully!');
+    }
+
+    /**
+     * Get product images from the 8 available images in product_images folder
+     * Returns at least 5 images for each product
+     */
+    private function getProductImages($productId)
+    {
+        // Available images from product_images folder
+        $availableImages = [
+            asset('assets/img/product_images/Image1.png'),
+            asset('assets/img/product_images/Image2.png'),
+            asset('assets/img/product_images/Image3.png'),
+            asset('assets/img/product_images/Image4.png'),
+            asset('assets/img/product_images/Image5.png'),
+            asset('assets/img/product_images/Image6.png'),
+            asset('assets/img/product_images/Image7.png'),
+            asset('assets/img/product_images/Image8.png'),
+        ];
+        
+        // Use product ID to create a consistent but varied distribution
+        // This ensures each product gets a different combination
+        $startIndex = ($productId - 1) % count($availableImages);
+        $images = [];
+        
+        // Get at least 5 images, cycling through the available images
+        for ($i = 0; $i < 5; $i++) {
+            $index = ($startIndex + $i) % count($availableImages);
+            $images[] = $availableImages[$index];
+        }
+        
+        // Add more images if needed (up to 8 total)
+        if (count($images) < 8) {
+            $remaining = 8 - count($images);
+            for ($i = 0; $i < $remaining; $i++) {
+                $index = ($startIndex + 5 + $i) % count($availableImages);
+                if (!in_array($availableImages[$index], $images)) {
+                    $images[] = $availableImages[$index];
+                }
+            }
+        }
+        
+        return $images;
     }
 
     /**
@@ -454,12 +539,15 @@ class AuthController extends Controller
                     $category = 'sports';
                 }
                 
+                $currentProductId = $productId++;
+                $productImages = $this->getProductImages($currentProductId);
+                
                 $products[] = [
-                    'id' => $productId++,
+                    'id' => $currentProductId,
                     'name' => $productName,
                     'price' => rand(300, 800), // Default price, should come from database
-                    'image' => asset('assets/img/product/' . $folderName . '/' . $fileName),
-                    'images' => [asset('assets/img/product/' . $folderName . '/' . $fileName)], // Single image for now
+                    'image' => $productImages[0], // First image as primary
+                    'images' => $productImages, // At least 5 images
                     'description' => 'Premium quality ' . strtolower($productName),
                     'type' => 'authorized',
                     'category' => $category,
@@ -496,12 +584,15 @@ class AuthController extends Controller
                     $category = 'sports';
                 }
                 
+                $currentProductId = $productId++;
+                $productImages = $this->getProductImages($currentProductId);
+                
                 $products[] = [
-                    'id' => $productId++,
+                    'id' => $currentProductId,
                     'name' => $productName,
                     'price' => rand(300, 800), // Default price, should come from database
-                    'image' => $images[0] ?? asset('assets/img/products/shirt.jpg'),
-                    'images' => $images,
+                    'image' => $productImages[0], // First image as primary
+                    'images' => $productImages, // At least 5 images
                     'description' => 'Premium quality ' . strtolower($productName),
                     'type' => 'authorized',
                     'category' => $category,
@@ -518,14 +609,26 @@ class AuthController extends Controller
      */
     private function getAdditionalProducts()
     {
+        // Get the 8 product images
+        $productImages = [
+            asset('assets/img/product_images/Image1.png'),
+            asset('assets/img/product_images/Image2.png'),
+            asset('assets/img/product_images/Image3.png'),
+            asset('assets/img/product_images/Image4.png'),
+            asset('assets/img/product_images/Image5.png'),
+            asset('assets/img/product_images/Image6.png'),
+            asset('assets/img/product_images/Image7.png'),
+            asset('assets/img/product_images/Image8.png'),
+        ];
+        
         return [
             // Optional Products
             [
                 'id' => 100,
                 'name' => 'School Blazer',
                 'price' => 1200,
-                'image' => asset('assets/img/product/product1-1.png'),
-                'images' => [asset('assets/img/product/product1-1.png')],
+                'image' => $productImages[0],
+                'images' => array_slice($productImages, 0, 5),
                 'description' => 'Premium school blazer with school emblem',
                 'type' => 'optional',
                 'category' => 'regular_uniforms',
@@ -535,8 +638,8 @@ class AuthController extends Controller
                 'id' => 101,
                 'name' => 'School Sweater',
                 'price' => 650,
-                'image' => asset('assets/img/product/product1-2.png'),
-                'images' => [asset('assets/img/product/product1-2.png')],
+                'image' => $productImages[1],
+                'images' => array_slice($productImages, 1, 5),
                 'description' => 'Warm and comfortable school sweater',
                 'type' => 'optional',
                 'category' => 'regular_uniforms',
@@ -546,8 +649,8 @@ class AuthController extends Controller
                 'id' => 102,
                 'name' => 'School Cap',
                 'price' => 200,
-                'image' => asset('assets/img/product/product1-3.png'),
-                'images' => [asset('assets/img/product/product1-3.png')],
+                'image' => $productImages[2],
+                'images' => array_slice($productImages, 2, 5),
                 'description' => 'School cap with logo',
                 'type' => 'optional',
                 'category' => 'regular_uniforms',
@@ -559,8 +662,8 @@ class AuthController extends Controller
                 'id' => 200,
                 'name' => 'School Bag',
                 'price' => 800,
-                'image' => asset('assets/img/product/product1-4.png'),
-                'images' => [asset('assets/img/product/product1-4.png')],
+                'image' => $productImages[3],
+                'images' => array_slice($productImages, 3, 5),
                 'description' => 'Durable school bag with compartments',
                 'type' => 'merchandised',
                 'category' => 'regular_uniforms',
@@ -570,8 +673,8 @@ class AuthController extends Controller
                 'id' => 201,
                 'name' => 'School Badge Set',
                 'price' => 150,
-                'image' => asset('assets/img/product/product1-5.png'),
-                'images' => [asset('assets/img/product/product1-5.png')],
+                'image' => $productImages[4],
+                'images' => array_slice($productImages, 4, 5),
                 'description' => 'Complete set of school badges',
                 'type' => 'merchandised',
                 'category' => 'regular_uniforms',
@@ -581,8 +684,8 @@ class AuthController extends Controller
                 'id' => 202,
                 'name' => 'School ID Card Holder',
                 'price' => 100,
-                'image' => asset('assets/img/product/product1-6.png'),
-                'images' => [asset('assets/img/product/product1-6.png')],
+                'image' => $productImages[5],
+                'images' => array_slice($productImages, 5, 5),
                 'description' => 'Protective ID card holder with lanyard',
                 'type' => 'merchandised',
                 'category' => 'regular_uniforms',
@@ -594,8 +697,8 @@ class AuthController extends Controller
                 'id' => 300,
                 'name' => 'School Belt',
                 'price' => 300,
-                'image' => asset('assets/img/product/product1-7.png'),
-                'images' => [asset('assets/img/product/product1-7.png')],
+                'image' => $productImages[6],
+                'images' => array_slice($productImages, 6, 5),
                 'description' => 'Leather school belt with adjustable buckle',
                 'type' => 'back_to_school',
                 'category' => 'regular_uniforms',
@@ -605,8 +708,8 @@ class AuthController extends Controller
                 'id' => 301,
                 'name' => 'Geometry Box',
                 'price' => 250,
-                'image' => asset('assets/img/product/product1-8.png'),
-                'images' => [asset('assets/img/product/product1-8.png')],
+                'image' => $productImages[7],
+                'images' => array_slice($productImages, 7, 5),
                 'description' => 'Complete geometry box with compass, protractor, and ruler',
                 'type' => 'back_to_school',
                 'category' => 'regular_uniforms',
@@ -616,8 +719,8 @@ class AuthController extends Controller
                 'id' => 302,
                 'name' => 'Pen Set',
                 'price' => 120,
-                'image' => asset('assets/img/product/product1-9.png'),
-                'images' => [asset('assets/img/product/product1-9.png')],
+                'image' => $productImages[0],
+                'images' => array_slice($productImages, 0, 5),
                 'description' => 'Set of 5 premium pens (blue, black, red, green, pencil)',
                 'type' => 'back_to_school',
                 'category' => 'regular_uniforms',
@@ -627,8 +730,8 @@ class AuthController extends Controller
                 'id' => 303,
                 'name' => 'Pencil Set',
                 'price' => 80,
-                'image' => asset('assets/img/product/product1-10.png'),
-                'images' => [asset('assets/img/product/product1-10.png')],
+                'image' => $productImages[1],
+                'images' => array_slice($productImages, 1, 5),
                 'description' => 'Set of 10 HB pencils',
                 'type' => 'back_to_school',
                 'category' => 'regular_uniforms',
@@ -638,8 +741,8 @@ class AuthController extends Controller
                 'id' => 304,
                 'name' => 'Water Bottle',
                 'price' => 350,
-                'image' => asset('assets/img/product/product1-11.png'),
-                'images' => [asset('assets/img/product/product1-11.png')],
+                'image' => $productImages[2],
+                'images' => array_slice($productImages, 2, 5),
                 'description' => 'Insulated water bottle with school logo',
                 'type' => 'back_to_school',
                 'category' => 'regular_uniforms',
@@ -649,8 +752,8 @@ class AuthController extends Controller
                 'id' => 305,
                 'name' => 'Notebook Set',
                 'price' => 400,
-                'image' => asset('assets/img/product/product1-12.png'),
-                'images' => [asset('assets/img/product/product1-12.png')],
+                'image' => $productImages[3],
+                'images' => array_slice($productImages, 3, 5),
                 'description' => 'Set of 5 ruled notebooks (200 pages each)',
                 'type' => 'back_to_school',
                 'category' => 'regular_uniforms',
@@ -660,8 +763,8 @@ class AuthController extends Controller
                 'id' => 306,
                 'name' => 'Eraser Set',
                 'price' => 50,
-                'image' => asset('assets/img/product/product1-13.png'),
-                'images' => [asset('assets/img/product/product1-13.png')],
+                'image' => $productImages[4],
+                'images' => array_slice($productImages, 4, 5),
                 'description' => 'Set of 5 high-quality erasers',
                 'type' => 'back_to_school',
                 'category' => 'regular_uniforms',
@@ -796,22 +899,40 @@ class AuthController extends Controller
             'quantity' => 'required|integer|min:1',
         ]);
 
-        // Get cart from session
+        // Get cart from session (preserve existing items)
         $cart = session('cart', []);
         
-        // Add item to cart
-        $cartItem = [
-            'product_id' => $request->product_id,
-            'profile_id' => $request->profile_id,
-            'size' => $request->size,
-            'quantity' => $request->quantity,
-            'added_at' => now()->toDateTimeString(),
-        ];
-
-        $cart[] = $cartItem;
+        // Check if the same product with same size and profile already exists in cart
+        $existingIndex = null;
+        foreach ($cart as $index => $item) {
+            if (isset($item['product_id']) && $item['product_id'] == $request->product_id &&
+                isset($item['size']) && $item['size'] == $request->size &&
+                isset($item['profile_id']) && $item['profile_id'] == $request->profile_id) {
+                $existingIndex = $index;
+                break;
+            }
+        }
+        
+        if ($existingIndex !== null) {
+            // Update quantity of existing item
+            $cart[$existingIndex]['quantity'] += $request->quantity;
+        } else {
+            // Add new item to cart
+            $cartItem = [
+                'product_id' => $request->product_id,
+                'profile_id' => $request->profile_id,
+                'size' => $request->size,
+                'quantity' => $request->quantity,
+                'added_at' => now()->toDateTimeString(),
+            ];
+            $cart[] = $cartItem;
+        }
+        
+        // Save cart to session
         session(['cart' => $cart]);
 
-        return redirect()->route('frontend.parent.store', ['profile_id' => $request->profile_id])
+        // Redirect to cart page to show all items
+        return redirect()->route('frontend.parent.cart')
             ->with('success', 'Product added to cart successfully!');
     }
 
@@ -827,19 +948,34 @@ class AuthController extends Controller
         // Get cart from session
         $cart = session('cart', []);
         
-        // Clear existing cart items (Buy Now should only have this one item)
-        $cart = [];
+        // Check if item with same product, profile, and size already exists
+        $existingIndex = null;
+        foreach ($cart as $index => $item) {
+            if (
+                (int)$item['product_id'] === (int)$request->product_id &&
+                (int)$item['profile_id'] === (int)$request->profile_id &&
+                $item['size'] === $request->size
+            ) {
+                $existingIndex = $index;
+                break;
+            }
+        }
         
-        // Add item to cart
-        $cartItem = [
-            'product_id' => $request->product_id,
-            'profile_id' => $request->profile_id,
-            'size' => $request->size,
-            'quantity' => $request->quantity,
-            'added_at' => now()->toDateTimeString(),
-        ];
-
-        $cart[] = $cartItem;
+        if ($existingIndex !== null) {
+            // Increase quantity
+            $cart[$existingIndex]['quantity'] += $request->quantity;
+            $cart[$existingIndex]['added_at'] = now()->toDateTimeString();
+        } else {
+            // Add new item
+            $cart[] = [
+                'product_id' => $request->product_id,
+                'profile_id' => $request->profile_id,
+                'size' => $request->size,
+                'quantity' => $request->quantity,
+                'added_at' => now()->toDateTimeString(),
+            ];
+        }
+        
         session(['cart' => $cart]);
 
         // Redirect to cart page (not checkout) - user can review and then proceed to checkout
@@ -935,10 +1071,33 @@ class AuthController extends Controller
                 ->with('error', 'Your cart is empty.');
         }
 
+        // Get selected items from request (comma-separated indices)
+        $selectedItemsStr = $request->get('selected_items', '');
+        $selectedIndices = [];
+        if (!empty($selectedItemsStr)) {
+            $selectedIndices = array_map('intval', explode(',', $selectedItemsStr));
+        } else {
+            // If no selection, use all items
+            $selectedIndices = array_keys($cart);
+        }
+        
+        // Filter cart to only include selected items
+        $filteredCart = [];
+        foreach ($selectedIndices as $index) {
+            if (isset($cart[$index])) {
+                $filteredCart[] = $cart[$index];
+            }
+        }
+        
+        if (empty($filteredCart)) {
+            return redirect()->route('frontend.parent.cart')
+                ->with('error', 'Please select at least one item to checkout.');
+        }
+
         // Get profile_id from cart items
         $profileId = null;
-        if (!empty($cart)) {
-            $profileId = $cart[0]['profile_id'] ?? null;
+        if (!empty($filteredCart)) {
+            $profileId = $filteredCart[0]['profile_id'] ?? null;
         }
         
         // Find the selected profile
@@ -980,7 +1139,7 @@ class AuthController extends Controller
 
         $cartItems = [];
         $total = 0;
-        foreach ($cart as $item) {
+        foreach ($filteredCart as $item) {
             if (isset($allProductsMap[$item['product_id']])) {
                 $product = $allProductsMap[$item['product_id']];
                 $itemTotal = $product['price'] * $item['quantity'];
@@ -991,6 +1150,9 @@ class AuthController extends Controller
 
         // Get saved addresses from session
         $savedAddresses = session('saved_addresses', []);
+        
+        // Store selected indices in session for processCheckout
+        session(['checkout_selected_indices' => $selectedIndices]);
         
         return view('frontend.checkout.index', compact('cartItems', 'total', 'profiles', 'selectedProfile', 'savedAddresses'));
     }
@@ -1004,10 +1166,37 @@ class AuthController extends Controller
                 ->with('error', 'Your cart is empty.');
         }
         
+        // Get selected items from session (set during checkoutPage)
+        $selectedIndices = array_map('intval', session('checkout_selected_indices', []));
+        
+        // Filter cart to only include selected items
+        $filteredCart = [];
+        if (!empty($selectedIndices)) {
+            foreach ($selectedIndices as $index) {
+                if (isset($cart[$index])) {
+                    $filteredCart[] = $cart[$index];
+                }
+            }
+        } else {
+            // If no selection was made, use all items
+            $filteredCart = $cart;
+        }
+        
+        if (empty($filteredCart)) {
+            return redirect()->route('frontend.parent.cart')
+                ->with('error', 'Please select at least one item to checkout.');
+        }
+        
+        $savedAddresses = session('saved_addresses', []);
+
+        if (empty($savedAddresses) && !$request->has('name')) {
+            return redirect()->route('frontend.parent.checkout')
+                ->with('error', 'Please add a shipping address before placing your order.');
+        }
+        
         try {
             // Save address if it's a new one
             $selectedAddressIndex = $request->get('selected_address');
-            $savedAddresses = session('saved_addresses', []);
             
             $shippingAddress = [];
             if ($selectedAddressIndex !== null && isset($savedAddresses[$selectedAddressIndex])) {
@@ -1025,6 +1214,12 @@ class AuthController extends Controller
                     'pincode' => 'required|string|max:10',
                 ]);
                 
+                // Determine the display name for address type
+                $addressTypeDisplay = $request->address_type ?? 'home';
+                if ($request->address_type === 'others' && $request->custom_address_type) {
+                    $addressTypeDisplay = $request->custom_address_type;
+                }
+                
                 // Use new address and save it
                 $shippingAddress = [
                     'name' => $request->name,
@@ -1038,6 +1233,7 @@ class AuthController extends Controller
                     'pincode' => $request->pincode,
                     'landmark' => $request->landmark ?? '',
                     'address_type' => $request->address_type ?? 'home',
+                    'address_type_display' => $addressTypeDisplay, // Store the display name
                 ];
                 
                 // Save to session
@@ -1045,8 +1241,13 @@ class AuthController extends Controller
                 session(['saved_addresses' => $savedAddresses]);
             }
 
+            if (empty($shippingAddress)) {
+                return redirect()->route('frontend.parent.checkout')
+                    ->with('error', 'Please add or select a shipping address before placing your order.');
+            }
+
             // Ensure all items belong to the same profile (safety check)
-            $profileIds = array_unique(array_column($cart, 'profile_id'));
+            $profileIds = array_unique(array_column($filteredCart, 'profile_id'));
             if (count($profileIds) > 1) {
                 return redirect()->route('frontend.parent.checkout')
                     ->with('error', 'All items in cart must be for the same student.');
@@ -1065,27 +1266,46 @@ class AuthController extends Controller
                 $studentProfile = collect($profiles)->firstWhere('id', (int)$profileId);
             }
             
-            $order = [
-                'id' => $orderId,
-                'items' => $cart, // Store cart items as-is
-                'status' => 'ORDER PLACED',
-                'created_at' => now()->toDateTimeString(),
-                'total' => $request->get('total', 0),
-                'shipping_address' => $shippingAddress,
-                'profile_id' => $profileId,
-                'student_name' => $studentProfile ? $studentProfile['student_name'] : 'Unknown',
-            ];
+                $order = [
+                    'id' => $orderId,
+                    'items' => $filteredCart, // Store only selected cart items
+                    'status' => 'ORDER PLACED',
+                    'created_at' => now()->toDateTimeString(),
+                    'total' => $request->get('total', 0),
+                    'shipping_address' => $shippingAddress,
+                    'profile_id' => $profileId,
+                    'student_name' => $studentProfile ? $studentProfile['student_name'] : 'Unknown',
+                ];
 
-            $orders = session('orders', []);
-            $orders[] = $order;
-            session(['orders' => $orders]);
-            session(['cart' => []]); // Clear cart
+                $orders = session('orders', []);
+                $orders[] = $order;
+                session(['orders' => $orders]);
+                
+                // Remove only selected items from cart
+                $remainingCart = [];
+                foreach ($cart as $index => $item) {
+                    if (!in_array($index, $selectedIndices)) {
+                        $remainingCart[] = $item;
+                    }
+                }
+                session(['cart' => $remainingCart]);
+                session()->forget('checkout_selected_indices'); // Clear selection
 
             return redirect()->route('frontend.parent.orders')
                 ->with('success', 'Order placed successfully!');
-        } catch (\Exception $e) {
+        } catch (ValidationException $e) {
+            return redirect()->back()
+                ->withErrors($e->errors())
+                ->withInput()
+                ->with('error', 'Please correct the highlighted errors and try again.');
+        } catch (\Throwable $e) {
+            Log::error('Checkout processing error', [
+                'message' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
+            ]);
+            
             return redirect()->route('frontend.parent.checkout')
-                ->with('error', 'An error occurred while processing your order. Please try again.');
+                ->with('error', 'An unexpected error occurred while processing your order. Please try again.');
         }
     }
 
@@ -1103,6 +1323,12 @@ class AuthController extends Controller
 
         $savedAddresses = session('saved_addresses', []);
         
+        // Determine the display name for address type
+        $addressTypeDisplay = $request->address_type ?? 'home';
+        if ($request->address_type === 'others' && $request->custom_address_type) {
+            $addressTypeDisplay = $request->custom_address_type;
+        }
+        
         $newAddress = [
             'name' => $request->name,
             'email' => $request->email,
@@ -1115,12 +1341,58 @@ class AuthController extends Controller
             'pincode' => $request->pincode,
             'landmark' => $request->landmark ?? '',
             'address_type' => $request->address_type ?? 'home',
+            'address_type_display' => $addressTypeDisplay, // Store the display name
         ];
         
         $savedAddresses[] = $newAddress;
         session(['saved_addresses' => $savedAddresses]);
 
         return response()->json(['success' => true, 'message' => 'Address saved successfully']);
+    }
+
+    public function updateAddress(Request $request, $addressId)
+    {
+        $request->validate([
+            'name' => 'required|string|max:255',
+            'email' => 'required|email|max:255',
+            'phone' => 'required|string|max:20',
+            'address' => 'required|string',
+            'city' => 'required|string|max:255',
+            'state' => 'required|string|max:255',
+            'pincode' => 'required|string|max:10',
+        ]);
+
+        $savedAddresses = session('saved_addresses', []);
+        
+        if (!isset($savedAddresses[$addressId])) {
+            return response()->json(['success' => false, 'message' => 'Address not found'], 404);
+        }
+        
+        // Determine the display name for address type
+        $addressTypeDisplay = $request->address_type ?? 'home';
+        if ($request->address_type === 'others' && $request->custom_address_type) {
+            $addressTypeDisplay = $request->custom_address_type;
+        }
+        
+        // Update the address
+        $savedAddresses[$addressId] = [
+            'name' => $request->name,
+            'email' => $request->email,
+            'phone' => $request->phone,
+            'alternative_number' => $request->alternative_number ?? '',
+            'block_name' => $request->block_name ?? '',
+            'address' => $request->address,
+            'city' => $request->city,
+            'state' => $request->state,
+            'pincode' => $request->pincode,
+            'landmark' => $request->landmark ?? '',
+            'address_type' => $request->address_type ?? 'home',
+            'address_type_display' => $addressTypeDisplay, // Store the display name
+        ];
+        
+        session(['saved_addresses' => $savedAddresses]);
+
+        return response()->json(['success' => true, 'message' => 'Address updated successfully']);
     }
 
     public function deleteAddress($addressId)

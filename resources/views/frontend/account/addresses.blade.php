@@ -8,37 +8,7 @@
         <div class="row">
             <!-- Left Sidebar - Account Menu -->
             <div class="col-lg-3 mb-4">
-                <div class="card border-0" style="background-color: #f5f5f5; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.08);">
-                    <div class="card-body p-3">
-                        <a href="{{ route('frontend.parent.dashboard') }}" class="d-block text-decoration-none mb-2 p-2 rounded" style="background-color: {{ request()->routeIs('frontend.parent.dashboard') ? '#28a745' : 'transparent' }}; color: {{ request()->routeIs('frontend.parent.dashboard') ? '#ffffff' : '#333' }}; transition: all 0.2s;">
-                            <i class="fas fa-th-large me-2"></i> Dashboard
-                        </a>
-                        
-                        <a href="{{ route('frontend.parent.cart') }}" class="d-block text-decoration-none mb-2 p-2 rounded position-relative" style="background-color: {{ request()->routeIs('frontend.parent.cart') ? '#28a745' : 'transparent' }}; color: {{ request()->routeIs('frontend.parent.cart') ? '#ffffff' : '#333' }}; transition: all 0.2s;">
-                            <i class="fas fa-shopping-cart me-2"></i> Cart
-                            @php
-                                $cartCount = count(session('cart', []));
-                            @endphp
-                            @if($cartCount > 0)
-                                <span class="badge rounded-pill" style="background-color: #dc3545; color: #ffffff; font-size: 0.7rem; padding: 2px 6px; position: absolute; right: 8px; top: 50%; transform: translateY(-50%);">{{ $cartCount }}</span>
-                            @endif
-                        </a>
-                        
-                        <a href="{{ route('frontend.parent.orders') }}" class="d-block text-decoration-none mb-2 p-2 rounded" style="background-color: {{ request()->routeIs('frontend.parent.orders') ? '#28a745' : 'transparent' }}; color: {{ request()->routeIs('frontend.parent.orders') ? '#ffffff' : '#333' }}; transition: all 0.2s;">
-                            <i class="fas fa-shopping-bag me-2"></i> My Orders
-                        </a>
-                        
-                        <a href="{{ route('frontend.parent.addresses') }}" class="d-block text-decoration-none mb-2 p-2 rounded" style="background-color: {{ request()->routeIs('frontend.parent.addresses') ? '#28a745' : 'transparent' }}; color: {{ request()->routeIs('frontend.parent.addresses') ? '#ffffff' : '#333' }}; transition: all 0.2s;">
-                            <i class="fas fa-map-marker-alt me-2"></i> My Address
-                        </a>
-                        
-                        <hr class="my-2" style="border-color: #ddd;">
-                        
-                        <a href="{{ route('frontend.get-started') }}" class="d-block text-decoration-none p-2 rounded" style="background-color: {{ request()->routeIs('frontend.get-started') ? '#e9ecef' : 'transparent' }}; color: #333; transition: all 0.2s;" onmouseover="this.style.backgroundColor='#e9ecef'" onmouseout="this.style.backgroundColor='{{ request()->routeIs('frontend.get-started') ? '#e9ecef' : 'transparent' }}'">
-                            <i class="fas fa-sign-out-alt me-2"></i> Logout
-                        </a>
-                    </div>
-                </div>
+                @include('frontend.dashboard.partials.account-sidebar')
             </div>
 
             <!-- Right Content Area -->
@@ -64,7 +34,14 @@
                                                         <p class="text-muted small mb-1">{{ $address['phone'] }}</p>
                                                         <p class="text-muted small mb-2">{{ $address['email'] }}</p>
                                                     </div>
-                                                    <div>
+                                                    <div class="d-flex gap-2">
+                                                        <button type="button" 
+                                                                class="btn btn-sm" 
+                                                                style="background-color: #28a745; color: #ffffff; border: none; padding: 6px 10px; border-radius: 6px;"
+                                                                title="Edit Address"
+                                                                onclick="editAddress({{ $index }})">
+                                                            <i class="fas fa-edit"></i>
+                                                        </button>
                                                         <form action="{{ route('frontend.parent.delete-address', ['addressId' => $index]) }}" 
                                                               method="POST" 
                                                               class="d-inline"
@@ -107,5 +84,67 @@
 
 <!-- Add New Address Modal (same as checkout) -->
 @include('frontend.checkout.add-address-modal')
+
+<script>
+// Store addresses data for editing
+const addressesData = @json($savedAddresses ?? []);
+
+function editAddress(index) {
+    const address = addressesData[index];
+    if (!address) return;
+    
+    // Set edit mode
+    document.getElementById('editingAddressIndex').value = index;
+    
+    // Update modal title and button
+    document.getElementById('addAddressModalLabel').textContent = 'Edit Address';
+    document.getElementById('saveAddressBtn').textContent = 'Update Address';
+    
+    // Pre-fill form fields
+    document.getElementById('modal_name').value = address.name || '';
+    document.getElementById('modal_phone').value = address.phone || '';
+    document.getElementById('modal_email').value = address.email || '';
+    document.getElementById('modal_alternative_number').value = address.alternative_number || '';
+    document.getElementById('modal_block_name').value = address.block_name || '';
+    document.getElementById('modal_address').value = address.address || '';
+    document.getElementById('modal_city').value = address.city || '';
+    document.getElementById('modal_state').value = address.state || '';
+    document.getElementById('modal_pincode').value = address.pincode || '';
+    document.getElementById('modal_landmark').value = address.landmark || '';
+    
+    // Set address type
+    const addressType = address.address_type || 'home';
+    selectedAddressType = addressType;
+    document.getElementById('modal_address_type').value = addressType;
+    
+    // Update button styles
+    document.querySelectorAll('#addAddressModal .address-type-btn').forEach(btn => {
+        if (btn.dataset.type === addressType) {
+            btn.style.backgroundColor = '#28a745';
+            btn.style.color = '#ffffff';
+            btn.style.borderColor = '#28a745';
+        } else {
+            btn.style.backgroundColor = '#ffffff';
+            btn.style.color = '#28a745';
+            btn.style.borderColor = '#28a745';
+        }
+    });
+    
+    // Handle custom address type
+    if (addressType === 'others' && address.address_type_display) {
+        document.getElementById('customAddressTypeContainer').style.display = 'block';
+        document.getElementById('modal_custom_address_type').value = address.address_type_display;
+        document.getElementById('modal_custom_address_type').required = true;
+    } else {
+        document.getElementById('customAddressTypeContainer').style.display = 'none';
+        document.getElementById('modal_custom_address_type').value = '';
+        document.getElementById('modal_custom_address_type').required = false;
+    }
+    
+    // Show modal
+    const modal = new bootstrap.Modal(document.getElementById('addAddressModal'));
+    modal.show();
+}
+</script>
 @endsection
 
