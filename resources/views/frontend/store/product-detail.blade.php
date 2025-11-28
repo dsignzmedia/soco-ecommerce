@@ -107,8 +107,18 @@
                                 <button type="button" class="quantity-plus qty-btn"><i class="fal fa-plus"></i></button>
                         </div>
                             <button type="submit" class="vs-btn">Add to Cart</button>
-                            <a href="#" class="icon-btn"><i class="far fa-heart"></i></a>
                         </div>
+                    </form>
+                    
+                    <form action="{{ route('frontend.parent.add-to-wishlist') }}" method="POST" class="d-inline mt-3">
+                        @csrf
+                        <input type="hidden" name="product_id" value="{{ $product['id'] }}">
+                        <input type="hidden" name="name" value="{{ $product['name'] }}">
+                        <input type="hidden" name="price" value="{{ $product['price'] }}">
+                        <input type="hidden" name="image" value="{{ $product['image'] ?? asset('assets/img/product/product1-1.png') }}">
+                        <button type="submit" class="icon-btn" title="{{ isset($inWishlist) && $inWishlist ? 'Remove from Wishlist' : 'Add to Wishlist' }}" style="margin-top: 10px;" {{ isset($inWishlist) && $inWishlist ? 'disabled' : '' }}>
+                            <i class="{{ isset($inWishlist) && $inWishlist ? 'fas fa-heart text-danger' : 'far fa-heart' }}"></i>
+                        </button>
                     </form>
 
                     <div class="product-getway">
@@ -282,7 +292,7 @@
             <div class="col-12">
                 <h2>Related Products</h2>
                 <div class="title-divider1"></div>
-                <div class="row vs-carousel" data-slide-show="4" data-lg-slide-show="3" data-md-slide-show="2">
+                <div class="row vs-carousel" data-slide-show="4" data-lg-slide-show="3" data-md-slide-show="2" data-sm-slide-show="2" data-xs-slide-show="2">
                     @foreach($relatedProductsList as $relatedProduct)
                         <div class="col-md-6 col-lg-3 col-xl-3">
                             <div class="vs-product product-style1">
@@ -314,7 +324,15 @@
                                         <a href="{{ route('frontend.parent.product-detail', ['productId' => $relatedProduct['id'], 'profile_id' => $selectedProfile['id'] ?? '']) }}" class="vs-btn">
                                             <i class="far fa-shopping-cart"></i>Add to Cart
                                         </a>
-                                        <a href="#" class="icon-btn"><i class="far fa-heart"></i></a>
+                                        <form action="{{ route('frontend.parent.add-to-wishlist') }}" method="POST" class="d-inline">
+                                    @csrf
+                                    <input type="hidden" name="profile_id" value="{{ $selectedProfile['id'] ?? '' }}">
+                                    <input type="hidden" name="product_id" value="{{ $relatedProduct['id'] }}">
+                                    <input type="hidden" name="name" value="{{ $relatedProduct['name'] }}">
+                                    <input type="hidden" name="price" value="{{ $relatedProduct['price'] }}">
+                                    <input type="hidden" name="image" value="{{ $relatedProduct['image'] }}">
+                                    <button type="submit" class="icon-btn" title="Add to Wishlist"><i class="far fa-heart"></i></button>
+                                </form>
                                     </div>
                                 </div>
                             </div>
@@ -799,6 +817,110 @@
         color: #333;
     }
 
+    /* Mobile Responsiveness */
+    @media (max-width: 767px) {
+        .product-big-img .img {
+            height: 300px;
+        }
+
+        .product-about {
+            padding: 20px;
+            margin-top: 20px;
+        }
+
+        .product-title {
+            font-size: 22px;
+        }
+
+        .product-price {
+            font-size: 24px;
+        }
+
+        .product-price del {
+            font-size: 18px;
+        }
+
+        .actions {
+            flex-wrap: wrap;
+        }
+
+        .product-style1 .vs-btn {
+            min-width: 100%; /* Full width button on mobile */
+            order: 2; /* Move below quantity if needed, or keep as is */
+        }
+        
+        .quantity {
+            width: 100%;
+            justify-content: center;
+            margin-bottom: 10px;
+        }
+        
+        .qty-input {
+            width: 80px; /* Wider input for easier tapping */
+        }
+
+        /* Compact Breadcrumb for Mobile */
+        .breadcumb-title,
+        .breadcumb-text {
+            display: none;
+        }
+
+        .breadcumb-wrapper {
+            padding-top: 50px; /* Clear header */
+            padding-bottom: 20px;
+            min-height: auto;
+        }
+
+        .breadcumb-content {
+            text-align: left;
+        }
+
+        .breadcumb-menu {
+            justify-content: flex-start;
+            margin-bottom: 0;
+        }
+
+        /* 2-Column Related Products */
+        .vs-carousel .col-md-6 {
+            padding: 0 5px; /* Reduce gap */
+        }
+        
+        .vs-product.product-style1 {
+            border-radius: 20px;
+        }
+
+        .product-img {
+            height: 180px; /* Smaller image height */
+            border-radius: 20px 20px 0 0;
+        }
+
+        .product-content {
+            padding: 15px;
+        }
+
+        .product-title {
+            font-size: 14px;
+            min-height: 40px; /* Allow 2 lines */
+            margin-bottom: 5px;
+        }
+
+        .product-price {
+            font-size: 14px;
+            margin-bottom: 0 !important;
+        }
+
+        .actions .vs-btn {
+            font-size: 11px;
+            padding: 8px 10px;
+        }
+        
+        .actions .icon-btn {
+            width: 35px;
+            height: 35px;
+            font-size: 14px;
+        }
+    }
+
     @media (max-width: 991px) {
         .product-big-img .img {
             height: 400px;
@@ -1112,5 +1234,87 @@
             });
         }
     });
+    });
+</script>
+
+<!-- Wishlist Toast Notification -->
+<div class="position-fixed bottom-0 end-0 p-3" style="z-index: 1100">
+    <div id="wishlistToast" class="toast align-items-center text-white bg-success border-0" role="alert" aria-live="assertive" aria-atomic="true">
+        <div class="d-flex">
+            <div class="toast-body">
+                <i class="fas fa-check-circle me-2"></i> <span id="wishlistToastMessage">Product added to wishlist!</span>
+            </div>
+            <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // AJAX Wishlist Functionality
+    const wishlistForms = document.querySelectorAll('form[action*="add-to-wishlist"]');
+    const toastEl = document.getElementById('wishlistToast');
+    
+    if (toastEl) {
+        const toast = new bootstrap.Toast(toastEl, { delay: 3000 });
+        const toastMessage = document.getElementById('wishlistToastMessage');
+        const toastBody = toastEl.querySelector('.toast-body');
+
+        wishlistForms.forEach(form => {
+            form.addEventListener('submit', function(e) {
+                e.preventDefault();
+                
+                const formData = new FormData(this);
+                const button = this.querySelector('button');
+                const originalHtml = button.innerHTML;
+                const icon = button.querySelector('i');
+                
+                // Optimistic UI: Immediately show success state
+                // Change icon to filled heart and maybe color (optional, handled by class)
+                if (icon) {
+                    icon.classList.remove('far');
+                    icon.classList.add('fas');
+                    icon.classList.add('text-danger'); // Make it red
+                }
+                button.disabled = true; // Prevent double clicks
+
+                fetch(this.action, {
+                    method: 'POST',
+                    headers: {
+                        'X-Requested-With': 'XMLHttpRequest',
+                        'Accept': 'application/json',
+                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+                    },
+                    body: formData
+                })
+                .then(response => response.json())
+                .then(data => {
+                    // Keep the filled state if success or already in wishlist
+                    button.disabled = false;
+
+                    // Show toast
+                    toastMessage.textContent = data.message;
+                    
+                    if (data.status === 'info') {
+                        toastEl.classList.remove('bg-success');
+                        toastEl.classList.add('bg-info');
+                    } else {
+                        toastEl.classList.remove('bg-info');
+                        toastEl.classList.add('bg-success');
+                    }
+                    
+                    toast.show();
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    // Revert UI on error
+                    button.innerHTML = originalHtml;
+                    button.disabled = false;
+                    alert('Something went wrong. Please try again.');
+                });
+            });
+        });
+    }
+});
 </script>
 @endsection

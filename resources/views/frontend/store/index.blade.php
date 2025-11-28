@@ -6,7 +6,7 @@
 <!--==============================
     Breadcumb
 ============================== -->
-<div class="breadcumb-wrapper " data-bg-src="{{ asset('assets/img/contact/Background.png') }}">
+<div class="breadcumb-wrapper d-none d-lg-block" data-bg-src="{{ asset('assets/img/contact/Background.png') }}">
     <div class="container z-index-common">
         <div class="breadcumb-content">
             <h1 class="breadcumb-title">Our Products</h1>
@@ -22,12 +22,26 @@
     </div>
 </div>
 
-<section class="vs-product-wrapper space-top space-extra-bottom" style="background-color: #ffffff;">
+<!-- Mobile Breadcrumb (Compact) -->
+<div class="breadcumb-wrapper d-lg-none" data-bg-src="{{ asset('assets/img/contact/Background.png') }}" style="padding-top: 80px; padding-bottom: 30px; min-height: auto; margin-top: 0px;">
+    <div class="container z-index-common">
+        <div class="breadcumb-content text-start">
+            <ul class="breadcumb-menu justify-content-start" style="margin-bottom: 0;">
+                <li><a href="{{ route('frontend.index') }}">Home</a></li>
+                <li><a href="{{ route('frontend.parent.dashboard') }}">Parent Dashboard</a></li>
+                <li>Store</li>
+            </ul>
+        </div>
+    </div>
+</div>
+
+<section class="vs-product-wrapper margin-top-2 space-extra-bottom" style="background-color: #ffffff;">
     <div class="container">
+        
         <!-- Page Header -->
-        <div class="row mb-4">
+        <div class="row mb-4 mt-4">
             <div class="col-12">
-                <div class="d-flex justify-content-between align-items-center flex-wrap gap-3 mb-4">
+                <div class="d-flex justify-content-between align-items-center flex-wrap gap-3">
                     <div>
                         <h2 class="h3 mb-2">Store</h2>
                         <p class="text-muted mb-0">Shopping for {{ $selectedProfile['student_name'] }}</p>
@@ -48,9 +62,9 @@
 
         <div class="row">
             <!-- Left Sidebar Filters -->
-            <div class="col-lg-3 mb-4 mb-lg-0">
+            <div class="col-lg-3 mb-lg-0">
                 <div class="d-lg-none mb-3">
-                    <button class="vs-btn w-100" id="toggleFilters">
+                    <button class="vs-btn style-outline" id="toggleFilters" style="padding: 10px 20px; width: auto; border: 1px solid #490D59; color: #490D59; background: transparent;">
                         <i class="fas fa-sliders-h me-2"></i> <span>Show Filters</span>
                     </button>
                 </div>
@@ -130,13 +144,29 @@
                 
                 <div class="row justify-content-center" id="productsContainer">
                     @foreach($allProducts as $product)
-                        <div class="col-md-6 col-lg-4 col-xl-4 product-item" 
+                        <div class="col-6 col-md-6 col-lg-4 col-xl-4 product-item" 
                              data-product-type="{{ $product['type'] }}"
                              data-product-name="{{ strtolower($product['name']) }}"
                              data-product-category="{{ $product['category'] ?? 'regular_uniforms' }}">
                             <div class="vs-product product-style1 product-card-clickable" 
                                  data-product-url="{{ route('frontend.parent.product-detail', ['productId' => $product['id'], 'profile_id' => $selectedProfile['id']]) }}">
                                 <div class="product-img">
+                                    <!-- Mobile Wishlist Icon -->
+                                    <!-- Mobile/Floating Wishlist Icon -->
+                                    <form action="{{ route('frontend.parent.add-to-wishlist') }}" method="POST" class="wishlist-floating-form" style="display: none;">
+                                        @csrf
+                                        <input type="hidden" name="profile_id" value="{{ $selectedProfile['id'] ?? '' }}">
+                                        <input type="hidden" name="product_id" value="{{ $product['id'] }}">
+                                        <input type="hidden" name="name" value="{{ $product['name'] }}">
+                                        <input type="hidden" name="price" value="{{ $product['price'] }}">
+                                        <input type="hidden" name="image" value="{{ $product['image'] }}">
+                                        @php
+                                            $inWishlist = in_array($product['id'], $wishlistProductIds ?? []);
+                                        @endphp
+                                        <button type="submit" class="icon-btn wishlist-mobile" title="{{ $inWishlist ? 'Remove from Wishlist' : 'Add to Wishlist' }}">
+                                            <i class="{{ $inWishlist ? 'fas fa-heart text-danger' : 'far fa-heart' }}"></i>
+                                        </button>
+                                    </form>
                                     <a href="{{ route('frontend.parent.product-detail', ['productId' => $product['id'], 'profile_id' => $selectedProfile['id']]) }}" target="_blank">
                                         @if(isset($product['image']) && $product['image'])
                                             <img src="{{ $product['image'] }}" alt="{{ $product['name'] }}" class="w-100">
@@ -180,33 +210,26 @@
                                                 <i class="far fa-shopping-cart"></i>Select Profile
                                             </a>
                                         @endif
-                                        <a href="#" class="icon-btn"><i class="far fa-heart"></i></a>
+                                        <form action="{{ route('frontend.parent.add-to-wishlist') }}" method="POST" class="d-none d-md-inline wishlist-inline-form">
+                                            @csrf
+                                            <input type="hidden" name="profile_id" value="{{ $selectedProfile['id'] ?? '' }}">
+                                            <input type="hidden" name="product_id" value="{{ $product['id'] }}">
+                                            <input type="hidden" name="name" value="{{ $product['name'] }}">
+                                            <input type="hidden" name="price" value="{{ $product['price'] }}">
+                                            <input type="hidden" name="image" value="{{ $product['image'] }}">
+                                            @php
+                                                $inWishlist = in_array($product['id'], $wishlistProductIds ?? []);
+                                            @endphp
+                                            <button type="submit" class="icon-btn" title="{{ $inWishlist ? 'Remove from Wishlist' : 'Add to Wishlist' }}">
+                                                <i class="{{ $inWishlist ? 'fas fa-heart text-danger' : 'far fa-heart' }}"></i>
+                                            </button>
+                                        </form>
                                     </div>
                                 </div>
                             </div>
                         </div>
                     @endforeach
                 </div>
-
-                @if(count($allProducts) === 0)
-                    <div class="text-center py-5">
-                        <p class="text-muted">No products found in this category.</p>
-                    </div>
-                @endif
-
-                <!-- Pagination -->
-                <div class="vs-pagination">
-                    <a href="#" class="pagi-btn">Prev</a>
-                    <ul>
-                        <li><a href="#">1</a></li>
-                        <li><a href="#">2</a></li>
-                        <li><a href="#">3</a></li>
-                        <li><a href="#">...</a></li>
-                        <li><a href="#">12</a></li>
-                    </ul>
-                    <a href="#" class="pagi-btn">next</a>
-                </div>
-            </div>
         </div>
     </div>
 </section>
@@ -367,7 +390,7 @@
         width: 100%;
         height: 100%;
         object-fit: contain;
-        padding: 15px;
+        padding: 0;
     }
 
     .vs-product.product-style1 {
@@ -398,18 +421,18 @@
     }
 
     .product-content {
-        padding: 20px;
+        padding: 15px;
         flex-grow: 1;
         display: flex;
         flex-direction: column;
     }
 
     .product-price {
-        font-size: 22px;
-        font-weight: 500;
+        font-size: 16px;
+        font-weight: 600;
         color: #dc3545;
         font-family: var(--title-font, inherit);
-        margin-bottom: 8px;
+        margin-bottom: 4px;
         display: block;
         line-height: 1;
     }
@@ -422,16 +445,21 @@
     }
 
     .product-title {
-        font-size: 16px;
-        margin-bottom: 12px;
+        font-size: 14px;
+        margin-bottom: 5px;
         text-transform: capitalize;
         line-height: 1.4;
-        min-height: 44px;
+        min-height: 42px; /* Minimum height for 2 lines */
+        display: -webkit-box;
+        -webkit-line-clamp: 3;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
     }
 
     .product-title a {
         color: #333;
         text-decoration: none;
+        
     }
 
     .product-title a:hover {
@@ -509,11 +537,12 @@
 
     .product-style1 .vs-btn {
         background-color: var(--vs-secondary-color, #e0d5f0);
-        padding: 17px 26px;
+        padding: 17px 15px;
         flex: 1;
         display: flex;
         align-items: center;
         justify-content: center;
+        white-space: nowrap;
     }
 
     .actions .icon-btn {
@@ -564,6 +593,12 @@
         margin-bottom: 30px;
     }
 
+    @media (max-width: 767px) {
+        .product-item {
+            margin-bottom: 15px;
+        }
+    }
+
     .product-item.hidden {
         display: none;
     }
@@ -598,7 +633,8 @@
         }
 
         .product-content {
-            padding: 16px;
+            padding: 15px;
+    
         }
 
         .actions {
@@ -608,6 +644,15 @@
         .actions .icon-btn {
             width: 45px;
             height: 45px;
+        }
+
+        .product-title a {
+            font-size: 14px;
+        }
+
+        .product-price {
+            font-size: 14px;
+            margin-bottom: 0 !important;
         }
     }
 
@@ -620,9 +665,118 @@
             opacity: 1;
             transform: translateY(0);
         }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    /* Mobile Wishlist Icon Style */
+    .wishlist-mobile {
+        position: absolute;
+        top: 10px;
+        left: 10px;
+        z-index: 20;
+        background: #ffffff;
+        border-radius: 50%;
+        width: 35px;
+        height: 35px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        color: #333;
+        border: 1px solid #ddd;
+    }
+    
+    .wishlist-mobile:hover {
+        color: #490D59;
+        border-color: #490D59;
+    }
+
+    /* Floating Wishlist Logic */
+    .wishlist-floating-form {
+        display: none; /* Default hidden */
+    }
+
+    /* Show on mobile always */
+    @media (max-width: 767px) {
+        .wishlist-floating-form {
+            display: block !important;
+        }
+        /* Hide bottom wishlist on mobile */
+        .actions .icon-btn {
+            display: none !important;
+        }
+    }
+
+    /* Show when expanded actions (e.g. quantity selector active) */
+    .product-item.expanded-actions .wishlist-floating-form {
+        display: block !important;
+    }
+
+    .product-item.expanded-actions .actions .icon-btn {
+        display: none !important;
     }
 </style>
 
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // ... existing code ...
+    const productItems = document.querySelectorAll('.product-item');
+    // ... existing code ...
+
+    // Monitor for quantity selector appearance to toggle layout
+    const observer = new MutationObserver(function(mutations) {
+        mutations.forEach(function(mutation) {
+            if (mutation.type === 'childList') {
+                const target = mutation.target;
+                // Check if we are inside .actions
+                let actions = null;
+                if (target.classList.contains('actions')) {
+                    actions = target;
+                } else if (target.closest('.actions')) {
+                    actions = target.closest('.actions');
+                }
+
+                if (actions) {
+                    const productItem = actions.closest('.product-item');
+                    if (productItem) {
+                        // Check for quantity input or specific class indicating expansion
+                        // We check for text input quantity (visible) or specific container classes
+                        if (actions.querySelector('input[name="quantity"][type="text"]') || 
+                            actions.querySelector('input[name="quantity"][type="number"]') || 
+                            actions.querySelector('.quantity') || 
+                            actions.querySelector('.qty-input') ||
+                            actions.querySelector('.quantity-plus')) {
+                            productItem.classList.add('expanded-actions');
+                        } else {
+                            productItem.classList.remove('expanded-actions');
+                        }
+                    }
+                }
+            }
+        });
+    });
+
+    // Observe all .actions containers
+    document.querySelectorAll('.actions').forEach(function(actions) {
+        observer.observe(actions, { childList: true, subtree: true });
+        
+        // Initial check
+        const productItem = actions.closest('.product-item');
+        if (productItem) {
+            if (actions.querySelector('input[name="quantity"][type="text"]') || 
+                actions.querySelector('input[name="quantity"][type="number"]') || 
+                actions.querySelector('.quantity') || 
+                actions.querySelector('.qty-input') ||
+                actions.querySelector('.quantity-plus')) {
+                productItem.classList.add('expanded-actions');
+            }
+        }
+    });
+});
+</script>
 <script>
 document.addEventListener('DOMContentLoaded', function() {
     const productItems = document.querySelectorAll('.product-item');
@@ -729,8 +883,8 @@ document.addEventListener('DOMContentLoaded', function() {
     // Make product cards clickable
     document.querySelectorAll('.product-card-clickable').forEach(card => {
         card.addEventListener('click', function(e) {
-            // Don't navigate if clicking on buttons or links
-            if (e.target.closest('.actions') || e.target.closest('a')) {
+            // Don't navigate if clicking on buttons, links, or wishlist form
+            if (e.target.closest('.actions') || e.target.closest('a') || e.target.closest('.wishlist-mobile-form')) {
                 return;
             }
             
@@ -740,6 +894,88 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         });
     });
+});
+</script>
+<!-- Wishlist Toast Notification -->
+<div class="position-fixed bottom-0 end-0 p-3" style="z-index: 1100">
+    <div id="wishlistToast" class="toast align-items-center text-white bg-success border-0" role="alert" aria-live="assertive" aria-atomic="true">
+        <div class="d-flex">
+            <div class="toast-body">
+                <i class="fas fa-check-circle me-2"></i> <span id="wishlistToastMessage">Product added to wishlist!</span>
+            </div>
+            <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // ... existing code ...
+
+    // AJAX Wishlist Functionality
+    const wishlistForms = document.querySelectorAll('form[action*="add-to-wishlist"]');
+    const toastEl = document.getElementById('wishlistToast');
+    // Check if toast element exists before initializing
+    if (toastEl) {
+        const toast = new bootstrap.Toast(toastEl, { delay: 3000 });
+        const toastMessage = document.getElementById('wishlistToastMessage');
+        const toastBody = toastEl.querySelector('.toast-body');
+
+        wishlistForms.forEach(form => {
+            form.addEventListener('submit', function(e) {
+                e.preventDefault();
+                
+                const formData = new FormData(this);
+                const button = this.querySelector('button');
+                const originalHtml = button.innerHTML;
+                const icon = button.querySelector('i');
+                
+                // Optimistic UI: Immediately show success state
+                // Change icon to filled heart and maybe color (optional, handled by class)
+                if (icon) {
+                    icon.classList.remove('far');
+                    icon.classList.add('fas');
+                    icon.classList.add('text-danger'); // Make it red
+                }
+                button.disabled = true; // Prevent double clicks
+
+                fetch(this.action, {
+                    method: 'POST',
+                    headers: {
+                        'X-Requested-With': 'XMLHttpRequest',
+                        'Accept': 'application/json',
+                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+                    },
+                    body: formData
+                })
+                .then(response => response.json())
+                .then(data => {
+                    // Keep the filled state if success or already in wishlist
+                    button.disabled = false;
+
+                    // Show toast
+                    toastMessage.textContent = data.message;
+                    
+                    if (data.status === 'info') {
+                        toastEl.classList.remove('bg-success');
+                        toastEl.classList.add('bg-info');
+                    } else {
+                        toastEl.classList.remove('bg-info');
+                        toastEl.classList.add('bg-success');
+                    }
+                    
+                    toast.show();
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    // Revert UI on error
+                    button.innerHTML = originalHtml;
+                    button.disabled = false;
+                    alert('Something went wrong. Please try again.');
+                });
+            });
+        });
+    }
 });
 </script>
 @endsection

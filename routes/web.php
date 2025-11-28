@@ -20,6 +20,9 @@ Route::get('/parent/edit-profile/{profileId}', [AuthController::class, 'editProf
 Route::post('/parent/update-profile/{profileId}', [AuthController::class, 'updateProfile'])->name('frontend.parent.update-profile');
 Route::post('/parent/delete-profile/{profileId}', [AuthController::class, 'deleteProfile'])->name('frontend.parent.delete-profile');
 Route::get('/parent/store', [AuthController::class, 'store'])->name('frontend.parent.store');
+Route::get('/parent/wishlist', [AuthController::class, 'wishlist'])->name('frontend.parent.wishlist');
+Route::post('/parent/add-to-wishlist', [AuthController::class, 'addToWishlist'])->name('frontend.parent.add-to-wishlist');
+Route::get('/parent/remove-from-wishlist/{productId}', [AuthController::class, 'removeFromWishlist'])->name('frontend.parent.remove-from-wishlist');
 Route::get('/parent/products/{productId}', [AuthController::class, 'productDetail'])->name('frontend.parent.product-detail');
 Route::post('/parent/add-to-cart', [AuthController::class, 'addToCart'])->name('frontend.parent.add-to-cart');
 Route::post('/parent/buy-now', [AuthController::class, 'buyNow'])->name('frontend.parent.buy-now');

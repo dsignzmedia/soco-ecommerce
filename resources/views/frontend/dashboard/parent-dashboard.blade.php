@@ -3,7 +3,19 @@
 @section('content')
 @include('frontend.partials.header')
 
-<section class="space-top space-extra-bottom parent-dashboard-wrapper">
+<!-- Breadcrumb -->
+<div class="breadcrumb-wrapper" style="background-color: #e0e0e0; padding-top: 50px;  border-bottom: 1px solid #d0d0d0;">
+    <div class="container" style=" padding: 20px;">
+        <div class="breadcumb-menu-wrap" style=" margin: 9px 0 0 0;">
+            <ul class="breadcumb-menu">
+                <li><a href="{{ route('frontend.index') }}">Home</a></li>
+                <li>Parent Dashboard</li>
+            </ul>
+        </div>
+    </div>
+</div>
+
+<section class="space-top space-extra-bottom parent-dashboard-wrapper" style="padding-top: 60px;">
     <div class="container">
         @if(session('success'))
             <div class="alert alert-success alert-dismissible fade show" role="alert">
@@ -35,7 +47,7 @@
                         <i class="fas fa-plus"></i> Add Student
                     </a>
                 </div>
-                <div class="mobile-add-student d-lg-none">
+                <div class="mobile-add-student d-none">
                     <button type="button" class="vs-btn w-100" data-bs-toggle="modal" data-bs-target="#addStudentModal" onclick="prepareAddStudentModal()" style="background: linear-gradient(135deg, #8c4fcf, #490D59); border: none; border-radius: 12px;">
                         <i class="fas fa-plus me-2"></i> Add Student
                     </button>
@@ -46,13 +58,39 @@
                     <div class="tab-content-container {{ (isset($selectedProfile) && $selectedProfile['id'] == $selectedProfile['id']) ? 'active-content' : '' }}">
                         <div class="tab-content-inner">
                             <!-- School and Student Info Card -->
-                            <div class="card border-0 mb-4 student-info-card" style="background-color: #ffffff; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.1);">
+                            <div class="card border-0 mb-4 student-info-card" style="background-color: #ffffff; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); position: relative;">
                                 <div class="card-body p-4">
+                                    <!-- Edit and Delete Buttons - Top Right -->
+                                    <div class="d-flex justify-content-end gap-2 mb-3" style="position: absolute; top: 16px; right: 16px;">
+                                        <button type="button"
+                                            class="btn btn-sm"
+                                            data-bs-toggle="modal"
+                                            data-bs-target="#addStudentModal"
+                                            onclick="prefillStudentModal({{ json_encode($selectedProfile) }})"
+                                            style="background-color: #ffffffff; color: #490D59; border: 2px solid #490D59; padding: 8px 18px; border-radius: 30px;"
+                                            title="Edit Profile">
+                                            <i class="fas fa-edit me-2"></i> Edit Profile
+                                        </button>
+                                        <form action="{{ route('frontend.parent.delete-profile', ['profileId' => $selectedProfile['id']]) }}" 
+                                            method="POST" 
+                                            class="d-inline"
+                                            onsubmit="return confirm('Are you sure you want to delete this student profile? This action cannot be undone.');">
+                                            @csrf
+                                            <button type="submit" 
+                                                    class="btn btn-sm" 
+                                                    style="background: linear-gradient(135deg, #ff6b6b, #d90429); color: #ffffff; border: none; padding: 8px 18px; border-radius: 30px;"
+                                                    title="Delete Profile">
+                                                <i class="fas fa-trash me-2"></i> Delete Profile
+                                            </button>
+                                        </form>
+                                    </div>
                                     <div class="row align-items-center">
-                                        <!-- Left: School Logo and Info -->
-                                        <div class="col-md-6">
-                                            <div class="d-flex align-items-center gap-3" style="overflow: visible;">
-                                                <div class="school-logo-container">
+                                        <!-- School Logo and Info -->
+                                        <div class="col-md-12">
+                                            <!-- School Name and Logo - Horizontal Layout -->
+                                            <div class="d-flex align-items-center gap-3 mb-3">
+                                                <!-- Logo on Left -->
+                                                <div class="school-logo-container" style="flex-shrink: 0;">
                                                     @if(isset($schoolLogo) && $schoolLogo)
                                                         <img src="{{ $schoolLogo }}" alt="{{ $selectedProfile['school_name'] }}" class="school-logo-img">
                                                     @else
@@ -61,48 +99,26 @@
                                                         </div>
                                                     @endif
                                                 </div>
-                                                <div>
-                                                    <h5 class="mb-1" style="color: #333; font-weight: 600;">{{ $selectedProfile['school_name'] }}</h5>
+                                                <!-- School Name and Location on Right -->
+                                                <div class="flex-grow-1">
+                                                    <p class="mb-1" style="color: #333; font-weight: 500; font-size: 1rem;"><strong>School:</strong> {{ $selectedProfile['school_name'] }}</p>
                                                     @if(isset($schoolAddress) && $schoolAddress)
                                                         <p class="mb-0 text-muted small">{{ $schoolAddress }}</p>
                                                     @endif
                                                 </div>
                                             </div>
-                                        </div>
-                                        
-                                        <!-- Right: Student Info -->
-                                        <div class="col-md-6 mt-3 mt-md-0">
-                                            <div class="bg-light p-3 rounded" style="border-left: 4px solid #490D59; box-shadow: 0 2px 6px rgba(0,0,0,0.05);">
-                                                <p class="mb-1 small"><strong>Student:</strong> {{ $selectedProfile['student_name'] }}</p>
-                                                <p class="mb-1 small"><strong>Grade:</strong> {{ $selectedProfile['grade'] }} | <strong>Gender:</strong> {{ ucfirst($selectedProfile['gender']) }}</p>
-                                                <a href="{{ route('frontend.parent.store', ['profile_id' => $selectedProfile['id']]) }}" class="btn btn-sm mt-2" style="background: linear-gradient(135deg, #8c4fcf, #490D59); color: #ffffff; border: none; border-radius: 30px; padding: 8px 16px; transition: all 0.3s;">
-                                                    <i class="fas fa-shopping-bag me-1"></i> Shop Now
-                                                </a>
-                                            </div>
-                                        </div>
-                                        <div class="col-12 mt-4">
-                                            <div class="d-flex justify-content-center justify-content-md-end gap-2 flex-wrap">
-                                                <button type="button"
-                                                    class="btn btn-sm"
-                                                    data-bs-toggle="modal"
-                                                    data-bs-target="#addStudentModal"
-                                                    onclick="prefillStudentModal({{ json_encode($selectedProfile) }})"
-                                                    style="background: linear-gradient(135deg, #8c4fcf, #490D59); color: #ffffff; border: none; padding: 8px 18px; border-radius: 30px;"
-                                                    title="Edit Profile">
-                                                    <i class="fas fa-edit me-2"></i> Edit Profile
-                                                </button>
-                                                <form action="{{ route('frontend.parent.delete-profile', ['profileId' => $selectedProfile['id']]) }}" 
-                                                    method="POST" 
-                                                    class="d-inline"
-                                                    onsubmit="return confirm('Are you sure you want to delete this student profile? This action cannot be undone.');">
-                                                    @csrf
-                                                    <button type="submit" 
-                                                            class="btn btn-sm" 
-                                                            style="background: linear-gradient(135deg, #ff6b6b, #d90429); color: #ffffff; border: none; padding: 8px 18px; border-radius: 30px;"
-                                                            title="Delete Profile">
-                                                        <i class="fas fa-trash me-2"></i> Delete Profile
-                                                    </button>
-                                                </form>
+                                            <!-- Student Info Below -->
+                                            <div>
+                                                <div class="bg-light p-3 rounded mt-2" style="border-left: 4px solid #490D59; box-shadow: 0 2px 6px rgba(0,0,0,0.05); display: flex; align-items: center; justify-content: space-between; gap: 15px;">
+                                                    <div style="display: flex; align-items: center; gap: 15px; flex-wrap: wrap;">
+                                                        <span class="small"><strong>Student:</strong> {{ $selectedProfile['student_name'] }}</span>
+                                                        <span class="small"><strong>Grade:</strong> {{ $selectedProfile['grade'] }}</span>
+                                                        <span class="small"><strong>Gender:</strong> {{ ucfirst($selectedProfile['gender']) }}</span>
+                                                    </div>
+                                                    <a href="{{ route('frontend.parent.store', ['profile_id' => $selectedProfile['id']]) }}" class="btn btn-sm" style="background-color: #6f42c1; color: #ffffff; border: none; border-radius: 30px; padding: 8px 16px; transition: all 0.3s; flex-shrink: 0;">
+                                                        <i class="fas fa-shopping-bag me-1"></i> Shop Now
+                                                    </a>
+                                                </div>
                                             </div>
                                         </div>
                                     </div>
@@ -146,7 +162,8 @@
                                     <div class="card-body">
                                         <i class="fas fa-shopping-bag fa-3x text-muted mb-3"></i>
                                         <p class="text-muted mb-3">No purchased products yet.</p>
-                                        <a href="{{ route('frontend.parent.store', ['profile_id' => $selectedProfile['id']]) }}" class="btn" style="background: linear-gradient(135deg, #8c4fcf, #490D59); color: #ffffff; border: none; border-radius: 30px;">
+                                        <div class="mt-4">
+                                        <a href="{{ route('frontend.parent.store', ['profile_id' => $selectedProfile['id']]) }}" class="vs-btn w-100" style="background: #490D59; border: none; border-radius: 8px;">
                                             <i class="fas fa-shopping-bag me-2"></i> Shop Now
                                         </a>
                                     </div>
@@ -180,15 +197,15 @@
 
 <!-- Add Student Modal -->
 <div class="modal fade" id="addStudentModal" tabindex="-1" aria-labelledby="addStudentModalLabel" aria-hidden="true" style="z-index: 9999;">
-    <div class="modal-dialog modal-dialog-centered" style="z-index: 10000;">
+    <div class="modal-dialog modal-dialog-centered modal-md" style="z-index: 10000; max-width: 500px;">
         <div class="modal-content" style="border-radius: 12px; border: none; box-shadow: 0 4px 20px rgba(0,0,0,0.15); position: relative; z-index: 10001;">
-            <div class="modal-header" style="border-bottom: 1px solid #e0e0e0; padding: 20px 24px; position: relative;">
-                <h5 class="modal-title" id="addStudentModalLabel" style="font-weight: 600; color: #333;">Add Student</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close" style="opacity: 1; background: #dc3545; border-radius: 50%; width: 30px; height: 30px; padding: 0; display: flex; align-items: center; justify-content: center; margin: 0; position: absolute; top: 20px; right: 24px;">
-                    <span style="color: white; font-size: 18px; font-weight: bold;">×</span>
+            <div class="modal-header" style="border-bottom: 1px solid #e0e0e0; padding: 15px 20px; position: relative;">
+                <h5 class="modal-title mb-0" id="addStudentModalLabel" style="font-weight: 600; color: #333; font-size: 1.1rem;">Add Student</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close" style="opacity: 1; background: #dc3545; border-radius: 50%; width: 28px; height: 28px; padding: 0; display: flex; align-items: center; justify-content: center; margin: 0; position: absolute; top: 15px; right: 20px;">
+                    <span style="color: white; font-size: 16px; font-weight: bold;">×</span>
                 </button>
             </div>
-            <div class="modal-body" style="padding: 24px;">
+            <div class="modal-body" style="padding: 20px;">
                 <form id="addStudentForm">
                     <input type="hidden" id="modalProfileId" name="profile_id" value="">
                     <div class="mb-3">
@@ -203,24 +220,24 @@
                         <input type="text" id="modalStudentName" name="student_name" class="form-control" placeholder="Enter student name" required style="border: 1px solid #ddd; border-radius: 6px; padding: 10px 12px;">
                     </div>
                     <div class="mb-3">
-                        <label class="form-label" style="font-weight: 500; color: #333; margin-bottom: 8px;">Grade</label>
-                        <div class="grade-buttons-modal" style="display: flex; flex-wrap: wrap; gap: 8px;">
-                            <button type="button" class="btn btn-sm grade-btn-modal" data-value="LKG" style="border: 1px solid #ddd; background: white; color: #333; padding: 6px 12px; border-radius: 6px;">LKG</button>
-                            <button type="button" class="btn btn-sm grade-btn-modal" data-value="UKG" style="border: 1px solid #ddd; background: white; color: #333; padding: 6px 12px; border-radius: 6px;">UKG</button>
-                            <button type="button" class="btn btn-sm grade-btn-modal" data-value="1" style="border: 1px solid #ddd; background: white; color: #333; padding: 6px 12px; border-radius: 6px;">Grade 1</button>
-                            <button type="button" class="btn btn-sm grade-btn-modal" data-value="2" style="border: 1px solid #ddd; background: white; color: #333; padding: 6px 12px; border-radius: 6px;">Grade 2</button>
-                            <button type="button" class="btn btn-sm grade-btn-modal" data-value="3" style="border: 1px solid #ddd; background: white; color: #333; padding: 6px 12px; border-radius: 6px;">Grade 3</button>
-                            <button type="button" class="btn btn-sm grade-btn-modal" data-value="4" style="border: 1px solid #ddd; background: white; color: #333; padding: 6px 12px; border-radius: 6px;">Grade 4</button>
-                            <button type="button" class="btn btn-sm grade-btn-modal" data-value="5" style="border: 1px solid #ddd; background: white; color: #333; padding: 6px 12px; border-radius: 6px;">Grade 5</button>
-                            <button type="button" class="btn btn-sm grade-btn-modal" data-value="6" style="border: 1px solid #ddd; background: white; color: #333; padding: 6px 12px; border-radius: 6px;">Grade 6</button>
-                            <button type="button" class="btn btn-sm grade-btn-modal" data-value="7" style="border: 1px solid #ddd; background: white; color: #333; padding: 6px 12px; border-radius: 6px;">Grade 7</button>
-                            <button type="button" class="btn btn-sm grade-btn-modal" data-value="8" style="border: 1px solid #ddd; background: white; color: #333; padding: 6px 12px; border-radius: 6px;">Grade 8</button>
-                            <button type="button" class="btn btn-sm grade-btn-modal" data-value="9" style="border: 1px solid #ddd; background: white; color: #333; padding: 6px 12px; border-radius: 6px;">Grade 9</button>
-                            <button type="button" class="btn btn-sm grade-btn-modal" data-value="10" style="border: 1px solid #ddd; background: white; color: #333; padding: 6px 12px; border-radius: 6px;">Grade 10</button>
-                            <button type="button" class="btn btn-sm grade-btn-modal" data-value="11" style="border: 1px solid #ddd; background: white; color: #333; padding: 6px 12px; border-radius: 6px;">Grade 11</button>
-                            <button type="button" class="btn btn-sm grade-btn-modal" data-value="12" style="border: 1px solid #ddd; background: white; color: #333; padding: 6px 12px; border-radius: 6px;">Grade 12</button>
-                        </div>
-                        <input type="hidden" id="modalGradeValue" name="grade" required>
+                        <label for="modalGrade" class="form-label" style="font-weight: 500; color: #333; margin-bottom: 8px;">Grade</label>
+                        <select id="modalGrade" name="grade" class="form-select" required style="border: 1px solid #ddd; border-radius: 6px; padding: 10px 12px;">
+                            <option value="">Select Grade</option>
+                            <option value="LKG">LKG</option>
+                            <option value="UKG">UKG</option>
+                            <option value="1">Grade 1</option>
+                            <option value="2">Grade 2</option>
+                            <option value="3">Grade 3</option>
+                            <option value="4">Grade 4</option>
+                            <option value="5">Grade 5</option>
+                            <option value="6">Grade 6</option>
+                            <option value="7">Grade 7</option>
+                            <option value="8">Grade 8</option>
+                            <option value="9">Grade 9</option>
+                            <option value="10">Grade 10</option>
+                            <option value="11">Grade 11</option>
+                            <option value="12">Grade 12</option>
+                        </select>
                     </div>
                     <div class="mb-3">
                         <label for="modalSection" class="form-label" style="font-weight: 500; color: #333; margin-bottom: 8px;">Section</label>
@@ -234,9 +251,9 @@
                         </div>
                         <input type="hidden" id="modalGenderValue" name="gender" required>
                     </div>
-                    <div class="modal-footer" style="border-top: 1px solid #e0e0e0; padding: 16px 24px; margin-top: 20px;">
-                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" style="border: 1px solid #ddd; background: white; color: #333; padding: 8px 20px; border-radius: 6px;">Cancel</button>
-                        <button type="submit" class="btn btn-primary" style="background-color: #490D59; color: white; border: none; padding: 8px 20px; border-radius: 6px;">Submit</button>
+                    <div class="modal-footer" style="border-top: 1px solid #e0e0e0; padding: 12px 20px; margin-top: 15px;">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" style="border: 1px solid #ddd; background: white; color: #333; padding: 8px 16px; border-radius: 6px; font-size: 0.9rem;">Cancel</button>
+                        <button type="submit" class="btn btn-primary" style="background-color: #490D59; color: white; border: none; padding: 8px 16px; border-radius: 6px; font-size: 0.9rem;">Submit</button>
                     </div>
                 </form>
             </div>
@@ -403,7 +420,7 @@ document.addEventListener('DOMContentLoaded', function() {
     function resetStudentModal() {
         if (!addStudentForm) return;
         addStudentForm.reset();
-        document.getElementById('modalGradeValue').value = '';
+        document.getElementById('modalGrade').value = '';
         document.getElementById('modalGenderValue').value = '';
         if (profileIdField) profileIdField.value = '';
         setSelection(gradeButtons, null);
@@ -424,7 +441,7 @@ document.addEventListener('DOMContentLoaded', function() {
         addStudentForm.addEventListener('submit', function(e) {
             e.preventDefault();
             
-            const grade = document.getElementById('modalGradeValue').value;
+            const grade = document.getElementById('modalGrade').value;
             const gender = document.getElementById('modalGenderValue').value;
             const schoolName = document.getElementById('modalSchoolName').value;
             const studentName = document.getElementById('modalStudentName').value;
@@ -458,7 +475,17 @@ document.addEventListener('DOMContentLoaded', function() {
                     'X-Requested-With': 'XMLHttpRequest'
                 }
             })
-            .then(response => response.json())
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Network response was not ok');
+                }
+                const contentType = response.headers.get('content-type');
+                if (contentType && contentType.includes('application/json')) {
+                    return response.json();
+                } else {
+                    throw new Error('Response is not JSON');
+                }
+            })
             .then(data => {
                 if (data.success) {
                     const modalInstance = bootstrap.Modal.getInstance(addStudentModal);
@@ -472,12 +499,17 @@ document.addEventListener('DOMContentLoaded', function() {
                         : '{{ route("frontend.parent.dashboard") }}';
                     window.location.href = redirectUrl;
                 } else {
-                    alert(data.message || 'Unable to save student profile.');
+                    let errorMsg = data.message || 'Unable to save student profile.';
+                    if (data.errors) {
+                        const errorList = Object.values(data.errors).flat().join('\n');
+                        errorMsg = errorMsg + '\n\n' + errorList;
+                    }
+                    alert(errorMsg);
                 }
             })
             .catch(error => {
                 console.error('Error:', error);
-                alert('An error occurred. Please try again.');
+                alert('An error occurred. Please try again. ' + error.message);
             });
         });
     }
@@ -493,7 +525,7 @@ document.addEventListener('DOMContentLoaded', function() {
         document.getElementById('modalStudentName').value = profile.student_name || '';
         document.getElementById('modalSection').value = profile.section || '';
 
-        document.getElementById('modalGradeValue').value = profile.grade || '';
+        document.getElementById('modalGrade').value = profile.grade || '';
         document.getElementById('modalGenderValue').value = profile.gender || '';
         setSelection(gradeButtons, profile.grade || null);
         setSelection(genderButtons, profile.gender || null);
@@ -525,7 +557,7 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     .parent-dashboard-wrapper {
-        background-color: #f8f5ff;
+        background-color: #ffffff;
     }
 
     .tab-navigation {
@@ -548,7 +580,7 @@ document.addEventListener('DOMContentLoaded', function() {
         color: #333;
         display: inline-flex;
         align-items: center;
-        
+        border-radius: 8px 8px 0 0; /* Rounded top corners for all tabs */
     }
 
     .tab-button:hover {
@@ -562,7 +594,8 @@ document.addEventListener('DOMContentLoaded', function() {
         color: #333;
         z-index: 10;
         margin-bottom: -2px;
-        border-top-left-radius: 0;
+        border-top-left-radius: 8px;
+        border-top-right-radius: 8px;
         position: relative;
     }
 
@@ -590,7 +623,7 @@ document.addEventListener('DOMContentLoaded', function() {
         background: linear-gradient(135deg, #8c4fcf, #490D59);
         color: #ffffff;
         border: none;
-        border-radius: 0;
+        border-radius: 8px;
         gap: 6px;
         
     }
@@ -617,9 +650,9 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     .tab-content-container.active-content {
-        border: 2px solid #490D59 !important;
+        border: 2px solid #ffffff !important;
         border-radius: 16px;
-        box-shadow: 0 4px 12px rgba(73, 13, 89, 0.1);
+        box-shadow: 0 4px 12px rgba(31, 2, 39, 0.4);
         margin-top: 20px;
     }
 
@@ -638,10 +671,10 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     .school-logo-container {
-        width: 100px;
-        height: 100px;
-        min-width: 100px;
-        min-height: 100px;
+        width: 64px;
+        height: 64px;
+        min-width: 64px;
+        min-height: 64px;
         border-radius: 50%;
         border: 3px solid #490D59 !important;
         display: flex;
@@ -650,30 +683,30 @@ document.addEventListener('DOMContentLoaded', function() {
         background-color: #ffffff;
         box-shadow: 0 2px 8px rgba(73, 13, 89, 0.2);
         flex-shrink: 0;
-        padding: 8px;
+        padding: 6px;
         box-sizing: border-box;
         overflow: visible;
         position: relative;
     }
 
     .school-logo-img {
-        width: calc(100% - 16px);
-        height: calc(100% - 16px);
+        width: calc(100% - 12px);
+        height: calc(100% - 12px);
         object-fit: contain;
         border-radius: 50%;
         display: block;
     }
 
     .school-logo-placeholder {
-        width: calc(100% - 16px);
-        height: calc(100% - 16px);
+        width: calc(100% - 12px);
+        height: calc(100% - 12px);
         border-radius: 50%;
         background-color: #f0f0f0;
         display: flex;
         align-items: center;
         justify-content: center;
         color: #999;
-        font-size: 32px;
+        font-size: 24px;
     }
 
     @media (max-width: 991px) {
@@ -700,7 +733,14 @@ document.addEventListener('DOMContentLoaded', function() {
 
         .tab-button {
             flex: 0 0 auto;
-            padding: 10px 16px;
+            padding: 8px 16px; /* Smaller padding */
+            font-size: 14px; /* Smaller font */
+            width: auto !important; /* Fit content */
+        }
+        
+        .tab-button.add-tab {
+             display: inline-flex !important; /* Ensure visible */
+             width: auto !important;
         }
 
         .tab-content-container {
@@ -712,7 +752,7 @@ document.addEventListener('DOMContentLoaded', function() {
         }
 
         .tab-content-inner .d-flex.justify-content-end.gap-2 {
-            justify-content: flex-start !important;
+            justify-content: flex-end !important;
         }
     }
 
@@ -726,32 +766,50 @@ document.addEventListener('DOMContentLoaded', function() {
         }
 
         .school-logo-container {
-            margin: 0 auto;
+            margin: 0; /* Align left with text */
         }
 
-        .tab-content-inner .d-flex.justify-content-end {
-            flex-direction: column;
-            gap: 12px !important;
-            align-items: stretch !important;
+        /* Fix Edit/Delete Buttons on Mobile */
+        .student-info-card .d-flex.justify-content-end {
+            position: relative !important;
+            top: 0 !important;
+            right: 0 !important;
+            margin-bottom: 0px !important; /* Removed margin as requested */
+            justify-content: flex-end !important; /* Align right */
+            gap: 10px !important;
+            width: 100%; /* Ensure container takes full width to allow right alignment */
         }
 
-        .tab-content-inner .d-flex.justify-content-end button,
-        .tab-content-inner .d-flex.justify-content-end form {
-            width: 100%;
+        .student-info-card .d-flex.justify-content-end button,
+        .student-info-card .d-flex.justify-content-end form button {
+            flex: 0 0 auto; /* Prevent growing */
+            width: auto;
+            min-width: 0;
+            padding: 4px 10px !important; /* Even smaller padding */
+            font-size: 11px !important; /* Smaller font */
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            height: auto;
         }
-
-        .tab-content-inner .d-flex.justify-content-end form button {
-            width: 100%;
-        }
-
+        
+        /* Stack Student Details */
         .tab-content-inner .bg-light {
-            border-left: none !important;
-            border-top: 4px solid #490D59;
+            flex-direction: column;
+            align-items: flex-start !important;
+            gap: 15px;
+        }
+        
+        .tab-content-inner .bg-light > div {
+            width: 100%;
+            flex-direction: column;
+            align-items: flex-start !important;
+            gap: 8px !important;
         }
 
         .tab-content-inner .btn.btn-sm {
             width: 100%;
-            justify-content: center;
+            margin-bottom: 0px;
         }
     }
 
@@ -903,20 +961,41 @@ document.addEventListener('DOMContentLoaded', function() {
         .col-lg-3 {
             margin-bottom: 20px;
         }
+    @media (max-width: 991px) {
+        .tab-navigation {
+            flex-wrap: nowrap;
+            overflow-x: auto;
+            padding-bottom: 14px; /* Updated padding */
+            scrollbar-width: none;
+        }
+        
+        .tab-content-container.active-content {
+            margin-top: 0px !important; /* Removed top margin */
+        }
+    }
 
+    @media (max-width: 768px) {
         .col-lg-9 {
-            padding-left: 0;
-            padding-right: 0;
+            padding-left: 12px;
+        }
+
+        .parent-dashboard-wrapper {
+            padding-top: 10px !important; /* Reduced padding as requested */
         }
 
         .tab-navigation {
             overflow-x: auto;
             flex-wrap: nowrap;
             -webkit-overflow-scrolling: touch;
+            padding-bottom: 14px; /* Ensure consistency */
+            scrollbar-width: none; /* Firefox */
+        }
+        .tab-navigation::-webkit-scrollbar {
+            display: none; /* Chrome/Safari */
         }
 
         .tab-button {
-            min-width: 100px;
+            min-width: auto; /* Removed fixed width to fit content */
             padding: 10px 16px !important;
             font-size: 14px;
         }

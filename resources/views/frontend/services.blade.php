@@ -33,8 +33,7 @@
             <p class="sec-text">From classrooms to playgrounds, SOCO uniforms offer exceptional comfort, style, and
                 durability — trusted by schools across India.</p>
         </div>
-        <div class="row vs-carousel" data-slide-show="4" data-ml-slide-show="3" data-lg-slide-show="3"
-            data-md-slide-show="2">
+        <div class="row gy-4">
             <div class="service-style1 col-xl-3">
                 <div class="service-body">
                     <div class="service-img"><a href="#"><img

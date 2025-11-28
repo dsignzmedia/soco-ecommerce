@@ -9,7 +9,7 @@
                 <p class="breadcumb-text">Get In Touch With Us For Any Queries, Support, Or Assistance</p>
                 <div class="breadcumb-menu-wrap">
                     <ul class="breadcumb-menu">
-                        <li><a href="index.html">Home</a></li>
+                        <li><a href="{{ route('frontend.index') }}">Home</a></li>
                         <li>Contact Us</li>
                     </ul>
                 </div>
@@ -52,7 +52,7 @@
     <div class="container">
         <div class="row flex-row-reverse gx-60 justify-content-between">
             <div class="col-xl-auto">
-                <img src="{{ asset('assets/img/contact/girl.png') }}" alt="girl" class="w-100">
+                <img src="{{ asset('assets/img/contact/girl_cover.jpeg') }}" alt="girl" style="max-width: 100%; height: auto; object-fit: contain;">
             </div>
             <div class="col-xl col-xxl-6 align-self-center">
                 <div class="title-area">

@@ -827,7 +827,12 @@ class AuthController extends Controller
         // Filter products based on gender (in production, this would be more sophisticated)
         // For now, show all products
 
-        return view('frontend.store.index', compact('selectedProfile', 'allProducts'));
+        // Get wishlist product IDs for this profile
+        $wishlistProductIds = \App\Models\Wishlist::where('profile_id', $selectedProfile['id'])
+            ->pluck('product_id')
+            ->toArray();
+
+        return view('frontend.store.index', compact('selectedProfile', 'allProducts', 'wishlistProductIds'));
     }
 
     public function productDetail($productId, Request $request)
@@ -887,7 +892,12 @@ class AuthController extends Controller
                 ->with('error', 'Product not found.');
         }
 
-        return view('frontend.store.product-detail', compact('selectedProfile', 'product'));
+        // Check if product is in wishlist
+        $inWishlist = \App\Models\Wishlist::where('profile_id', $selectedProfile['id'])
+            ->where('product_id', $productId)
+            ->exists();
+
+        return view('frontend.store.product-detail', compact('selectedProfile', 'product', 'inWishlist'));
     }
 
     public function addToCart(Request $request)
@@ -988,59 +998,70 @@ class AuthController extends Controller
         $cart = session('cart', []);
         $profiles = session('student_profiles', []);
         
-        // Get profile_id from cart items or request
-        $profileId = null;
-        if (!empty($cart)) {
-            $profileId = $cart[0]['profile_id'] ?? null;
-        }
-        $profileId = $request->get('profile_id', $profileId);
+        // Get all unique profile IDs from cart
+        $cartProfileIds = array_unique(array_column($cart, 'profile_id'));
         
-        // Find the selected profile
-        $selectedProfile = null;
-        if ($profileId) {
-            $selectedProfile = collect($profiles)->firstWhere('id', (int)$profileId);
-        }
-        
-        // Load all products using the same logic as store page
+        // Load products for all profiles in cart
         $allProductsMap = [];
-        if ($selectedProfile) {
-            // Load products from folder based on school name
-            $folderProducts = $this->loadProductsFromFolder($selectedProfile['school_name']);
-            
-            // Mark folder products as authorized
-            foreach ($folderProducts as &$product) {
-                $product['type'] = 'authorized';
+        
+        // Always load default products first (fallback)
+        $defaultProducts = [
+            1 => ['id' => 1, 'name' => 'School Shirt', 'price' => 450, 'image' => asset('assets/img/products/shirt.jpg')],
+            2 => ['id' => 2, 'name' => 'School Pants', 'price' => 550, 'image' => asset('assets/img/products/pants.jpg')],
+            3 => ['id' => 3, 'name' => 'School Skirt', 'price' => 480, 'image' => asset('assets/img/products/skirt.jpg')],
+            4 => ['id' => 4, 'name' => 'School Tie', 'price' => 250, 'image' => asset('assets/img/products/tie.jpg')],
+            5 => ['id' => 5, 'name' => 'School Belt', 'price' => 300, 'image' => asset('assets/img/products/belt.jpg')],
+        ];
+        $allProductsMap = $defaultProducts;
+
+        // Add additional products (merchandise, etc)
+        $additionalProducts = $this->getAdditionalProducts();
+        foreach ($additionalProducts as $product) {
+            $allProductsMap[$product['id']] = $product;
+        }
+
+        // Load specific school products for each profile in cart
+        foreach ($cartProfileIds as $pId) {
+            $profile = collect($profiles)->firstWhere('id', (int)$pId);
+            if ($profile) {
+                $folderProducts = $this->loadProductsFromFolder($profile['school_name']);
+                foreach ($folderProducts as $product) {
+                    $product['type'] = 'authorized';
+                    $allProductsMap[$product['id']] = $product;
+                }
             }
-            
-            // Add all additional products
-            $additionalProducts = $this->getAdditionalProducts();
-            
-            $allProducts = array_merge($folderProducts, $additionalProducts);
-            
-            // Create a map for quick lookup
-            foreach ($allProducts as $product) {
-                $allProductsMap[$product['id']] = $product;
-            }
-        } else {
-            // Fallback to default products if no profile
-            $allProductsMap = [
-                1 => ['id' => 1, 'name' => 'School Shirt', 'price' => 450, 'image' => asset('assets/img/products/shirt.jpg')],
-                2 => ['id' => 2, 'name' => 'School Pants', 'price' => 550, 'image' => asset('assets/img/products/pants.jpg')],
-                3 => ['id' => 3, 'name' => 'School Skirt', 'price' => 480, 'image' => asset('assets/img/products/skirt.jpg')],
-                4 => ['id' => 4, 'name' => 'School Tie', 'price' => 250, 'image' => asset('assets/img/products/tie.jpg')],
-                5 => ['id' => 5, 'name' => 'School Belt', 'price' => 300, 'image' => asset('assets/img/products/belt.jpg')],
-            ];
         }
 
         $cartItems = [];
         $total = 0;
+        
         foreach ($cart as $item) {
             if (isset($allProductsMap[$item['product_id']])) {
                 $product = $allProductsMap[$item['product_id']];
                 $itemTotal = $product['price'] * $item['quantity'];
                 $total += $itemTotal;
-                $cartItems[] = array_merge($item, $product, ['item_total' => $itemTotal]);
+                
+                // Find student name
+                $studentName = 'Unknown Student';
+                if (isset($item['profile_id'])) {
+                    $profile = collect($profiles)->firstWhere('id', (int)$item['profile_id']);
+                    if ($profile) {
+                        $studentName = $profile['student_name'];
+                    }
+                }
+                
+                $cartItems[] = array_merge($item, $product, [
+                    'item_total' => $itemTotal,
+                    'student_name' => $studentName
+                ]);
             }
+        }
+
+        // For the view's "Buy More" link, we can just use the first profile or the requested one
+        $profileId = $request->get('profile_id', $cart[0]['profile_id'] ?? null);
+        $selectedProfile = null;
+        if ($profileId) {
+            $selectedProfile = collect($profiles)->firstWhere('id', (int)$profileId);
         }
 
         return view('frontend.cart.index', compact('cartItems', 'total', 'profiles', 'selectedProfile'));
@@ -1594,5 +1615,157 @@ class AuthController extends Controller
 
         return redirect()->route('frontend.parent.orders')
             ->with('success', 'Return/Exchange request submitted successfully!');
+    }
+    public function wishlist(Request $request)
+    {
+        // Get profiles to determine current profile
+        $profiles = session('student_profiles', []);
+        $selectedProfile = null;
+        
+        // Check if profile_id is passed in request
+        $profileId = $request->get('profile_id');
+        
+        if ($profileId) {
+            $selectedProfile = collect($profiles)->firstWhere('id', (int)$profileId);
+        }
+        
+        // Fallback: take the first one
+        if (!$selectedProfile && count($profiles) > 0) {
+            $selectedProfile = $profiles[0]; 
+        }
+
+        if (!$selectedProfile) {
+            return redirect()->route('frontend.parent.dashboard')->with('error', 'No student profile found.');
+        }
+
+        // Fetch from DB
+        $wishlistItems = \App\Models\Wishlist::where('profile_id', $selectedProfile['id'])
+            ->orderBy('created_at', 'desc')
+            ->get();
+            
+        // Transform to array format expected by view
+        $wishlist = $wishlistItems->map(function($item) {
+            return [
+                'id' => $item->product_id,
+                'name' => $item->product_details['name'] ?? 'Unknown',
+                'price' => $item->product_details['price'] ?? 0,
+                'image' => $item->product_details['image'] ?? '',
+                'added_at' => $item->created_at,
+            ];
+        })->toArray();
+
+        return view('frontend.wishlist.index', compact('wishlist', 'selectedProfile', 'profiles'));
+    }
+
+    public function addToWishlist(Request $request)
+    {
+        Log::info('addToWishlist called', $request->all());
+
+        $request->validate([
+            'product_id' => 'required|integer',
+            'name' => 'required|string',
+            'price' => 'required|numeric',
+            'image' => 'required|string',
+            'profile_id' => 'nullable|integer',
+        ]);
+
+        $profileId = $request->profile_id;
+        
+        // Fallback if profile_id not sent (try to get from session)
+        if (!$profileId) {
+            $profiles = session('student_profiles', []);
+            if (count($profiles) > 0) {
+                $profileId = $profiles[0]['id'];
+            }
+        }
+
+        Log::info('Profile ID resolved', ['profile_id' => $profileId]);
+
+        if (!$profileId) {
+             Log::error('No profile ID found');
+             if ($request->ajax() || $request->wantsJson()) {
+                return response()->json(['status' => 'error', 'message' => 'Please select a student profile.']);
+             }
+             return back()->with('error', 'Please select a student profile.');
+        }
+
+        // Check if exists in DB
+        $exists = \App\Models\Wishlist::where('profile_id', $profileId)
+            ->where('product_id', $request->product_id)
+            ->exists();
+        
+        Log::info('Product exists in wishlist?', ['exists' => $exists]);
+
+        if (!$exists) {
+            try {
+                \App\Models\Wishlist::create([
+                    'profile_id' => $profileId,
+                    'product_id' => $request->product_id,
+                    'product_details' => [
+                        'name' => $request->name,
+                        'price' => $request->price,
+                        'image' => $request->image,
+                    ]
+                ]);
+                Log::info('Product added to DB');
+            } catch (\Exception $e) {
+                Log::error('Error adding to wishlist: ' . $e->getMessage());
+                if ($request->ajax() || $request->wantsJson()) {
+                    return response()->json(['status' => 'error', 'message' => 'Failed to save to wishlist.']);
+                }
+                return back()->with('error', 'Failed to save to wishlist.');
+            }
+            
+            $count = \App\Models\Wishlist::where('profile_id', $profileId)->count();
+
+            if ($request->ajax() || $request->wantsJson()) {
+                return response()->json([
+                    'status' => 'success',
+                    'message' => 'Product added to wishlist!',
+                    'count' => $count,
+                    'action' => 'added'
+                ]);
+            }
+            
+            return back()->with('success', 'Product added to wishlist!');
+        } else {
+            // Toggle: Remove from wishlist if already exists
+            \App\Models\Wishlist::where('profile_id', $profileId)
+                ->where('product_id', $request->product_id)
+                ->delete();
+                
+            $count = \App\Models\Wishlist::where('profile_id', $profileId)->count();
+
+            if ($request->ajax() || $request->wantsJson()) {
+                return response()->json([
+                    'status' => 'success',
+                    'message' => 'Product removed from wishlist!',
+                    'count' => $count,
+                    'action' => 'removed'
+                ]);
+            }
+
+            return back()->with('success', 'Product removed from wishlist!');
+        }
+    }
+
+    public function removeFromWishlist(Request $request, $productId)
+    {
+        $profileId = $request->get('profile_id');
+        
+        if (!$profileId) {
+            $profiles = session('student_profiles', []);
+            if (count($profiles) > 0) {
+                $profileId = $profiles[0]['id'];
+            }
+        }
+        
+        if ($profileId) {
+            \App\Models\Wishlist::where('profile_id', $profileId)
+                ->where('product_id', $productId)
+                ->delete();
+        }
+
+        return back()->with('success', 'Product removed from wishlist!');
     }
 }
