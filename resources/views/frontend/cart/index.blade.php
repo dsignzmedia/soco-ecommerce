@@ -3,7 +3,20 @@
 @section('content')
 @include('frontend.partials.header')
 
-<section class="space-top space-extra-bottom" style="background-color: #f8f5ff;">
+<!-- Breadcrumb -->
+<div class="breadcrumb-wrapper" style="background-color: #e0e0e0; padding-top: 50px;  border-bottom: 1px solid #d0d0d0;">
+    <div class="container" style=" padding: 20px;">
+        <div class="breadcumb-menu-wrap" style=" margin: 9px 0 0 0;">
+            <ul class="breadcumb-menu">
+                <li><a href="{{ route('frontend.index') }}">Home</a></li>
+                <li><a href="{{ route('frontend.parent.dashboard') }}">Parent Dashboard</a></li>
+                <li>Shopping Cart</li>
+            </ul>
+        </div>
+    </div>
+</div>
+
+<section class="space-top space-extra-bottom" style="background-color: #f8f5ff; padding-top: 60px;">
     <div class="container">
         <div class="row g-4 align-items-start">
             <div class="col-lg-3 mb-4">
@@ -63,6 +76,7 @@
                                             <td style="padding: 15px; vertical-align: middle; cursor: pointer;" onclick="showProductSummary({{ $index }})">
                                                 <h6 class="mb-1" style="font-weight: 600; color: #333; margin: 0;">{{ $item['name'] }}</h6>
                                                 <p class="text-muted small mb-0" style="font-size: 0.875rem; margin: 0;">Size: {{ $item['size'] }}</p>
+                                                <p class="text-primary small mb-0" style="font-size: 0.8rem; margin: 0;">Student: {{ $item['student_name'] }}</p>
                                             </td>
                                             <td style="padding: 15px; vertical-align: middle; text-align: center;">
                                                 <span style="color: #dc3545; font-weight: 600;">₹{{ number_format($item['price']) }}</span>
@@ -189,7 +203,10 @@ function updateOrderSummary() {
     const selectedIndices = Array.from(checkboxes).map(cb => parseInt(cb.value));
     
     // Update selected items input
-    document.getElementById('selectedItemsInput').value = selectedIndices.join(',');
+    const selectedItemsInput = document.getElementById('selectedItemsInput');
+    if (selectedItemsInput) {
+        selectedItemsInput.value = selectedIndices.join(',');
+    }
     
     // Calculate totals for selected items
     let subtotal = 0;
@@ -211,6 +228,7 @@ function updateOrderSummary() {
                     <div class="flex-grow-1">
                         <h6 class="mb-0" style="font-size: 0.85rem; font-weight: 600;">${item.name}</h6>
                         <p class="text-muted small mb-0" style="font-size: 0.75rem;">Size: ${item.size} × ${item.quantity}</p>
+                        <p class="text-primary small mb-0" style="font-size: 0.75rem;">Student: ${item.student_name}</p>
                         <p class="mb-0" style="color: #dc3545; font-weight: 600; font-size: 0.85rem;">₹${itemTotal.toLocaleString('en-IN')}</p>
                     </div>
                 </div>
@@ -219,14 +237,28 @@ function updateOrderSummary() {
     });
     
     // Update summary display
-    document.getElementById('selectedItemsSummary').innerHTML = selectedItemsHtml || '<p class="text-muted small">No items selected</p>';
-    document.getElementById('summarySubtotal').textContent = '₹' + subtotal.toLocaleString('en-IN');
-    document.getElementById('summaryTotal').textContent = '₹' + subtotal.toLocaleString('en-IN');
+    const summaryContainer = document.getElementById('selectedItemsSummary');
+    if (summaryContainer) {
+        summaryContainer.innerHTML = selectedItemsHtml || '<p class="text-muted small">No items selected</p>';
+    }
+    
+    const subtotalEl = document.getElementById('summarySubtotal');
+    if (subtotalEl) {
+        subtotalEl.textContent = '₹' + subtotal.toLocaleString('en-IN');
+    }
+    
+    const totalEl = document.getElementById('summaryTotal');
+    if (totalEl) {
+        totalEl.textContent = '₹' + subtotal.toLocaleString('en-IN');
+    }
     
     // Update select all checkbox
     const allCheckboxes = document.querySelectorAll('.item-checkbox');
     const allChecked = allCheckboxes.length > 0 && Array.from(allCheckboxes).every(cb => cb.checked);
-    document.getElementById('selectAll').checked = allChecked;
+    const selectAllCheckbox = document.getElementById('selectAll');
+    if (selectAllCheckbox) {
+        selectAllCheckbox.checked = allChecked;
+    }
 }
 
 function showProductSummary(index) {

@@ -4,6 +4,7 @@
     $sidebarItems = [
         ['route' => 'frontend.parent.dashboard', 'icon' => 'fas fa-th-large', 'label' => 'Dashboard'],
         ['route' => 'frontend.parent.cart', 'icon' => 'fas fa-shopping-cart', 'label' => 'Cart'],
+        ['route' => 'frontend.parent.wishlist', 'icon' => 'fas fa-heart', 'label' => 'Wishlist'],
         ['route' => 'frontend.parent.orders', 'icon' => 'fas fa-shopping-bag', 'label' => 'My Orders'],
         ['route' => 'frontend.parent.addresses', 'icon' => 'fas fa-map-marker-alt', 'label' => 'My Address'],
     ];
@@ -11,19 +12,15 @@
 @endphp
 
 <div class="dashboard-sidebar">
-    <div class="sidebar-header d-flex align-items-center gap-3 mb-4">
-        <div class="sidebar-avatar-image">
-            <img src="{{ asset('assets/img/profile_icon/man.svg') }}" alt="Profile Icon">
-        </div>
-        <div>
-            <h6 class="mb-0">{{ $userName }}</h6>
-            <small class="text-muted">{{ $userEmail }}</small>
-        </div>
-    </div>
-
     <nav class="sidebar-menu">
         @foreach($sidebarItems as $item)
-            <a href="{{ route($item['route']) }}" class="sidebar-link {{ request()->routeIs($item['route']) ? 'active' : '' }}">
+            @php
+                $routeParams = [];
+                if (isset($selectedProfile) && $selectedProfile) {
+                    $routeParams['profile_id'] = $selectedProfile['id'];
+                }
+            @endphp
+            <a href="{{ route($item['route'], $routeParams) }}" class="sidebar-link {{ request()->routeIs($item['route']) ? 'active' : '' }}">
                 <span><i class="{{ $item['icon'] }} me-2"></i>{{ $item['label'] }}</span>
                 @if($item['route'] === 'frontend.parent.cart' && $cartCount > 0)
                     <span class="badge bg-danger">{{ $cartCount }}</span>
@@ -48,22 +45,6 @@
             padding: 20px;
             position: sticky;
             top: 120px;
-        }
-
-        .dashboard-sidebar .sidebar-header .sidebar-avatar-image {
-            width: 60px;
-            height: 60px;
-            border-radius: 50%;
-            background-color: #f0f4ff;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            box-shadow: 0 5px 15px rgba(0,0,0,0.15);
-        }
-
-        .dashboard-sidebar .sidebar-header .sidebar-avatar-image img {
-            width: 40px;
-            height: 40px;
         }
 
         .dashboard-sidebar .sidebar-menu {

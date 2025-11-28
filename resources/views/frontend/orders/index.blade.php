@@ -3,7 +3,20 @@
 @section('content')
 @include('frontend.partials.header')
 
-<section class="space-top space-extra-bottom" style="background-color: #f8f5ff;">
+<!-- Breadcrumb -->
+<div class="breadcrumb-wrapper" style="background-color: #e0e0e0; padding-top: 50px;  border-bottom: 1px solid #d0d0d0;">
+    <div class="container" style=" padding: 20px;">
+        <div class="breadcumb-menu-wrap" style=" margin: 9px 0 0 0;">
+            <ul class="breadcumb-menu">
+                <li><a href="{{ route('frontend.index') }}">Home</a></li>
+                <li><a href="{{ route('frontend.parent.dashboard') }}">Parent Dashboard</a></li>
+                <li>My Orders</li>
+            </ul>
+        </div>
+    </div>
+</div>
+
+<section class="space-top space-extra-bottom" style="background-color: #f8f5ff; padding-top: 60px;">
     <div class="container">
         <div class="row">
             <div class="col-lg-3 mb-4">

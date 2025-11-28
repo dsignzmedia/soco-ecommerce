@@ -1,3 +1,17 @@
+@php
+    $headerRouteParams = [];
+    // Try to get profile from request first, then fallback to session
+    $headerProfileId = request('profile_id');
+    if (!$headerProfileId) {
+        $headerProfiles = session('student_profiles', []);
+        if (count($headerProfiles) > 0) {
+            $headerProfileId = $headerProfiles[0]['id'];
+        }
+    }
+    if ($headerProfileId) {
+        $headerRouteParams['profile_id'] = $headerProfileId;
+    }
+@endphp
 <div class="vs-menu-wrapper">
     <div class="vs-menu-area text-center">
         <button class="vs-menu-toggle"><i class="fal fa-times"></i></button>
@@ -27,6 +41,9 @@
         </div>
     </div>
 </div>
+
+<!-- Profile Sidebar Wrapper -->
+
 
 <header class="vs-header header-layout6">
     <div class="header-top">
@@ -125,6 +142,11 @@
                                         </a>
                                     </li>
                                     <li>
+                                        <a class="dropdown-item" href="{{ route('frontend.parent.wishlist', $headerRouteParams) }}">
+                                            <i class="fas fa-heart me-2"></i> Wishlist
+                                        </a>
+                                    </li>
+                                    <li>
                                         <a class="dropdown-item" href="{{ route('frontend.parent.orders') }}">
                                             <i class="fas fa-shopping-bag me-2"></i> My Orders
                                         </a>
@@ -173,6 +195,12 @@
                                                 @endif
                                             </a>
                                         </li>
+                                        <li>
+
+                                        <a class="dropdown-item d-flex align-items-center" href="{{ route('frontend.parent.wishlist', $headerRouteParams) }}" style="padding: 10px 15px;">
+                                            <i class="fas fa-heart me-2" style="width: 20px;"></i> Wishlist
+                                        </a>
+                                    </li>
                                         <li>
                                             <a class="dropdown-item d-flex align-items-center" href="{{ route('frontend.parent.orders') }}" style="padding: 10px 15px;">
                                                 <i class="fas fa-shopping-bag me-2" style="width: 20px;"></i> My Orders
@@ -274,12 +302,49 @@
         height: 32px;
     }
 
+    @keyframes slideInRight {
+        from {
+            transform: translateX(100%);
+            opacity: 0;
+        }
+        to {
+            transform: translateX(0);
+            opacity: 1;
+        }
+    }
+
+    .mobile-parent-dropdown {
+        position: fixed !important;
+        top: auto !important;
+        left: 50% !important;
+        right: 50% !important;
+        width: 50% !important; /* Full width */
+        min-width: 50% !important;
+        max-width: 50% !important; /* Full screen width */
+        margin: 0 !important;
+        border-radius: 0 !important;
+        transform: none !important; /* Reset transform for normal state */
+        border: none !important;
+        border-top: 1px solid #eee !important;
+        box-shadow: -5px 10px 30px rgba(0,0,0,0.1) !important;
+        margin-top: 0 !important;
+        display: none; /* Default hidden */
+    }
+
+    .mobile-parent-dropdown.show {
+        display: block !important;
+        animation: slideInRight 0.3s ease-out forwards; /* Animate when shown */
+    }
+
     .mobile-parent-dropdown .dropdown-item {
         display: flex;
         align-items: center;
-        gap: 8px;
-        padding: 10px 18px;
+        justify-content: flex-start !important; /* Fix spacing issue */
+        gap: 8px; /* Reduced gap */
+        padding: 10px 15px; /* Reduced padding */
         font-weight: 500;
+        width: 100%;
+        letter-spacing: normal !important; /* Ensure no weird letter spacing */
     }
 
     .mobile-parent-dropdown .dropdown-item i {

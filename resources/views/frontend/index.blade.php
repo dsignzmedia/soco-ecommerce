@@ -35,6 +35,73 @@
         </div>
     </div>
 </div>
+<!-- Mobile Marquee Auto-Scroll Script -->
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        function setupMarquee(wrapperSelector, rowSelector) {
+            // Only run on mobile devices (matching CSS breakpoint)
+            if (window.innerWidth > 768) return;
+
+            const wrapper = document.querySelector(wrapperSelector);
+            const row = document.querySelector(rowSelector);
+            
+            if (!wrapper || !row) return;
+
+            // Duplicate content for seamless infinite scroll
+            const content = row.innerHTML;
+            row.innerHTML = content + content; // Duplicate once
+
+            let scrollSpeed = 0.6; // Reduced speed by 40% (was 1)
+            let animationId;
+            let isTouching = false;
+            
+            function autoScroll() {
+                if (isTouching) return; // Stop loop if touching
+
+                wrapper.scrollLeft += scrollSpeed;
+                
+                // Infinite scroll logic:
+                if (wrapper.scrollLeft >= (wrapper.scrollWidth / 2)) {
+                        wrapper.scrollLeft = 0; 
+                }
+                
+                animationId = requestAnimationFrame(autoScroll);
+            }
+
+            // Start auto-scroll
+            animationId = requestAnimationFrame(autoScroll);
+
+            // Pause on interaction
+            wrapper.addEventListener('touchstart', () => { 
+                isTouching = true;
+                cancelAnimationFrame(animationId); // Stop animation completely
+            });
+            
+            wrapper.addEventListener('touchend', () => { 
+                // Resume after a short delay
+                setTimeout(() => { 
+                    isTouching = false; 
+                    animationId = requestAnimationFrame(autoScroll);
+                }, 1000); 
+            });
+            
+            // Mouse events for desktop testing
+            wrapper.addEventListener('mouseenter', () => { 
+                isTouching = true;
+                cancelAnimationFrame(animationId);
+            });
+            
+            wrapper.addEventListener('mouseleave', () => { 
+                isTouching = false;
+                animationId = requestAnimationFrame(autoScroll);
+            });
+        }
+
+        // Setup for Category and Service marquees
+        setupMarquee('.category-marquee-wrapper', '.category_box_row');
+        setupMarquee('.service-marquee-wrapper', '.service-marquee-row');
+    });
+</script>
 
 <header class="vs-header header-layout6">
     <div class="header-top">
@@ -141,6 +208,41 @@
             </div>
         </div>
     </div>
+    <style>
+        .category-box {
+            width: 120px;
+            height: 120px;
+            background-color: #f8f5ff;
+            border: 2px solid #e0d5f0;
+            border-radius: 60px !important; /* <-- THIS BREAKS THE CIRCLE */
+            overflow: hidden;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        /* Image fill */
+        .category-img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transition: transform .4s ease;
+        }
+        
+        /* Zoom on hover */
+        .category-item:hover .category-img {
+            transform: scale(1.15);
+        }
+        
+        /* Name */
+        .category-name {
+            color: #333;
+            font-weight: 500;
+            margin: 0;
+            margin-top: 8px;
+        }
+        </style>
+        
 </header>
 
 
@@ -155,11 +257,11 @@
                 style="font-size:36px; color:#000; stroke:#000; stroke-width:0px; text-align:left; font-style:normal; text-decoration:none; text-transform:none; font-weight:400; letter-spacing:0px; border-style:solid; background-position:0% 0%; background-repeat:no-repeat; background-clip:border-box; overflow:visible; width:255px; height:255px; border-width:60px 60px 60px 60px; border-color:#FFD600; border-radius:50% 50% 50% 50%; top:126px; left:740px; z-index:4; -webkit-background-clip:border-box;"
                 class="ls-l ls-hide-tablet ls-hide-phone ls-text-layer" data-ls="static:forever;">
             </ls-layer>
-            <div style="font-size:36px; stroke:#000; stroke-width:0px; text-align:left; font-style:normal; text-decoration:none; text-transform:none; font-weight:400; letter-spacing:0px; background-position:0% 0%; background-repeat:no-repeat; background-clip:border-box; overflow:visible; width:1296px; height:410px; left:312px; top:213px; background-color:#490D59; border-radius:213px 206px 50px 213px; z-index:5; -webkit-background-clip:border-box;"
+            <div style="font-size:36px; stroke:#000; stroke-width:0px; text-align:left; font-style:normal; text-decoration:none; text-transform:none; font-weight:400; letter-spacing:0px; background-position:0% 0%; background-repeat:no-repeat; background-clip:border-box; overflow:visible; width:1296px; height:410px; left:312px; top:213px; background-color:rgb(73 13 89 / 81%); border-radius:213px 206px 50px 213px; z-index:5; -webkit-background-clip:border-box;"
                 class="ls-l ls-hide-tablet ls-hide-phone ls-text-layer" data-ls="static:forever;"></div>
-            <div style="font-size:36px; stroke:#000; stroke-width:0px; text-align:left; font-style:normal; text-decoration:none; text-transform:none; font-weight:400; letter-spacing:0px; background-position:0% 0%; background-repeat:no-repeat; background-clip:border-box; opacity:0.9; overflow:visible; width:1200px; height:600px; left:350px; top:76px; background-color:#490D59; border-radius:213px 206px 50px 213px; z-index:5; -webkit-background-clip:border-box;"
+            <div style="font-size:36px; stroke:#000; stroke-width:0px; text-align:left; font-style:normal; text-decoration:none; text-transform:none; font-weight:400; letter-spacing:0px; background-position:0% 0%; background-repeat:no-repeat; background-clip:border-box; overflow:visible; width:1200px; height:600px; left:350px; top:76px; background-color:rgb(73 13 89 / 81%); border-radius:213px 206px 50px 213px; z-index:5; -webkit-background-clip:border-box;"
                 class="ls-l ls-hide-desktop ls-hide-phone ls-text-layer" data-ls="static:forever;"></div>
-            <div style="font-size:36px; stroke:#000; stroke-width:0px; text-align:left; font-style:normal; text-decoration:none; text-transform:none; font-weight:400; letter-spacing:0px; background-position:0% 0%; background-repeat:no-repeat; background-clip:border-box; opacity:0.9; overflow:visible; width:1300px; height:700px; left:50%; top:33px; background-color:#490D59; border-radius:213px 206px 50px 213px; z-index:5; -webkit-background-clip:border-box;"
+            <div style="font-size:36px; stroke:#000; stroke-width:0px; text-align:left; font-style:normal; text-decoration:none; text-transform:none; font-weight:400; letter-spacing:0px; background-position:0% 0%; background-repeat:no-repeat; background-clip:border-box; overflow:visible; width:1300px; height:700px; left:50%; top:33px; background-color:rgb(73 13 89 / 81%); border-radius:213px 206px 50px 213px; z-index:5; -webkit-background-clip:border-box;"
                 class="ls-l ls-hide-desktop ls-hide-tablet ls-text-layer" data-ls="static:forever;"></div>
             <h1 style="font-size:60px; stroke:#000; stroke-width:0px; text-align:center; font-style:normal; text-decoration:none; text-transform:none; font-weight:600; letter-spacing:0px; background-position:0% 0%; background-repeat:no-repeat; background-clip:border-box; overflow:visible; font-family:'Poppins', sans-serif; line-height:60px; color:#ffffff; top:284px; left:312px; width:1296px; -webkit-background-clip:border-box;"
                 class="ls-l ls-hide-tablet ls-hide-phone ls-text-layer"
@@ -219,7 +321,289 @@
 
 
     </div>
-</section><!--==============================
+</section>
+
+<!--==============================
+Shop by Category Area
+==============================-->
+<section>
+    <div class="category-marquee-wrapper">
+        <div class="category_box_row">
+            
+
+            <!-- 1. Uniform -->
+            <div class="simple-cat">
+                <div class="simple-box">
+                    <img src="{{ asset('assets/img/catagories/SchoolUniform.jpeg') }}" alt="Uniform">
+                    
+                </div>
+                <p class="sec-text simple-title">Uniform</p>
+            </div>
+       
+            <!-- 2. Shoes -->
+            <div class="simple-cat">
+                <div class="simple-box">
+                    <img src="{{ asset('assets/img/catagories/Shoe_school.jpg') }}" alt="Shoes">
+                </div>
+                <p class="sec-text simple-title">Shoes</p>
+            </div>
+       
+            <!-- 3. Bags -->
+            <div class="simple-cat">
+                <div class="simple-box">
+                    <img src="{{ asset('assets/img/catagories/SchoolBag_2.jpg') }}" alt="Bags">
+                </div>
+                <p class="simple-title sec-text">Bags</p>
+            </div>
+       
+            <!-- 4. Stationery -->
+            <div class="simple-cat">
+                <div class="simple-box">
+                    <img src="{{ asset('assets/img/catagories/Stationery.jpg') }}" alt="Stationery">
+                </div>
+                <p class="simple-title sec-text">Stationery</p>
+            </div>
+       
+            <!-- 5. Food Container -->
+            <div class="simple-cat">
+                <div class="simple-box">
+                    <img src="{{ asset('assets/img/catagories/Box_1.jpeg') }}" alt="Food Container">
+                </div>
+                <p class="simple-title sec-text">Food Container</p>
+            </div>
+       
+            <!-- 6. Drinkware -->
+            <div class="simple-cat">
+                <div class="simple-box">
+                    <img src="{{ asset('assets/img/catagories/Drinkware.jpg') }}" alt="Drinkware">
+                </div>
+                <p class="simple-title sec-text">Drinkware</p>
+            </div>
+        </div>
+    </div>
+       
+       
+    <style>
+        .simple-cat {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        .category_box_row {
+            display: flex;
+            gap: 30px;
+            justify-content: center;
+            padding-top: 60px;
+            flex-wrap: wrap; /* Allow wrapping */
+        }
+
+        .simple-box {
+            width: 160px;
+            height: 160px;
+            border-radius: 18px;
+            border: 2px solid #ccc;
+            overflow: hidden;
+            margin: 0 auto; /* Center in column */
+        }
+
+        .simple-box img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transition: transform 0.4s ease;
+        }
+
+        .simple-box:hover img {
+            transform: scale(1.15);
+        }
+
+        .simple-title {
+            margin-top: 8px;
+            color: #333;
+        }
+
+        /* Mobile Responsiveness */
+        @media (max-width: 768px) {
+            .category-marquee-wrapper {
+                overflow-x: auto;
+                width: 100%;
+                -webkit-overflow-scrolling: touch; /* Smooth scrolling on iOS */
+                scrollbar-width: none; /* Firefox */
+            }
+            .category-marquee-wrapper::-webkit-scrollbar {
+                display: none; /* Chrome/Safari */
+            }
+
+            .category_box_row {
+                gap: 15px;
+                padding-top: 40px;
+                flex-wrap: nowrap;
+                justify-content: flex-start;
+                padding-left: 0;
+                padding-right: 0;
+                /* animation: scroll 15s linear infinite; REMOVED */
+                width: max-content;
+                display: flex;
+            }
+            
+            /* Service Section Marquee */
+            .service-marquee-wrapper {
+                overflow-x: auto;
+                width: 100%;
+                -webkit-overflow-scrolling: touch;
+                scrollbar-width: none;
+            }
+            .service-marquee-wrapper::-webkit-scrollbar {
+                display: none;
+            }
+
+            .service-marquee-row {
+                display: flex;
+                flex-wrap: nowrap;
+                width: max-content;
+                /* animation: scroll 15s linear infinite; REMOVED */
+            }
+            
+            .service-marquee-row .service-style1 {
+                flex: 0 0 auto;
+                width: 280px; /* Fixed width for service cards */
+                margin-right: 20px;
+                display: flex; /* Enable flex to stretch children */
+                height: auto; /* Allow it to grow */
+            }
+            
+            .service-marquee-row .service-body {
+                height: 100%; /* Fill the parent height */
+                display: flex;
+                flex-direction: column;
+                justify-content: space-between; /* Push content apart if needed */
+                width: 100%;
+            }
+            
+            /* Ensure content takes available space */
+            .service-content {
+                flex-grow: 1;
+                display: flex;
+                flex-direction: column;
+                align-items: center; /* Center align items horizontally */
+                text-align: center; /* Center text */
+            }
+            
+            .service-icon {
+                margin: 0 auto 20px auto; /* Ensure icon is centered with margin */
+                display: inline-block;
+            }
+            
+            .service-bottom {
+                margin-top: auto; /* Push button to bottom */
+                width: 100%;
+                display: flex;
+                justify-content: center;
+                padding: 0 15px; /* Add padding to container if needed */
+            }
+            
+            .service-btn {
+                width: 100%; /* Full width */
+                display: block;
+                text-align: center;
+            }
+
+            /* @keyframes scroll REMOVED */
+
+
+
+            .simple-cat {
+                width: 140px;
+                flex-shrink: 0;
+                margin-right: 15px;
+            }
+
+            .simple-box {
+                width: 100%;
+                height: 140px;
+            }
+        }
+
+
+
+</style>
+</section>
+
+
+
+
+<!-- Hover zoom effect -->
+<style>
+.category-item:hover .category-full-img {
+    transform: scale(1.15);
+}
+</style>
+
+
+<style>
+
+/* Image default state */
+.category-full-img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.2s ease;   /* Smooth zoom animation */
+}
+
+/* Zoom-in on hover */
+.category-item:hover .category-full-img {
+    transform: scale(1.15); /* Adjust zoom level (1.1 to 1.3 recommended) */
+}
+
+/* Slight lift effect on the whole circle */
+
+
+.category-item:hover .category-name {
+    color: #490D59;
+}
+
+.category-row {
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: thin;
+}
+
+.category-row::-webkit-scrollbar {
+    height: 6px;
+}
+
+.category-row::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 10px;
+}
+
+.category-row::-webkit-scrollbar-thumb {
+    background: #490D59;
+    border-radius: 10px;
+}
+
+@media (max-width: 768px) {
+    .category-icon-wrapper {
+        width: 100px !important;
+        height: 100px !important;
+    }
+    
+    .category-icon-wrapper i {
+        font-size: 40px !important;
+    }
+    
+    .category-col {
+        min-width: 100px !important;
+    }
+    
+    /* Resize Menu Toggle Button */
+    .vs-menu-toggle {
+        transform: scale(0.8);
+        transform-origin: center;
+    }
+}
+</style>
+
+<!--==============================
 About Area
 ==============================-->
 <section class=" space-top space-extra-bottom" style="background-color: #ffffff;">
@@ -249,7 +633,7 @@ About Area
                     to quality, timely delivery, and customer satisfaction, we ensure every uniform
                     meets the highest standards.</p>
                 <div class="row gx-70 justify-content-center justify-content-lg-start text-md-start">
-                    <div class="col-auto">
+                    <div class="col-6 col-md-6">
                         <div class="vs-media media-style1">
                             <div class="media-icon"><img src="{{ asset('assets/img/icon/ab-1-2.svg') }}" alt="icon">
                             </div>
@@ -260,7 +644,7 @@ About Area
                         </div>
                     </div>
 
-                    <div class="col-auto">
+                    <div class="col-6 col-md-6">
                         <div class="vs-media media-style1">
                             <div class="media-icon"><img src="{{ asset('assets/img/icon/ab-1-1.svg') }}" alt="icon">
                             </div>
@@ -271,10 +655,9 @@ About Area
                         </div>
                     </div>
 
-
-                    <div class="col-auto">
+                    <div class="col-6 col-md-6">
                         <div class="vs-media media-style1">
-                            <div class="media-icon"><img src="{{ asset('assets/img/icon/ab-1-2.svg') }}" alt="icon">
+                            <div class="media-icon"><img src="{{ asset('assets/img/icon/ab-1-3.svg') }}" alt="icon">
                             </div>
                             <div class="media-body">
                                 <p class="media-label">24/7</p>
@@ -282,9 +665,10 @@ About Area
                             </div>
                         </div>
                     </div>
-                    <div class="col-auto">
+
+                    <div class="col-6 col-md-6">
                         <div class="vs-media media-style1">
-                            <div class="media-icon"><img src="{{ asset('assets/img/icon/ab-1-2.svg') }}" alt="icon">
+                            <div class="media-icon"><img src="{{ asset('assets/img/icon/ab-1-4.svg') }}" alt="icon">
                             </div>
                             <div class="media-body">
                                 <p class="media-label">7+</p>
@@ -292,6 +676,7 @@ About Area
                             </div>
                         </div>
                     </div>
+                </div>
                 </div>
             </div>
 
@@ -312,7 +697,7 @@ Service Area
             <p class="sec-text">From classrooms to playgrounds, SOCO uniforms offer exceptional comfort, style, and
                 durability — trusted by schools across India.</p>
         </div>
-        <div class="row vs-carousel" data-slide-show="4" data-ml-slide-show="3" data-lg-slide-show="3"
+        <div class="row vs-carousel d-none d-md-flex" data-slide-show="4" data-ml-slide-show="3" data-lg-slide-show="3"
             data-md-slide-show="2">
             <div class="service-style1 col-xl-3">
                 <div class="service-body">
@@ -371,6 +756,64 @@ Service Area
                             areas for different types</p>
                         <div class="service-bottom">
                             <a href="#" class="service-btn">Learn More</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Mobile Marquee for Services -->
+        <div class="service-marquee-wrapper d-md-none">
+            <div class="service-marquee-row">
+                <div class="service-style1">
+                    <div class="service-body">
+                        <div class="service-img"><a href="#"><img src="{{ asset('assets/img/services/service.svg') }}" alt="service"></a></div>
+                        <div class="service-content">
+                            <div class="service-icon"><img src="{{ asset('assets/img/icon/sr-1-1.svg') }}" alt="icon"></div>
+                            <h3 class="service-title"><a href="#">Comfort & Care</a></h3>
+                            <p class="service-text">Soft, skin-friendly fabrics designed for all-day comfort, ensuring durability, easy care, and lasting freshness.</p>
+                            <div class="service-bottom">
+                                <a href="#" class="service-btn">Learn More</a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="service-style1">
+                    <div class="service-body">
+                        <div class="service-img"><a href="#"><img src="{{ asset('assets/img/services/service (1).svg') }}" alt="service"></a></div>
+                        <div class="service-content">
+                            <div class="service-icon"><img src="{{ asset('assets/img/icon/sr-1-2.svg') }}" alt="icon"></div>
+                            <h3 class="service-title"><a href="#">Child Care</a></h3>
+                            <p class="service-text">We have a very large indoor space allowing us to have designated areas for different types</p>
+                            <div class="service-bottom">
+                                <a href="#" class="service-btn">Learn More</a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="service-style1">
+                    <div class="service-body">
+                        <div class="service-img"><a href="#"><img src="{{ asset('assets/img/services/service (2).svg') }}" alt="service"></a></div>
+                        <div class="service-content">
+                            <div class="service-icon"><img src="{{ asset('assets/img/icon/sr-1-3.svg') }}" alt="icon"></div>
+                            <h3 class="service-title"><a href="#">Healthy Meals</a></h3>
+                            <p class="service-text">We have a very large indoor space allowing us to have designated areas for different types</p>
+                            <div class="service-bottom">
+                                <a href="#" class="service-btn">Learn More</a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="service-style1">
+                    <div class="service-body">
+                        <div class="service-img"><a href="#"><img src="{{ asset('assets/img/services/service (3).svg') }}" alt="service"></a></div>
+                        <div class="service-content">
+                            <div class="service-icon"><img src="{{ asset('assets/img/icon/sr-1-4.svg') }}" alt="icon"></div>
+                            <h3 class="service-title"><a href="#">Secure Environment</a></h3>
+                            <p class="service-text">We have a very large indoor space allowing us to have designated areas for different types</p>
+                            <div class="service-bottom">
+                                <a href="#" class="service-btn">Learn More</a>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -493,4 +936,6 @@ Service Area
             </div>
         </div>
 </section>
+
+
 @endsection

@@ -10,6 +10,7 @@
         content="we make school uniform shopping easy and hassle-free. As a leading uniform manufacturer in Coimbatore, we have been supplying high-quality school uniforms for years. Now, we're bringing our expertise online, making it simpler for parents to order uniforms with just a few clicks">
     <!-- <meta name="keywords" content="SoCo Uniforms - School Uniforms"> -->
     <meta name="robots" content="INDEX,FOLLOW">
+    <meta name="csrf-token" content="{{ csrf_token() }}">
 
     <!-- Mobile Specific Metas -->
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
@@ -49,7 +50,7 @@
         html,
         body {
             height: 100%;
-            background-color: #f8f5ff;
+            background-color: #ffffff;
         }
 
         .vs-hero-wrapper {
@@ -165,6 +166,13 @@
             .vs-hero-wrapper .ls-l {
                 left: 50% !important;
                 transform: translateX(-50%);
+            }
+        }
+        @media (max-width: 768px) {
+            /* Resize Menu Toggle Button Globally */
+            .vs-menu-toggle {
+                transform: scale(0.8);
+                transform-origin: center;
             }
         }
     </style>
