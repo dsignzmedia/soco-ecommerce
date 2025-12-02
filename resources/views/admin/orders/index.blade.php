@@ -108,11 +108,47 @@
                         <td>₹{{ number_format($order->total_amount, 2) }}</td>
                         <td>{{ ucfirst($order->payment_status) }}</td>
                         <td>
-                            <span class="status-pill status-{{ $order->order_status }}">
-                                {{ ucfirst($order->order_status) }}
-                            </span>
+                            <form action="{{ route('master.admin.orders.status', $order) }}" method="POST">
+                                @csrf
+                                <select name="order_status" onchange="this.form.submit()" style="
+                                    padding: 6px 10px;
+                                    border-radius: 4px;
+                                    font-size: 11px;
+                                    font-weight: 700;
+                                    color: white;
+                                    border: none;
+                                    cursor: pointer;
+                                    width: 100%;
+                                    text-transform: uppercase;
+                                    background-color: 
+                                        @if($order->order_status == 'delivered') #0ea5e9
+                                        @elseif($order->order_status == 'payment_pending') #eab308
+                                        @elseif($order->order_status == 'processing') #22c55e
+                                        @elseif($order->order_status == 'shipped') #3b82f6
+                                        @elseif($order->order_status == 'failed') #ef4444
+                                        @elseif($order->order_status == 'refunded') #64748b
+                                        @elseif($order->order_status == 'label_generated') #1e293b
+                                        @elseif($order->order_status == 'rtd') #475569
+                                        @elseif($order->order_status == 'dispatched') #2563eb
+                                        @else #6b7280 @endif;
+                                ">
+                                    @foreach([
+                                        'delivered' => 'DELIVERED',
+                                        'payment_pending' => 'PAYMENT PENDING',
+                                        'processing' => 'PROCESSING',
+                                        'shipped' => 'SHIPPED',
+                                        'failed' => 'FAILED',
+                                        'refunded' => 'REFUNDED',
+                                        'label_generated' => 'LABEL GENERATED',
+                                        'rtd' => 'RTD',
+                                        'dispatched' => 'DISPATCHED'
+                                    ] as $value => $label)
+                                        <option value="{{ $value }}" @selected($order->order_status == $value) style="background-color: white; color: black;">{{ $label }}</option>
+                                    @endforeach
+                                </select>
+                            </form>
                             @if($order->return_exchange_status)
-                                <small style="color:#b42318;">{{ $order->return_exchange_status }}</small>
+                                <small style="color:#b42318; margin-top: 4px;">{{ $order->return_exchange_status }}</small>
                             @endif
                         </td>
                         <td>₹{{ number_format($order->shipping_cost, 2) }}</td>

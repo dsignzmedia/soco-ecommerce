@@ -248,36 +248,30 @@ class AuthController extends Controller
         $schoolLogo = null;
         $schoolAddress = null;
         if ($selectedProfile) {
-            $schoolLogoMap = [
-                'Stanes ICSE School' => 'Stanes ICSE logo.png',
-                'Stanes School CBSE' => 'Stanes School CBSE logo.jpg',
-                'Stanes Anglo Indian Higher Secondary School (AIHSS) – Samacheer' => 'Stanes Anglo Indian Higher Secondary School (AIHSS) – Samacheer logo.png',
-                'Bharatiya Vidya Bhavan Matric Higher Secondary School (BVB) – RS Puram' => 'Bharatiya Vidya Bhavan Matric Higher Secondary School (BVB) – RS Puram logo.jpg',
-                'Bharatiya Vidya Bhavan Matric Higher Secondary School (BVB) – Ajjanur' => 'Bharatiya Vidya Bhavan Matric Higher Secondary School (BVB) – Ajjanur logo.jpg',
-            ];
-            
-            $schoolAddresses = [
-                'Stanes ICSE School' => 'Peelamedu',
-                'Stanes School CBSE' => 'Avinashi Road',
-                'Stanes Anglo Indian Higher Secondary School (AIHSS) – Samacheer' => 'Avinashi Road',
-                'Bharatiya Vidya Bhavan Matric Higher Secondary School (BVB) – RS Puram' => 'R S Puram',
-                'Bharatiya Vidya Bhavan Matric Higher Secondary School (BVB) – Ajjanur' => 'Ajjanur',
-                'Shri Nehru Vidyalaya Matriculation Higher Secondary School (SNV)' => 'R.S. Puram',
-            ];
-            
-            if (isset($schoolLogoMap[$selectedProfile['school_name']])) {
-                $schoolLogo = asset('assets/img/school_logo/' . $schoolLogoMap[$selectedProfile['school_name']]);
-            }
-            
-            if (isset($schoolAddresses[$selectedProfile['school_name']])) {
-                $schoolAddress = $schoolAddresses[$selectedProfile['school_name']];
+            $school = \App\Models\Admin\Master\School::where('name', $selectedProfile['school_name'])->first();
+            if ($school) {
+                $schoolLogo = $school->logo ? asset('storage/' . $school->logo) : null;
+                $schoolAddress = $school->city;
             }
         }
         
+        // Fetch active schools with their logos for the Add Student modal
+        $schools = \App\Models\Admin\Master\School::where('status', 'active')
+            ->select('id', 'name', 'city as location', 'logo')
+            ->orderBy('name')
+            ->get()
+            ->map(function($school) {
+                return [
+                    'name' => $school->name,
+                    'location' => $school->location ?? '',
+                    'logo' => $school->logo ? asset('storage/' . $school->logo) : null,
+                ];
+            });
+
         // Get parent phone number from session (in production, from database)
         $parentPhone = session('parent_phone', '+91 9159413234');
-        
-        return view('frontend.dashboard.parent-dashboard', compact('profiles', 'selectedProfile', 'purchasedProducts', 'schoolLogo', 'schoolAddress', 'parentPhone'));
+
+        return view('frontend.dashboard.parent-dashboard', compact('profiles', 'selectedProfile', 'purchasedProducts', 'schoolLogo', 'schoolAddress', 'parentPhone', 'schools'));
     }
 
     public function accountDetails()
@@ -295,7 +289,20 @@ class AuthController extends Controller
 
     public function createProfile()
     {
-        return view('frontend.dashboard.create-profile');
+        // Fetch active schools with their logos
+        $schools = \App\Models\Admin\Master\School::where('status', 'active')
+            ->select('id', 'name', 'city as location', 'logo')
+            ->orderBy('name')
+            ->get()
+            ->map(function($school) {
+                return [
+                    'name' => $school->name,
+                    'location' => $school->location ?? '',
+                    'logo' => $school->logo ? asset('storage/' . $school->logo) : null,
+                ];
+            });
+
+        return view('frontend.dashboard.create-profile', compact('schools'));
     }
 
     public function storeProfile(Request $request)
@@ -811,28 +818,87 @@ class AuthController extends Controller
                 ->with('error', 'Please select a student profile first.');
         }
 
-        // Load products from folder based on school name
-        $folderProducts = $this->loadProductsFromFolder($selectedProfile['school_name']);
-        
-        // Mark folder products as authorized
-        foreach ($folderProducts as &$product) {
-            $product['type'] = 'authorized';
+        // Fetch real products from database
+        $schoolName = $selectedProfile['school_name'];
+        $school = \App\Models\Admin\Master\School::where('name', $schoolName)->first();
+
+        $allProducts = [];
+
+        if ($school) {
+            $dbProductsQuery = \App\Models\Admin\Master\ProductMapping::where('school_id', $school->id)
+                ->where('status', 'live'); // Assuming 'live' is the active status
+            
+            // Filter by grade if available in profile
+            if (isset($selectedProfile['grade'])) {
+                $dbProductsQuery->where(function($q) use ($selectedProfile) {
+                    $q->where('grade', $selectedProfile['grade'])
+                      ->orWhereNull('grade')
+                      ->orWhere('grade', ''); // Handle empty strings if any
+                });
+            }
+
+            // Filter by gender if available in profile
+            if (isset($selectedProfile['gender'])) {
+                $gender = strtolower($selectedProfile['gender']);
+                $genderMap = [
+                    'male' => 'Boys',
+                    'female' => 'Girls',
+                    'boys' => 'Boys',
+                    'girls' => 'Girls'
+                ];
+                $mappedGender = $genderMap[$gender] ?? $selectedProfile['gender'];
+
+                $dbProductsQuery->where(function($q) use ($mappedGender) {
+                    $q->where('gender', $mappedGender)
+                      ->orWhere('gender', 'unisex')
+                      ->orWhere('gender', 'Unisex');
+                });
+            }
+
+            $dbProducts = $dbProductsQuery->get();
+
+            foreach ($dbProducts as $dbProduct) {
+                // Determine image URL
+                $image = $dbProduct->featured_image 
+                    ? (\Illuminate\Support\Str::startsWith($dbProduct->featured_image, 'http') ? $dbProduct->featured_image : asset('storage/' . $dbProduct->featured_image))
+                    : asset('assets/img/product/product1-1.png');
+                
+                // Handle media images if available
+                $images = [$image];
+                if ($dbProduct->media_images) {
+                    foreach ($dbProduct->media_images as $mediaImg) {
+                        $images[] = \Illuminate\Support\Str::startsWith($mediaImg, 'http') ? $mediaImg : asset('storage/' . $mediaImg);
+                    }
+                }
+
+                $allProducts[] = [
+                    'id' => $dbProduct->id,
+                    'name' => $dbProduct->product_name,
+                    'price' => $dbProduct->price_regular,
+                    'original_price' => $dbProduct->price_sale, // Assuming price_sale is the original/higher price if on sale, or vice versa. Adjust logic as needed.
+                    'image' => $image,
+                    'images' => $images,
+                    'description' => $dbProduct->description,
+                    'type' => strtolower($dbProduct->product_type ?? 'authorized'),
+                    'category' => $dbProduct->category ?? 'regular_uniforms',
+                    'gender' => match(strtolower($dbProduct->gender ?? 'unisex')) {
+                        'boys', 'male' => 'male',
+                        'girls', 'female' => 'female',
+                        default => 'unisex'
+                    },
+                    'sizes' => ['S', 'M', 'L', 'XL', 'XXL'], // Default sizes as DB doesn't have them yet
+                    'tags' => $dbProduct->tag_name ? explode(',', $dbProduct->tag_name) : [],
+                    'sku' => $dbProduct->id, // Use ID as SKU for now
+                ];
+            }
+        } else {
+            // Fallback or empty if school not found in DB
+            // You might want to keep the fake data here for testing if DB is empty
+            // For now, let's return empty to prove the connection (or lack thereof)
+             $allProducts = [];
         }
-        
-        // Add additional products for all categories
-        $additionalProducts = $this->getAdditionalProducts();
-        
-        $allProducts = array_merge($folderProducts, $additionalProducts);
-        
-        // Filter products based on gender (in production, this would be more sophisticated)
-        // For now, show all products
 
-        // Get wishlist product IDs for this profile
-        $wishlistProductIds = \App\Models\Wishlist::where('profile_id', $selectedProfile['id'])
-            ->pluck('product_id')
-            ->toArray();
-
-        return view('frontend.store.index', compact('selectedProfile', 'allProducts', 'wishlistProductIds'));
+        return view('frontend.store.index', compact('selectedProfile', 'allProducts'));
     }
 
     public function productDetail($productId, Request $request)
@@ -851,53 +917,43 @@ class AuthController extends Controller
                 ->with('error', 'Please select a student profile first.');
         }
 
-        // Load products from folder based on school name
-        $folderProducts = $this->loadProductsFromFolder($selectedProfile['school_name']);
-        
-        // Mark folder products as authorized
-        foreach ($folderProducts as &$product) {
-            $product['type'] = 'authorized';
-        }
-        
-        // Add all additional products (same as in store method)
-        $additionalProducts = $this->getAdditionalProducts();
-        
-        $allProducts = array_merge($folderProducts, $additionalProducts);
-        
-        // If no products found, use default
-        if (empty($allProducts)) {
-            $allProducts = [
-                [
-                    'id' => 1,
-                    'name' => 'School Shirt',
-                    'price' => 450,
-                    'image' => asset('assets/img/products/shirt.jpg'),
-                    'images' => [asset('assets/img/products/shirt.jpg')],
-                    'description' => 'Premium quality school shirt with school logo. Made from comfortable cotton blend fabric. Features school emblem and colors.',
-                    'type' => 'authorized',
-                    'sizes' => ['24', '26', '28', '30', '32'],
-                ],
-            ];
-        }
+        // Fetch real product from database
+        $dbProduct = \App\Models\Admin\Master\ProductMapping::find($productId);
 
-        $product = collect($allProducts)->firstWhere('id', (int)$productId);
-        
-        // Ensure images array exists
-        if ($product && !isset($product['images'])) {
-            $product['images'] = [$product['image'] ?? asset('assets/img/products/shirt.jpg')];
-        }
-
-        if (!$product) {
+        if (!$dbProduct) {
             return redirect()->route('frontend.parent.store', ['profile_id' => $profileId])
                 ->with('error', 'Product not found.');
         }
 
-        // Check if product is in wishlist
-        $inWishlist = \App\Models\Wishlist::where('profile_id', $selectedProfile['id'])
-            ->where('product_id', $productId)
-            ->exists();
+        // Determine image URL
+        $image = $dbProduct->featured_image 
+            ? (\Illuminate\Support\Str::startsWith($dbProduct->featured_image, 'http') ? $dbProduct->featured_image : asset('storage/' . $dbProduct->featured_image))
+            : asset('assets/img/product/product1-1.png');
+        
+        // Handle media images if available
+        $images = [$image];
+        if ($dbProduct->media_images) {
+            foreach ($dbProduct->media_images as $mediaImg) {
+                $images[] = \Illuminate\Support\Str::startsWith($mediaImg, 'http') ? $mediaImg : asset('storage/' . $mediaImg);
+            }
+        }
 
-        return view('frontend.store.product-detail', compact('selectedProfile', 'product', 'inWishlist'));
+        $product = [
+            'id' => $dbProduct->id,
+            'name' => $dbProduct->product_name,
+            'price' => $dbProduct->price_regular,
+            'original_price' => $dbProduct->price_sale,
+            'image' => $image,
+            'images' => $images,
+            'description' => $dbProduct->description,
+            'type' => $dbProduct->product_type ?? 'authorized',
+            'category' => $dbProduct->category ?? 'regular_uniforms',
+            'sizes' => ['S', 'M', 'L', 'XL', 'XXL'], // Default sizes
+            'tags' => $dbProduct->tag_name ? explode(',', $dbProduct->tag_name) : [],
+            'sku' => $dbProduct->id,
+        ];
+
+        return view('frontend.store.product-detail', compact('selectedProfile', 'product'));
     }
 
     public function addToCart(Request $request)
@@ -998,47 +1054,19 @@ class AuthController extends Controller
         $cart = session('cart', []);
         $profiles = session('student_profiles', []);
         
-        // Get all unique profile IDs from cart
-        $cartProfileIds = array_unique(array_column($cart, 'profile_id'));
+        // Get all unique product IDs from cart
+        $productIds = array_unique(array_column($cart, 'product_id'));
         
-        // Load products for all profiles in cart
-        $allProductsMap = [];
-        
-        // Always load default products first (fallback)
-        $defaultProducts = [
-            1 => ['id' => 1, 'name' => 'School Shirt', 'price' => 450, 'image' => asset('assets/img/products/shirt.jpg')],
-            2 => ['id' => 2, 'name' => 'School Pants', 'price' => 550, 'image' => asset('assets/img/products/pants.jpg')],
-            3 => ['id' => 3, 'name' => 'School Skirt', 'price' => 480, 'image' => asset('assets/img/products/skirt.jpg')],
-            4 => ['id' => 4, 'name' => 'School Tie', 'price' => 250, 'image' => asset('assets/img/products/tie.jpg')],
-            5 => ['id' => 5, 'name' => 'School Belt', 'price' => 300, 'image' => asset('assets/img/products/belt.jpg')],
-        ];
-        $allProductsMap = $defaultProducts;
-
-        // Add additional products (merchandise, etc)
-        $additionalProducts = $this->getAdditionalProducts();
-        foreach ($additionalProducts as $product) {
-            $allProductsMap[$product['id']] = $product;
-        }
-
-        // Load specific school products for each profile in cart
-        foreach ($cartProfileIds as $pId) {
-            $profile = collect($profiles)->firstWhere('id', (int)$pId);
-            if ($profile) {
-                $folderProducts = $this->loadProductsFromFolder($profile['school_name']);
-                foreach ($folderProducts as $product) {
-                    $product['type'] = 'authorized';
-                    $allProductsMap[$product['id']] = $product;
-                }
-            }
-        }
+        // Fetch products from DB
+        $products = \App\Models\Admin\Master\ProductMapping::whereIn('id', $productIds)->get()->keyBy('id');
 
         $cartItems = [];
         $total = 0;
         
-        foreach ($cart as $item) {
-            if (isset($allProductsMap[$item['product_id']])) {
-                $product = $allProductsMap[$item['product_id']];
-                $itemTotal = $product['price'] * $item['quantity'];
+        foreach ($cart as $index => $item) {
+            if (isset($products[$item['product_id']])) {
+                $product = $products[$item['product_id']];
+                $itemTotal = $product->price_sale * $item['quantity'];
                 $total += $itemTotal;
                 
                 // Find student name
@@ -1050,14 +1078,34 @@ class AuthController extends Controller
                     }
                 }
                 
-                $cartItems[] = array_merge($item, $product, [
+                // Get product image - try multiple fields
+            $productImage = null;
+            // Try featured_image first
+            if ($product->featured_image) {
+                $productImage = $product->featured_image;
+            }
+            // Try media_images array
+            elseif ($product->media_images && is_array($product->media_images) && !empty($product->media_images)) {
+                $productImage = $product->media_images[0];
+            }
+            // Try media_gallery array
+            elseif ($product->media_gallery && is_array($product->media_gallery) && !empty($product->media_gallery)) {
+                $productImage = $product->media_gallery[0];
+            }
+            
+            // Merge item data with product data from DB
+            $cartItems[] = array_merge($item, [
+                'name' => $product->product_name,
+                'price' => $product->price_sale,
+                'image' => $productImage ? asset('storage/' . $productImage) : null,
                     'item_total' => $itemTotal,
-                    'student_name' => $studentName
+                    'student_name' => $studentName,
+                    'original_index' => $index // Keep track of original index for updates/removes
                 ]);
             }
         }
 
-        // For the view's "Buy More" link, we can just use the first profile or the requested one
+        // For the view's "Buy More" link
         $profileId = $request->get('profile_id', $cart[0]['profile_id'] ?? null);
         $selectedProfile = null;
         if ($profileId) {
@@ -1127,47 +1175,67 @@ class AuthController extends Controller
             $selectedProfile = collect($profiles)->firstWhere('id', (int)$profileId);
         }
         
-        // Load all products using the same logic as store page
-        $allProductsMap = [];
-        if ($selectedProfile) {
-            // Load products from folder based on school name
-            $folderProducts = $this->loadProductsFromFolder($selectedProfile['school_name']);
-            
-            // Mark folder products as authorized
-            foreach ($folderProducts as &$product) {
-                $product['type'] = 'authorized';
-            }
-            
-            // Add all additional products
-            $additionalProducts = $this->getAdditionalProducts();
-            
-            $allProducts = array_merge($folderProducts, $additionalProducts);
-            
-            // Create a map for quick lookup
-            foreach ($allProducts as $product) {
-                $allProductsMap[$product['id']] = $product;
-            }
-        } else {
-            // Fallback to default products if no profile
-            $allProductsMap = [
-                1 => ['id' => 1, 'name' => 'School Shirt', 'price' => 450, 'image' => asset('assets/img/products/shirt.jpg')],
-                2 => ['id' => 2, 'name' => 'School Pants', 'price' => 550, 'image' => asset('assets/img/products/pants.jpg')],
-                3 => ['id' => 3, 'name' => 'School Skirt', 'price' => 480, 'image' => asset('assets/img/products/skirt.jpg')],
-                4 => ['id' => 4, 'name' => 'School Tie', 'price' => 250, 'image' => asset('assets/img/products/tie.jpg')],
-                5 => ['id' => 5, 'name' => 'School Belt', 'price' => 300, 'image' => asset('assets/img/products/belt.jpg')],
-            ];
-        }
+        // Get unique product IDs from filtered cart
+        $productIds = array_unique(array_column($filteredCart, 'product_id'));
+        
+        // Fetch products from DB
+        $products = \App\Models\Admin\Master\ProductMapping::whereIn('id', $productIds)->get()->keyBy('id');
 
         $cartItems = [];
-        $total = 0;
+        $subtotal = 0;
+        $totalTax = 0;
+        
         foreach ($filteredCart as $item) {
-            if (isset($allProductsMap[$item['product_id']])) {
-                $product = $allProductsMap[$item['product_id']];
-                $itemTotal = $product['price'] * $item['quantity'];
-                $total += $itemTotal;
-                $cartItems[] = array_merge($item, $product, ['item_total' => $itemTotal]);
+            if (isset($products[$item['product_id']])) {
+                $product = $products[$item['product_id']];
+                $itemSubtotal = $product->price_sale * $item['quantity'];
+                
+                // Calculate tax for this item using price_tax field (which stores the percentage)
+                $taxPercentage = $product->price_tax ?? 0;
+                $itemTax = ($itemSubtotal * $taxPercentage) / 100;
+                $itemTotal = $itemSubtotal + $itemTax;
+                
+                $subtotal += $itemSubtotal;
+                $totalTax += $itemTax;
+                
+                // Get student name from profile
+                $studentName = 'Unknown Student';
+                if (isset($item['profile_id'])) {
+                    $profile = collect($profiles)->firstWhere('id', (int)$item['profile_id']);
+                    if ($profile) {
+                        $studentName = $profile['student_name'];
+                    }
+                }
+                
+                // Get product image - try multiple fields
+                $productImage = null;
+                // Try featured_image first
+                if ($product->featured_image) {
+                    $productImage = $product->featured_image;
+                }
+                // Try media_images array
+                elseif ($product->media_images && is_array($product->media_images) && !empty($product->media_images)) {
+                    $productImage = $product->media_images[0];
+                }
+                // Try media_gallery array
+                elseif ($product->media_gallery && is_array($product->media_gallery) && !empty($product->media_gallery)) {
+                    $productImage = $product->media_gallery[0];
+                }
+                
+                $cartItems[] = array_merge($item, [
+                    'name' => $product->product_name,
+                    'price' => $product->price_sale,
+                    'image' => $productImage ? asset('storage/' . $productImage) : null,
+                    'item_total' => $itemTotal,
+                    'item_subtotal' => $itemSubtotal,
+                    'item_tax' => $itemTax,
+                    'tax_percentage' => $taxPercentage,
+                    'student_name' => $studentName,
+                ]);
             }
         }
+        
+        $total = $subtotal + $totalTax;
 
         // Get saved addresses from session
         $savedAddresses = session('saved_addresses', []);
@@ -1175,7 +1243,7 @@ class AuthController extends Controller
         // Store selected indices in session for processCheckout
         session(['checkout_selected_indices' => $selectedIndices]);
         
-        return view('frontend.checkout.index', compact('cartItems', 'total', 'profiles', 'selectedProfile', 'savedAddresses'));
+        return view('frontend.checkout.index', compact('cartItems', 'total', 'subtotal', 'totalTax', 'profiles', 'selectedProfile', 'savedAddresses'));
     }
 
     public function processCheckout(Request $request)
@@ -1267,15 +1335,13 @@ class AuthController extends Controller
                     ->with('error', 'Please add or select a shipping address before placing your order.');
             }
 
-            // Ensure all items belong to the same profile (safety check)
-            $profileIds = array_unique(array_column($filteredCart, 'profile_id'));
-            if (count($profileIds) > 1) {
-                return redirect()->route('frontend.parent.checkout')
-                    ->with('error', 'All items in cart must be for the same student.');
-            }
+            // Allow multiple students in one order
             
             // Create order with unique ID
-            $orderId = 'ORD' . time() . rand(1000, 9999);
+            // Get the last order id to increment
+            $lastOrder = \App\Models\Admin\Master\Order::latest('id')->first();
+            $nextId = $lastOrder ? $lastOrder->id + 1 : 1;
+            $orderNumber = 'SOCO-' . $nextId;
             
             // Get profile_id from cart (all items should have same profile_id)
             $profileId = !empty($cart) ? ($cart[0]['profile_id'] ?? null) : null;
@@ -1286,47 +1352,81 @@ class AuthController extends Controller
             if ($profileId) {
                 $studentProfile = collect($profiles)->firstWhere('id', (int)$profileId);
             }
-            
-                $order = [
-                    'id' => $orderId,
-                    'items' => $filteredCart, // Store only selected cart items
-                    'status' => 'ORDER PLACED',
-                    'created_at' => now()->toDateTimeString(),
-                    'total' => $request->get('total', 0),
-                    'shipping_address' => $shippingAddress,
-                    'profile_id' => $profileId,
-                    'student_name' => $studentProfile ? $studentProfile['student_name'] : 'Unknown',
-                ];
 
-                $orders = session('orders', []);
-                $orders[] = $order;
-                session(['orders' => $orders]);
+            // DB Transaction to ensure data consistency
+            \Illuminate\Support\Facades\DB::beginTransaction();
+            
+            foreach ($filteredCart as $index => $item) {
+                // Fetch product details from DB
+                $product = \App\Models\Admin\Master\ProductMapping::find($item['product_id']);
                 
-                // Remove only selected items from cart
+                if (!$product) {
+                    continue; // Skip if product not found
+                }
+
+                // Create Order Record with unique suffix for each item
+                // Format: SOCO-[ID]-[Index]
+                $uniqueOrderNumber = $orderNumber . '-' . ($index + 1);
+
+                \App\Models\Admin\Master\Order::create([
+                    'order_number' => $uniqueOrderNumber,
+                    'school_id' => $studentProfile['school_id'] ?? $product->school_id,
+                    'order_date' => now(),
+                    'student_name' => $studentProfile['student_name'] ?? 'Unknown',
+                    'grade' => $studentProfile['grade'] ?? $product->grade,
+                    'category' => $product->category ?? 'General',
+                    'item_name' => $product->product_name,
+                    'size' => $item['size'],
+                    'quantity' => $item['quantity'],
+                    'customer_name' => $shippingAddress['name'],
+                    'customer_address' => $shippingAddress['address'] . ', ' . $shippingAddress['city'] . ', ' . $shippingAddress['state'] . ' - ' . $shippingAddress['pincode'],
+                    'customer_phone' => $shippingAddress['phone'],
+                    'customer_email' => $shippingAddress['email'],
+                    'total_amount' => $product->price_sale * $item['quantity'], // Use current price from DB
+                    'tax_amount' => 0,
+                    'shipping_cost' => 0,
+                    'payment_status' => 'pending',
+                    'order_status' => 'processing',
+                ]);
+
+                // Decrement Inventory
+                $product->decrement('inventory_stock', $item['quantity']);
+            }
+            
+            \Illuminate\Support\Facades\DB::commit();
+            
+            // Clear cart (or selected items)
+            if (empty($selectedIndices)) {
+                session()->forget('cart');
+            } else {
                 $remainingCart = [];
                 foreach ($cart as $index => $item) {
                     if (!in_array($index, $selectedIndices)) {
                         $remainingCart[] = $item;
                     }
                 }
-                session(['cart' => $remainingCart]);
-                session()->forget('checkout_selected_indices'); // Clear selection
+                session(['cart' => $remainingCart]); // Reindex array
+            }
+            
+            // Clear checkout session data
+            session()->forget(['checkout_selected_indices', 'orders']);
 
-            return redirect()->route('frontend.parent.orders')
-                ->with('success', 'Order placed successfully!');
-        } catch (ValidationException $e) {
+            return redirect()->route('frontend.parent.orders')->with('success', 'Order placed successfully! Order # ' . $orderNumber);
+            
+        } catch (\Illuminate\Validation\ValidationException $e) {
             return redirect()->back()
                 ->withErrors($e->errors())
                 ->withInput()
                 ->with('error', 'Please correct the highlighted errors and try again.');
         } catch (\Throwable $e) {
-            Log::error('Checkout processing error', [
+            \Illuminate\Support\Facades\DB::rollBack();
+            \Illuminate\Support\Facades\Log::error('Checkout processing error', [
                 'message' => $e->getMessage(),
                 'trace' => $e->getTraceAsString(),
             ]);
             
             return redirect()->route('frontend.parent.checkout')
-                ->with('error', 'An unexpected error occurred while processing your order. Please try again.');
+                ->with('error', 'An unexpected error occurred while processing your order. Please try again: ' . $e->getMessage());
         }
     }
 
@@ -1435,337 +1535,249 @@ class AuthController extends Controller
 
     public function orders()
     {
-        $orders = session('orders', []);
-        $profiles = session('student_profiles', []);
+        // Get logged in parent's phone number (assuming auth logic uses phone)
+        // Since we don't have a strict parent auth system yet, we'll use the session 'student_profiles' 
+        // to find orders related to the students.
+        // Ideally, we should have a parent_id or user_id.
         
-        // Build product map from all profiles' products
-        $allProducts = [];
-        foreach ($profiles as $profile) {
-            $folderProducts = $this->loadProductsFromFolder($profile['school_name']);
-            $additionalProducts = $this->getAdditionalProducts();
-            $allProductsList = array_merge($folderProducts, $additionalProducts);
+        $profiles = session('student_profiles', []);
+        $studentNames = collect($profiles)->pluck('student_name')->toArray();
+        
+        // Fetch orders from DB where student_name matches any of the profiles
+        // This is a temporary linkage based on student name. 
+        // A better approach would be linking by parent phone/email if available in session.
+        
+        $orders = \App\Models\Admin\Master\Order::whereIn('student_name', $studentNames)
+            ->orderByDesc('created_at')
+            ->get();
+
+        // Group orders by the base order number (before the hyphen)
+        // Group orders by the base order number (SOCO-ID-Index -> ID)
+        $groupedOrders = $orders->groupBy(function ($order) {
+            $parts = explode('-', $order->order_number);
+            return isset($parts[1]) ? $parts[1] : $parts[0];
+        });
+
+        // Transform for view
+        $formattedOrders = [];
+        foreach ($groupedOrders as $baseOrderNumber => $items) {
+            $firstItem = $items->first();
             
-            foreach ($allProductsList as $product) {
-                if (!isset($allProducts[$product['id']])) {
-                    $allProducts[$product['id']] = $product;
-                }
-            }
+            // Check if there's a return/exchange request for any item in this order
+            $orderIds = $items->pluck('id')->toArray();
+            $returnRequests = \App\Models\Admin\Master\ReturnExchangeRequest::whereIn('order_id', $orderIds)
+                ->get()
+                ->keyBy('order_id');
+            
+            $formattedOrders[] = [
+                'id' => $baseOrderNumber,
+                'status' => $firstItem->order_status,
+                'created_at' => $firstItem->created_at,
+                'total' => $items->sum('total_amount'),
+                // No longer attach a single request at order level; per-item will be added below
+                'items' => $items->map(function ($item) use ($returnRequests) {
+                    // Get product image
+                    $product = \App\Models\Admin\Master\ProductMapping::where('product_name', $item->item_name)
+                        ->where('school_id', $item->school_id)
+                        ->first();
+                    
+                    $productImage = null;
+                    if ($product) {
+                        if ($product->featured_image) {
+                            $productImage = $product->featured_image;
+                        } elseif ($product->media_images && is_array($product->media_images) && !empty($product->media_images)) {
+                            $productImage = $product->media_images[0];
+                        } elseif ($product->media_gallery && is_array($product->media_gallery) && !empty($product->media_gallery)) {
+                            $productImage = $product->media_gallery[0];
+                        }
+                    }
+                    
+                    return [
+                        'id' => $item->id,
+                        'name' => $item->item_name,
+                        'price' => $item->total_amount / $item->quantity, // Unit price
+                        'quantity' => $item->quantity,
+                        'size' => $item->size,
+                        'image' => $productImage ? asset('storage/' . $productImage) : null,
+                        'return_request' => $returnRequests[$item->id] ?? null,
+                    ];
+                })->toArray(),
+            ];
         }
 
-        // Enrich orders with product details and ensure no duplicates
-        foreach ($orders as &$order) {
-            // First enrich items with product details
-            foreach ($order['items'] as &$item) {
-                if (isset($allProducts[$item['product_id']])) {
-                    $product = $allProducts[$item['product_id']];
-                    $item = array_merge($item, [
-                        'name' => $product['name'] ?? 'Unknown Product',
-                        'price' => $product['price'] ?? 0,
-                        'image' => $product['image'] ?? null,
-                        'description' => $product['description'] ?? '',
-                    ]);
-                } else {
-                    // If product not found, set default values
-                    $item['name'] = $item['name'] ?? 'Unknown Product';
-                    $item['price'] = $item['price'] ?? 0;
-                    $item['image'] = $item['image'] ?? null;
-                    $item['description'] = $item['description'] ?? '';
-                }
-            }
-            
-            // Get unique items by product_id and size combination to prevent duplicates
-            $uniqueItems = [];
-            foreach ($order['items'] as $item) {
-                $key = ($item['product_id'] ?? '') . '_' . ($item['size'] ?? '');
-                if (!isset($uniqueItems[$key])) {
-                    $uniqueItems[$key] = $item;
-                } else {
-                    // If same product and size exists, merge quantities
-                    $existingQty = $uniqueItems[$key]['quantity'] ?? 0;
-                    $newQty = $item['quantity'] ?? 1;
-                    $uniqueItems[$key]['quantity'] = $existingQty + $newQty;
-                }
-            }
-            
-            // Replace items with unique items
-            $order['items'] = array_values($uniqueItems);
-        }
-
-        return view('frontend.orders.index', compact('orders', 'profiles'));
+        return view('frontend.orders.index', ['orders' => $formattedOrders, 'profiles' => $profiles]);
     }
 
     public function trackOrder($orderId)
     {
-        $orders = session('orders', []);
-        $order = collect($orders)->firstWhere('id', $orderId);
+        // Get orders from database based on the base order number
+        $profiles = session('student_profiles', []);
+        $studentNames = collect($profiles)->pluck('student_name')->toArray();
+        
+        $orders = \App\Models\Admin\Master\Order::whereIn('student_name', $studentNames)
+            ->where(function($q) use ($orderId) {
+                $q->where('order_number', 'like', 'SOCO-' . $orderId . '-%')
+                  ->orWhere('order_number', 'like', $orderId . '%');
+            })
+            ->get();
 
-        if (!$order) {
+        if ($orders->isEmpty()) {
             return redirect()->route('frontend.parent.orders')
                 ->with('error', 'Order not found.');
         }
 
-        // Order statuses
-        $statuses = ['ORDER PLACED', 'PACKED', 'SHIPPED', 'DELIVERED'];
-        $currentStatusIndex = array_search($order['status'], $statuses);
+        $firstOrder = $orders->first();
+        
+        // Order tracking statuses
+        $statuses = [
+            ['key' => 'pending', 'label' => 'Order Placed', 'icon' => 'shopping-cart'],
+            ['key' => 'processing', 'label' => 'Processing', 'icon' => 'tasks'],
+            ['key' => 'packed', 'label' => 'Packed', 'icon' => 'box'],
+            ['key' => 'shipped', 'label' => 'Shipped', 'icon' => 'truck'],
+            ['key' => 'delivered', 'label' => 'Delivered', 'icon' => 'check-circle'],
+        ];
+        
+        // Find current status index
+        $currentStatus = strtolower($firstOrder->order_status);
+        $currentStatusIndex = 0;
+        foreach ($statuses as $index => $status) {
+            if ($status['key'] === $currentStatus) {
+                $currentStatusIndex = $index;
+                break;
+            }
+        }
+        
+        // Format order data
+        $order = [
+            'id' => $orderId,
+            'status' => $firstOrder->order_status,
+            'created_at' => $firstOrder->created_at,
+            'updated_at' => $firstOrder->updated_at,
+            'total' => $orders->sum('total_amount'),
+            'items' => $orders->map(function ($item) {
+                return [
+                    'name' => $item->item_name,
+                    'quantity' => $item->quantity,
+                    'size' => $item->size,
+                    'price' => $item->total_amount,
+                ];
+            })->toArray(),
+        ];
 
         return view('frontend.orders.track', compact('order', 'statuses', 'currentStatusIndex'));
     }
 
-    public function returnExchange($orderId)
+    public function returnExchange($orderId, Request $request)
     {
-        $orders = session('orders', []);
-        $order = collect($orders)->firstWhere('id', $orderId);
+        // Fetch orders from database based on the base order number
+        $profiles = session('student_profiles', []);
+        $studentNames = collect($profiles)->pluck('student_name')->toArray();
+        
+        $orders = \App\Models\Admin\Master\Order::whereIn('student_name', $studentNames)
+            ->where(function($q) use ($orderId) {
+                $q->where('order_number', 'like', 'SOCO-' . $orderId . '-%')
+                  ->orWhere('order_number', 'like', $orderId . '%');
+            })
+            ->get();
 
-        if (!$order) {
+        if ($orders->isEmpty()) {
             return redirect()->route('frontend.parent.orders')
                 ->with('error', 'Order not found.');
         }
 
-        // Get profile for this order
-        $profiles = session('student_profiles', []);
-        $profileId = null;
-        if (!empty($order['items'])) {
-            $profileId = $order['items'][0]['profile_id'] ?? null;
-        }
+        // Get the first order for basic info
+        $firstOrder = $orders->first();
         
-        $selectedProfile = null;
-        if ($profileId) {
-            $selectedProfile = collect($profiles)->firstWhere('id', (int)$profileId);
-        }
+        // Get pre-selected items from query string
+        $selectedItems = $request->query('selected_items', []);
         
-        // Build product map
-        $allProducts = [];
-        if ($selectedProfile) {
-            $folderProducts = $this->loadProductsFromFolder($selectedProfile['school_name']);
-            $additionalProducts = $this->getAdditionalProducts();
-            $allProductsList = array_merge($folderProducts, $additionalProducts);
-            
-            foreach ($allProductsList as $product) {
-                $allProducts[$product['id']] = $product;
-            }
-        } else {
-            // Fallback: load from all profiles
-            foreach ($profiles as $profile) {
-                $folderProducts = $this->loadProductsFromFolder($profile['school_name']);
-                $additionalProducts = $this->getAdditionalProducts();
-                $allProductsList = array_merge($folderProducts, $additionalProducts);
+        // Format order data
+        $order = [
+            'id' => $orderId,
+            'status' => $firstOrder->order_status,
+            'created_at' => $firstOrder->created_at,
+            'total' => $orders->sum('total_amount'),
+            'items' => $orders->map(function ($item) {
+                // Try to get product image from ProductMapping
+                $product = \App\Models\Admin\Master\ProductMapping::where('product_name', $item->item_name)
+                    ->where('school_id', $item->school_id)
+                    ->first();
                 
-                foreach ($allProductsList as $product) {
-                    if (!isset($allProducts[$product['id']])) {
-                        $allProducts[$product['id']] = $product;
-                    }
+                $image = null;
+                if ($product && $product->product_images) {
+                    $images = is_string($product->product_images) 
+                        ? json_decode($product->product_images, true) 
+                        : $product->product_images;
+                    $image = is_array($images) && !empty($images) ? $images[0] : null;
                 }
-            }
-        }
+                
+                return [
+                    'id' => $item->id,
+                    'order_number' => $item->order_number,
+                    'name' => $item->item_name,
+                    'price' => $item->total_amount / $item->quantity,
+                    'quantity' => $item->quantity,
+                    'size' => $item->size,
+                    'image' => $image,
+                ];
+            })->toArray(),
+        ];
 
-        // Enrich order items with product details
-        foreach ($order['items'] as &$item) {
-            if (isset($allProducts[$item['product_id']])) {
-                $product = $allProducts[$item['product_id']];
-                $item = array_merge($item, [
-                    'name' => $product['name'],
-                    'price' => $product['price'],
-                    'image' => $product['image'],
-                    'description' => $product['description'] ?? '',
-                ]);
-            }
-        }
-
-        return view('frontend.orders.return-exchange', compact('order'));
+        return view('frontend.orders.return-exchange', compact('order', 'selectedItems'));
     }
 
     public function requestReturnExchange(Request $request)
     {
         $request->validate([
-            'order_id' => 'required|string',
+            'selected_items' => 'required|array|min:1',
+            'selected_items.*' => 'integer|exists:orders,id',
             'reason' => 'required|string',
             'action' => 'required|in:return,exchange',
             'photo' => 'nullable|image|max:2048',
         ]);
 
-        $orders = session('orders', []);
-        $orderIndex = collect($orders)->search(function($order) use ($request) {
-            return $order['id'] === $request->order_id;
-        });
-
-        if ($orderIndex === false) {
-            return redirect()->route('frontend.parent.orders')
-                ->with('error', 'Order not found.');
-        }
-
-        // Handle photo upload
+        // Handle photo upload once
         $photoPath = null;
         if ($request->hasFile('photo')) {
             $photoPath = $request->file('photo')->store('return-exchange', 'public');
         }
 
-        // Create return/exchange request
-        $returnRequest = [
-            'order_id' => $request->order_id,
-            'reason' => $request->reason,
-            'action' => $request->action,
-            'photo' => $photoPath,
-            'status' => 'REQUEST SUBMITTED - PENDING',
-            'created_at' => now()->toDateTimeString(),
-        ];
+        // Get authenticated student names for security check
+        $profiles = session('student_profiles', []);
+        $studentNames = collect($profiles)->pluck('student_name')->toArray();
 
-        $returnRequests = session('return_requests', []);
-        $returnRequests[] = $returnRequest;
-        session(['return_requests' => $returnRequests]);
+        // Fetch selected orders
+        $orders = \App\Models\Admin\Master\Order::whereIn('id', $request->selected_items)
+            ->whereIn('student_name', $studentNames)
+            ->get();
+
+        if ($orders->isEmpty()) {
+            return redirect()->back()->with('error', 'Invalid items selected.');
+        }
+
+        // Create return/exchange request for each selected item
+        foreach ($orders as $order) {
+            // Check if request already exists for this item to prevent duplicates
+            $exists = \App\Models\Admin\Master\ReturnExchangeRequest::where('order_id', $order->id)
+                ->whereIn('status', ['pending', 'approved', 'received'])
+                ->exists();
+            
+            if ($exists) {
+                continue; 
+            }
+
+            \App\Models\Admin\Master\ReturnExchangeRequest::create([
+                'order_id' => $order->id,
+                'type' => $request->action,
+                'reason' => $request->reason,
+                'photo_path' => $photoPath,
+                'status' => 'pending',
+                'customer_notes' => $request->reason,
+            ]);
+        }
 
         return redirect()->route('frontend.parent.orders')
-            ->with('success', 'Return/Exchange request submitted successfully!');
-    }
-    public function wishlist(Request $request)
-    {
-        // Get profiles to determine current profile
-        $profiles = session('student_profiles', []);
-        $selectedProfile = null;
-        
-        // Check if profile_id is passed in request
-        $profileId = $request->get('profile_id');
-        
-        if ($profileId) {
-            $selectedProfile = collect($profiles)->firstWhere('id', (int)$profileId);
-        }
-        
-        // Fallback: take the first one
-        if (!$selectedProfile && count($profiles) > 0) {
-            $selectedProfile = $profiles[0]; 
-        }
-
-        if (!$selectedProfile) {
-            return redirect()->route('frontend.parent.dashboard')->with('error', 'No student profile found.');
-        }
-
-        // Fetch from DB
-        $wishlistItems = \App\Models\Wishlist::where('profile_id', $selectedProfile['id'])
-            ->orderBy('created_at', 'desc')
-            ->get();
-            
-        // Transform to array format expected by view
-        $wishlist = $wishlistItems->map(function($item) {
-            return [
-                'id' => $item->product_id,
-                'name' => $item->product_details['name'] ?? 'Unknown',
-                'price' => $item->product_details['price'] ?? 0,
-                'image' => $item->product_details['image'] ?? '',
-                'added_at' => $item->created_at,
-            ];
-        })->toArray();
-
-        return view('frontend.wishlist.index', compact('wishlist', 'selectedProfile', 'profiles'));
+            ->with('success', 'Return/Exchange request submitted successfully for selected items!');
     }
 
-    public function addToWishlist(Request $request)
-    {
-        Log::info('addToWishlist called', $request->all());
-
-        $request->validate([
-            'product_id' => 'required|integer',
-            'name' => 'required|string',
-            'price' => 'required|numeric',
-            'image' => 'required|string',
-            'profile_id' => 'nullable|integer',
-        ]);
-
-        $profileId = $request->profile_id;
-        
-        // Fallback if profile_id not sent (try to get from session)
-        if (!$profileId) {
-            $profiles = session('student_profiles', []);
-            if (count($profiles) > 0) {
-                $profileId = $profiles[0]['id'];
-            }
-        }
-
-        Log::info('Profile ID resolved', ['profile_id' => $profileId]);
-
-        if (!$profileId) {
-             Log::error('No profile ID found');
-             if ($request->ajax() || $request->wantsJson()) {
-                return response()->json(['status' => 'error', 'message' => 'Please select a student profile.']);
-             }
-             return back()->with('error', 'Please select a student profile.');
-        }
-
-        // Check if exists in DB
-        $exists = \App\Models\Wishlist::where('profile_id', $profileId)
-            ->where('product_id', $request->product_id)
-            ->exists();
-        
-        Log::info('Product exists in wishlist?', ['exists' => $exists]);
-
-        if (!$exists) {
-            try {
-                \App\Models\Wishlist::create([
-                    'profile_id' => $profileId,
-                    'product_id' => $request->product_id,
-                    'product_details' => [
-                        'name' => $request->name,
-                        'price' => $request->price,
-                        'image' => $request->image,
-                    ]
-                ]);
-                Log::info('Product added to DB');
-            } catch (\Exception $e) {
-                Log::error('Error adding to wishlist: ' . $e->getMessage());
-                if ($request->ajax() || $request->wantsJson()) {
-                    return response()->json(['status' => 'error', 'message' => 'Failed to save to wishlist.']);
-                }
-                return back()->with('error', 'Failed to save to wishlist.');
-            }
-            
-            $count = \App\Models\Wishlist::where('profile_id', $profileId)->count();
-
-            if ($request->ajax() || $request->wantsJson()) {
-                return response()->json([
-                    'status' => 'success',
-                    'message' => 'Product added to wishlist!',
-                    'count' => $count,
-                    'action' => 'added'
-                ]);
-            }
-            
-            return back()->with('success', 'Product added to wishlist!');
-        } else {
-            // Toggle: Remove from wishlist if already exists
-            \App\Models\Wishlist::where('profile_id', $profileId)
-                ->where('product_id', $request->product_id)
-                ->delete();
-                
-            $count = \App\Models\Wishlist::where('profile_id', $profileId)->count();
-
-            if ($request->ajax() || $request->wantsJson()) {
-                return response()->json([
-                    'status' => 'success',
-                    'message' => 'Product removed from wishlist!',
-                    'count' => $count,
-                    'action' => 'removed'
-                ]);
-            }
-
-            return back()->with('success', 'Product removed from wishlist!');
-        }
-    }
-
-    public function removeFromWishlist(Request $request, $productId)
-    {
-        $profileId = $request->get('profile_id');
-        
-        if (!$profileId) {
-            $profiles = session('student_profiles', []);
-            if (count($profiles) > 0) {
-                $profileId = $profiles[0]['id'];
-            }
-        }
-        
-        if ($profileId) {
-            \App\Models\Wishlist::where('profile_id', $profileId)
-                ->where('product_id', $productId)
-                ->delete();
-        }
-
-        return back()->with('success', 'Product removed from wishlist!');
-    }
 }

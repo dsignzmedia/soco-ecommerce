@@ -61,24 +61,24 @@
                     <option value="{{ $school->id }}" @selected(($filters['school_id'] ?? '') == $school->id)>{{ $school->name }}</option>
                 @endforeach
             </select>
-            <select name="grade_id">
+            <select name="grade">
                 <option value="">All grades</option>
-                @foreach($grades as $grade)
-                    <option value="{{ $grade->id }}" @selected(($filters['grade_id'] ?? '') == $grade->id)>
-                        {{ $grade->name }} ({{ $grade->school?->name }})
+                @foreach($grades as $key => $label)
+                    <option value="{{ $key }}" @selected(($filters['grade'] ?? '') == $key)>
+                        {{ $label }}
                     </option>
                 @endforeach
             </select>
             <select name="category">
                 <option value="">Category</option>
-                @foreach($categories as $category)
-                    <option value="{{ $category }}" @selected(($filters['category'] ?? '') === $category)>{{ $category }}</option>
+                @foreach($categories as $key => $label)
+                    <option value="{{ $key }}" @selected(($filters['category'] ?? '') === $key)>{{ $label }}</option>
                 @endforeach
             </select>
             <select name="product_type">
                 <option value="">Product type</option>
-                @foreach($productTypes as $type)
-                    <option value="{{ $type }}" @selected(($filters['product_type'] ?? '') === $type)>{{ $type }}</option>
+                @foreach($productTypes as $key => $label)
+                    <option value="{{ $key }}" @selected(($filters['product_type'] ?? '') === $key)>{{ $label }}</option>
                 @endforeach
             </select>
             <select name="gender">
@@ -132,7 +132,7 @@
                     <tr>
                         <td>
                             @if($mapping->featured_image)
-                                <img src="{{ $mapping->featured_image }}" alt="{{ $mapping->product_name }}" style="width:64px;height:64px;object-fit:cover;border-radius:12px;">
+                                <img src="{{ Str::startsWith($mapping->featured_image, 'http') ? $mapping->featured_image : asset('storage/' . $mapping->featured_image) }}" alt="{{ $mapping->product_name }}" style="width:64px;height:64px;object-fit:cover;border-radius:12px;">
                             @else
                                 <div style="width:64px;height:64px;border-radius:12px;background:#f2f4f7;display:flex;align-items:center;justify-content:center;color:#98a2b3;">N/A</div>
                             @endif
@@ -142,7 +142,7 @@
                             <small>{{ $mapping->tag_name ?? $mapping->availability_label }}</small>
                         </td>
                         <td>{{ $mapping->school->name }}</td>
-                        <td>{{ $mapping->grade?->name ?? 'All grades' }}</td>
+                        <td>{{ $mapping->grade ?? 'All grades' }}</td>
                         <td>
                             {{ $mapping->category ?? '—' }}
                             <small>{{ $mapping->product_type ?? '—' }}</small>

@@ -49,6 +49,29 @@
         transform: scale(0.8);
         transform-origin: center;
     }
+
+    /* Reduce font sizes by half for mobile */
+    .sec-subtitle {
+        font-size: 0.7rem !important; /* Approx half of typical subtitle */
+    }
+    .sec-title {
+        font-size: 1.5rem !important; /* Approx half of typical h2 */
+    }
+    .sec-text, p {
+        font-size: 0.8rem !important; /* Approx half of typical paragraph */
+    }
+    .h4, h3 {
+        font-size: 1rem !important; /* Approx half of h3/h4 */
+    }
+    .vs-btn {
+        font-size: 0.8rem !important;
+        padding: 10px 20px !important;
+    }
+
+    /* Reduce header email font size specifically */
+    .header-links a[href^="mailto:"] {
+        font-size: 10px !important; /* Significantly smaller */
+    }
 }
 </style>
 

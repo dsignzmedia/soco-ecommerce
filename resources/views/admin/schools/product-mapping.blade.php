@@ -33,18 +33,27 @@
             </label>
             <label>
                 <span>Category</span>
-                <input type="text" name="category">
+                <select name="category">
+                    <option value="regular_uniforms">Regular Uniforms</option>
+                    <option value="fabrics">Fabrics</option>
+                    <option value="sports">Sports</option>
+                </select>
             </label>
             <label>
                 <span>Product type</span>
-                <input type="text" name="product_type">
+                <select name="product_type">
+                    <option value="authorized">Authorized Product</option>
+                    <option value="optional">Optional Product</option>
+                    <option value="merchandised">Merchandised Product</option>
+                    <option value="back_to_school">Back to School Product</option>
+                </select>
             </label>
             <label>
                 <span>Gender *</span>
                 <select name="gender">
-                    @foreach(['boys','girls','unisex'] as $gender)
-                        <option value="{{ $gender }}">{{ ucfirst($gender) }}</option>
-                    @endforeach
+                    <option value="male">Male</option>
+                    <option value="female">Female</option>
+                    <option value="unisex">Unisex</option>
                 </select>
             </label>
             <label>

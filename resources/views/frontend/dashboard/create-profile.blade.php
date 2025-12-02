@@ -43,11 +43,18 @@
             </div>
             <div class="filter-group">
                 <label class="filter-label">Gender</label>
-                <div class="filter-buttons">
-                    <button type="button" class="filter-btn gender-btn" data-value="male">Male</button>
-                    <button type="button" class="filter-btn gender-btn" data-value="female">Female</button>
+                <div class="gender-options" style="display: flex; gap: 20px;">
+                    <label class="radio-container">
+                        <input type="radio" name="gender" value="male" {{ (isset($profile) && $profile['gender'] == 'male') ? 'checked' : '' }} required>
+                        <span class="radio-checkmark"></span>
+                        <span class="radio-label">Male</span>
+                    </label>
+                    <label class="radio-container">
+                        <input type="radio" name="gender" value="female" {{ (isset($profile) && $profile['gender'] == 'female') ? 'checked' : '' }} required>
+                        <span class="radio-checkmark"></span>
+                        <span class="radio-label">Female</span>
+                    </label>
                 </div>
-                <input type="hidden" id="genderValue" name="gender" required>
             </div>
             <div class="form-actions">
                 <button type="submit" class="submit-btn w-100">
@@ -76,7 +83,54 @@
         max-width: 700px;
         width: 100%;
         box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+        max-height: 80vh; /* Limit height */
+        overflow-y: auto; /* Enable scrolling */
+        /* Custom scrollbar styling */
+        scrollbar-width: thin;
+        scrollbar-color: #ff1744 rgba(255, 255, 255, 0.1);
     }
+
+    /* Radio Button Styling */
+    .radio-container {
+        display: flex;
+        align-items: center;
+        cursor: pointer;
+        position: relative;
+        padding-left: 35px;
+        color: #fff;
+        font-family: 'Poppins', sans-serif;
+        font-size: 16px;
+        user-select: none;
+    }
+
+    .radio-container input {
+        position: absolute;
+        opacity: 0;
+        cursor: pointer;
+        height: 0;
+        width: 0;
+    }
+
+    .radio-checkmark {
+        position: absolute;
+        top: 0;
+        left: 0;
+        height: 24px;
+        width: 24px;
+        background-color: #fff;
+        border-radius: 50%;
+        transition: all 0.2s ease;
+    }
+
+    .radio-container:hover input ~ .radio-checkmark {
+        background-color: #f0f0f0;
+    }
+
+    .radio-container input:checked ~ .radio-checkmark {
+        background-color: #ff1744;
+        box-shadow: inset 0 0 0 4px #fff;
+    }
+
 
     .filter-group {
         margin-bottom: 35px;
@@ -301,8 +355,6 @@ document.addEventListener('DOMContentLoaded', function() {
                     // Update hidden input values
                     if (button.classList.contains('grade-btn')) {
                         document.getElementById('gradeValue').value = button.dataset.value;
-                    } else if (button.classList.contains('gender-btn')) {
-                        document.getElementById('genderValue').value = button.dataset.value;
                     }
                 }
             });
@@ -310,38 +362,7 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 
     // School name autocomplete with logos
-    const schools = [
-        {
-            name: 'Stanes ICSE School',
-            location: 'Peelamedu',
-            logo: '{{ asset("assets/img/school_logo/Stanes ICSE logo.png") }}'
-        },
-        {
-            name: 'Stanes School CBSE',
-            location: 'Avinashi Road',
-            logo: '{{ asset("assets/img/school_logo/Stanes School CBSE logo.jpg") }}'
-        },
-        {
-            name: 'Stanes Anglo Indian Higher Secondary School (AIHSS) – Samacheer',
-            location: 'Avinashi Road',
-            logo: '{{ asset("assets/img/school_logo/Stanes Anglo Indian Higher Secondary School (AIHSS) – Samacheer logo.png") }}'
-        },
-        {
-            name: 'Bharatiya Vidya Bhavan Matric Higher Secondary School (BVB) – RS Puram',
-            location: 'R S Puram',
-            logo: '{{ asset("assets/img/school_logo/Bharatiya Vidya Bhavan Matric Higher Secondary School (BVB) – RS Puram logo.jpg") }}'
-        },
-        {
-            name: 'Bharatiya Vidya Bhavan Matric Higher Secondary School (BVB) – Ajjanur',
-            location: 'Ajjanur',
-            logo: '{{ asset("assets/img/school_logo/Bharatiya Vidya Bhavan Matric Higher Secondary School (BVB) – Ajjanur logo.jpg") }}'
-        },
-        {
-            name: 'Shri Nehru Vidyalaya Matriculation Higher Secondary School (SNV)',
-            location: 'R.S. Puram',
-            logo: null // No logo file found
-        }
-    ];
+    const schools = @json($schools);
 
     const schoolInput = document.getElementById('schoolName');
     const suggestionBox = document.getElementById('schoolSuggestions');
@@ -409,14 +430,7 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         }
         
-        // Pre-select gender
-        const genderValue = '{{ $profile["gender"] }}';
-        if (genderValue) {
-            const genderBtn = document.querySelector(`.gender-btn[data-value="${genderValue}"]`);
-            if (genderBtn) {
-                genderBtn.click();
-            }
-        }
+        // Pre-select gender (handled by blade checked attribute)
     @endif
 
     // Form submission
@@ -425,7 +439,7 @@ document.addEventListener('DOMContentLoaded', function() {
         
         // Validate required fields
         const grade = document.getElementById('gradeValue').value;
-        const gender = document.getElementById('genderValue').value;
+        const gender = document.querySelector('input[name="gender"]:checked');
         const schoolName = document.getElementById('schoolName').value;
         const studentName = document.getElementById('studentName').value;
         const section = document.getElementById('section').value;

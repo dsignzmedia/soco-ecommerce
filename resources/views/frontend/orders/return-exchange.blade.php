@@ -19,16 +19,14 @@
             </div>
         </div>
 
-        <div class="row">
-            <div class="col-lg-8">
-                <div class="card shadow-sm rounded-4 border-0" style="background-color: #ffffff;">
-                    <div class="card-body p-4">
-                        <h5 class="mb-4">Request Return/Exchange</h5>
-                        
-                        <form action="{{ route('frontend.parent.request-return-exchange') }}" method="POST" enctype="multipart/form-data">
-                            @csrf
-                            <input type="hidden" name="order_id" value="{{ $order['id'] }}">
-
+        <form action="{{ route('frontend.parent.request-return-exchange') }}" method="POST" enctype="multipart/form-data">
+            @csrf
+            <div class="row">
+                <div class="col-lg-8">
+                    <div class="card shadow-sm rounded-4 border-0" style="background-color: #ffffff;">
+                        <div class="card-body p-4">
+                            <h5 class="mb-4">Request Return/Exchange</h5>
+                            
                             <!-- Select Reason -->
                             <div class="mb-4">
                                 <label class="form-label fw-bold">Select Reason</label>
@@ -79,32 +77,50 @@
                             <button type="submit" class="vs-btn">
                                 <i class="fas fa-paper-plane me-2"></i> Submit Request
                             </button>
-                        </form>
+                        </div>
                     </div>
                 </div>
-            </div>
 
-            <div class="col-lg-4">
-                <div class="card shadow-sm rounded-4 border-0" style="background-color: #ffffff;">
-                    <div class="card-body">
-                        <h5 class="mb-3">Order Items</h5>
-                        @foreach($order['items'] as $item)
-                            <div class="d-flex gap-2 mb-3 pb-3 border-bottom">
-                                <div class="flex-shrink-0">
-                                    <div class="bg-light rounded d-flex align-items-center justify-content-center" style="width: 60px; height: 60px;">
-                                        <i class="fas fa-image text-muted"></i>
+                <div class="col-lg-4">
+                    <div class="card shadow-sm rounded-4 border-0" style="background-color: #ffffff;">
+                        <div class="card-body">
+                            <h5 class="mb-3">Select Items to Return/Exchange</h5>
+                            <p class="text-muted small mb-3">Please select the items you wish to return or exchange.</p>
+                            
+                            @if($errors->has('selected_items'))
+                                <div class="alert alert-danger small py-2 mb-3">
+                                    {{ $errors->first('selected_items') }}
+                                </div>
+                            @endif
+
+                            @foreach($order['items'] as $item)
+                                <div class="d-flex gap-2 mb-3 pb-3 border-bottom position-relative">
+                                    <div class="form-check position-absolute" style="top: 0; left: 0; z-index: 10;">
+                                        <input class="form-check-input" type="checkbox" name="selected_items[]" value="{{ $item['id'] }}" id="item_{{ $item['id'] }}" @checked(in_array($item['id'], $selectedItems ?? []))>
+                                    </div>
+                                    <div class="flex-shrink-0 ms-4">
+                                        <div class="bg-light rounded d-flex align-items-center justify-content-center" style="width: 60px; height: 60px;">
+                                            @if($item['image'])
+                                                <img src="{{ $item['image'] }}" alt="{{ $item['name'] }}" class="img-fluid rounded" style="max-height: 100%; max-width: 100%;">
+                                            @else
+                                                <i class="fas fa-image text-muted"></i>
+                                            @endif
+                                        </div>
+                                    </div>
+                                    <div class="flex-grow-1">
+                                        <label class="form-check-label w-100" for="item_{{ $item['id'] }}" style="cursor: pointer;">
+                                            <h6 class="mb-1 small">{{ $item['name'] }}</h6>
+                                            <p class="text-muted small mb-0">Size: {{ $item['size'] }}</p>
+                                            <p class="text-muted small mb-0 fw-bold">₹{{ number_format($item['price'], 2) }}</p>
+                                        </label>
                                     </div>
                                 </div>
-                                <div class="flex-grow-1">
-                                    <h6 class="mb-1 small">{{ $item['name'] }}</h6>
-                                    <p class="text-muted small mb-0">Size: {{ $item['size'] }}</p>
-                                </div>
-                            </div>
-                        @endforeach
+                            @endforeach
+                        </div>
                     </div>
                 </div>
             </div>
-        </div>
+        </form>
     </div>
 </section>
 

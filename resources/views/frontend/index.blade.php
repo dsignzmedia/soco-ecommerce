@@ -1,6 +1,10 @@
 @extends('frontend.layouts.app')
 
 @section('content')
+<style>
+    
+</style>
+
 <div class="vs-menu-wrapper">
     <div class="vs-menu-area text-center">
         <button class="vs-menu-toggle"><i class="fal fa-times"></i></button>
@@ -257,11 +261,11 @@
                 style="font-size:36px; color:#000; stroke:#000; stroke-width:0px; text-align:left; font-style:normal; text-decoration:none; text-transform:none; font-weight:400; letter-spacing:0px; border-style:solid; background-position:0% 0%; background-repeat:no-repeat; background-clip:border-box; overflow:visible; width:255px; height:255px; border-width:60px 60px 60px 60px; border-color:#FFD600; border-radius:50% 50% 50% 50%; top:126px; left:740px; z-index:4; -webkit-background-clip:border-box;"
                 class="ls-l ls-hide-tablet ls-hide-phone ls-text-layer" data-ls="static:forever;">
             </ls-layer>
-            <div style="font-size:36px; stroke:#000; stroke-width:0px; text-align:left; font-style:normal; text-decoration:none; text-transform:none; font-weight:400; letter-spacing:0px; background-position:0% 0%; background-repeat:no-repeat; background-clip:border-box; overflow:visible; width:1296px; height:410px; left:312px; top:213px; background-color:rgb(73 13 89 / 81%); border-radius:213px 206px 50px 213px; z-index:5; -webkit-background-clip:border-box;"
+            <div style="font-size:36px; stroke:#000; stroke-width:0px; text-align:left; font-style:normal; text-decoration:none; text-transform:none; font-weight:400; letter-spacing:0px; background-position:0% 0%; background-repeat:no-repeat; background-clip:border-box; overflow:visible; width:900px; height:410px; left:500px; top:213px; background-color:rgb(73 13 89 / 81%); border-radius:100px; z-index:5; -webkit-background-clip:border-box;"
                 class="ls-l ls-hide-tablet ls-hide-phone ls-text-layer" data-ls="static:forever;"></div>
             <div style="font-size:36px; stroke:#000; stroke-width:0px; text-align:left; font-style:normal; text-decoration:none; text-transform:none; font-weight:400; letter-spacing:0px; background-position:0% 0%; background-repeat:no-repeat; background-clip:border-box; overflow:visible; width:1200px; height:600px; left:350px; top:76px; background-color:rgb(73 13 89 / 81%); border-radius:213px 206px 50px 213px; z-index:5; -webkit-background-clip:border-box;"
                 class="ls-l ls-hide-desktop ls-hide-phone ls-text-layer" data-ls="static:forever;"></div>
-            <div style="font-size:36px; stroke:#000; stroke-width:0px; text-align:left; font-style:normal; text-decoration:none; text-transform:none; font-weight:400; letter-spacing:0px; background-position:0% 0%; background-repeat:no-repeat; background-clip:border-box; overflow:visible; width:1300px; height:700px; left:50%; top:33px; background-color:rgb(73 13 89 / 81%); border-radius:213px 206px 50px 213px; z-index:5; -webkit-background-clip:border-box;"
+            <div style="font-size:36px; stroke:#000; stroke-width:0px; text-align:left; font-style:normal; text-decoration:none; text-transform:none; font-weight:425; letter-spacing:0px; background-position:0% 0%; background-repeat:no-repeat; background-clip:border-box; overflow:visible; width:1600px; height:600px; left:50%; top:33px; background-color:rgb(73 13 89 / 81%); border-radius:213px 206px 50px 213px; z-index:5; -webkit-background-clip:border-box;"
                 class="ls-l ls-hide-desktop ls-hide-tablet ls-text-layer" data-ls="static:forever;"></div>
             <h1 style="font-size:60px; stroke:#000; stroke-width:0px; text-align:center; font-style:normal; text-decoration:none; text-transform:none; font-weight:600; letter-spacing:0px; background-position:0% 0%; background-repeat:no-repeat; background-clip:border-box; overflow:visible; font-family:'Poppins', sans-serif; line-height:60px; color:#ffffff; top:284px; left:312px; width:1296px; -webkit-background-clip:border-box;"
                 class="ls-l ls-hide-tablet ls-hide-phone ls-text-layer"
@@ -657,7 +661,7 @@ About Area
 
                     <div class="col-6 col-md-6">
                         <div class="vs-media media-style1">
-                            <div class="media-icon"><img src="{{ asset('assets/img/icon/ab-1-3.svg') }}" alt="icon">
+                            <div class="media-icon"><img src="{{ asset('assets/img/icon/coun-1-3.svg') }}" alt="icon">
                             </div>
                             <div class="media-body">
                                 <p class="media-label">24/7</p>
@@ -668,7 +672,7 @@ About Area
 
                     <div class="col-6 col-md-6">
                         <div class="vs-media media-style1">
-                            <div class="media-icon"><img src="{{ asset('assets/img/icon/ab-1-4.svg') }}" alt="icon">
+                            <div class="media-icon"><img src="{{ asset('assets/img/icon/coun-1-4.svg') }}" alt="icon">
                             </div>
                             <div class="media-body">
                                 <p class="media-label">7+</p>
@@ -762,58 +766,56 @@ Service Area
             </div>
         </div>
         
-        <!-- Mobile Marquee for Services -->
-        <div class="service-marquee-wrapper d-md-none">
-            <div class="service-marquee-row">
-                <div class="service-style1">
-                    <div class="service-body">
-                        <div class="service-img"><a href="#"><img src="{{ asset('assets/img/services/service.svg') }}" alt="service"></a></div>
-                        <div class="service-content">
-                            <div class="service-icon"><img src="{{ asset('assets/img/icon/sr-1-1.svg') }}" alt="icon"></div>
-                            <h3 class="service-title"><a href="#">Comfort & Care</a></h3>
-                            <p class="service-text">Soft, skin-friendly fabrics designed for all-day comfort, ensuring durability, easy care, and lasting freshness.</p>
-                            <div class="service-bottom">
-                                <a href="#" class="service-btn">Learn More</a>
-                            </div>
+        <!-- Mobile Vertical List for Services -->
+        <div class="row gy-4 d-md-none">
+            <div class="col-12 service-style1">
+                <div class="service-body">
+                    <div class="service-img"><a href="#"><img src="{{ asset('assets/img/services/service.svg') }}" alt="service"></a></div>
+                    <div class="service-content">
+                        <div class="service-icon"><img src="{{ asset('assets/img/icon/sr-1-1.svg') }}" alt="icon"></div>
+                        <h3 class="service-title"><a href="#">Comfort & Care</a></h3>
+                        <p class="service-text">Soft, skin-friendly fabrics designed for all-day comfort, ensuring durability, easy care, and lasting freshness.</p>
+                        <div class="service-bottom">
+                            <a href="#" class="service-btn">Learn More</a>
                         </div>
                     </div>
                 </div>
-                <div class="service-style1">
-                    <div class="service-body">
-                        <div class="service-img"><a href="#"><img src="{{ asset('assets/img/services/service (1).svg') }}" alt="service"></a></div>
-                        <div class="service-content">
-                            <div class="service-icon"><img src="{{ asset('assets/img/icon/sr-1-2.svg') }}" alt="icon"></div>
-                            <h3 class="service-title"><a href="#">Child Care</a></h3>
-                            <p class="service-text">We have a very large indoor space allowing us to have designated areas for different types</p>
-                            <div class="service-bottom">
-                                <a href="#" class="service-btn">Learn More</a>
-                            </div>
+            </div>
+            <div class="col-12 service-style1">
+                <div class="service-body">
+                    <div class="service-img"><a href="#"><img src="{{ asset('assets/img/services/service (1).svg') }}" alt="service"></a></div>
+                    <div class="service-content">
+                        <div class="service-icon"><img src="{{ asset('assets/img/icon/sr-1-2.svg') }}" alt="icon"></div>
+                        <h3 class="service-title"><a href="#">Child Care</a></h3>
+                        <p class="service-text">We have a very large indoor space allowing us to have designated areas for different types</p>
+                        <div class="service-bottom">
+                            <a href="#" class="service-btn">Learn More</a>
                         </div>
                     </div>
                 </div>
-                <div class="service-style1">
-                    <div class="service-body">
-                        <div class="service-img"><a href="#"><img src="{{ asset('assets/img/services/service (2).svg') }}" alt="service"></a></div>
-                        <div class="service-content">
-                            <div class="service-icon"><img src="{{ asset('assets/img/icon/sr-1-3.svg') }}" alt="icon"></div>
-                            <h3 class="service-title"><a href="#">Healthy Meals</a></h3>
-                            <p class="service-text">We have a very large indoor space allowing us to have designated areas for different types</p>
-                            <div class="service-bottom">
-                                <a href="#" class="service-btn">Learn More</a>
-                            </div>
+            </div>
+            <div class="col-12 service-style1">
+                <div class="service-body">
+                    <div class="service-img"><a href="#"><img src="{{ asset('assets/img/services/service (2).svg') }}" alt="service"></a></div>
+                    <div class="service-content">
+                        <div class="service-icon"><img src="{{ asset('assets/img/icon/sr-1-3.svg') }}" alt="icon"></div>
+                        <h3 class="service-title"><a href="#">Healthy Meals</a></h3>
+                        <p class="service-text">We have a very large indoor space allowing us to have designated areas for different types</p>
+                        <div class="service-bottom">
+                            <a href="#" class="service-btn">Learn More</a>
                         </div>
                     </div>
                 </div>
-                <div class="service-style1">
-                    <div class="service-body">
-                        <div class="service-img"><a href="#"><img src="{{ asset('assets/img/services/service (3).svg') }}" alt="service"></a></div>
-                        <div class="service-content">
-                            <div class="service-icon"><img src="{{ asset('assets/img/icon/sr-1-4.svg') }}" alt="icon"></div>
-                            <h3 class="service-title"><a href="#">Secure Environment</a></h3>
-                            <p class="service-text">We have a very large indoor space allowing us to have designated areas for different types</p>
-                            <div class="service-bottom">
-                                <a href="#" class="service-btn">Learn More</a>
-                            </div>
+            </div>
+            <div class="col-12 service-style1">
+                <div class="service-body">
+                    <div class="service-img"><a href="#"><img src="{{ asset('assets/img/services/service (3).svg') }}" alt="service"></a></div>
+                    <div class="service-content">
+                        <div class="service-icon"><img src="{{ asset('assets/img/icon/sr-1-4.svg') }}" alt="icon"></div>
+                        <h3 class="service-title"><a href="#">Secure Environment</a></h3>
+                        <p class="service-text">We have a very large indoor space allowing us to have designated areas for different types</p>
+                        <div class="service-bottom">
+                            <a href="#" class="service-btn">Learn More</a>
                         </div>
                     </div>
                 </div>

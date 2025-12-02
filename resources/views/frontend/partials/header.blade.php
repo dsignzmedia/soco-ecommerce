@@ -141,11 +141,7 @@
                                             @endif
                                         </a>
                                     </li>
-                                    <li>
-                                        <a class="dropdown-item" href="{{ route('frontend.parent.wishlist', $headerRouteParams) }}">
-                                            <i class="fas fa-heart me-2"></i> Wishlist
-                                        </a>
-                                    </li>
+
                                     <li>
                                         <a class="dropdown-item" href="{{ route('frontend.parent.orders') }}">
                                             <i class="fas fa-shopping-bag me-2"></i> My Orders
@@ -195,12 +191,7 @@
                                                 @endif
                                             </a>
                                         </li>
-                                        <li>
 
-                                        <a class="dropdown-item d-flex align-items-center" href="{{ route('frontend.parent.wishlist', $headerRouteParams) }}" style="padding: 10px 15px;">
-                                            <i class="fas fa-heart me-2" style="width: 20px;"></i> Wishlist
-                                        </a>
-                                    </li>
                                         <li>
                                             <a class="dropdown-item d-flex align-items-center" href="{{ route('frontend.parent.orders') }}" style="padding: 10px 15px;">
                                                 <i class="fas fa-shopping-bag me-2" style="width: 20px;"></i> My Orders
@@ -251,7 +242,7 @@
     }
 
     .vs-header.header-layout6 .header-bottom {
-        background-color: #ffffff;
+        background-color: #490D59;
         z-index: 2;
     }
 
