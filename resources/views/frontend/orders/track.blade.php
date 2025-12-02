@@ -28,7 +28,7 @@
                         <!-- Status Timeline -->
                         <div class="order-timeline">
                             @foreach($statuses as $index => $status)
-                                <div class="timeline-item {{ $index <= $currentStatusIndex ? 'completed' : '' }}">
+                                <div class="timeline-item {{ $index <= $currentStatusIndex ? 'completed' : '' }} {{ $index == $currentStatusIndex ? 'current' : '' }}">
                                     <div class="timeline-marker">
                                         @if($index <= $currentStatusIndex)
                                             <i class="fas fa-check-circle"></i>
@@ -37,11 +37,16 @@
                                         @endif
                                     </div>
                                     <div class="timeline-content">
-                                        <h6 class="mb-1">{{ $status }}</h6>
-                                        @if($index <= $currentStatusIndex)
-                                            <p class="text-muted small mb-0">Completed</p>
+                                        <div class="d-flex align-items-center gap-2 mb-1">
+                                            <i class="fas fa-{{ $status['icon'] }}" style="font-size: 1.1rem;"></i>
+                                            <h6 class="mb-0">{{ $status['label'] }}</h6>
+                                        </div>
+                                        @if($index < $currentStatusIndex)
+                                            <p class="text-muted small mb-0">✅ Completed</p>
+                                        @elseif($index == $currentStatusIndex)
+                                            <p class="text-primary small mb-0 fw-bold">🔵 Current Status</p>
                                         @else
-                                            <p class="text-muted small mb-0">Pending</p>
+                                            <p class="text-muted small mb-0">⏳ Pending</p>
                                         @endif
                                     </div>
                                 </div>
@@ -94,12 +99,25 @@
         border: 2px solid #e0d5f0;
         border-radius: 50%;
         z-index: 2;
+        transition: all 0.3s ease;
     }
 
     .timeline-item.completed .timeline-marker {
         background-color: #28a745;
         border-color: #28a745;
         color: #ffffff;
+    }
+    
+    .timeline-item.current .timeline-marker {
+        background-color: #490D59;
+        border-color: #490D59;
+        color: #ffffff;
+        animation: pulse 2s infinite;
+    }
+
+    @keyframes pulse {
+        0%, 100% { transform: scale(1); }
+        50% { transform: scale(1.1); }
     }
 
     .timeline-item:not(:last-child)::after {
@@ -119,10 +137,16 @@
 
     .timeline-content h6 {
         color: #333;
+        font-weight: 600;
     }
 
     .timeline-item.completed .timeline-content h6 {
         color: #28a745;
+    }
+    
+    .timeline-item.current .timeline-content h6 {
+        color: #490D59;
+        font-weight: 700;
     }
 </style>
 @endsection

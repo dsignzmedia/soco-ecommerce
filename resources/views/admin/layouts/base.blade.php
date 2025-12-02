@@ -7,6 +7,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
         :root {
             --primary: #490d59;
@@ -226,6 +227,47 @@
                 gap: 16px;
             }
         }
+
+        /* Pagination Fixes */
+        nav[role="navigation"] {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 13px;
+        }
+        nav[role="navigation"] svg {
+            width: 16px;
+            height: 16px;
+        }
+        nav[role="navigation"] > div:first-child {
+            display: none; /* Hide the 'Showing X to Y' text on mobile if needed, or just style it */
+        }
+        @media (min-width: 640px) {
+            nav[role="navigation"] > div:first-child {
+                display: block;
+            }
+        }
+        nav[role="navigation"] a, 
+        nav[role="navigation"] span[aria-current="page"] {
+            padding: 6px 12px;
+            border-radius: 6px;
+            border: 1px solid #e5e7eb;
+            margin-left: -1px;
+            color: #475467;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+        }
+        nav[role="navigation"] span[aria-current="page"] {
+            background-color: var(--primary);
+            color: #fff;
+            border-color: var(--primary);
+        }
+        nav[role="navigation"] span[aria-disabled="true"] {
+            color: #98a2b3;
+            cursor: not-allowed;
+        }
     </style>
     @stack('styles')
 </head>
@@ -238,19 +280,20 @@
             </div>
             <nav class="nav">
                 @php($navItems = [
-                    ['label' => 'Dashboard', 'route' => 'master.admin.dashboard'],
-                    ['label' => 'Orders', 'route' => 'master.admin.orders.index'],
-                    ['label' => 'School Management', 'route' => 'master.admin.schools.index'],
-                    ['label' => 'Products & Catalog', 'route' => 'master.admin.catalog.index'],
-                    ['label' => 'Inventory', 'route' => 'master.admin.inventory.dashboard'],
-                    ['label' => 'Returns & Exchanges', 'route' => 'master.admin.returns-exchange.index'],
-                    ['label' => 'Shipping', 'route' => 'master.admin.shipping.edit'],
-                    ['label' => 'Reports', 'route' => 'master.admin.reports.index'],
-                    ['label' => 'System Settings', 'route' => 'master.admin.settings.index'],
-                    ['label' => 'Audit Logs', 'route' => 'master.admin.settings.audit-logs'],
+                    ['label' => 'Dashboard', 'route' => 'master.admin.dashboard', 'icon' => 'fas fa-th-large'],
+                    ['label' => 'Orders', 'route' => 'master.admin.orders.index', 'icon' => 'fas fa-shopping-bag'],
+                    ['label' => 'Products & Catalog', 'route' => 'master.admin.catalog.index', 'icon' => 'fas fa-box-open'],
+                    ['label' => 'Inventory', 'route' => 'master.admin.inventory.dashboard', 'icon' => 'fas fa-warehouse'],
+                    ['label' => 'Returns & Exchanges', 'route' => 'master.admin.returns-exchange.index', 'icon' => 'fas fa-exchange-alt'],
+                    ['label' => 'Shipping', 'route' => 'master.admin.shipping.edit', 'icon' => 'fas fa-shipping-fast'],
+                    ['label' => 'School Management', 'route' => 'master.admin.schools.index', 'icon' => 'fas fa-school'],
+                    ['label' => 'Reports', 'route' => 'master.admin.reports.index', 'icon' => 'fas fa-chart-bar'],
+                    ['label' => 'System Settings', 'route' => 'master.admin.settings.index', 'icon' => 'fas fa-cog'],
+                    ['label' => 'Audit Logs', 'route' => 'master.admin.settings.audit-logs', 'icon' => 'fas fa-clipboard-list'],
                 ])
                 @foreach($navItems as $item)
                     <a class="nav__item {{ request()->routeIs($item['route']) ? 'active' : '' }}" href="{{ route($item['route']) }}">
+                        <i class="{{ $item['icon'] }}" style="width: 18px; text-align: center;"></i>
                         {{ $item['label'] }}
                     </a>
                 @endforeach

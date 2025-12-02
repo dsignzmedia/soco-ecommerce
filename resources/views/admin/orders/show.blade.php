@@ -96,8 +96,88 @@
     </section>
 
     <section class="card" style="display:flex;gap:12px;flex-wrap:wrap;">
-        <a href="{{ route('master.admin.orders.invoice', $order) }}" style="padding:10px 16px;border:1px solid #d0d5dd;border-radius:12px;color:#490d59;font-weight:600;">View invoice</a>
-        <a href="{{ route('master.admin.orders.invoice.download', $order) }}" style="padding:10px 16px;border:1px solid #d0d5dd;border-radius:12px;color:#490d59;font-weight:600;">Download invoice</a>
+        <a href="{{ route('master.admin.orders.invoice', $order) }}" class="action-btn action-btn-primary">
+            <i class="fas fa-file-invoice"></i>
+            View invoice
+        </a>
+        <a href="{{ route('master.admin.orders.invoice.download', $order) }}" class="action-btn action-btn-secondary">
+            <i class="fas fa-download"></i>
+            Download
+        </a>
+        <button type="button" class="action-btn action-btn-success" onclick="markAsShipped()">
+            <i class="fas fa-shipping-fast"></i>
+            Mark shipped
+        </button>
     </section>
+
+    <style>
+        .action-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 12px 20px;
+            border-radius: 12px;
+            font-weight: 600;
+            font-size: 14px;
+            text-decoration: none;
+            transition: all 0.2s ease;
+            border: none;
+            cursor: pointer;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+        }
+
+        .action-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
+        }
+
+        .action-btn i {
+            font-size: 16px;
+        }
+
+        .action-btn-primary {
+            background: #490d59;
+            color: #ffffff;
+        }
+
+        .action-btn-primary:hover {
+            background: #5a1169;
+        }
+
+        .action-btn-secondary {
+            background: #ffffff;
+            color: #490d59;
+            border: 2px solid #490d59;
+        }
+
+        .action-btn-secondary:hover {
+            background: #f7f2fb;
+        }
+
+        .action-btn-success {
+            background: #10b981;
+            color: #ffffff;
+        }
+
+        .action-btn-success:hover {
+            background: #059669;
+        }
+    </style>
+
+    <script>
+        function markAsShipped() {
+            if (confirm('Mark this order as shipped?')) {
+                // Submit form to update order status to 'shipped'
+                const form = document.querySelector('form[action*="status"]');
+                if (form) {
+                    const orderStatusSelect = form.querySelector('select[name="order_status"]');
+                    if (orderStatusSelect) {
+                        orderStatusSelect.value = 'shipped';
+                        form.submit();
+                    }
+                }
+            }
+        }
+    </script>
 @endsection
 

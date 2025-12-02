@@ -8,20 +8,33 @@
 
 @section('content')
     <div class="card">
-        <form method="POST" action="{{ $isEdit ? route('master.admin.schools.update', $school) : route('master.admin.schools.store') }}">
+        <form method="POST" action="{{ $mode === 'edit' ? route('master.admin.schools.update', $school) : route('master.admin.schools.store') }}" enctype="multipart/form-data">
             @csrf
-            @if($isEdit)
+            @if($mode === 'edit')
                 @method('PUT')
             @endif
-            <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:18px;">
+
+            <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:24px;margin-bottom:24px;">
                 <label>
-                    <span>Name *</span>
+                    <span>School Name *</span>
                     <input type="text" name="name" value="{{ old('name', $school->name) }}" required>
                 </label>
                 <label>
-                    <span>Board</span>
-                    <input type="text" name="board" value="{{ old('board', $school->board) }}">
+                    <span>School Logo</span>
+                    <input type="file" name="logo" accept="image/*">
+                    @if($school->logo)
+                        <div style="margin-top:8px;">
+                            <img src="{{ asset('storage/' . $school->logo) }}" alt="Logo" style="height:50px;object-fit:contain;">
+                        </div>
+                    @endif
                 </label>
+                <label>
+                    <span>Board / Affiliation</span>
+                    <input type="text" name="board" value="{{ old('board', $school->board) }}" placeholder="CBSE, ICSE, State Board...">
+                </label>
+            </div>
+
+            <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:24px;margin-bottom:24px;">
                 <label>
                     <span>City</span>
                     <input type="text" name="city" value="{{ old('city', $school->city) }}">
@@ -32,30 +45,34 @@
                 </label>
                 <label>
                     <span>Status *</span>
-                    <select name="status">
-                        @foreach(['active','pending','inactive'] as $status)
-                            <option value="{{ $status }}" @selected(old('status', $school->status ?: 'active') === $status)>
-                                {{ ucfirst($status) }}
-                            </option>
-                        @endforeach
+                    <select name="status" required>
+                        <option value="active" @selected(old('status', $school->status) === 'active')>Active</option>
+                        <option value="pending" @selected(old('status', $school->status) === 'pending')>Pending</option>
+                        <option value="inactive" @selected(old('status', $school->status) === 'inactive')>Inactive</option>
                     </select>
                 </label>
+            </div>
+
+            <h3 style="margin:24px 0 16px;font-size:16px;color:#374151;border-bottom:1px solid #e5e7eb;padding-bottom:8px;">Contact Information</h3>
+            
+            <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:24px;margin-bottom:24px;">
                 <label>
-                    <span>Contact Name</span>
+                    <span>Contact Person</span>
                     <input type="text" name="contact_name" value="{{ old('contact_name', $school->contact_name) }}">
                 </label>
                 <label>
-                    <span>Contact Email</span>
+                    <span>Email</span>
                     <input type="email" name="contact_email" value="{{ old('contact_email', $school->contact_email) }}">
                 </label>
                 <label>
-                    <span>Contact Phone</span>
+                    <span>Phone</span>
                     <input type="text" name="contact_phone" value="{{ old('contact_phone', $school->contact_phone) }}">
                 </label>
             </div>
-            <label style="display:block;margin-top:16px;">
-                <span>Notes</span>
-                <textarea name="notes" rows="4">{{ old('notes', $school->notes) }}</textarea>
+
+            <label style="margin-bottom:24px;">
+                <span>Notes (Internal)</span>
+                <textarea name="notes" rows="3">{{ old('notes', $school->notes) }}</textarea>
             </label>
             <div style="margin-top:24px;display:flex;gap:12px;">
                 <button type="submit" style="padding:12px 20px;border-radius:12px;border:none;background:#490d59;color:#fff;font-weight:600;">

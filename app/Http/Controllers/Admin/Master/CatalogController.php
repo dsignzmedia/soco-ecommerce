@@ -34,9 +34,38 @@ class CatalogController extends Controller
             ->withQueryString();
 
         $schools = School::orderBy('name')->get();
-        $grades = Grade::orderBy('name')->get();
-        $productTypes = ProductMapping::select('product_type')->whereNotNull('product_type')->distinct()->orderBy('product_type')->pluck('product_type');
-        $categories = ProductMapping::select('category')->whereNotNull('category')->distinct()->orderBy('category')->pluck('category');
+        
+        // Hardcoded grades to match frontend profile creation
+        $grades = [
+            'LKG' => 'LKG',
+            'UKG' => 'UKG',
+            '1' => 'Grade 1',
+            '2' => 'Grade 2',
+            '3' => 'Grade 3',
+            '4' => 'Grade 4',
+            '5' => 'Grade 5',
+            '6' => 'Grade 6',
+            '7' => 'Grade 7',
+            '8' => 'Grade 8',
+            '9' => 'Grade 9',
+            '10' => 'Grade 10',
+            '11' => 'Grade 11',
+            '12' => 'Grade 12',
+        ];
+        
+        // Hardcoded options to ensure dropdowns are populated even without products
+        $categories = [
+            'regular_uniforms' => 'Regular Uniforms',
+            'fabrics' => 'Fabrics',
+            'sports' => 'Sports',
+        ];
+
+        $productTypes = [
+            'authorized' => 'Authorized Product',
+            'optional' => 'Optional Product',
+            'merchandised' => 'Merchandised Product',
+            'back_to_school' => 'Back to School Product',
+        ];
 
         return view('admin.catalog.index', [
             'mappings' => $mappings,
@@ -117,8 +146,8 @@ class CatalogController extends Controller
         $type = strtolower($type);
         abort_unless(in_array($type, ['csv', 'excel', 'pdf'], true), 404);
 
-        $filters = $request->only(['school_id', 'grade_id', 'status', 'gender', 'category', 'q']);
-        $query = ProductMapping::with(['school', 'grade'])->orderBy('product_name');
+        $filters = $request->only(['school_id', 'grade', 'status', 'gender', 'category', 'q']);
+        $query = ProductMapping::with(['school'])->orderBy('product_name');
         $this->applyFilters($query, $filters);
 
         if (! empty($filters['q'])) {
@@ -140,16 +169,45 @@ class CatalogController extends Controller
     protected function formView(ProductMapping $product, string $mode): View
     {
         $schools = School::with('grades')->orderBy('name')->get();
-        $grades = Grade::orderBy('name')->get();
+        
+        $grades = [
+            'LKG' => 'LKG',
+            'UKG' => 'UKG',
+            '1' => 'Grade 1',
+            '2' => 'Grade 2',
+            '3' => 'Grade 3',
+            '4' => 'Grade 4',
+            '5' => 'Grade 5',
+            '6' => 'Grade 6',
+            '7' => 'Grade 7',
+            '8' => 'Grade 8',
+            '9' => 'Grade 9',
+            '10' => 'Grade 10',
+            '11' => 'Grade 11',
+            '12' => 'Grade 12',
+        ];
 
-        return view('admin.catalog.form', compact('product', 'schools', 'grades', 'mode'));
+        $categories = [
+            'regular_uniforms' => 'Regular Uniforms',
+            'fabrics' => 'Fabrics',
+            'sports' => 'Sports',
+        ];
+
+        $productTypes = [
+            'authorized' => 'Authorized Product',
+            'optional' => 'Optional Product',
+            'merchandised' => 'Merchandised Product',
+            'back_to_school' => 'Back to School Product',
+        ];
+
+        return view('admin.catalog.form', compact('product', 'schools', 'grades', 'mode', 'categories', 'productTypes'));
     }
 
     protected function validatedData(Request $request, ?ProductMapping $product = null): array
     {
-        $validated = $request->validate([
+        $rules = [
             'school_id' => ['required', 'exists:schools,id'],
-            'grade_id' => ['nullable', 'exists:grades,id'],
+            'grade' => ['nullable', 'string'],
             'product_name' => ['required', 'string', 'max:255'],
             'category' => ['nullable', 'string', 'max:255'],
             'product_type' => ['nullable', 'string', 'max:255'],
@@ -165,22 +223,65 @@ class CatalogController extends Controller
             'tax_profile' => ['nullable', 'string', 'max:255'],
             'product_weight' => ['nullable', 'numeric', 'min:0'],
             'tag_name' => ['nullable', 'string', 'max:255'],
-            'featured_image' => ['nullable', 'string', 'max:2048'],
             'inventory_stock' => ['required', 'integer', 'min:0'],
             'low_stock_threshold' => ['required', 'integer', 'min:0'],
-            'media_images' => ['nullable', 'string'],
             'media_gallery' => ['nullable', 'string'],
             'media_size_chart' => ['nullable', 'string', 'max:2048'],
             'size_measurement_image' => ['nullable', 'string', 'max:2048'],
             'media_measurement_video' => ['nullable', 'string', 'max:2048'],
-        ]);
+        ];
 
-        if (! empty($validated['grade_id'])) {
-            $grade = Grade::find($validated['grade_id']);
-            abort_if(! $grade || (int) $validated['school_id'] !== (int) $grade->school_id, 422, 'Selected grade does not belong to the school.');
+        // Add file validation rules
+        if ($request->hasFile('featured_image')) {
+            $rules['featured_image'] = ['image', 'max:2048']; // Max 2MB
+        } else {
+            $rules['featured_image'] = ['nullable', 'string', 'max:2048']; // Allow keeping existing path
         }
 
-        $validated['media_images'] = $this->stringToArray($validated['media_images'] ?? '');
+        if ($request->hasFile('media_images')) {
+            $rules['media_images.*'] = ['image', 'max:2048'];
+        }
+
+        $validated = $request->validate($rules);
+
+        // Handle Featured Image Upload
+        if ($request->hasFile('featured_image')) {
+            $path = $request->file('featured_image')->store('products', 'public');
+            $validated['featured_image'] = $path;
+        }
+
+        // Handle Gallery Images Upload
+        if ($request->hasFile('media_images')) {
+            $paths = [];
+            foreach ($request->file('media_images') as $file) {
+                $paths[] = $file->store('products', 'public');
+            }
+            // If editing, you might want to merge with existing or replace. 
+            // For now, let's append if it's an update, or just set if new.
+            // But since the form input for file doesn't show existing files to "keep", 
+            // usually file inputs replace. However, for multiple, we might want to keep old ones.
+            // Let's assume replacement for simplicity unless we add logic to keep specific ones.
+            // Actually, a common pattern is: new uploads are added to existing ones.
+            
+            if ($product && $product->media_images) {
+                $validated['media_images'] = array_merge($product->media_images, $paths);
+            } else {
+                $validated['media_images'] = $paths;
+            }
+        } else {
+            // If no new files uploaded, keep existing array (handled by not being in $validated if not present in request?)
+            // But wait, 'media_images' is not in $rules as a direct field if it's a file array.
+            // If we don't upload anything, we should preserve the old value if it exists.
+            if ($product) {
+                 // We don't need to do anything if we don't include it in $validated, 
+                 // but we need to make sure we don't overwrite it with null.
+                 // The validate() call filters out non-validated fields.
+                 // So if we don't validate 'media_images' when it's not present, it won't be in $validated.
+                 // But we need to ensure we don't accidentally clear it if the user didn't upload anything.
+            }
+        }
+        
+        // Handle legacy gallery string if provided
         $validated['media_gallery'] = $this->stringToArray($validated['media_gallery'] ?? '');
 
         return $validated;
@@ -202,7 +303,7 @@ class CatalogController extends Controller
     protected function applyFilters(Builder $query, array $filters): void
     {
         $query->when($filters['school_id'] ?? null, fn ($q, $schoolId) => $q->where('school_id', $schoolId))
-            ->when($filters['grade_id'] ?? null, fn ($q, $gradeId) => $q->where('grade_id', $gradeId))
+            ->when($filters['grade'] ?? null, fn ($q, $grade) => $q->where('grade', $grade))
             ->when($filters['status'] ?? null, fn ($q, $status) => $q->where('status', $status))
             ->when($filters['gender'] ?? null, fn ($q, $gender) => $q->where('gender', $gender))
             ->when($filters['category'] ?? null, fn ($q, $category) => $q->where('category', $category))
@@ -223,7 +324,7 @@ class CatalogController extends Controller
                 fputcsv($handle, [
                     $product->product_name,
                     optional($product->school)->name,
-                    optional($product->grade)->name,
+                    $product->grade ?? 'All grades',
                     $product->gender,
                     $product->category,
                     $product->product_type,
@@ -251,7 +352,7 @@ class CatalogController extends Controller
 
         foreach ($products as $product) {
             $lines[] = 'Product: ' . $product->product_name;
-            $lines[] = 'School: ' . optional($product->school)->name . ' / Grade: ' . (optional($product->grade)->name ?? 'All');
+            $lines[] = 'School: ' . optional($product->school)->name . ' / Grade: ' . ($product->grade ?? 'All');
             $lines[] = 'Pricing: ' . $product->price_regular . ' (Sale: ' . ($product->price_sale ?? '—') . ', Tax: ' . ($product->price_tax ?? '—') . ')';
             $lines[] = 'Inventory: stock ' . $product->inventory_stock . ' • alert ' . $product->low_stock_threshold;
             $lines[] = 'Status: ' . ucfirst($product->status);

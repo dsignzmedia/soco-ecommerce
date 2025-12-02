@@ -85,17 +85,22 @@
 
         .trend-bars .bar {
             flex: 1;
-            height: 6px;
+            height: 8px;
             border-radius: 999px;
             background: #f2f4f7;
             position: relative;
+            overflow: hidden; /* Ensure inner bar doesn't overflow */
         }
 
         .trend-bars .bar span {
             position: absolute;
-            inset: 0;
+            top: 0;
+            left: 0;
+            bottom: 0;
+            /* right: 0; Removed to allow width to control size */
             border-radius: inherit;
             background: linear-gradient(90deg, #490d59, #d946ef);
+            transition: width 0.5s ease-out;
         }
 
         .alert-list {
@@ -175,12 +180,18 @@
         <article class="card chart-card">
             <h4>{{ $charts['salesTrend']['title'] }}</h4>
             <ul class="trend-bars">
+                @php
+                    $maxSales = max($charts['salesTrend']['series']);
+                @endphp
                 @foreach($charts['salesTrend']['labels'] as $index => $label)
-                    @php($value = $charts['salesTrend']['series'][$index])
+                    @php
+                        $value = $charts['salesTrend']['series'][$index];
+                        $percent = $maxSales > 0 ? ($value / $maxSales) * 100 : 0;
+                    @endphp
                     <li>
                         <span style="width:40px;color:#98a2b3;">{{ $label }}</span>
-                        <div class="bar"><span style="width:{{ $value }}%;"></span></div>
-                        <strong style="width:50px;text-align:right;color:#111827;">₹{{ $value }}</strong>
+                        <div class="bar"><span style="width:{{ $percent }}%;"></span></div>
+                        <strong style="width:80px;text-align:right;color:#111827;">₹{{ number_format($value) }}</strong>
                     </li>
                 @endforeach
             </ul>
@@ -188,10 +199,16 @@
         <article class="card chart-card">
             <h4>{{ $charts['ordersBySchool']['title'] }}</h4>
             <ul class="trend-bars">
+                @php
+                    $maxSchool = collect($charts['ordersBySchool']['data'])->max('value');
+                @endphp
                 @foreach($charts['ordersBySchool']['data'] as $row)
+                    @php
+                        $percent = $maxSchool > 0 ? ($row['value'] / $maxSchool) * 100 : 0;
+                    @endphp
                     <li>
-                        <span style="width:120px;">{{ $row['label'] }}</span>
-                        <div class="bar"><span style="width:{{ $row['value'] }}%;"></span></div>
+                        <span style="width:120px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;" title="{{ $row['label'] }}">{{ $row['label'] }}</span>
+                        <div class="bar"><span style="width:{{ $percent }}%;"></span></div>
                         <strong style="width:40px;text-align:right;">{{ $row['value'] }}</strong>
                     </li>
                 @endforeach
@@ -200,10 +217,16 @@
         <article class="card chart-card">
             <h4>{{ $charts['ordersByCategory']['title'] }}</h4>
             <ul class="trend-bars">
+                @php
+                    $maxCategory = collect($charts['ordersByCategory']['data'])->max('value');
+                @endphp
                 @foreach($charts['ordersByCategory']['data'] as $row)
+                    @php
+                        $percent = $maxCategory > 0 ? ($row['value'] / $maxCategory) * 100 : 0;
+                    @endphp
                     <li>
-                        <span style="width:120px;">{{ $row['label'] }}</span>
-                        <div class="bar"><span style="width:{{ $row['value'] }}%;"></span></div>
+                        <span style="width:120px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;" title="{{ $row['label'] }}">{{ $row['label'] }}</span>
+                        <div class="bar"><span style="width:{{ $percent }}%;"></span></div>
                         <strong style="width:40px;text-align:right;">{{ $row['value'] }}</strong>
                     </li>
                 @endforeach
@@ -212,10 +235,16 @@
         <article class="card chart-card">
             <h4>{{ $charts['stockInsights']['title'] }}</h4>
             <ul class="trend-bars">
+                @php
+                    $maxStock = collect($charts['stockInsights']['bars'])->max('value');
+                @endphp
                 @foreach($charts['stockInsights']['bars'] as $row)
+                    @php
+                        $percent = $maxStock > 0 ? ($row['value'] / $maxStock) * 100 : 0;
+                    @endphp
                     <li>
                         <span style="width:120px;">{{ $row['label'] }}</span>
-                        <div class="bar"><span style="width:{{ $row['value'] === 0 ? 5 : min(100, $row['value'] * 5) }}%;"></span></div>
+                        <div class="bar"><span style="width:{{ $percent }}%;"></span></div>
                         <strong style="width:40px;text-align:right;">{{ $row['value'] }}</strong>
                     </li>
                 @endforeach

@@ -4,7 +4,6 @@
     $sidebarItems = [
         ['route' => 'frontend.parent.dashboard', 'icon' => 'fas fa-th-large', 'label' => 'Dashboard'],
         ['route' => 'frontend.parent.cart', 'icon' => 'fas fa-shopping-cart', 'label' => 'Cart'],
-        ['route' => 'frontend.parent.wishlist', 'icon' => 'fas fa-heart', 'label' => 'Wishlist'],
         ['route' => 'frontend.parent.orders', 'icon' => 'fas fa-shopping-bag', 'label' => 'My Orders'],
         ['route' => 'frontend.parent.addresses', 'icon' => 'fas fa-map-marker-alt', 'label' => 'My Address'],
     ];

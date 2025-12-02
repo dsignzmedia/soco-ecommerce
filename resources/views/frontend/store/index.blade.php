@@ -46,9 +46,12 @@
                         <h2 class="h3 mb-2">Store</h2>
                         <p class="text-muted mb-0">Shopping for {{ $selectedProfile['student_name'] }}</p>
                     </div>
-                    <a href="{{ route('frontend.parent.dashboard', ['student_id' => $selectedProfile['id']]) }}" class="vs-btn btn-sm">
+                    <a href="{{ route('frontend.parent.dashboard', ['student_id' => $selectedProfile['id']]) }}" class="vs-btn btn-sm d-none d-lg-inline-flex">
                         <i class="fas fa-arrow-left me-2"></i> Back to Dashboard
                     </a>
+                    <button class="vs-btn btn-sm d-lg-none style-outline" id="toggleFilters" style="padding: 10px 20px; width: auto; border: 1px solid #490D59; color: #490D59; background: transparent;">
+                        <i class="fas fa-sliders-h me-2"></i> <span>Filter</span>
+                    </button>
                 </div>
             </div>
         </div>
@@ -63,11 +66,7 @@
         <div class="row">
             <!-- Left Sidebar Filters -->
             <div class="col-lg-3 mb-lg-0">
-                <div class="d-lg-none mb-3">
-                    <button class="vs-btn style-outline" id="toggleFilters" style="padding: 10px 20px; width: auto; border: 1px solid #490D59; color: #490D59; background: transparent;">
-                        <i class="fas fa-sliders-h me-2"></i> <span>Show Filters</span>
-                    </button>
-                </div>
+
                 <div class="filter-sidebar" id="filterSidebar">
                     <div class="filter-header">
                         <i class="fas fa-filter me-2"></i>
@@ -84,32 +83,7 @@
                         </div>
                     </div>
 
-                    <!-- Product Type -->
-                    <div class="filter-section">
-                        <h6 class="filter-title">Product Type</h6>
-                        <div class="filter-options">
-                            <label class="filter-option">
-                                <input type="checkbox" name="product_type" value="authorized" class="filter-checkbox" checked>
-                                <span class="checkbox-mark"></span>
-                                <span class="option-label">Authorized Products</span>
-                            </label>
-                            <label class="filter-option">
-                                <input type="checkbox" name="product_type" value="optional" class="filter-checkbox" checked>
-                                <span class="checkbox-mark"></span>
-                                <span class="option-label">Optional Products</span>
-                            </label>
-                            <label class="filter-option">
-                                <input type="checkbox" name="product_type" value="merchandised" class="filter-checkbox" checked>
-                                <span class="checkbox-mark"></span>
-                                <span class="option-label">Merchandised Products</span>
-                            </label>
-                            <label class="filter-option">
-                                <input type="checkbox" name="product_type" value="back_to_school" class="filter-checkbox" checked>
-                                <span class="checkbox-mark"></span>
-                                <span class="option-label">Back to School Products</span>
-                            </label>
-                        </div>
-                    </div>
+
 
 
                     <!-- Categories -->
@@ -133,6 +107,8 @@
                             </label>
                         </div>
                     </div>
+
+
                 </div>
             </div>
 
@@ -147,26 +123,12 @@
                         <div class="col-6 col-md-6 col-lg-4 col-xl-4 product-item" 
                              data-product-type="{{ $product['type'] }}"
                              data-product-name="{{ strtolower($product['name']) }}"
-                             data-product-category="{{ $product['category'] ?? 'regular_uniforms' }}">
+                             data-product-category="{{ $product['category'] ?? 'regular_uniforms' }}"
+                             data-product-gender="{{ $product['gender'] ?? 'unisex' }}">
                             <div class="vs-product product-style1 product-card-clickable" 
                                  data-product-url="{{ route('frontend.parent.product-detail', ['productId' => $product['id'], 'profile_id' => $selectedProfile['id']]) }}">
                                 <div class="product-img">
-                                    <!-- Mobile Wishlist Icon -->
-                                    <!-- Mobile/Floating Wishlist Icon -->
-                                    <form action="{{ route('frontend.parent.add-to-wishlist') }}" method="POST" class="wishlist-floating-form" style="display: none;">
-                                        @csrf
-                                        <input type="hidden" name="profile_id" value="{{ $selectedProfile['id'] ?? '' }}">
-                                        <input type="hidden" name="product_id" value="{{ $product['id'] }}">
-                                        <input type="hidden" name="name" value="{{ $product['name'] }}">
-                                        <input type="hidden" name="price" value="{{ $product['price'] }}">
-                                        <input type="hidden" name="image" value="{{ $product['image'] }}">
-                                        @php
-                                            $inWishlist = in_array($product['id'], $wishlistProductIds ?? []);
-                                        @endphp
-                                        <button type="submit" class="icon-btn wishlist-mobile" title="{{ $inWishlist ? 'Remove from Wishlist' : 'Add to Wishlist' }}">
-                                            <i class="{{ $inWishlist ? 'fas fa-heart text-danger' : 'far fa-heart' }}"></i>
-                                        </button>
-                                    </form>
+
                                     <a href="{{ route('frontend.parent.product-detail', ['productId' => $product['id'], 'profile_id' => $selectedProfile['id']]) }}" target="_blank">
                                         @if(isset($product['image']) && $product['image'])
                                             <img src="{{ $product['image'] }}" alt="{{ $product['name'] }}" class="w-100">
@@ -174,6 +136,11 @@
                                             <img src="{{ asset('assets/img/product/product1-1.png') }}" alt="{{ $product['name'] }}" class="w-100">
                                         @endif
                                     </a>
+                                    @if(isset($product['type']) && in_array(strtolower($product['type']), ['authorized', 'optional']))
+                                        <div class="product-tag {{ strtolower($product['type']) }}">
+                                            {{ strtoupper($product['type']) }}
+                                        </div>
+                                    @endif
                                 </div>
                                 <div class="product-content">
                                     <span class="product-price">
@@ -210,20 +177,6 @@
                                                 <i class="far fa-shopping-cart"></i>Select Profile
                                             </a>
                                         @endif
-                                        <form action="{{ route('frontend.parent.add-to-wishlist') }}" method="POST" class="d-none d-md-inline wishlist-inline-form">
-                                            @csrf
-                                            <input type="hidden" name="profile_id" value="{{ $selectedProfile['id'] ?? '' }}">
-                                            <input type="hidden" name="product_id" value="{{ $product['id'] }}">
-                                            <input type="hidden" name="name" value="{{ $product['name'] }}">
-                                            <input type="hidden" name="price" value="{{ $product['price'] }}">
-                                            <input type="hidden" name="image" value="{{ $product['image'] }}">
-                                            @php
-                                                $inWishlist = in_array($product['id'], $wishlistProductIds ?? []);
-                                            @endphp
-                                            <button type="submit" class="icon-btn" title="{{ $inWishlist ? 'Remove from Wishlist' : 'Add to Wishlist' }}">
-                                                <i class="{{ $inWishlist ? 'fas fa-heart text-danger' : 'far fa-heart' }}"></i>
-                                            </button>
-                                        </form>
                                     </div>
                                 </div>
                             </div>
@@ -421,7 +374,7 @@
     }
 
     .product-content {
-        padding: 15px;
+        padding: 25px;
         flex-grow: 1;
         display: flex;
         flex-direction: column;
@@ -633,7 +586,7 @@
         }
 
         .product-content {
-            padding: 15px;
+            padding: 8px !important;
     
         }
 
@@ -671,51 +624,71 @@
         }
     }
 
-    /* Mobile Wishlist Icon Style */
-    .wishlist-mobile {
+
+    /* Product Tag Styles */
+    .product-tag {
         position: absolute;
         top: 10px;
-        left: 10px;
-        z-index: 20;
-        background: #ffffff;
-        border-radius: 50%;
-        width: 35px;
-        height: 35px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-        color: #333;
-        border: 1px solid #ddd;
+        right: 10px;
+        background-color: #000;
+        color: #fff;
+        padding: 4px 8px;
+        font-size: 10px;
+        font-weight: 700;
+        text-transform: uppercase;
+        border-radius: 16px;
+        z-index: 10;
+        letter-spacing: 0.5px;
+    }
+
+    .product-tag.optional {
+        background-color: #6c757d; /* Grey for optional */
     }
     
-    .wishlist-mobile:hover {
-        color: #490D59;
-        border-color: #490D59;
+    /* Ensure product image container is relative */
+    .product-img {
+        position: relative;
     }
 
-    /* Floating Wishlist Logic */
-    .wishlist-floating-form {
-        display: none; /* Default hidden */
+    /* Simplified Filter Button Styles */
+    #toggleFilters {
+        border: 2px solid #490D59 !important;
+        background: white !important;
+        color: #490D59 !important;
+        padding: 10px 20px !important;
+        border-radius: 8px !important;
+        font-weight: 600;
+        transition: all 0.3s ease;
     }
-
-    /* Show on mobile always */
-    @media (max-width: 767px) {
-        .wishlist-floating-form {
-            display: block !important;
-        }
-        /* Hide bottom wishlist on mobile */
-        .actions .icon-btn {
-            display: none !important;
-        }
+    
+    #toggleFilters:hover {
+        background: #490D59 !important;
+        color: white !important;
     }
-
-    /* Show when expanded actions (e.g. quantity selector active) */
-    .product-item.expanded-actions .wishlist-floating-form {
-        display: block !important;
+    
+    #toggleFilters.active-filter-btn {
+        background: #490D59 !important;
+        color: white !important;
     }
-
-    .product-item.expanded-actions .actions .icon-btn {
+    
+    .vs-btn.active-filter-btn,
+    .vs-btn.active-filter-btn:hover {
+        background-color: #490D59 !important;
+        color: #ffffff !important;
+        border-color: #490D59 !important;
+    }
+    
+    .vs-btn.active-filter-btn span,
+    .vs-btn.active-filter-btn i,
+    .vs-btn.active-filter-btn:hover span,
+    .vs-btn.active-filter-btn:hover i {
+        color: #ffffff !important;
+    }
+    
+    .vs-btn.active-filter-btn::before,
+    .vs-btn.active-filter-btn::after,
+    .vs-btn.active-filter-btn:hover::before,
+    .vs-btn.active-filter-btn:hover::after {
         display: none !important;
     }
 </style>
@@ -782,6 +755,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const productItems = document.querySelectorAll('.product-item');
     const productTypeCheckboxes = document.querySelectorAll('input[name="product_type"]');
     const categoryCheckboxes = document.querySelectorAll('input[name="category"]');
+    const genderCheckboxes = document.querySelectorAll('input[name="gender"]');
     const searchInput = document.getElementById('productSearch');
     const clearSearchBtn = document.getElementById('clearSearch');
 
@@ -793,19 +767,26 @@ document.addEventListener('DOMContentLoaded', function() {
         const selectedCategories = Array.from(categoryCheckboxes)
             .filter(cb => cb.checked)
             .map(cb => cb.value);
+
+        const selectedGenders = Array.from(genderCheckboxes)
+            .filter(cb => cb.checked)
+            .map(cb => cb.value);
         
         const searchTerm = searchInput.value.toLowerCase().trim();
 
         // Get all checkboxes to check if any are checked
         const allTypeCheckboxes = Array.from(productTypeCheckboxes);
         const allCategoryCheckboxes = Array.from(categoryCheckboxes);
+        const allGenderCheckboxes = Array.from(genderCheckboxes);
         const hasAnyTypeChecked = allTypeCheckboxes.some(cb => cb.checked);
         const hasAnyCategoryChecked = allCategoryCheckboxes.some(cb => cb.checked);
+        const hasAnyGenderChecked = allGenderCheckboxes.some(cb => cb.checked);
 
         productItems.forEach(item => {
             const productType = item.getAttribute('data-product-type');
             const productName = item.getAttribute('data-product-name') || '';
             const productCategory = item.getAttribute('data-product-category') || 'regular_uniforms';
+            const productGender = item.getAttribute('data-product-gender') || 'unisex';
 
             let show = true;
 
@@ -823,6 +804,13 @@ document.addEventListener('DOMContentLoaded', function() {
             // If no category checkbox is checked, show all products (don't filter by category)
             if (hasAnyCategoryChecked) {
                 if (!selectedCategories.includes(productCategory)) {
+                    show = false;
+                }
+            }
+
+            // Filter by gender (multi-select)
+            if (hasAnyGenderChecked) {
+                if (!selectedGenders.includes(productGender)) {
                     show = false;
                 }
             }
@@ -850,6 +838,13 @@ document.addEventListener('DOMContentLoaded', function() {
         checkbox.addEventListener('change', filterProducts);
     });
 
+    genderCheckboxes.forEach(checkbox => {
+        checkbox.addEventListener('change', filterProducts);
+    });
+
+    // Initial filter run
+    filterProducts();
+
     searchInput.addEventListener('input', function() {
         if (this.value.trim()) {
             clearSearchBtn.style.display = 'block';
@@ -871,11 +866,19 @@ document.addEventListener('DOMContentLoaded', function() {
     if (toggleFiltersBtn && filterSidebar) {
         toggleFiltersBtn.addEventListener('click', function() {
             filterSidebar.classList.toggle('active');
+            this.classList.toggle('active-filter-btn');
+            
             const label = this.querySelector('span');
+            
             if (filterSidebar.classList.contains('active')) {
-                label.textContent = 'Hide Filters';
+                label.textContent = 'Close';
+                // Remove inline styles as class handles it
+                this.style.backgroundColor = '';
+                this.style.color = '';
             } else {
-                label.textContent = 'Show Filters';
+                label.textContent = 'Filter';
+                this.style.backgroundColor = '';
+                this.style.color = '';
             }
         });
     }
@@ -883,8 +886,8 @@ document.addEventListener('DOMContentLoaded', function() {
     // Make product cards clickable
     document.querySelectorAll('.product-card-clickable').forEach(card => {
         card.addEventListener('click', function(e) {
-            // Don't navigate if clicking on buttons, links, or wishlist form
-            if (e.target.closest('.actions') || e.target.closest('a') || e.target.closest('.wishlist-mobile-form')) {
+            // Don't navigate if clicking on buttons or links
+            if (e.target.closest('.actions') || e.target.closest('a')) {
                 return;
             }
             
@@ -894,88 +897,6 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         });
     });
-});
-</script>
-<!-- Wishlist Toast Notification -->
-<div class="position-fixed bottom-0 end-0 p-3" style="z-index: 1100">
-    <div id="wishlistToast" class="toast align-items-center text-white bg-success border-0" role="alert" aria-live="assertive" aria-atomic="true">
-        <div class="d-flex">
-            <div class="toast-body">
-                <i class="fas fa-check-circle me-2"></i> <span id="wishlistToastMessage">Product added to wishlist!</span>
-            </div>
-            <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
-        </div>
-    </div>
-</div>
-
-<script>
-document.addEventListener('DOMContentLoaded', function() {
-    // ... existing code ...
-
-    // AJAX Wishlist Functionality
-    const wishlistForms = document.querySelectorAll('form[action*="add-to-wishlist"]');
-    const toastEl = document.getElementById('wishlistToast');
-    // Check if toast element exists before initializing
-    if (toastEl) {
-        const toast = new bootstrap.Toast(toastEl, { delay: 3000 });
-        const toastMessage = document.getElementById('wishlistToastMessage');
-        const toastBody = toastEl.querySelector('.toast-body');
-
-        wishlistForms.forEach(form => {
-            form.addEventListener('submit', function(e) {
-                e.preventDefault();
-                
-                const formData = new FormData(this);
-                const button = this.querySelector('button');
-                const originalHtml = button.innerHTML;
-                const icon = button.querySelector('i');
-                
-                // Optimistic UI: Immediately show success state
-                // Change icon to filled heart and maybe color (optional, handled by class)
-                if (icon) {
-                    icon.classList.remove('far');
-                    icon.classList.add('fas');
-                    icon.classList.add('text-danger'); // Make it red
-                }
-                button.disabled = true; // Prevent double clicks
-
-                fetch(this.action, {
-                    method: 'POST',
-                    headers: {
-                        'X-Requested-With': 'XMLHttpRequest',
-                        'Accept': 'application/json',
-                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
-                    },
-                    body: formData
-                })
-                .then(response => response.json())
-                .then(data => {
-                    // Keep the filled state if success or already in wishlist
-                    button.disabled = false;
-
-                    // Show toast
-                    toastMessage.textContent = data.message;
-                    
-                    if (data.status === 'info') {
-                        toastEl.classList.remove('bg-success');
-                        toastEl.classList.add('bg-info');
-                    } else {
-                        toastEl.classList.remove('bg-info');
-                        toastEl.classList.add('bg-success');
-                    }
-                    
-                    toast.show();
-                })
-                .catch(error => {
-                    console.error('Error:', error);
-                    // Revert UI on error
-                    button.innerHTML = originalHtml;
-                    button.disabled = false;
-                    alert('Something went wrong. Please try again.');
-                });
-            });
-        });
-    }
 });
 </script>
 @endsection

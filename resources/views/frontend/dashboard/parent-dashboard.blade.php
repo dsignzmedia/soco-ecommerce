@@ -77,10 +77,10 @@
                                             onsubmit="return confirm('Are you sure you want to delete this student profile? This action cannot be undone.');">
                                             @csrf
                                             <button type="submit" 
-                                                    class="btn btn-sm" 
+                                                    class="btn btn-sm delete-profile-btn" 
                                                     style="background: linear-gradient(135deg, #ff6b6b, #d90429); color: #ffffff; border: none; padding: 8px 18px; border-radius: 30px;"
                                                     title="Delete Profile">
-                                                <i class="fas fa-trash me-2"></i> Delete Profile
+                                                <i class="fas fa-trash me-2"></i> <span class="d-none d-sm-inline">Delete Profile</span><span class="d-inline d-sm-none">Delete</span>
                                             </button>
                                         </form>
                                     </div>
@@ -205,16 +205,20 @@
                     <span style="color: white; font-size: 16px; font-weight: bold;">×</span>
                 </button>
             </div>
-            <div class="modal-body" style="padding: 20px;">
-                <form id="addStudentForm">
-                    <input type="hidden" id="modalProfileId" name="profile_id" value="">
-                    <div class="mb-3">
-                        <label for="modalSchoolName" class="form-label" style="font-weight: 500; color: #333; margin-bottom: 8px;">School Name</label>
-                        <div class="autocomplete-wrapper-modal" style="position: relative;">
-                            <input type="text" id="modalSchoolName" name="school_name" class="form-control" placeholder="Start typing school name" autocomplete="off" required style="border: 1px solid #ddd; border-radius: 6px; padding: 10px 12px;">
-                            <div class="suggestion-list-modal" id="modalSchoolSuggestions" style="position: absolute; top: 100%; left: 0; right: 0; background: white; border: 1px solid #ddd; border-radius: 6px; max-height: 200px; overflow-y: auto; z-index: 10002 !important; display: none; margin-top: 4px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);"></div>
+            <form id="addStudentForm">
+            <div class="modal-body" style="padding: 0;">
+                <div class="modal-scrollable">
+
+                        <input type="hidden" id="modalProfileId" name="profile_id" value="">
+                        <div class="mb-3">
+                            <label for="modalSchoolName" class="form-label" style="font-weight: 500; color: #333; margin-bottom: 8px;">School Name</label>
+                            <div class="autocomplete-wrapper-modal" style="position: relative;">
+                                <input type="text" id="modalSchoolName" name="school_name" class="form-control" placeholder="Start typing school name" autocomplete="off" required style="border: 1px solid #ddd; border-radius: 6px; padding: 10px 12px;">
+                                <div class="suggestion-list-modal" id="modalSchoolSuggestions" style="position: absolute; top: 100%; left: 0; right: 0; background: white; border: 1px solid #ddd; border-radius: 6px; max-height: 200px; overflow-y: auto; z-index: 10002 !important; display: none; margin-top: 4px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);"></div>
+                            </div>
                         </div>
-                    </div>
+                        <!-- other form fields remain unchanged -->
+
                     <div class="mb-3">
                         <label for="modalStudentName" class="form-label" style="font-weight: 500; color: #333; margin-bottom: 8px;">Student Name</label>
                         <input type="text" id="modalStudentName" name="student_name" class="form-control" placeholder="Enter student name" required style="border: 1px solid #ddd; border-radius: 6px; padding: 10px 12px;">
@@ -245,16 +249,26 @@
                     </div>
                     <div class="mb-3">
                         <label class="form-label" style="font-weight: 500; color: #333; margin-bottom: 8px;">Gender</label>
-                        <div class="gender-buttons-modal" style="display: flex; gap: 8px;">
-                            <button type="button" class="btn btn-sm gender-btn-modal" data-value="male" style="border: 1px solid #ddd; background: white; color: #333; padding: 6px 20px; border-radius: 6px; flex: 1;">Male</button>
-                            <button type="button" class="btn btn-sm gender-btn-modal" data-value="female" style="border: 1px solid #ddd; background: white; color: #333; padding: 6px 20px; border-radius: 6px; flex: 1;">Female</button>
+                        <div class="gender-radio-group" style="display: flex; gap: 20px;">
+                            <label class="gender-radio-label">
+                                <input type="radio" name="gender" value="male" required class="gender-radio-input">
+                                <span class="gender-radio-custom"></span>
+                                <span class="gender-radio-text">Male</span>
+                            </label>
+                            <label class="gender-radio-label">
+                                <input type="radio" name="gender" value="female" required class="gender-radio-input">
+                                <span class="gender-radio-custom"></span>
+                                <span class="gender-radio-text">Female</span>
+                            </label>
                         </div>
-                        <input type="hidden" id="modalGenderValue" name="gender" required>
                     </div>
-                    <div class="modal-footer" style="border-top: 1px solid #e0e0e0; padding: 12px 20px; margin-top: 15px;">
+
+                    <div class="modal-footer" style="border-top: 1px solid #e0e0e0; padding: 12px 20px; margin-top: 15px; display: flex; justify-content: flex-end; gap: 10px;">
                         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" style="border: 1px solid #ddd; background: white; color: #333; padding: 8px 16px; border-radius: 6px; font-size: 0.9rem;">Cancel</button>
                         <button type="submit" class="btn btn-primary" style="background-color: #490D59; color: white; border: none; padding: 8px 16px; border-radius: 6px; font-size: 0.9rem;">Submit</button>
                     </div>
+                </div>
+            </div>
                 </form>
             </div>
         </div>
@@ -273,38 +287,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const modalSubmitBtn = document.querySelector('#addStudentForm button[type="submit"]');
     const addStudentModal = document.getElementById('addStudentModal');
 
-    const schools = [
-        {
-            name: 'Stanes ICSE School',
-            location: 'Peelamedu',
-            logo: '{{ asset("assets/img/school_logo/Stanes ICSE logo.png") }}'
-        },
-        {
-            name: 'Stanes School CBSE',
-            location: 'Avinashi Road',
-            logo: '{{ asset("assets/img/school_logo/Stanes School CBSE logo.jpg") }}'
-        },
-        {
-            name: 'Stanes Anglo Indian Higher Secondary School (AIHSS) – Samacheer',
-            location: 'Avinashi Road',
-            logo: '{{ asset("assets/img/school_logo/Stanes Anglo Indian Higher Secondary School (AIHSS) – Samacheer logo.png") }}'
-        },
-        {
-            name: 'Bharatiya Vidya Bhavan Matric Higher Secondary School (BVB) – RS Puram',
-            location: 'R S Puram',
-            logo: '{{ asset("assets/img/school_logo/Bharatiya Vidya Bhavan Matric Higher Secondary School (BVB) – RS Puram logo.jpg") }}'
-        },
-        {
-            name: 'Bharatiya Vidya Bhavan Matric Higher Secondary School (BVB) – Ajjanur',
-            location: 'Ajjanur',
-            logo: '{{ asset("assets/img/school_logo/Bharatiya Vidya Bhavan Matric Higher Secondary School (BVB) – Ajjanur logo.jpg") }}'
-        },
-        {
-            name: 'Shri Nehru Vidyalaya Matriculation Higher Secondary School (SNV)',
-            location: 'R.S. Puram',
-            logo: null
-        }
-    ];
+    const schools = @json($schools);
 
     const renderModalSuggestions = (value) => {
         const query = value.trim().toLowerCase();
@@ -387,12 +370,7 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     });
 
-    genderButtons.forEach(button => {
-        button.addEventListener('click', function() {
-            document.getElementById('modalGenderValue').value = this.dataset.value;
-            setSelection(genderButtons, this.dataset.value);
-        });
-    });
+
 
     if (modalSchoolInput) {
         modalSchoolInput.addEventListener('input', (e) => {
@@ -421,10 +399,11 @@ document.addEventListener('DOMContentLoaded', function() {
         if (!addStudentForm) return;
         addStudentForm.reset();
         document.getElementById('modalGrade').value = '';
-        document.getElementById('modalGenderValue').value = '';
+        // Reset radio buttons
+        const genderRadios = document.querySelectorAll('input[name="gender"]');
+        genderRadios.forEach(radio => radio.checked = false);
         if (profileIdField) profileIdField.value = '';
         setSelection(gradeButtons, null);
-        setSelection(genderButtons, null);
         if (modalSuggestionBox) {
             modalSuggestionBox.style.display = 'none';
             modalSuggestionBox.innerHTML = '';
@@ -442,7 +421,8 @@ document.addEventListener('DOMContentLoaded', function() {
             e.preventDefault();
             
             const grade = document.getElementById('modalGrade').value;
-            const gender = document.getElementById('modalGenderValue').value;
+            const genderRadio = document.querySelector('input[name="gender"]:checked');
+            const gender = genderRadio ? genderRadio.value : '';
             const schoolName = document.getElementById('modalSchoolName').value;
             const studentName = document.getElementById('modalStudentName').value;
             const section = document.getElementById('modalSection').value;
@@ -526,9 +506,13 @@ document.addEventListener('DOMContentLoaded', function() {
         document.getElementById('modalSection').value = profile.section || '';
 
         document.getElementById('modalGrade').value = profile.grade || '';
-        document.getElementById('modalGenderValue').value = profile.gender || '';
+        // Set gender radio button
+        const genderValue = profile.gender || '';
+        if (genderValue) {
+            const genderRadio = document.querySelector(`input[name="gender"][value="${genderValue}"]`);
+            if (genderRadio) genderRadio.checked = true;
+        }
         setSelection(gradeButtons, profile.grade || null);
-        setSelection(genderButtons, profile.gender || null);
 
         const modalInstance = bootstrap.Modal.getOrCreateInstance(addStudentModal);
         modalInstance.show();
@@ -551,6 +535,114 @@ document.addEventListener('DOMContentLoaded', function() {
 </script>
 
 <style>
+    /* Custom Radio Button Styling */
+    .gender-radio-label {
+        display: flex;
+        align-items: center;
+        cursor: pointer;
+        position: relative;
+        padding-left: 32px;
+        user-select: none;
+        font-size: 15px;
+        color: #333;
+    }
+
+    .gender-radio-input {
+        position: absolute;
+        opacity: 0;
+        cursor: pointer;
+        height: 20px;
+        width: 20px;
+        left: 0;
+        top: 50%;
+        transform: translateY(-50%);
+        z-index: 2;
+    }
+
+    .gender-radio-custom {
+        position: absolute;
+        left: 0;
+        top: 50%;
+        transform: translateY(-50%);
+        height: 20px;
+        width: 20px;
+        background-color: #fff;
+        border: 2px solid #490D59;
+        border-radius: 50%;
+        transition: all 0.2s ease;
+    }
+
+    .gender-radio-label:hover .gender-radio-custom {
+        border-color: #6a1b7a;
+        box-shadow: 0 0 0 2px rgba(73, 13, 89, 0.1);
+    }
+
+    .gender-radio-input:checked ~ .gender-radio-custom {
+        background-color: #490D59;
+        border-color: #490D59;
+    }
+
+    .gender-radio-input:checked ~ .gender-radio-custom:after {
+        content: "";
+        position: absolute;
+        display: block;
+        left: 50%;
+        top: 50%;
+        transform: translate(-50%, -50%);
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        background: white;
+    }
+
+    .gender-radio-text {
+        margin-left: 8px;
+    }
+
+    /* Fix Modal Centering */
+    .modal-dialog-centered {
+        display: flex !important;
+        align-items: center !important;
+        min-height: calc(100% - 1rem) !important;
+        margin: 0.5rem auto !important;
+    }
+
+    @media (min-width: 576px) {
+        .modal-dialog-centered {
+            min-height: calc(100% - 3.5rem) !important;
+            margin: 1.75rem auto !important;
+        }
+    }
+
+    #addStudentModal .modal-dialog {
+        margin-left: auto;
+        margin-right: auto;
+    }
+
+    .modal-scrollable {
+        max-height: 70vh;
+        overflow-y: auto;
+        padding: 20px;
+    }
+
+    @media (max-width: 576px) {
+        #addStudentModal .modal-dialog {
+            margin: 1.75rem auto !important; /* Default bootstrap margin for centered */
+            max-width: calc(100% - 30px) !important;
+            margin-left: 15px !important;
+            margin-right: 15px !important;
+        }
+        
+        .modal-scrollable {
+            max-height: 55vh; /* Reduced height for mobile */
+            padding: 15px; /* Slightly smaller padding on mobile */
+        }
+        
+        .modal-body {
+            padding: 0 !important;
+        }
+    }
+
     .tabbed-interface-wrapper {
         max-width: 1200px;
         margin: 0 auto;
@@ -940,12 +1032,14 @@ document.addEventListener('DOMContentLoaded', function() {
         }
 
         .modal-footer {
-            flex-direction: column;
-            gap: 10px;
+            flex-direction: row !important;
+            justify-content: flex-end !important;
+            gap: 10px !important;
         }
 
         .modal-footer .btn {
-            width: 100%;
+            width: auto !important;
+            flex: 0 0 auto;
         }
 
         .suggestion-list-modal {

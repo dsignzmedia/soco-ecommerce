@@ -32,41 +32,57 @@ class AuthController extends Controller
     {
         $filters = $request->only(['date_range', 'school_id', 'category']);
 
-        $products = ProductMapping::query()
-            ->when($filters['school_id'] ?? null, fn($q, $schoolId) => $q->where('school_id', $schoolId))
-            ->when($filters['category'] ?? null, fn($q, $category) => $q->where('category', $category))
-            ->get();
+        // Base queries
+        $ordersQuery = \App\Models\Admin\Master\Order::query();
+        $productsQuery = ProductMapping::query();
 
-        $schools = School::orderBy('name')->get();
-        $categories = ProductMapping::select('category')->whereNotNull('category')->distinct()->orderBy('category')->pluck('category');
+        // Apply Filters to Orders
+        if (!empty($filters['school_id'])) {
+            $ordersQuery->where('school_id', $filters['school_id']);
+        }
+        if (!empty($filters['category'])) {
+            $ordersQuery->where('category', $filters['category']);
+        }
+        if (!empty($filters['date_range'])) {
+            $dates = explode(' - ', $filters['date_range']);
+            if (count($dates) == 2) {
+                $ordersQuery->whereBetween('order_date', [
+                    \Carbon\Carbon::parse($dates[0])->startOfDay(),
+                    \Carbon\Carbon::parse($dates[1])->endOfDay()
+                ]);
+            }
+        }
 
+        // Apply Filters to Products (for stock KPIs)
+        if (!empty($filters['school_id'])) {
+            $productsQuery->where('school_id', $filters['school_id']);
+        }
+        if (!empty($filters['category'])) {
+            $productsQuery->where('category', $filters['category']);
+        }
+
+        // --- KPI Cards ---
+        // Clone query for different stats to avoid interference
         $ordersKpi = [
-            'total_orders' => 412,
-            'processing' => 28,
-            'shipped' => 36,
-            'delivered' => 312,
-            'failed' => 12,
+            'total_orders' => (clone $ordersQuery)->count(),
+            'processing' => (clone $ordersQuery)->where('order_status', 'processing')->count(),
+            'shipped' => (clone $ordersQuery)->where('order_status', 'shipped')->count(),
+            'delivered' => (clone $ordersQuery)->where('order_status', 'delivered')->count(),
+            'failed' => (clone $ordersQuery)->whereIn('order_status', ['failed', 'cancelled'])->count(),
         ];
 
         $financialKpi = [
-            'total_sales' => 186000,
-            'total_tax' => 14600,
-            'total_shipping' => 9200,
+            'total_sales' => (clone $ordersQuery)->sum('total_amount'),
+            'total_tax' => (clone $ordersQuery)->sum('tax_amount'),
+            'total_shipping' => (clone $ordersQuery)->sum('shipping_cost'),
         ];
 
-        $lowStockCount = $products->filter(function ($product) {
-            if (is_null($product->low_stock_threshold)) {
-                return false;
-            }
-
-            return $product->inventory_stock <= $product->low_stock_threshold;
-        })->count();
-
+        // Stock KPIs (based on Products, not Orders)
         $stockKpi = [
-            'in_stock' => $products->where('inventory_stock', '>', 0)->count(),
-            'out_of_stock' => $products->where('inventory_stock', '<=', 0)->count(),
-            'low_stock' => $lowStockCount,
-            'returns' => 14,
+            'in_stock' => (clone $productsQuery)->where('inventory_stock', '>', 0)->count(),
+            'out_of_stock' => (clone $productsQuery)->where('inventory_stock', '<=', 0)->count(),
+            'low_stock' => (clone $productsQuery)->whereColumn('inventory_stock', '<=', 'low_stock_threshold')->count(),
+            'returns' => (clone $ordersQuery)->whereNotNull('return_exchange_status')->count(),
         ];
 
         $kpis = [
@@ -83,42 +99,63 @@ class AuthController extends Controller
             ['label' => 'Returns / Exchange', 'value' => $stockKpi['returns']],
         ];
 
-        $ordersBySchoolData = $schools->map(fn($school) => [
-            'label' => $school->name,
-            'value' => rand(10, 60),
-        ]);
-
-        if ($ordersBySchoolData->isEmpty()) {
-            $ordersBySchoolData = collect([
-                ['label' => 'No schools yet', 'value' => 0],
-            ]);
+        // --- Charts ---
+        
+        // 1. Sales over time (Last 7 days or selected range)
+        // Group by date
+        $salesData = (clone $ordersQuery)
+            ->selectRaw('DATE(order_date) as date, SUM(total_amount) as total')
+            ->groupBy('date')
+            ->orderBy('date')
+            ->get();
+            
+        $chartLabels = $salesData->pluck('date')->map(fn($d) => \Carbon\Carbon::parse($d)->format('M d'))->toArray();
+        $chartSeries = $salesData->pluck('total')->toArray();
+        
+        // If empty, show last 7 days empty
+        if (empty($chartLabels)) {
+            $period = \Carbon\CarbonPeriod::create(now()->subDays(6), now());
+            foreach ($period as $date) {
+                $chartLabels[] = $date->format('M d');
+                $chartSeries[] = 0;
+            }
         }
 
-        $ordersByCategoryData = $categories->map(fn($category) => [
-            'label' => $category,
-            'value' => rand(20, 80),
-        ]);
-
-        if ($ordersByCategoryData->isEmpty()) {
-            $ordersByCategoryData = collect([
-                ['label' => 'Uniform', 'value' => 45],
-                ['label' => 'Sports', 'value' => 22],
+        // 2. Orders by School
+        $ordersBySchool = (clone $ordersQuery)
+            ->select('school_id', \Illuminate\Support\Facades\DB::raw('count(*) as total'))
+            ->with('school:id,name')
+            ->groupBy('school_id')
+            ->get()
+            ->map(fn($item) => [
+                'label' => $item->school->name ?? 'Unknown',
+                'value' => $item->total
             ]);
-        }
+
+        // 3. Orders by Category
+        $ordersByCategory = (clone $ordersQuery)
+            ->select('category', \Illuminate\Support\Facades\DB::raw('count(*) as total'))
+            ->whereNotNull('category')
+            ->groupBy('category')
+            ->get()
+            ->map(fn($item) => [
+                'label' => $item->category,
+                'value' => $item->total
+            ]);
 
         $charts = [
             'salesTrend' => [
                 'title' => 'Sales over time',
-                'labels' => ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
-                'series' => [52, 68, 71, 90, 110, 132, 97],
+                'labels' => $chartLabels,
+                'series' => $chartSeries,
             ],
             'ordersBySchool' => [
                 'title' => 'Orders by school',
-                'data' => $ordersBySchoolData->toArray(),
+                'data' => $ordersBySchool->isEmpty() ? [['label' => 'No orders', 'value' => 0]] : $ordersBySchool->toArray(),
             ],
             'ordersByCategory' => [
                 'title' => 'Orders by category',
-                'data' => $ordersByCategoryData->toArray(),
+                'data' => $ordersByCategory->isEmpty() ? [['label' => 'No orders', 'value' => 0]] : $ordersByCategory->toArray(),
             ],
             'stockInsights' => [
                 'title' => 'Stock insights',
@@ -130,25 +167,43 @@ class AuthController extends Controller
             ],
         ];
 
+        // --- Alerts ---
+        
+        // 1. Low Stock
         $lowStockAlerts = ProductMapping::whereColumn('inventory_stock', '<=', 'low_stock_threshold')
             ->orderBy('inventory_stock')
-            ->take(3)
+            ->take(5)
+            ->get();
+
+        // 2. Delayed Orders (Processing for > 3 days)
+        $delayedOrders = \App\Models\Admin\Master\Order::where('order_status', 'processing')
+            ->where('created_at', '<', now()->subDays(3))
+            ->take(5)
+            ->get();
+
+        // 3. Failed Payments
+        $failedPayments = \App\Models\Admin\Master\Order::where('payment_status', 'failed')
+            ->take(5)
             ->get();
 
         $alerts = [
             [
                 'type' => 'Low stock',
-                'items' => $lowStockAlerts->map(fn($mapping) => $mapping->product_name . ' (' . $mapping->inventory_stock . ' units left)'),
+                'items' => $lowStockAlerts->map(fn($m) => $m->product_name . ' (' . $m->inventory_stock . ' left)'),
             ],
             [
                 'type' => 'Delayed orders',
-                'items' => collect(['#ORD-1045 stuck at hub', '#ORD-1061 pending dispatch']),
+                'items' => $delayedOrders->map(fn($o) => '#' . $o->order_number . ' (' . $o->created_at->diffForHumans() . ')'),
             ],
             [
                 'type' => 'Failed payments',
-                'items' => collect(['Parent S Kumar (₹1,499)', 'Parent R Devi (₹2,249)']),
+                'items' => $failedPayments->map(fn($o) => '#' . $o->order_number . ' - ' . $o->customer_name),
             ],
         ];
+
+        // Data for Filters
+        $schools = School::orderBy('name')->get();
+        $categories = ProductMapping::select('category')->whereNotNull('category')->distinct()->orderBy('category')->pluck('category');
 
         return view('admin.dashboard', [
             'kpis' => $kpis,

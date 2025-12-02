@@ -12,7 +12,7 @@
         <a href="{{ route('master.admin.catalog.index') }}" style="color:#490d59;font-weight:600;">← Back to catalog</a>
     </div>
     <div class="card">
-        <form method="POST" action="{{ $isEdit ? route('master.admin.catalog.update', $product) : route('master.admin.catalog.store') }}">
+        <form method="POST" action="{{ $isEdit ? route('master.admin.catalog.update', $product) : route('master.admin.catalog.store') }}" enctype="multipart/form-data">
             @csrf
             @if($isEdit)
                 @method('PUT')
@@ -29,22 +29,32 @@
                 </label>
                 <label>
                     <span>Grade</span>
-                    <select name="grade_id">
+                    <select name="grade">
                         <option value="">All grades</option>
-                        @foreach($grades as $grade)
-                            <option value="{{ $grade->id }}" @selected(old('grade_id', $product->grade_id) == $grade->id)>
-                                {{ $grade->name }} ({{ $grade->school?->name }})
+                        @foreach($grades as $key => $label)
+                            <option value="{{ $key }}" @selected(old('grade', $product->grade) == $key)>
+                                {{ $label }}
                             </option>
                         @endforeach
                     </select>
                 </label>
                 <label>
                     <span>Category</span>
-                    <input type="text" name="category" value="{{ old('category', $product->category) }}">
+                    <select name="category">
+                        <option value="">Select Category</option>
+                        @foreach($categories as $key => $label)
+                            <option value="{{ $key }}" @selected(old('category', $product->category) === $key)>{{ $label }}</option>
+                        @endforeach
+                    </select>
                 </label>
                 <label>
                     <span>Product Type</span>
-                    <input type="text" name="product_type" value="{{ old('product_type', $product->product_type) }}">
+                    <select name="product_type">
+                        <option value="">Select Type</option>
+                        @foreach($productTypes as $key => $label)
+                            <option value="{{ $key }}" @selected(old('product_type', $product->product_type) === $key)>{{ $label }}</option>
+                        @endforeach
+                    </select>
                 </label>
                 <label>
                     <span>Gender *</span>
@@ -134,18 +144,30 @@
                 <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:16px;">
                     <label>
                         <span>Featured product image</span>
-                        <input type="text" name="featured_image" value="{{ old('featured_image', $product->featured_image) }}" placeholder="https://...">
+                        <input type="file" name="featured_image" accept="image/*">
+                        @if($product->featured_image)
+                            <div style="margin-top:8px;">
+                                <img src="{{ Str::startsWith($product->featured_image, 'http') ? $product->featured_image : asset('storage/' . $product->featured_image) }}" alt="Featured" style="width:80px;height:80px;object-fit:cover;border-radius:8px;">
+                            </div>
+                        @endif
                     </label>
                     <label>
                         <span>Tag name</span>
                         <input type="text" name="tag_name" value="{{ old('tag_name', $product->tag_name) }}" placeholder="Eg: Bestseller">
                     </label>
                     <label>
-                        <span>Featured images (comma separated URLs)</span>
-                        <input type="text" name="media_images" value="{{ old('media_images', implode(', ', $product->media_images ?? [])) }}">
+                        <span>Gallery images</span>
+                        <input type="file" name="media_images[]" multiple accept="image/*">
+                        @if($product->media_images)
+                            <div style="margin-top:8px;display:flex;gap:8px;flex-wrap:wrap;">
+                                @foreach($product->media_images as $img)
+                                    <img src="{{ Str::startsWith($img, 'http') ? $img : asset('storage/' . $img) }}" alt="Gallery" style="width:60px;height:60px;object-fit:cover;border-radius:8px;">
+                                @endforeach
+                            </div>
+                        @endif
                     </label>
                     <label>
-                        <span>Gallery images (comma separated URLs)</span>
+                        <span>Gallery images (Legacy URLs - Optional)</span>
                         <input type="text" name="media_gallery" value="{{ old('media_gallery', implode(', ', $product->media_gallery ?? [])) }}">
                     </label>
                     <label>

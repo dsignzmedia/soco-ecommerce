@@ -138,13 +138,6 @@
                                 <span style="color: #dc3545; font-weight: 600;" id="summarySubtotal">₹{{ number_format($total) }}</span>
                             </div>
                             
-                            <div class="mb-3">
-                                <div class="d-flex justify-content-between mb-2">
-                                    <span style="color: #666;">Shipping:</span>
-                                </div>
-                                <p class="text-muted small mb-0" style="font-size: 0.875rem; text-align: right;">Enter your address to view shipping options.</p>
-                            </div>
-                            
                             <hr style="margin: 20px 0;">
                             
                             <div class="d-flex justify-content-between mb-4">

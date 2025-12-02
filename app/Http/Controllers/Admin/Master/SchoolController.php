@@ -35,6 +35,11 @@ class SchoolController extends Controller
     {
         $data = $this->validateData($request);
         $data['slug'] = Str::slug($data['name']);
+        
+        if ($request->hasFile('logo')) {
+            $data['logo'] = $request->file('logo')->store('schools', 'public');
+        }
+
         School::create($data);
 
         return redirect()->route('master.admin.schools.index')
@@ -53,6 +58,11 @@ class SchoolController extends Controller
     {
         $data = $this->validateData($request, $school->id);
         $data['slug'] = Str::slug($data['name']);
+
+        if ($request->hasFile('logo')) {
+            $data['logo'] = $request->file('logo')->store('schools', 'public');
+        }
+
         $school->update($data);
 
         return redirect()->route('master.admin.schools.index')
@@ -63,6 +73,7 @@ class SchoolController extends Controller
     {
         return $request->validate([
             'name' => ['required', 'string', 'max:255'],
+            'logo' => ['nullable', 'image', 'max:2048'],
             'board' => ['nullable', 'string', 'max:255'],
             'city' => ['nullable', 'string', 'max:255'],
             'state' => ['nullable', 'string', 'max:255'],

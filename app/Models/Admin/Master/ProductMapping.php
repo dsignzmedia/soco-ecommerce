@@ -14,6 +14,7 @@ class ProductMapping extends Model
     protected $fillable = [
         'school_id',
         'grade_id',
+        'grade',
         'product_name',
         'category',
         'product_type',

@@ -8,10 +8,19 @@
         <div class="row mb-4">
             <div class="col-12">
                 <h2 class="h3 mb-2">Checkout</h2>
-                @if(isset($selectedProfile) && $selectedProfile)
+                @php
+                    // Get unique students from cart
+                    $uniqueStudents = collect($cartItems)->pluck('student_name')->unique()->values();
+                @endphp
+                @if($uniqueStudents->count() > 0)
                     <p class="text-muted mb-3">
                         <i class="fas fa-user-graduate me-2"></i>
-                        <strong>Shopping for:</strong> {{ $selectedProfile['student_name'] }}
+                        <strong>Shopping for:</strong> 
+                        @if($uniqueStudents->count() == 1)
+                            {{ $uniqueStudents->first() }}
+                        @else
+                            {{ $uniqueStudents->count() }} students ({{ $uniqueStudents->join(', ') }})
+                        @endif
                     </p>
                 @endif
                 <nav aria-label="breadcrumb">
@@ -51,32 +60,32 @@
                             <div class="card-body">
                                 <h5 class="mb-4" style="font-weight: 600; color: #333;">Shipping Address</h5>
                                 
-                                @if(isset($savedAddresses) && count($savedAddresses) > 0)
-                                    <!-- Saved Addresses -->
-                                    <div class="row g-3 mb-3" id="savedAddressesContainer">
-                                        @foreach($savedAddresses as $index => $address)
-                                            <div class="col-md-6">
-                                                <div class="address-card p-3 border rounded position-relative" 
-                                                     style="cursor: pointer; border-color: #e9ecef !important; transition: all 0.3s ease;"
-                                                     onclick="selectSavedAddress({{ $index }})"
-                                                     id="addressCard_{{ $index }}">
-                                                    <div class="form-check">
-                                                        <input class="form-check-input" type="radio" name="address_radio" id="address_radio_{{ $index }}" value="{{ $index }}" {{ $index === 0 ? 'checked' : '' }} onchange="setSelectedAddress({{ $index }})">
-                                                        <label class="form-check-label w-100" for="address_radio_{{ $index }}" style="cursor: pointer;">
-                                                            <div class="d-flex align-items-start gap-2">
-                                                                <i class="fas fa-{{ $address['address_type'] === 'home' ? 'home' : ($address['address_type'] === 'office' ? 'building' : 'map-marker-alt') }} mt-1" style="color: #28a745; font-size: 1.2rem;"></i>
-                                                                <div class="flex-grow-1">
-                                                                    <strong>{{ $address['name'] }}</strong>
-                                                                    <p class="mb-1 small text-muted">{{ $address['phone'] }}</p>
-                                                                    <p class="mb-0 small text-muted">{{ $address['address'] }}, {{ $address['city'] }}, {{ $address['state'] }} - {{ $address['pincode'] }}</p>
-                                                                </div>
+                                    @if(isset($savedAddresses) && count($savedAddresses) > 0)
+                                        <!-- Saved Addresses -->
+                                        <div class="row g-3 mb-3" id="savedAddressesContainer">
+                                            @foreach($savedAddresses as $index => $address)
+                                                <div class="col-md-6">
+                                                    <div class="address-card p-3 border rounded position-relative" 
+                                                         style="cursor: pointer; border-color: #e9ecef !important; transition: all 0.3s ease;"
+                                                         onclick="selectSavedAddress({{ $index }})"
+                                                         id="addressCard_{{ $index }}">
+                                                        <input type="checkbox" class="address-checkbox d-none" name="address_checkbox_{{ $index }}" id="address_checkbox_{{ $index }}" value="{{ $index }}" {{ count($savedAddresses) === 1 || $index === 0 ? 'checked' : '' }} onchange="setSelectedAddress({{ $index }})">
+                                                        <div class="d-flex align-items-start gap-2">
+                                                            <i class="fas fa-{{ $address['address_type'] === 'home' ? 'home' : ($address['address_type'] === 'office' ? 'building' : 'map-marker-alt') }} mt-1" style="color: #28a745; font-size: 1.2rem;"></i>
+                                                            <div class="flex-grow-1">
+                                                                <strong>{{ $address['name'] }}</strong>
+                                                                <p class="mb-1 small text-muted">{{ $address['phone'] }}</p>
+                                                                <p class="mb-0 small text-muted">{{ $address['address'] }}, {{ $address['city'] }}, {{ $address['state'] }} - {{ $address['pincode'] }}</p>
                                                             </div>
-                                                        </label>
+                                                        </div>
+                                                        <!-- Checkmark indicator -->
+                                                        <div class="position-absolute top-0 end-0 m-2 checkmark-indicator" id="checkmark_{{ $index }}" style="display: {{ count($savedAddresses) === 1 || $index === 0 ? 'block' : 'none' }};">
+                                                            <i class="fas fa-check-circle" style="color: #28a745; font-size: 1.5rem;"></i>
+                                                        </div>
                                                     </div>
                                                 </div>
-                                            </div>
-                                        @endforeach
-                                    </div>
+                                            @endforeach
+                                        </div>
                                 @else
                                     <!-- No Address Found -->
                                     <div class="text-center py-4 mb-3" id="noAddressContainer">
@@ -99,25 +108,47 @@
                             <div class="card-body">
                                 <h5 class="mb-4" style="font-weight: 600; color: #333;">Order Summary</h5>
                                 
-                                <!-- Cart Items -->
-                                <div class="mb-3" style="max-height: 300px; overflow-y: auto;">
-                                    @foreach($cartItems as $item)
-                                        <div class="d-flex gap-2 mb-3 pb-3 border-bottom">
-                                            <div class="flex-shrink-0">
-                                                <div style="width: 60px; height: 60px; border-radius: 6px; overflow: hidden; border: 1px solid #e9ecef; background-color: #f8f9fa; display: flex; align-items: center; justify-content: center;">
-                                                    @if(isset($item['image']) && $item['image'])
-                                                        <img src="{{ $item['image'] }}" alt="{{ $item['name'] }}" style="width: 100%; height: 100%; object-fit: cover;">
-                                                    @else
-                                                        <i class="fas fa-image text-muted"></i>
-                                                    @endif
+                                <!-- Cart Items Grouped by Student -->
+                                <div class="mb-3" style="max-height: 400px; overflow-y: auto;">
+                                    @php
+                                        // Group items by student
+                                        $groupedItems = [];
+                                        foreach($cartItems as $item) {
+                                            $studentName = $item['student_name'] ?? 'Unknown Student';
+                                            if (!isset($groupedItems[$studentName])) {
+                                                $groupedItems[$studentName] = [];
+                                            }
+                                            $groupedItems[$studentName][] = $item;
+                                        }
+                                    @endphp
+                                    
+                                    @foreach($groupedItems as $studentName => $items)
+                                        <!-- Student Header -->
+                                        <div class="mb-2 pb-2 border-bottom" style="background-color: #f8f9fa; padding: 8px; border-radius: 6px; margin-bottom: 12px;">
+                                            <h6 class="mb-0" style="font-size: 0.875rem; font-weight: 600; color: #490D59;">
+                                                <i class="fas fa-user-graduate me-2"></i>{{ $studentName }}
+                                            </h6>
+                                        </div>
+                                        
+                                        <!-- Items for this student -->
+                                        @foreach($items as $item)
+                                            <div class="d-flex gap-2 mb-3 pb-3 border-bottom">
+                                                <div class="flex-shrink-0">
+                                                    <div style="width: 60px; height: 60px; border-radius: 6px; overflow: hidden; border: 1px solid #e9ecef; background-color: #f8f9fa; display: flex; align-items: center; justify-content: center;">
+                                                        @if(isset($item['image']) && $item['image'])
+                                                            <img src="{{ $item['image'] }}" alt="{{ $item['name'] }}" style="width: 100%; height: 100%; object-fit: cover;">
+                                                        @else
+                                                            <i class="fas fa-image text-muted"></i>
+                                                        @endif
+                                                    </div>
+                                                </div>
+                                                <div class="flex-grow-1">
+                                                    <h6 class="mb-1" style="font-size: 0.875rem; font-weight: 600;">{{ $item['name'] }}</h6>
+                                                    <p class="text-muted small mb-1">Size: {{ $item['size'] }} × Qty: {{ $item['quantity'] }}</p>
+                                                    <p class="mb-0" style="color: #dc3545; font-weight: 600; font-size: 0.875rem;">₹{{ number_format($item['item_total']) }}</p>
                                                 </div>
                                             </div>
-                                            <div class="flex-grow-1">
-                                                <h6 class="mb-1" style="font-size: 0.875rem; font-weight: 600;">{{ $item['name'] }}</h6>
-                                                <p class="text-muted small mb-1">Size: {{ $item['size'] }} × Qty: {{ $item['quantity'] }}</p>
-                                                <p class="mb-0" style="color: #dc3545; font-weight: 600; font-size: 0.875rem;">₹{{ number_format($item['item_total']) }}</p>
-                                            </div>
-                                        </div>
+                                        @endforeach
                                     @endforeach
                                 </div>
                                 
@@ -125,7 +156,11 @@
                                 <div class="mb-3">
                                     <div class="d-flex justify-content-between mb-2">
                                         <span style="color: #666;">Subtotal:</span>
-                                        <span style="color: #333; font-weight: 500;">₹{{ number_format($total) }}</span>
+                                        <span style="color: #333; font-weight: 500;">₹{{ number_format($subtotal) }}</span>
+                                    </div>
+                                    <div class="d-flex justify-content-between mb-2">
+                                        <span style="color: #666;">Tax:</span>
+                                        <span style="color: #333; font-weight: 500;">₹{{ number_format($totalTax) }}</span>
                                     </div>
                                     <div class="d-flex justify-content-between mb-2">
                                         <span style="color: #666;">Shipping:</span>
@@ -202,16 +237,32 @@ function selectSavedAddress(index) {
     if (selectedAddressInput) {
         selectedAddressInput.value = index;
     }
-    document.getElementById('address_radio_' + index).checked = true;
     
-    // Update card styling
-    document.querySelectorAll('.address-card').forEach(card => {
+    const checkbox = document.getElementById('address_checkbox_' + index);
+    if (checkbox) {
+        checkbox.checked = true;
+    }
+    
+    // Update card styling and checkmarks
+    document.querySelectorAll('.address-card').forEach((card, i) => {
         card.style.borderColor = '#e9ecef';
         card.style.backgroundColor = '#ffffff';
+        const checkmark = document.getElementById('checkmark_' + i);
+        const cb = document.getElementById('address_checkbox_' + i);
+        if (checkmark && cb) {
+            checkmark.style.display = 'none';
+            cb.checked = false;
+        }
     });
+    
     if (document.getElementById('addressCard_' + index)) {
         document.getElementById('addressCard_' + index).style.borderColor = '#28a745';
         document.getElementById('addressCard_' + index).style.backgroundColor = '#f8fff9';
+        const checkmark = document.getElementById('checkmark_' + index);
+        if (checkmark && checkbox) {
+            checkmark.style.display = 'block';
+            checkbox.checked = true;
+        }
     }
 }
 
@@ -225,9 +276,9 @@ function setSelectedAddress(index) {
 
 // Style address cards on load
 document.addEventListener('DOMContentLoaded', function() {
-    const checkedRadio = document.querySelector('input[name="address_radio"]:checked');
-    if (checkedRadio) {
-        const index = checkedRadio.value;
+    const checkedCheckbox = document.querySelector('input[class*="address-checkbox"]:checked');
+    if (checkedCheckbox) {
+        const index = checkedCheckbox.value;
         selectSavedAddress(index);
     }
 });

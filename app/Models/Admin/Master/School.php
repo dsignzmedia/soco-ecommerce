@@ -13,6 +13,7 @@ class School extends Model
     protected $fillable = [
         'name',
         'slug',
+        'logo',
         'board',
         'city',
         'state',
@@ -20,7 +21,6 @@ class School extends Model
         'contact_name',
         'contact_email',
         'contact_phone',
-        'logo_path',
         'notes',
     ];
 
