@@ -3,10 +3,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>Inventory Admin Login | The Skool Store</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
         :root {
             --primary: #4f46e5;
@@ -43,7 +45,7 @@
 
         .login-shell__hero {
             padding: 48px;
-            background: #111827;
+            background: #f6f8ff;
             color: #e2e8f0;
             display: flex;
             flex-direction: column;
@@ -53,13 +55,14 @@
 
         .login-shell__hero h1 {
             margin: 0;
-            color: #fff;
+            color: #000000;
             font-size: 34px;
         }
 
         .login-shell__hero p {
             margin: 0;
             opacity: 0.8;
+            color: #000000;
         }
 
         .login-shell__form {
@@ -128,12 +131,36 @@
         <div class="login-shell__form">
             <h2 style="margin:0 0 8px;font-size:28px;">Sign in</h2>
             <p style="margin:0 0 24px;color:var(--text);">Enter credentials shared by the Master Admin team.</p>
-            <form method="GET" action="{{ route('inventory.admin.dashboard') }}">
+            
+            @if (session('status'))
+                <div style="background:#ecfdf3;border:1px solid #6ee7b7;padding:12px;border-radius:8px;margin-bottom:16px;color:#065f46;">
+                    <i class="fas fa-check-circle" style="margin-right:8px;"></i>{{ session('status') }}
+                </div>
+            @endif
+            
+            @if (session('info'))
+                <div style="background:#eff6ff;border:1px solid #93c5fd;padding:12px;border-radius:8px;margin-bottom:16px;color:#1e40af;">
+                    <i class="fas fa-info-circle" style="margin-right:8px;"></i>{{ session('info') }}
+                </div>
+            @endif
+
+            @if ($errors->any())
+                <div style="background:#fee;border:1px solid #fcc;padding:12px;border-radius:8px;margin-bottom:16px;">
+                    <ul style="margin:0;padding-left:20px;color:#c33;">
+                        @foreach ($errors->all() as $error)
+                            <li>{{ $error }}</li>
+                        @endforeach
+                    </ul>
+                </div>
+            @endif
+
+            <form method="POST" action="{{ route('inventory.admin.login.submit') }}" autocomplete="off">
+                @csrf
                 <label for="email">Email</label>
-                <input type="email" id="email" name="email" placeholder="inventory.manager@school.com">
+                <input type="text" id="email" name="email" placeholder="inventory.manager@school.com" autocomplete="off" required>
 
                 <label for="password">Password</label>
-                <input type="password" id="password" name="password" placeholder="••••••••••">
+                <input type="password" id="password" name="password" placeholder="••••••••••" autocomplete="new-password" required>
 
                 <button type="submit">Login</button>
             </form>

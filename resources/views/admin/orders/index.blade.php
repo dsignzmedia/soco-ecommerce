@@ -154,14 +154,22 @@
                         <td>₹{{ number_format($order->shipping_cost, 2) }}</td>
                         <td>₹{{ number_format($order->tax_amount, 2) }}</td>
                         <td>{{ $order->tracking_number ?? '—' }}</td>
-                        <td class="actions">
-                            <a href="{{ route('master.admin.orders.show', $order) }}">View</a>
-                            <a href="{{ route('master.admin.orders.invoice', $order) }}">Invoice</a>
-                            <a href="{{ route('master.admin.orders.invoice.download', $order) }}">Download</a>
+                        <td class="actions" style="white-space: nowrap;">
+                            <a href="{{ route('master.admin.orders.show', $order) }}" class="btn btn-sm btn-info text-white" title="View">
+                                <i class="fas fa-eye"></i>
+                            </a>
+                            <a href="{{ route('master.admin.orders.invoice', $order) }}" class="btn btn-sm btn-secondary text-white" title="Invoice">
+                                <i class="fas fa-file-invoice"></i>
+                            </a>
+                            <a href="{{ route('master.admin.orders.invoice.download', $order) }}" class="btn btn-sm btn-primary" title="Download">
+                                <i class="fas fa-download"></i>
+                            </a>
                             <form method="POST" action="{{ route('master.admin.orders.status', $order) }}" style="display:inline-block;">
                                 @csrf
                                 <input type="hidden" name="order_status" value="shipped">
-                                <button type="submit" style="border:none;background:none;color:#490d59;font-weight:600;padding:0;">Mark shipped</button>
+                                <button type="submit" class="btn btn-sm btn-success text-white" title="Mark Shipped">
+                                    <i class="fas fa-shipping-fast"></i>
+                                </button>
                             </form>
                         </td>
                     </tr>

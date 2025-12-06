@@ -29,14 +29,14 @@
                     <h2 class="sec-title">Frequently Asked Questions</h2>
                 </div>
                 <div class="accordion accordion-style1 faq-two-column" id="faqVersion1">
-                    <div class="accordion-item active">
+                    <div class="accordion-item">
                         <div class="accordion-header" id="headingOne1">
-                            <button class="accordion-button" type="button" data-bs-toggle="collapse"
-                                data-bs-target="#collapseOne1" aria-expanded="true" aria-controls="collapseOne1">
+                            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse"
+                                data-bs-target="#collapseOne1" aria-expanded="false" aria-controls="collapseOne1">
                                 How can I contact customer support?
                             </button>
                         </div>
-                        <div id="collapseOne1" class="accordion-collapse collapse show"
+                        <div id="collapseOne1" class="accordion-collapse collapse"
                             aria-labelledby="headingOne1" data-bs-parent="#faqVersion1">
                             <div class="accordion-body">
                                 <p>You can reach us via email at hello@theskoolstore.com or call us at +91

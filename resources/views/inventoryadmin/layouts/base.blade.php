@@ -3,10 +3,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>@yield('title', 'Inventory Admin Portal | The Skool Store')</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
         :root {
             --primary: #0f172a;
@@ -257,6 +259,26 @@
         </main>
     </div>
     @stack('scripts')
+    
+    <!-- Logout Confirmation Modal -->
+    <div id="logoutModal" style="display:none; position:fixed; top:0; left:0; right:0; bottom:0; background:rgba(0,0,0,0.5); z-index:9999; align-items:center; justify-content:center;">
+        <div style="background:#fff; border-radius:16px; padding:32px; max-width:400px; text-align:center; box-shadow:0 20px 60px rgba(0,0,0,0.2);">
+            <div style="width:64px; height:64px; background:#fef3f2; border-radius:50%; display:flex; align-items:center; justify-content:center; margin:0 auto 16px;">
+                <i class="fas fa-sign-out-alt" style="font-size:24px; color:#b42318;"></i>
+            </div>
+            <h3 style="margin:0 0 8px; color:#111827; font-size:20px;">Leaving Dashboard?</h3>
+            <p style="margin:0 0 24px; color:#475467; font-size:14px;">Are you sure you want to logout? You will need to login again to access the admin panel.</p>
+            <div style="display:flex; gap:12px; justify-content:center;">
+                <button id="cancelLogout" style="padding:12px 24px; border-radius:10px; border:1px solid #d0d5dd; background:#fff; color:#344054; font-weight:600; cursor:pointer; transition:all 0.2s;">
+                    Stay Here
+                </button>
+                <button id="confirmLogout" style="padding:12px 24px; border-radius:10px; border:none; background:#b42318; color:#fff; font-weight:600; cursor:pointer; transition:all 0.2s;">
+                    Yes, Logout
+                </button>
+            </div>
+        </div>
+    </div>
+
     <script>
         document.addEventListener('DOMContentLoaded', function() {
             const profileChip = document.getElementById('profileChip');
@@ -280,6 +302,59 @@
                     }
                 });
             }
+
+            // ========================================
+            // Back Button Logout Confirmation Logic
+            // ========================================
+            const logoutModal = document.getElementById('logoutModal');
+            const cancelLogoutBtn = document.getElementById('cancelLogout');
+            const confirmLogoutBtn = document.getElementById('confirmLogout');
+            
+            // Push a state to history so we can detect back button
+            history.pushState(null, null, location.href);
+            
+            // Handle back button press
+            window.addEventListener('popstate', function(event) {
+                // Show the logout confirmation modal
+                logoutModal.style.display = 'flex';
+                // Push state again to prevent immediate navigation
+                history.pushState(null, null, location.href);
+            });
+            
+            // Cancel logout - hide modal and stay on page
+            if (cancelLogoutBtn) {
+                cancelLogoutBtn.addEventListener('click', function() {
+                    logoutModal.style.display = 'none';
+                });
+            }
+            
+            // Confirm logout - submit the logout form
+            if (confirmLogoutBtn) {
+                confirmLogoutBtn.addEventListener('click', function() {
+                    // Find the logout form and submit it
+                    const logoutForm = document.querySelector('form[action*="logout"]');
+                    if (logoutForm) {
+                        logoutForm.submit();
+                    } else {
+                        // Fallback: redirect to login
+                        window.location.href = '{{ route("inventory.admin.login") }}';
+                    }
+                });
+            }
+            
+            // Close modal when clicking outside
+            logoutModal.addEventListener('click', function(e) {
+                if (e.target === logoutModal) {
+                    logoutModal.style.display = 'none';
+                }
+            });
+            
+            // Close modal on Escape key
+            document.addEventListener('keydown', function(e) {
+                if (e.key === 'Escape' && logoutModal.style.display === 'flex') {
+                    logoutModal.style.display = 'none';
+                }
+            });
         });
     </script>
 </body>

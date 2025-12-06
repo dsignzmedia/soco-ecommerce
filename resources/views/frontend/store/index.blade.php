@@ -86,6 +86,28 @@
 
 
 
+                    <!-- Product Type -->
+                    <div class="filter-section">
+                        <h6 class="filter-title">Product Type</h6>
+                        <div class="filter-options">
+                            <!-- Hidden filters for Authorized and Optional (checked by default) -->
+                            <input type="checkbox" name="product_type" value="authorized" class="filter-checkbox d-none" checked>
+                            <input type="checkbox" name="product_type" value="optional" class="filter-checkbox d-none" checked>
+
+                            <label class="filter-option">
+                                <input type="checkbox" name="product_type" value="merchandised" class="filter-checkbox" checked>
+                                <span class="checkbox-mark"></span>
+                                <span class="option-label">Merchandised Product</span>
+                            </label>
+                            <label class="filter-option">
+                                <input type="checkbox" name="product_type" value="back_to_school" class="filter-checkbox" checked>
+                                <span class="checkbox-mark"></span>
+                                <span class="option-label">Back to School Product</span>
+                            </label>
+                        </div>
+                        <div class="filter-divider"></div>
+                    </div>
+
                     <!-- Categories -->
                     <div class="filter-section">
                         <h6 class="filter-title">Categories</h6>
@@ -118,7 +140,7 @@
                     <p class="text-muted mb-0">Now Shopping By :</p>
                 </div>
                 
-                <div class="row justify-content-center" id="productsContainer">
+                <div class="row justify-content-start" id="productsContainer">
                     @foreach($allProducts as $product)
                         <div class="col-6 col-md-6 col-lg-4 col-xl-4 product-item" 
                              data-product-type="{{ $product['type'] }}"
@@ -279,8 +301,15 @@
 
     .filter-checkbox {
         position: absolute;
-        opacity: 0;
+        opacity: 0 !important;
         cursor: pointer;
+        height: 0;
+        width: 0;
+        margin: 0;
+        padding: 0;
+        z-index: -1;
+        -webkit-appearance: none;
+        appearance: none;
     }
 
     .checkbox-mark {

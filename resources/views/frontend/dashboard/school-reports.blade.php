@@ -1,7 +1,6 @@
-@extends('frontend.layouts.app')
+@extends('frontend.layouts.school')
 
 @section('content')
-@include('frontend.partials.header')
 
 <section class="space-top space-extra-bottom" style="background-color: #f8f5ff;">
     <div class="container">

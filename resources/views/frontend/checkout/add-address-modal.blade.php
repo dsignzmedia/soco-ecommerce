@@ -14,16 +14,17 @@
                     <div class="row g-3">
                         <div class="col-md-6">
                             <label for="modal_name" class="form-label">Name <span class="text-danger">*</span></label>
-                            <input type="text" class="form-control" id="modal_name" name="name" required>
+                            <input type="text" class="form-control" id="modal_name" name="name" required value="{{ auth()->user()->name ?? '' }}">
+                        </div>
+                        <div class="col-md-6">
+                            <label for="modal_email" class="form-label">Email <span class="text-danger">*</span></label>
+                            <input type="email" class="form-control" id="modal_email" name="email" required value="{{ session('parent_email') ?? auth()->user()->email ?? '' }}">
                         </div>
                         <div class="col-md-6">
                             <label for="modal_phone" class="form-label">Phone Number <span class="text-danger">*</span></label>
-                            <input type="tel" class="form-control" id="modal_phone" name="phone" required>
+                            <input type="tel" class="form-control" id="modal_phone" name="phone" required value="{{ auth()->user()->phone ?? '' }}">
                         </div>
-                        <div class="col-md-6">
-                            <label for="modal_email" class="form-label">Email Address <span class="text-danger">*</span></label>
-                            <input type="email" class="form-control" id="modal_email" name="email" required>
-                        </div>
+
                         <div class="col-md-6">
                             <label for="modal_alternative_number" class="form-label">Alternative Number</label>
                             <input type="tel" class="form-control" id="modal_alternative_number" name="alternative_number">
@@ -36,7 +37,7 @@
                             <label for="modal_state" class="form-label">State <span class="text-danger">*</span></label>
                             <select class="form-select" id="modal_state" name="state" required>
                                 <option value="">Choose State</option>
-                                <option value="Tamil Nadu">Tamil Nadu</option>
+                                <option value="Tamil Nadu" selected>Tamil Nadu</option>
                                 <option value="Kerala">Kerala</option>
                                 <option value="Karnataka">Karnataka</option>
                                 <option value="Andhra Pradesh">Andhra Pradesh</option>
@@ -168,11 +169,18 @@ function saveNewAddress() {
         return;
     }
     
+    const btn = document.getElementById('saveAddressBtn');
+    const originalText = btn.innerText;
+    btn.disabled = true;
+    btn.innerText = 'Saving...';
+
     // Validate custom address type if "others" is selected
     const customAddressType = selectedAddressType === 'others' ? document.getElementById('modal_custom_address_type').value.trim() : null;
     if (selectedAddressType === 'others' && !customAddressType) {
         alert('Please enter a custom address type name.');
         document.getElementById('modal_custom_address_type').focus();
+        btn.disabled = false;
+        btn.innerText = originalText;
         return;
     }
     
@@ -195,11 +203,13 @@ function saveNewAddress() {
         headers: {
             'X-CSRF-TOKEN': '{{ csrf_token() }}',
             'Content-Type': 'application/json',
+            'Accept': 'application/json',
         },
         body: JSON.stringify({
             name: document.getElementById('modal_name').value,
             phone: document.getElementById('modal_phone').value,
             email: document.getElementById('modal_email').value,
+
             alternative_number: document.getElementById('modal_alternative_number').value,
             block_name: document.getElementById('modal_block_name').value,
             address: document.getElementById('modal_address').value,
@@ -209,9 +219,15 @@ function saveNewAddress() {
             landmark: document.getElementById('modal_landmark').value,
             address_type: selectedAddressType,
             custom_address_type: customAddressType,
+            editing_address_index: editingIndex || null,
         })
     })
-    .then(response => response.json())
+    .then(response => {
+        if (!response.ok) {
+            throw new Error('Network response was not ok');
+        }
+        return response.json();
+    })
     .then(data => {
         if (data.success) {
             // Close modal
@@ -221,12 +237,17 @@ function saveNewAddress() {
             // Reload page to show updated address
             location.reload();
         } else {
+            console.error('Save failed:', data.message);
             alert(data.message || 'Error saving address. Please try again.');
+            btn.disabled = false;
+            btn.innerText = originalText;
         }
     })
     .catch(error => {
-        console.error('Error:', error);
+        console.error('Fetch error:', error);
         alert('Error saving address. Please try again.');
+        btn.disabled = false;
+        btn.innerText = originalText;
     });
 }
 </script>

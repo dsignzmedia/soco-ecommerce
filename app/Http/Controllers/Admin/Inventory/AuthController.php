@@ -11,16 +11,121 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\RateLimiter;
+use Illuminate\Support\Str;
 use Illuminate\View\View;
 
 class AuthController extends Controller
 {
     /**
+     * Maximum login attempts before throttling
+     */
+    protected int $maxAttempts = 5;
+
+    /**
+     * Throttle decay time in seconds (1 minute)
+     */
+    protected int $decaySeconds = 60;
+
+    /**
      * Display the inventory admin login screen.
+     * Note: Now protected by RedirectIfInventoryAdmin middleware in routes.
      */
     public function showLoginForm(): View
     {
         return view('inventoryadmin.auth.login');
+    }
+
+    /**
+     * Handle inventory admin login request.
+     * 
+     * Security features:
+     * - Rate limiting to prevent brute force attacks
+     * - Session fixation protection via regenerate()
+     * - CSRF protection (via Laravel middleware)
+     * - Strict role validation
+     */
+    public function login(Request $request): RedirectResponse
+    {
+        // Check if user is rate limited
+        $throttleKey = $this->throttleKey($request);
+        
+        if (RateLimiter::tooManyAttempts($throttleKey, $this->maxAttempts)) {
+            $seconds = RateLimiter::availableIn($throttleKey);
+            return back()->withErrors([
+                'email' => "Too many login attempts. Please try again in {$seconds} seconds.",
+            ])->withInput();
+        }
+
+        // Validate input with comprehensive rules
+        $credentials = $request->validate([
+            'email' => ['required', 'string', 'max:255'],
+            'password' => ['required', 'string', 'min:6'],
+        ], [
+            'email.required' => 'Email or phone is required.',
+            'password.required' => 'Password is required.',
+            'password.min' => 'Password must be at least 6 characters.',
+        ]);
+
+        // Sanitize email input
+        $emailOrPhone = trim($credentials['email']);
+
+        // Attempt to find user by email or phone
+        $user = User::where('email', $emailOrPhone)
+            ->orWhere('phone', $emailOrPhone)
+            ->first();
+
+        // Check credentials
+        if (!$user || !Hash::check($credentials['password'], $user->password)) {
+            // Increment rate limiter on failed attempt
+            RateLimiter::hit($throttleKey, $this->decaySeconds);
+            
+            return back()->withErrors([
+                'email' => 'The provided credentials do not match our records.',
+            ])->withInput(['email' => $emailOrPhone]);
+        }
+
+        // Check if user has Inventory Admin role (role = 3)
+        if ($user->role !== 3) {
+            // Increment rate limiter on role mismatch too
+            RateLimiter::hit($throttleKey, $this->decaySeconds);
+            
+            return back()->withErrors([
+                'email' => 'You do not have permission to access the Inventory Admin panel.',
+            ])->withInput(['email' => $emailOrPhone]);
+        }
+
+        // Clear rate limiter on successful authentication
+        RateLimiter::clear($throttleKey);
+
+        // Log the user in
+        auth()->login($user);
+        
+        // CRITICAL: Regenerate session ID to prevent session fixation attacks
+        $request->session()->regenerate();
+
+        // Store admin session data
+        $request->session()->put('admin_id', $user->id);
+        $request->session()->put('admin_name', $user->name);
+        $request->session()->put('admin_email', $user->email);
+        $request->session()->put('admin_role', 'inventory_admin');
+
+        try {
+            AuditLogger::record(
+                'login',
+                $user,
+                [
+                    'user_email' => $user->email,
+                    'ip' => $request->ip(),
+                    'user_agent' => $request->userAgent(),
+                ],
+                'Inventory Admin logged in'
+            );
+        } catch (\Exception $e) {
+            // Silently ignore logging errors
+        }
+
+        return redirect()->route('inventory.admin.dashboard');
     }
 
     /**
@@ -191,18 +296,69 @@ class AuthController extends Controller
     }
 
     /**
+     * Generate throttle key based on email/IP combination
+     * This prevents both single-account brute force and distributed attacks
+     */
+    protected function throttleKey(Request $request): string
+    {
+        return Str::transliterate(
+            Str::lower($request->input('email', '')) . '|' . $request->ip()
+        );
+    }
+
+    /**
      * Logout the inventory admin user.
+     * 
+     * Security steps:
+     * 1. Log the logout action for audit trail
+     * 2. Log out the user from Laravel's auth system
+     * 3. Clear all admin-specific session data
+     * 4. Invalidate the entire session
+     * 5. Regenerate CSRF token
      */
     public function logout(Request $request): RedirectResponse
     {
-        $request->session()->forget('admin_id');
-        $request->session()->forget('admin_name');
-        $request->session()->forget('admin_email');
+        // Get user info before logout for audit logging
+        $user = auth()->user();
+        
+        if ($user) {
+            try {
+                AuditLogger::record(
+                    'logout',
+                    $user,
+                    [
+                        'user_email' => $user->email,
+                        'ip' => $request->ip(),
+                        'user_agent' => $request->userAgent(),
+                    ],
+                    'Inventory Admin logged out'
+                );
+            } catch (\Exception $e) {
+                // Silently ignore logging errors
+            }
+        }
+        
+        // Log out the user from Laravel's auth system
+        auth()->logout();
+        
+        // Clear all admin-specific session data
+        $request->session()->forget([
+            'admin_id',
+            'admin_name',
+            'admin_email',
+            'admin_role',
+        ]);
 
+        // Completely invalidate the session
         $request->session()->invalidate();
+        
+        // Regenerate CSRF token
         $request->session()->regenerateToken();
 
-        return redirect()->route('inventory.admin.login')->with('status', 'You have been logged out successfully.');
+        return redirect()->route('inventory.admin.login')
+            ->with('status', 'You have been logged out successfully.')
+            ->header('Cache-Control', 'no-cache, no-store, max-age=0, must-revalidate')
+            ->header('Pragma', 'no-cache');
     }
 }
 

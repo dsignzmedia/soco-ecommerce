@@ -17,19 +17,19 @@
                         <a href="{{ route('frontend.parent.cart') }}" class="d-block text-decoration-none mb-2 p-2 rounded position-relative" style="background-color: {{ request()->routeIs('frontend.parent.cart') ? '#28a745' : 'transparent' }}; color: {{ request()->routeIs('frontend.parent.cart') ? '#ffffff' : '#333' }}; transition: all 0.2s;">
                             <i class="fas fa-shopping-cart me-2"></i> Cart
                             @php
-                                $cartCount = count(session('cart', []));
+                                $cartCount = Auth::check() ? \App\Models\Cart::where('user_id', Auth::id())->count() : 0;
                             @endphp
                             @if($cartCount > 0)
                                 <span class="badge rounded-pill" style="background-color: #dc3545; color: #ffffff; font-size: 0.7rem; padding: 2px 6px; position: absolute; right: 8px; top: 50%; transform: translateY(-50%);">{{ $cartCount }}</span>
                             @endif
                         </a>
-                        
+
                         <a href="{{ route('frontend.parent.orders') }}" class="d-block text-decoration-none mb-2 p-2 rounded" style="background-color: {{ request()->routeIs('frontend.parent.orders') ? '#28a745' : 'transparent' }}; color: {{ request()->routeIs('frontend.parent.orders') ? '#ffffff' : '#333' }}; transition: all 0.2s;">
                             <i class="fas fa-shopping-bag me-2"></i> My Orders
                         </a>
                         
-                        <a href="{{ route('frontend.parent.addresses') }}" class="d-block text-decoration-none mb-2 p-2 rounded" style="background-color: {{ request()->routeIs('frontend.parent.addresses') ? '#28a745' : 'transparent' }}; color: {{ request()->routeIs('frontend.parent.addresses') ? '#ffffff' : '#333' }}; transition: all 0.2s;">
-                            <i class="fas fa-map-marker-alt me-2"></i> My Address
+                        <a href="{{ route('frontend.parent.profile') }}" class="d-block text-decoration-none mb-2 p-2 rounded" style="background-color: {{ request()->routeIs('frontend.parent.profile') ? '#28a745' : 'transparent' }}; color: {{ request()->routeIs('frontend.parent.profile') ? '#ffffff' : '#333' }}; transition: all 0.2s;">
+                            <i class="fas fa-user me-2"></i> Profile
                         </a>
                         
                         <hr class="my-2" style="border-color: #ddd;">
@@ -47,23 +47,24 @@
                     <div class="card-body p-4">
                         <h4 class="mb-4" style="font-weight: 600; color: #333;">Information</h4>
                         
-                        <form>
+                        <form action="{{ route('frontend.parent.update-profile') }}" method="POST">
+                            @csrf
                             <div class="row g-3">
                                 <div class="col-md-6">
-                                    <label for="first_name" class="form-label">First Name</label>
-                                    <input type="text" class="form-control" id="first_name" name="first_name" placeholder="First Name">
-                                </div>
-                                <div class="col-md-6">
-                                    <label for="last_name" class="form-label">Last Name</label>
-                                    <input type="text" class="form-control" id="last_name" name="last_name" placeholder="Last Name">
+                                    <label for="name" class="form-label">Name</label>
+                                    <input type="text" class="form-control" id="name" name="name" placeholder="Name" value="{{ Auth::user()->name }}">
                                 </div>
                                 <div class="col-md-6">
                                     <label for="email" class="form-label">Email</label>
-                                    <input type="email" class="form-control" id="email" name="email" placeholder="Email">
+                                    <input type="email" class="form-control" id="email" name="email" placeholder="Email" value="{{ str_contains(Auth::user()->email, '@noemail.com') ? '' : Auth::user()->email }}">
+                                    @if(str_contains(Auth::user()->email, '@noemail.com'))
+                                        <small class="text-muted">Please update your email address.</small>
+                                    @endif
                                 </div>
                                 <div class="col-md-6">
                                     <label for="phone" class="form-label">Phone</label>
-                                    <input type="tel" class="form-control" id="phone" name="phone" value="{{ $parentPhone ?? '+91 9159413234' }}" placeholder="Phone">
+                                    <input type="tel" class="form-control" id="phone" name="phone" value="{{ Auth::user()->phone }}" placeholder="Phone" readonly style="background-color: #e9ecef;">
+                                    <small class="text-muted">Phone number cannot be changed.</small>
                                 </div>
                                 <div class="col-12 mt-4">
                                     <button type="submit" class="vs-btn" style="background-color: #ff6b35; border: none;">

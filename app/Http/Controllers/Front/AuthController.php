@@ -7,9 +7,156 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\ValidationException;
+use Laravel\Socialite\Facades\Socialite;
+use App\Models\User;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 
 class AuthController extends Controller
 {
+    /**
+     * Send OTP for login/registration
+     */
+    /**
+     * Send OTP for login/registration
+     */
+    public function sendOtp(Request $request, \App\Services\SmsService $smsService)
+    {
+        $request->validate([
+            'contact' => 'required|string',
+        ]);
+
+        $contact = $request->contact;
+        
+        // Strict Validation Logic
+        $isEmail = filter_var($contact, FILTER_VALIDATE_EMAIL);
+        $isPhone = preg_match('/^[0-9]{10}$/', $contact);
+
+        if (!$isEmail && !$isPhone) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Please enter a valid email address or a 10-digit mobile number.',
+            ], 422);
+        }
+
+        $field = $isEmail ? 'email' : 'phone';
+
+        // Check if user exists
+        $user = User::where($field, $contact)->first();
+        $isNewUser = !$user;
+
+        if (!$user) {
+            // Create a temporary/guest user to store the OTP
+            // We'll update the name later during registration if needed
+            $user = User::create([
+                'name' => 'Guest',
+                'email' => $isEmail ? $contact : null, // Allow null email if phone
+                'phone' => $isEmail ? null : $contact,
+                'password' => bcrypt(str()->random(16)),
+                'role' => User::ROLE_PARENT,
+            ]);
+        }
+
+        // Generate 4-digit OTP
+        $otp = rand(1000, 9999);
+        
+        // Store in Users table
+        $user->otp = $otp;
+        $user->otp_expires_at = now()->addMinutes(10);
+        $user->otp_verified = false; // Reset verification status
+        $user->save();
+
+        Log::info("OTP generated for {$contact}");
+
+        // Send OTP via SMS or Email
+        if ($isEmail) {
+            try {
+                \Illuminate\Support\Facades\Mail::to($contact)->send(new \App\Mail\OtpMail($otp));
+                Log::info("Email OTP sent to {$contact}");
+            } catch (\Exception $e) {
+                Log::error("Failed to send email OTP to {$contact}: " . $e->getMessage());
+                // Fallback or just log error? For now, we log.
+            }
+        } else {
+            $message = "Your OTP for The Skool Store is: {$otp}. Valid for 10 minutes.";
+            $smsService->send($contact, $message);
+        }
+        
+        return response()->json([
+            'success' => true,
+            'is_new_user' => $isNewUser,
+            'message' => 'OTP sent successfully!',
+            // 'otp' => $otp, // REMOVED FOR SECURITY
+            'contact_type' => $field,
+        ]);
+    }
+
+    /**
+     * Verify OTP and login/register
+     */
+    public function verifyOtp(Request $request)
+    {
+        $request->validate([
+            'otp' => 'required|string',
+            'contact' => 'required|string',
+            'name' => 'nullable|string|max:255',
+        ]);
+
+        $otp = $request->otp;
+        $contact = $request->contact;
+        
+        $isEmail = filter_var($contact, FILTER_VALIDATE_EMAIL);
+        $field = $isEmail ? 'email' : 'phone';
+        
+        // Find user
+        $user = User::where($field, $contact)->first();
+
+        if (!$user || $user->otp != $otp) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Invalid OTP.',
+            ], 422);
+        }
+
+        if (now()->greaterThan($user->otp_expires_at)) {
+            return response()->json([
+                'success' => false,
+                'message' => 'OTP expired.',
+            ], 422);
+        }
+
+        // OTP is valid
+        // Mark as verified
+        $user->otp_verified = true;
+        // Optional: Clear OTP to prevent reuse, but maybe keep for audit? 
+        // Let's clear it to be safe and clean
+        $user->otp = null; 
+        $user->otp_expires_at = null;
+        $user->save();
+
+        // If name is provided and user was a guest (name is Guest), update name
+        if ($request->name && $user->name === 'Guest') {
+            $user->name = $request->name;
+            $user->save();
+        }
+
+        Auth::login($user);
+        
+        // Store parent phone
+        if ($user->phone) {
+            session(['parent_phone' => $user->phone]);
+        } elseif ($user->email) {
+            session(['parent_phone' => $user->email]);
+        }
+
+        return response()->json([
+            'success' => true,
+            'redirect_url' => $this->redirectBasedOnRole($user),
+        ]);
+    }
+
+
+
     public function parentLogin()
     {
         return view('frontend.auth.parent-login');
@@ -20,68 +167,501 @@ class AuthController extends Controller
         return view('frontend.auth.school-login');
     }
 
+    /**
+     * Redirect to Google for authentication
+     */
+    public function redirectToGoogle()
+    {
+        return Socialite::driver('google')->redirect();
+    }
+
+    /**
+     * Handle Google OAuth callback
+     */
+    public function handleGoogleCallback()
+    {
+        try {
+            $googleUser = Socialite::driver('google')->stateless()->user();
+            Log::info('Google OAuth - User data received', [
+                'email' => $googleUser->getEmail(),
+                'name' => $googleUser->getName(),
+                'id' => $googleUser->getId(),
+            ]);
+        } catch (\Exception $e) {
+            Log::error('Google OAuth - Failed to get user', ['error' => $e->getMessage()]);
+            return redirect()->route('login')
+                ->with('error', 'Google login failed. Please try again.');
+        }
+
+        // Extract username from email (part before @)
+        $email = $googleUser->getEmail();
+        $username = explode('@', $email)[0];
+        
+        Log::info('Google OAuth - Extracted data', [
+            'email' => $email,
+            'username' => $username,
+        ]);
+
+        // Check if user exists
+        $user = User::where('email', $email)->first();
+
+        if ($user) {
+            // User exists - Log them in
+            Log::info('Google OAuth - User found, logging in', [
+                'user_id' => $user->id,
+                'user_email' => $user->email,
+            ]);
+
+            Auth::login($user, true);
+            
+            // Store parent phone (optional)
+            session(['parent_phone' => $user->phone ?? $user->email]);
+
+            return redirect($this->redirectBasedOnRole($user))
+                ->with('success', 'Welcome back, ' . $user->name . '!');
+        } else {
+            // User does not exist - Create new user and login
+            Log::info('Google OAuth - User not found, creating new user', [
+                'email' => $email,
+            ]);
+
+            $user = User::create([
+                'name' => $googleUser->getName() ?? $username,
+                'email' => $email,
+                'password' => bcrypt(str()->random(16)), // Random password
+                'role' => User::ROLE_PARENT, // Default role for new users
+                'email_verified_at' => now(),
+            ]);
+
+            Log::info('Google OAuth - New user created', [
+                'user_id' => $user->id,
+            ]);
+
+            Auth::login($user, true);
+            
+            // Store parent phone (optional)
+            session(['parent_phone' => $user->phone ?? $user->email]);
+
+            return redirect($this->redirectBasedOnRole($user))
+                ->with('success', 'Registration successful! Welcome to The Skool Store.');
+        }
+    }
+
+    /**
+     * Show registration form
+     */
+    public function showRegister()
+    {
+        return view('frontend.auth.register');
+    }
+
+    /**
+     * Handle registration submission
+     */
+    public function register(Request $request)
+    {
+        Log::info('Registration attempt', $request->all());
+
+        try {
+            $validated = $request->validate([
+                'name' => 'required|string|max:255',
+                'email' => 'required|string|email|max:255|unique:users',
+                'phone' => 'nullable|string|max:20',
+                'password' => 'required|string|min:8|confirmed',
+            ]);
+
+            Log::info('Validation passed', $validated);
+
+            $user = User::create([
+                'name' => $validated['name'],
+                'email' => $validated['email'],
+                'phone' => $validated['phone'] ?? null,
+                'password' => bcrypt($validated['password']),
+                'role' => User::ROLE_PARENT, // Default role for new users
+            ]);
+
+            Log::info('User created', $user->toArray());
+
+            Auth::login($user);
+            
+            // Store parent phone in session for dashboard compatibility
+            if ($user->phone) {
+                session(['parent_phone' => $user->phone]);
+            } else {
+                session(['parent_phone' => $user->email]);
+            }
+
+            return redirect()->route('frontend.parent.dashboard')
+                ->with('success', 'Registration successful! Welcome to The Skool Store.');
+        } catch (\Exception $e) {
+            Log::error('Registration failed: ' . $e->getMessage());
+            return back()->withInput()->withErrors(['error' => 'Registration failed. Please try again.']);
+        }
+    }
+
+    /**
+     * Handle login submission
+     */
+    public function login(Request $request)
+    {
+        Log::info('Login attempt', ['email' => $request->email]);
+        
+        $credentials = $request->validate([
+            'email' => 'required|email',
+            'password' => 'required',
+        ]);
+
+        if (Auth::attempt($credentials)) {
+            $request->session()->regenerate();
+
+            $user = Auth::user();
+            
+            Log::info('Login successful', [
+                'user_id' => $user->id,
+                'user_email' => $user->email,
+                'user_name' => $user->name,
+                'role' => $user->role,
+            ]);
+            
+            // Store parent phone in session for dashboard compatibility
+            if ($user->phone) {
+                session(['parent_phone' => $user->phone]);
+            } else {
+                session(['parent_phone' => $user->email]);
+            }
+
+            // Role-based redirect
+            return $this->redirectBasedOnRole($user);
+        }
+
+        Log::warning('Login failed - Invalid credentials', ['email' => $request->email]);
+        
+        return back()->withErrors([
+            'email' => 'The provided credentials do not match our records.',
+        ])->onlyInput('email');
+    }
+
+    /**
+     * Handle logout
+     */
+    public function logout(Request $request)
+    {
+        Auth::logout();
+
+        $request->session()->invalidate();
+        $request->session()->regenerateToken();
+
+        return redirect()->route('frontend.index')
+            ->with('success', 'You have been logged out successfully.');
+    }
+
     public function authenticateSchool(Request $request)
     {
+        // Redirect to unified login - schools now use email/password like everyone else
+        // This method is kept for backward compatibility but redirects to main login
+        
+        Log::info('School login attempt - redirecting to unified login');
+        
         $request->validate([
             'username' => 'required|string',
             'password' => 'required|string',
         ]);
 
-        // TODO: In production, validate credentials against database
-        // For now, accept any username/password combination
-        // Store school session data
-        session(['school_authenticated' => true]);
-        session(['school_username' => $request->username]);
-        
-        // Map username to school name (in production, fetch from database)
-        // For now, use a default or map based on username
-        $schoolNameMap = [
-            'bvb_ajjanur' => 'Bharatiya Vidya Bhavan Matric Higher Secondary School (BVB) – Ajjanur',
-            'stanes_icse' => 'Stanes ICSE School',
-            'stanes_cbse' => 'Stanes School CBSE',
-            'stanes_aihss' => 'Stanes Anglo Indian Higher Secondary School (AIHSS) – Samacheer',
-            'bvb_rspuram' => 'Bharatiya Vidya Bhavan Matric Higher Secondary School (BVB) – RS Puram',
-            'snv' => 'Shri Nehru Vidyalaya Matriculation Higher Secondary School (SNV)',
+        // Try to authenticate using email (username field contains email)
+        $credentials = [
+            'email' => $request->username,
+            'password' => $request->password,
         ];
-        
-        $schoolName = $schoolNameMap[strtolower($request->username)] ?? 'Bharatiya Vidya Bhavan Matric Higher Secondary School (BVB) – Ajjanur';
-        session(['school_name' => $schoolName]);
 
-        return redirect()->route('frontend.school.dashboard')
-            ->with('success', 'Login successful! Welcome to your dashboard.');
+        if (Auth::attempt($credentials)) {
+            $request->session()->regenerate();
+            $user = Auth::user();
+            
+            Log::info('School login successful', [
+                'user_id' => $user->id,
+                'role' => $user->role,
+            ]);
+            
+            // Use role-based redirect
+            return $this->redirectBasedOnRole($user);
+        }
+
+        Log::warning('School login failed - Invalid credentials', ['username' => $request->username]);
+        
+        return back()->withErrors([
+            'username' => 'The provided credentials do not match our records.',
+        ])->onlyInput('username');
     }
 
     public function schoolDashboard()
     {
-        // Check if school is authenticated
-        if (!session('school_authenticated')) {
-            return redirect()->route('frontend.school.login')
-                ->with('error', 'Please login to access the dashboard.');
+        $user = Auth::user();
+
+        // Get school data from database
+        $school = $user->school;
+        
+        if (!$school) {
+            return redirect()->route('login')
+                ->with('error', 'School not found. Please contact administrator.');
         }
 
-        // Sample dashboard data (in production, fetch from database)
+        // Get real order statistics for this school
+        $orders = \App\Models\Admin\Master\Order::where('school_id', $school->id);
+        
         $dashboardData = [
-            'total_orders' => 1250,
-            'total_revenue' => 125000,
-            'pending_orders' => 45,
-            'completed_orders' => 1205,
+            'total_orders' => $orders->count(),
+            'total_revenue' => $orders->sum('total_amount'),
+            'pending_orders' => $orders->where('order_status', 'pending')->count(),
+            'completed_orders' => $orders->whereIn('order_status', ['completed', 'delivered'])->count(),
         ];
 
-        // School addresses mapping
-        $schoolAddresses = [
-            'Stanes ICSE School' => 'Peelamedu',
-            'Stanes School CBSE' => 'Avinashi Road',
-            'Stanes Anglo Indian Higher Secondary School (AIHSS) – Samacheer' => 'Avinashi Road',
-            'Bharatiya Vidya Bhavan Matric Higher Secondary School (BVB) – RS Puram' => 'R S Puram',
-            'Bharatiya Vidya Bhavan Matric Higher Secondary School (BVB) – Ajjanur' => 'Ajjanur',
-            'Shri Nehru Vidyalaya Matriculation Higher Secondary School (SNV)' => 'R.S. Puram',
-        ];
-
-        // Get school name from session or default
-        $schoolName = session('school_name', 'School');
-        $schoolAddress = $schoolAddresses[$schoolName] ?? '';
+        $schoolName = $school->name;
+        $schoolAddress = $school->city ?? '';
 
         return view('frontend.dashboard.school-dashboard', compact('dashboardData', 'schoolName', 'schoolAddress'));
+    }
+
+    public function schoolOrders(Request $request)
+    {
+        // Check if user is authenticated and has school role
+        if (!Auth::check() || !Auth::user()->isSchool()) {
+            return redirect()->route('login')
+                ->with('error', 'Please login to access this page.');
+        }
+
+        $user = Auth::user();
+        $school = $user->school;
+        
+        if (!$school) {
+            return redirect()->route('login')
+                ->with('error', 'School not found. Please contact administrator.');
+        }
+
+        // Get orders for this school with filters
+        $query = \App\Models\Admin\Master\Order::where('school_id', $school->id)
+            ->orderBy('order_date', 'desc');
+        
+        // Apply status filter if provided
+        if ($request->has('status') && $request->status != '') {
+            $query->where('order_status', $request->status);
+        }
+        
+        // Apply search filter if provided
+        if ($request->has('search') && $request->search != '') {
+            $search = $request->search;
+            $query->where(function($q) use ($search) {
+                $q->where('order_number', 'like', "%{$search}%")
+                  ->orWhere('student_name', 'like', "%{$search}%")
+                  ->orWhere('customer_name', 'like', "%{$search}%");
+            });
+        }
+        
+        $orders = $query->paginate(20);
+        
+        // Analytics Data
+        $analytics = [
+            'total_orders' => \App\Models\Admin\Master\Order::where('school_id', $school->id)->count(),
+            'total_revenue' => \App\Models\Admin\Master\Order::where('school_id', $school->id)->sum('total_amount'),
+            'pending_orders' => \App\Models\Admin\Master\Order::where('school_id', $school->id)->where('order_status', 'pending')->count(),
+            'completed_orders' => \App\Models\Admin\Master\Order::where('school_id', $school->id)->whereIn('order_status', ['completed', 'delivered'])->count(),
+            'orders_by_grade' => \App\Models\Admin\Master\Order::where('school_id', $school->id)
+                ->selectRaw('grade, count(*) as count')
+                ->groupBy('grade')
+                ->pluck('count', 'grade'),
+            'orders_by_month' => \App\Models\Admin\Master\Order::where('school_id', $school->id)
+                ->selectRaw('MONTHNAME(order_date) as month, count(*) as count')
+                ->groupBy('month')
+                ->pluck('count', 'month'),
+        ];
+        
+        return view('frontend.dashboard.school-orders', compact('orders', 'school', 'analytics'));
+    }
+
+    public function schoolStudents(Request $request)
+    {
+        // Check if user is authenticated and has school role
+        if (!Auth::check() || !Auth::user()->isSchool()) {
+            return redirect()->route('login')
+                ->with('error', 'Please login to access this page.');
+        }
+
+        $user = Auth::user();
+        $school = $user->school;
+        
+        if (!$school) {
+            return redirect()->route('login')
+                ->with('error', 'School not found. Please contact administrator.');
+        }
+
+        // Get students for this school
+        // We link StudentProfile to School via school_name
+        $query = \App\Models\StudentProfile::where('school_name', $school->name)
+            ->with('user'); // Eager load parent
+        
+        // Apply filters
+        if ($request->has('grade') && $request->grade != '') {
+            $query->where('grade', $request->grade);
+        }
+
+        if ($request->has('section') && $request->section != '') {
+            $query->where('section', $request->section);
+        }
+
+        if ($request->has('gender') && $request->gender != '') {
+            $query->where('gender', $request->gender);
+        }
+
+        // Apply search filter if provided
+        if ($request->has('search') && $request->search != '') {
+            $search = $request->search;
+            $query->where(function($q) use ($search) {
+                $q->where('student_name', 'like', "%{$search}%")
+                  ->orWhere('grade', 'like', "%{$search}%");
+            });
+        }
+        
+        $students = $query->orderBy('grade')->orderBy('student_name')->paginate(20);
+
+        // Get filter options
+        $grades = \App\Models\StudentProfile::where('school_name', $school->name)
+            ->whereNotNull('grade')
+            ->distinct()
+            ->orderBy('grade')
+            ->pluck('grade');
+
+        $sections = \App\Models\StudentProfile::where('school_name', $school->name)
+            ->whereNotNull('section')
+            ->distinct()
+            ->orderBy('section')
+            ->pluck('section');
+        
+        return view('frontend.dashboard.school-students', compact('students', 'school', 'grades', 'sections'));
+    }
+
+
+
+
+    public function schoolProducts(Request $request)
+    {
+        // Check if user is authenticated and has school role
+        if (!Auth::check() || !Auth::user()->isSchool()) {
+            return redirect()->route('login')
+                ->with('error', 'Please login to access this page.');
+        }
+
+        $user = Auth::user();
+        $school = $user->school;
+        
+        if (!$school) {
+            return redirect()->route('login')
+                ->with('error', 'School not found. Please contact administrator.');
+        }
+
+        // Get products for this school
+        $query = \App\Models\Admin\Master\ProductMapping::where('school_id', $school->id);
+        
+        // Apply filters
+        if ($request->has('category') && $request->category != '') {
+            $query->where('category', $request->category);
+        }
+
+        if ($request->has('product_type') && $request->product_type != '') {
+            $query->where('product_type', $request->product_type);
+        }
+
+        if ($request->has('gender') && $request->gender != '') {
+            $query->where('gender', $request->gender);
+        }
+
+        // Apply search filter if provided
+        if ($request->has('search') && $request->search != '') {
+            $search = $request->search;
+            $query->where('product_name', 'like', "%{$search}%");
+        }
+        
+        $products = $query->paginate(20);
+        
+        // Get filter options
+        $categories = \App\Models\Admin\Master\ProductMapping::where('school_id', $school->id)
+            ->whereNotNull('category')
+            ->distinct()
+            ->orderBy('category')
+            ->pluck('category');
+
+        $productTypes = \App\Models\Admin\Master\ProductMapping::where('school_id', $school->id)
+            ->whereNotNull('product_type')
+            ->distinct()
+            ->orderBy('product_type')
+            ->pluck('product_type');
+
+        $genders = \App\Models\Admin\Master\ProductMapping::where('school_id', $school->id)
+            ->whereNotNull('gender')
+            ->distinct()
+            ->orderBy('gender')
+            ->pluck('gender');
+        
+        return view('frontend.dashboard.school-products', compact('products', 'school', 'categories', 'productTypes', 'genders'));
+    }
+
+
+
+    public function schoolSettings()
+    {
+        // Check if user is authenticated and has school role
+        if (!Auth::check() || !Auth::user()->isSchool()) {
+            return redirect()->route('login')
+                ->with('error', 'Please login to access this page.');
+        }
+
+        $user = Auth::user();
+        $school = $user->school;
+        
+        if (!$school) {
+            return redirect()->route('login')
+                ->with('error', 'School not found. Please contact administrator.');
+        }
+
+        return view('frontend.dashboard.school-settings', compact('school'));
+    }
+
+    public function updateSchoolSettings(Request $request)
+    {
+        // Check if user is authenticated and has school role
+        if (!Auth::check() || !Auth::user()->isSchool()) {
+            return redirect()->route('login')
+                ->with('error', 'Please login to access this page.');
+        }
+
+        $user = Auth::user();
+        $school = $user->school;
+        
+        if (!$school) {
+            return redirect()->route('login')
+                ->with('error', 'School not found. Please contact administrator.');
+        }
+
+        $request->validate([
+            'contact_name' => 'required|string|max:255',
+            'contact_email' => 'required|email|max:255',
+            'contact_phone' => 'required|string|max:20',
+            'address' => 'nullable|string|max:500',
+            'city' => 'nullable|string|max:100',
+            'state' => 'nullable|string|max:100',
+            'zip_code' => 'nullable|string|max:20',
+        ]);
+
+        $school->update([
+            'contact_name' => $request->contact_name,
+            'contact_email' => $request->contact_email,
+            'contact_phone' => $request->contact_phone,
+            'address' => $request->address, // Assuming 'address' field exists or maps to something
+            'city' => $request->city,
+            'state' => $request->state,
+            // 'zip_code' => $request->zip_code, // Check if this column exists in School model
+        ]);
+
+        return redirect()->route('frontend.school.settings')
+            ->with('success', 'School settings updated successfully.');
     }
 
     public function schoolReports()
@@ -182,21 +762,28 @@ class AuthController extends Controller
 
     public function parentDashboard(Request $request)
     {
-        // Get profiles from session (in production, this would come from database)
-        $profiles = session('student_profiles', []);
+        // Get profiles from database
+        $user = Auth::user();
+        
+        // Ensure user is a parent
+        if ($user->isSchool()) {
+            return redirect()->route('frontend.school.dashboard');
+        }
+        
+        $profiles = $user->studentProfiles;
         
         // Get selected student ID from query parameter
         $selectedStudentId = $request->get('student_id');
         
         // If no student selected and profiles exist, select the first one
-        if (!$selectedStudentId && count($profiles) > 0) {
-            $selectedStudentId = $profiles[0]['id'];
+        if (!$selectedStudentId && $profiles->count() > 0) {
+            $selectedStudentId = $profiles->first()->id;
         }
         
         // Find selected profile
         $selectedProfile = null;
         if ($selectedStudentId) {
-            $selectedProfile = collect($profiles)->firstWhere('id', (int)$selectedStudentId);
+            $selectedProfile = $profiles->firstWhere('id', (int)$selectedStudentId);
         }
         
         // Get purchased products for selected student from actual orders
@@ -206,7 +793,7 @@ class AuthController extends Controller
             $orders = session('orders', []);
             
             // Load all products using the same logic as store page
-            $folderProducts = $this->loadProductsFromFolder($selectedProfile['school_name']);
+            $folderProducts = $this->loadProductsFromFolder($selectedProfile->school_name);
             $additionalProducts = $this->getAdditionalProducts();
             $allProductsList = array_merge($folderProducts, $additionalProducts);
             
@@ -220,7 +807,7 @@ class AuthController extends Controller
             foreach ($orders as $order) {
                 // Check if order belongs to this student (check items in order)
                 foreach ($order['items'] as $item) {
-                    if (isset($item['profile_id']) && (int)$item['profile_id'] === (int)$selectedProfile['id']) {
+                    if (isset($item['profile_id']) && (int)$item['profile_id'] === (int)$selectedProfile->id) {
                         // Get product details
                         if (isset($allProducts[$item['product_id']])) {
                             $product = $allProducts[$item['product_id']];
@@ -248,7 +835,7 @@ class AuthController extends Controller
         $schoolLogo = null;
         $schoolAddress = null;
         if ($selectedProfile) {
-            $school = \App\Models\Admin\Master\School::where('name', $selectedProfile['school_name'])->first();
+            $school = \App\Models\Admin\Master\School::where('name', $selectedProfile->school_name)->first();
             if ($school) {
                 $schoolLogo = $school->logo ? asset('storage/' . $school->logo) : null;
                 $schoolAddress = $school->city;
@@ -269,7 +856,7 @@ class AuthController extends Controller
             });
 
         // Get parent phone number from session (in production, from database)
-        $parentPhone = session('parent_phone', '+91 9159413234');
+        $parentPhone = session('parent_phone', $user->phone ?? '+91 9159413234');
 
         return view('frontend.dashboard.parent-dashboard', compact('profiles', 'selectedProfile', 'purchasedProducts', 'schoolLogo', 'schoolAddress', 'parentPhone', 'schools'));
     }
@@ -280,11 +867,143 @@ class AuthController extends Controller
         return view('frontend.account.details', compact('parentPhone'));
     }
 
+    public function profile()
+    {
+        $user = Auth::user();
+        $savedAddresses = $user->addresses;
+        return view('frontend.account.profile', compact('user', 'savedAddresses'));
+    }
+
+    public function updateProfileDetails(Request $request)
+    {
+        $user = Auth::user();
+        
+        $validated = $request->validate([
+            'name' => 'nullable|string|max:255',
+            'email' => 'nullable|email|max:255|unique:users,email,' . $user->id,
+            'phone' => 'nullable|string|size:10|unique:users,phone,' . $user->id,
+        ]);
+
+        $user->name = $validated['name'] ?? $user->name;
+        
+        // Update email if provided and different
+        if (!empty($validated['email']) && $validated['email'] !== $user->email) {
+            $user->email = $validated['email'];
+        }
+
+        // Update phone if provided and different
+        if (!empty($validated['phone']) && $validated['phone'] !== $user->phone) {
+            $user->phone = $validated['phone'];
+        }
+        
+        $user->save();
+
+        // Update session data if needed
+        if ($user->phone) {
+            session(['parent_phone' => $user->phone]);
+        }
+
+        return redirect()->route('frontend.parent.profile')
+            ->with('success', 'Profile updated successfully!');
+    }
+
     public function myAddresses()
     {
-        $savedAddresses = session('saved_addresses', []);
-        $parentPhone = session('parent_phone', '+91 9159413234');
+        $user = Auth::user();
+        $savedAddresses = $user->addresses;
+        $parentPhone = session('parent_phone', $user->phone ?? '+91 9159413234');
         return view('frontend.account.addresses', compact('savedAddresses', 'parentPhone'));
+    }
+
+    public function saveAddress(Request $request)
+    {
+        try {
+            $validated = $request->validate([
+                'name' => 'required|string|max:255',
+                'phone' => 'required|string|max:20',
+                'email' => 'required|email|max:255',
+
+                'alternative_number' => 'nullable|string|max:20',
+                'block_name' => 'nullable|string|max:255',
+                'address' => 'required|string',
+                'city' => 'required|string|max:100',
+                'state' => 'required|string|max:100',
+                'pincode' => 'required|string|max:10',
+                'landmark' => 'nullable|string|max:255',
+                'address_type' => 'required|string|in:home,office,others',
+                'custom_address_type' => 'nullable|string|max:50',
+            ]);
+
+            $user = Auth::user();
+            
+            // Sync phone number to profile if empty (Use Case 1)
+            if (empty($user->phone) && !empty($validated['phone'])) {
+                $user->phone = $validated['phone'];
+                $user->save();
+                // Update session phone if needed
+                session(['parent_phone' => $user->phone]);
+            }
+
+            $editingAddressId = $request->input('editing_address_index');
+
+            $addressData = [
+                'name' => $validated['name'],
+                'phone' => $validated['phone'],
+                'email' => $validated['email'],
+
+                'alternative_number' => $validated['alternative_number'] ?? '',
+                'block_name' => $validated['block_name'] ?? '',
+                'address' => $validated['address'],
+                'city' => $validated['city'],
+                'state' => $validated['state'],
+                'pincode' => $validated['pincode'],
+                'landmark' => $validated['landmark'] ?? '',
+                'address_type' => $validated['address_type'],
+                'address_type_display' => $validated['address_type'] === 'others' ? ($validated['custom_address_type'] ?? 'Other') : ucfirst($validated['address_type']),
+            ];
+
+            if ($editingAddressId) {
+                // Update existing address
+                $address = $user->addresses()->find($editingAddressId);
+                if ($address) {
+                    $address->update($addressData);
+                    $message = 'Address updated successfully!';
+                } else {
+                    if ($request->expectsJson()) {
+                        return response()->json(['success' => false, 'message' => 'Address not found.']);
+                    }
+                    return redirect()->back()->with('error', 'Address not found.');
+                }
+            } else {
+                // Create new address
+                $user->addresses()->create($addressData);
+                $message = 'Address saved successfully!';
+            }
+
+            if ($request->expectsJson()) {
+                return response()->json(['success' => true, 'message' => $message]);
+            }
+            return redirect()->back()->with('success', $message);
+        } catch (\Exception $e) {
+            Log::error('Error saving address: ' . $e->getMessage());
+            if ($request->expectsJson()) {
+                return response()->json(['success' => false, 'message' => 'Error: ' . $e->getMessage()]);
+            }
+            return redirect()->back()->with('error', 'Error saving address: ' . $e->getMessage());
+        }
+    }
+
+    public function deleteAddress($addressId)
+    {
+        $user = Auth::user();
+        $address = $user->addresses()->find($addressId);
+        
+        if ($address) {
+            $address->delete();
+            return redirect()->back()->with('success', 'Address deleted successfully!');
+        }
+
+        return redirect()->back()->with('error', 'Address not found.');
     }
 
     public function createProfile()
@@ -327,37 +1046,31 @@ class AuthController extends Controller
             throw $e;
         }
 
-        $profiles = session('student_profiles', []);
-
-        $profile = [
-            'id' => count($profiles) + 1,
+        $user = Auth::user();
+        $profile = $user->studentProfiles()->create([
             'student_name' => $validated['student_name'],
             'school_name' => $validated['school_name'],
             'grade' => $validated['grade'],
             'section' => $validated['section'],
             'gender' => $validated['gender'],
-            'created_at' => now()->toDateTimeString(),
-        ];
-
-        $profiles[] = $profile;
-        session(['student_profiles' => $profiles]);
+        ]);
 
         if ($request->expectsJson()) {
             return response()->json([
                 'success' => true,
                 'message' => 'Student profile created successfully!',
-                'profile_id' => $profile['id'],
+                'profile_id' => $profile->id,
             ]);
         }
 
-        return redirect()->route('frontend.parent.dashboard', ['student_id' => $profile['id']])
+        return redirect()->route('frontend.parent.dashboard', ['student_id' => $profile->id])
             ->with('success', 'Student profile created successfully!');
     }
 
     public function editProfile($profileId)
     {
-        $profiles = session('student_profiles', []);
-        $profile = collect($profiles)->firstWhere('id', (int)$profileId);
+        $user = Auth::user();
+        $profile = $user->studentProfiles()->find($profileId);
         
         if (!$profile) {
             return redirect()->route('frontend.parent.dashboard')
@@ -389,17 +1102,10 @@ class AuthController extends Controller
             throw $e;
         }
 
-        $profiles = session('student_profiles', []);
-        $index = null;
+        $user = Auth::user();
+        $profile = $user->studentProfiles()->find($profileId);
         
-        foreach ($profiles as $key => $profile) {
-            if ((int)$profile['id'] === (int)$profileId) {
-                $index = $key;
-                break;
-            }
-        }
-        
-        if ($index === null) {
+        if (!$profile) {
             if ($request->expectsJson()) {
                 return response()->json([
                     'success' => false,
@@ -411,24 +1117,19 @@ class AuthController extends Controller
                 ->with('error', 'Profile not found.');
         }
         
-        $profiles[$index] = [
-            'id' => (int)$profileId,
+        $profile->update([
             'student_name' => $validated['student_name'],
             'school_name' => $validated['school_name'],
             'grade' => $validated['grade'],
             'section' => $validated['section'],
             'gender' => $validated['gender'],
-            'created_at' => $profiles[$index]['created_at'] ?? now()->toDateTimeString(),
-            'updated_at' => now()->toDateTimeString(),
-        ];
-        
-        session(['student_profiles' => $profiles]);
+        ]);
         
         if ($request->expectsJson()) {
             return response()->json([
                 'success' => true,
                 'message' => 'Student profile updated successfully!',
-                'profile_id' => (int)$profileId,
+                'profile_id' => $profile->id,
             ]);
         }
 
@@ -438,22 +1139,17 @@ class AuthController extends Controller
 
     public function deleteProfile($profileId)
     {
-        $profiles = session('student_profiles', []);
-        $filteredProfiles = array_filter($profiles, function($profile) use ($profileId) {
-            return (int)$profile['id'] !== (int)$profileId;
-        });
+        $user = Auth::user();
+        $profile = $user->studentProfiles()->find($profileId);
         
-        // Re-index array
-        $filteredProfiles = array_values($filteredProfiles);
+        if ($profile) {
+            $profile->delete();
+        }
         
-        session(['student_profiles' => $filteredProfiles]);
-        
-        // Clear cart if it contains items for this profile
-        $cart = session('cart', []);
-        $filteredCart = array_filter($cart, function($item) use ($profileId) {
-            return isset($item['profile_id']) && (int)$item['profile_id'] !== (int)$profileId;
-        });
-        session(['cart' => array_values($filteredCart)]);
+        // Clear cart items for this profile from database
+        \App\Models\Cart::where('user_id', $user->id)
+            ->where('profile_id', $profileId)
+            ->delete();
         
         return redirect()->route('frontend.parent.dashboard')
             ->with('success', 'Student profile deleted successfully!');
@@ -804,13 +1500,22 @@ class AuthController extends Controller
 
     public function store(Request $request)
     {
+        // Get profiles from database (same as dashboard)
+        $user = Auth::user();
+        $profiles = $user->studentProfiles;
+        
+        // Get selected student ID from query parameter
         $profileId = $request->get('profile_id');
-        $profiles = session('student_profiles', []);
+        
+        // If no profile_id provided and profiles exist, auto-select the first one
+        if (!$profileId && $profiles->count() > 0) {
+            $profileId = $profiles->first()->id;
+        }
         
         // Find the selected profile
         $selectedProfile = null;
         if ($profileId) {
-            $selectedProfile = collect($profiles)->firstWhere('id', (int)$profileId);
+            $selectedProfile = $profiles->firstWhere('id', (int)$profileId);
         }
 
         if (!$selectedProfile) {
@@ -819,7 +1524,7 @@ class AuthController extends Controller
         }
 
         // Fetch real products from database
-        $schoolName = $selectedProfile['school_name'];
+        $schoolName = $selectedProfile->school_name;
         $school = \App\Models\Admin\Master\School::where('name', $schoolName)->first();
 
         $allProducts = [];
@@ -829,24 +1534,24 @@ class AuthController extends Controller
                 ->where('status', 'live'); // Assuming 'live' is the active status
             
             // Filter by grade if available in profile
-            if (isset($selectedProfile['grade'])) {
+            if ($selectedProfile->grade) {
                 $dbProductsQuery->where(function($q) use ($selectedProfile) {
-                    $q->where('grade', $selectedProfile['grade'])
+                    $q->where('grade', $selectedProfile->grade)
                       ->orWhereNull('grade')
                       ->orWhere('grade', ''); // Handle empty strings if any
                 });
             }
 
             // Filter by gender if available in profile
-            if (isset($selectedProfile['gender'])) {
-                $gender = strtolower($selectedProfile['gender']);
+            if ($selectedProfile->gender) {
+                $gender = strtolower($selectedProfile->gender);
                 $genderMap = [
                     'male' => 'Boys',
                     'female' => 'Girls',
                     'boys' => 'Boys',
                     'girls' => 'Girls'
                 ];
-                $mappedGender = $genderMap[$gender] ?? $selectedProfile['gender'];
+                $mappedGender = $genderMap[$gender] ?? $selectedProfile->gender;
 
                 $dbProductsQuery->where(function($q) use ($mappedGender) {
                     $q->where('gender', $mappedGender)
@@ -903,13 +1608,21 @@ class AuthController extends Controller
 
     public function productDetail($productId, Request $request)
     {
+        // Get profiles from database (same as store method)
+        $user = Auth::user();
+        $profiles = $user->studentProfiles;
+        
         $profileId = $request->get('profile_id');
-        $profiles = session('student_profiles', []);
+        
+        // If no profile_id provided and profiles exist, auto-select the first one
+        if (!$profileId && $profiles->count() > 0) {
+            $profileId = $profiles->first()->id;
+        }
         
         // Find the selected profile
         $selectedProfile = null;
         if ($profileId) {
-            $selectedProfile = collect($profiles)->firstWhere('id', (int)$profileId);
+            $selectedProfile = $profiles->firstWhere('id', (int)$profileId);
         }
 
         if (!$selectedProfile) {
@@ -965,37 +1678,28 @@ class AuthController extends Controller
             'quantity' => 'required|integer|min:1',
         ]);
 
-        // Get cart from session (preserve existing items)
-        $cart = session('cart', []);
-        
+        $user = Auth::user();
+
         // Check if the same product with same size and profile already exists in cart
-        $existingIndex = null;
-        foreach ($cart as $index => $item) {
-            if (isset($item['product_id']) && $item['product_id'] == $request->product_id &&
-                isset($item['size']) && $item['size'] == $request->size &&
-                isset($item['profile_id']) && $item['profile_id'] == $request->profile_id) {
-                $existingIndex = $index;
-                break;
-            }
-        }
-        
-        if ($existingIndex !== null) {
+        $existingItem = \App\Models\Cart::where('user_id', $user->id)
+            ->where('product_id', $request->product_id)
+            ->where('profile_id', $request->profile_id)
+            ->where('size', $request->size)
+            ->first();
+
+        if ($existingItem) {
             // Update quantity of existing item
-            $cart[$existingIndex]['quantity'] += $request->quantity;
+            $existingItem->increment('quantity', $request->quantity);
         } else {
             // Add new item to cart
-            $cartItem = [
+            \App\Models\Cart::create([
+                'user_id' => $user->id,
                 'product_id' => $request->product_id,
                 'profile_id' => $request->profile_id,
                 'size' => $request->size,
                 'quantity' => $request->quantity,
-                'added_at' => now()->toDateTimeString(),
-            ];
-            $cart[] = $cartItem;
+            ]);
         }
-        
-        // Save cart to session
-        session(['cart' => $cart]);
 
         // Redirect to cart page to show all items
         return redirect()->route('frontend.parent.cart')
@@ -1011,38 +1715,28 @@ class AuthController extends Controller
             'quantity' => 'required|integer|min:1',
         ]);
 
-        // Get cart from session
-        $cart = session('cart', []);
-        
+        $user = Auth::user();
+
         // Check if item with same product, profile, and size already exists
-        $existingIndex = null;
-        foreach ($cart as $index => $item) {
-            if (
-                (int)$item['product_id'] === (int)$request->product_id &&
-                (int)$item['profile_id'] === (int)$request->profile_id &&
-                $item['size'] === $request->size
-            ) {
-                $existingIndex = $index;
-                break;
-            }
-        }
-        
-        if ($existingIndex !== null) {
+        $existingItem = \App\Models\Cart::where('user_id', $user->id)
+            ->where('product_id', $request->product_id)
+            ->where('profile_id', $request->profile_id)
+            ->where('size', $request->size)
+            ->first();
+
+        if ($existingItem) {
             // Increase quantity
-            $cart[$existingIndex]['quantity'] += $request->quantity;
-            $cart[$existingIndex]['added_at'] = now()->toDateTimeString();
+            $existingItem->increment('quantity', $request->quantity);
         } else {
             // Add new item
-            $cart[] = [
+            \App\Models\Cart::create([
+                'user_id' => $user->id,
                 'product_id' => $request->product_id,
                 'profile_id' => $request->profile_id,
                 'size' => $request->size,
                 'quantity' => $request->quantity,
-                'added_at' => now()->toDateTimeString(),
-            ];
+            ]);
         }
-        
-        session(['cart' => $cart]);
 
         // Redirect to cart page (not checkout) - user can review and then proceed to checkout
         return redirect()->route('frontend.parent.cart')
@@ -1051,11 +1745,14 @@ class AuthController extends Controller
 
     public function cart(Request $request)
     {
-        $cart = session('cart', []);
-        $profiles = session('student_profiles', []);
+        $user = Auth::user();
+        $profiles = $user->studentProfiles;
+        
+        // Get cart items from database
+        $cartDbItems = \App\Models\Cart::where('user_id', $user->id)->get();
         
         // Get all unique product IDs from cart
-        $productIds = array_unique(array_column($cart, 'product_id'));
+        $productIds = $cartDbItems->pluck('product_id')->unique()->toArray();
         
         // Fetch products from DB
         $products = \App\Models\Admin\Master\ProductMapping::whereIn('id', $productIds)->get()->keyBy('id');
@@ -1063,53 +1760,49 @@ class AuthController extends Controller
         $cartItems = [];
         $total = 0;
         
-        foreach ($cart as $index => $item) {
-            if (isset($products[$item['product_id']])) {
-                $product = $products[$item['product_id']];
-                $itemTotal = $product->price_sale * $item['quantity'];
+        foreach ($cartDbItems as $item) {
+            if (isset($products[$item->product_id])) {
+                $product = $products[$item->product_id];
+                $itemTotal = $product->price_sale * $item->quantity;
                 $total += $itemTotal;
                 
-                // Find student name
+                // Find student name from database profiles
                 $studentName = 'Unknown Student';
-                if (isset($item['profile_id'])) {
-                    $profile = collect($profiles)->firstWhere('id', (int)$item['profile_id']);
-                    if ($profile) {
-                        $studentName = $profile['student_name'];
-                    }
+                $profile = $profiles->firstWhere('id', (int)$item->profile_id);
+                if ($profile) {
+                    $studentName = $profile->student_name;
                 }
                 
                 // Get product image - try multiple fields
-            $productImage = null;
-            // Try featured_image first
-            if ($product->featured_image) {
-                $productImage = $product->featured_image;
-            }
-            // Try media_images array
-            elseif ($product->media_images && is_array($product->media_images) && !empty($product->media_images)) {
-                $productImage = $product->media_images[0];
-            }
-            // Try media_gallery array
-            elseif ($product->media_gallery && is_array($product->media_gallery) && !empty($product->media_gallery)) {
-                $productImage = $product->media_gallery[0];
-            }
-            
-            // Merge item data with product data from DB
-            $cartItems[] = array_merge($item, [
-                'name' => $product->product_name,
-                'price' => $product->price_sale,
-                'image' => $productImage ? asset('storage/' . $productImage) : null,
+                $productImage = null;
+                if ($product->featured_image) {
+                    $productImage = $product->featured_image;
+                } elseif ($product->media_images && is_array($product->media_images) && !empty($product->media_images)) {
+                    $productImage = $product->media_images[0];
+                } elseif ($product->media_gallery && is_array($product->media_gallery) && !empty($product->media_gallery)) {
+                    $productImage = $product->media_gallery[0];
+                }
+                
+                $cartItems[] = [
+                    'id' => $item->id, // Cart item ID for removal
+                    'product_id' => $item->product_id,
+                    'profile_id' => $item->profile_id,
+                    'size' => $item->size,
+                    'quantity' => $item->quantity,
+                    'name' => $product->product_name,
+                    'price' => $product->price_sale,
+                    'image' => $productImage ? asset('storage/' . $productImage) : null,
                     'item_total' => $itemTotal,
                     'student_name' => $studentName,
-                    'original_index' => $index // Keep track of original index for updates/removes
-                ]);
+                ];
             }
         }
 
         // For the view's "Buy More" link
-        $profileId = $request->get('profile_id', $cart[0]['profile_id'] ?? null);
+        $profileId = $request->get('profile_id', $cartDbItems->first()?->profile_id);
         $selectedProfile = null;
         if ($profileId) {
-            $selectedProfile = collect($profiles)->firstWhere('id', (int)$profileId);
+            $selectedProfile = $profiles->firstWhere('id', (int)$profileId);
         }
 
         return view('frontend.cart.index', compact('cartItems', 'total', 'profiles', 'selectedProfile'));
@@ -1117,14 +1810,13 @@ class AuthController extends Controller
 
     public function removeFromCart(Request $request)
     {
-        $index = $request->get('index');
-        $cart = session('cart', []);
+        $cartItemId = $request->get('id') ?? $request->get('index');
+        $user = Auth::user();
         
-        if (isset($cart[$index])) {
-            unset($cart[$index]);
-            $cart = array_values($cart); // Re-index array
-            session(['cart' => $cart]);
-        }
+        // Delete cart item by ID
+        \App\Models\Cart::where('id', $cartItemId)
+            ->where('user_id', $user->id)
+            ->delete();
 
         return redirect()->route('frontend.parent.cart')
             ->with('success', 'Item removed from cart.');
@@ -1132,51 +1824,44 @@ class AuthController extends Controller
 
     public function checkoutPage(Request $request)
     {
-        $cart = session('cart', []);
-        $profiles = session('student_profiles', []);
+        $user = Auth::user();
+        $profiles = $user->studentProfiles;
         
-        if (empty($cart)) {
+        // Get cart items from database
+        $cartDbItems = \App\Models\Cart::where('user_id', $user->id)->get();
+        
+        if ($cartDbItems->isEmpty()) {
             return redirect()->route('frontend.parent.cart')
                 ->with('error', 'Your cart is empty.');
         }
 
-        // Get selected items from request (comma-separated indices)
+        // Get selected items from request (comma-separated IDs)
         $selectedItemsStr = $request->get('selected_items', '');
-        $selectedIndices = [];
+        $selectedIds = [];
         if (!empty($selectedItemsStr)) {
-            $selectedIndices = array_map('intval', explode(',', $selectedItemsStr));
+            $selectedIds = array_map('intval', explode(',', $selectedItemsStr));
+            $filteredCartItems = $cartDbItems->whereIn('id', $selectedIds);
         } else {
             // If no selection, use all items
-            $selectedIndices = array_keys($cart);
+            $filteredCartItems = $cartDbItems;
         }
         
-        // Filter cart to only include selected items
-        $filteredCart = [];
-        foreach ($selectedIndices as $index) {
-            if (isset($cart[$index])) {
-                $filteredCart[] = $cart[$index];
-            }
-        }
-        
-        if (empty($filteredCart)) {
+        if ($filteredCartItems->isEmpty()) {
             return redirect()->route('frontend.parent.cart')
                 ->with('error', 'Please select at least one item to checkout.');
         }
 
         // Get profile_id from cart items
-        $profileId = null;
-        if (!empty($filteredCart)) {
-            $profileId = $filteredCart[0]['profile_id'] ?? null;
-        }
+        $profileId = $filteredCartItems->first()?->profile_id;
         
-        // Find the selected profile
+        // Find the selected profile from database
         $selectedProfile = null;
         if ($profileId) {
-            $selectedProfile = collect($profiles)->firstWhere('id', (int)$profileId);
+            $selectedProfile = $profiles->firstWhere('id', (int)$profileId);
         }
         
         // Get unique product IDs from filtered cart
-        $productIds = array_unique(array_column($filteredCart, 'product_id'));
+        $productIds = $filteredCartItems->pluck('product_id')->unique()->toArray();
         
         // Fetch products from DB
         $products = \App\Models\Admin\Master\ProductMapping::whereIn('id', $productIds)->get()->keyBy('id');
@@ -1185,10 +1870,10 @@ class AuthController extends Controller
         $subtotal = 0;
         $totalTax = 0;
         
-        foreach ($filteredCart as $item) {
-            if (isset($products[$item['product_id']])) {
-                $product = $products[$item['product_id']];
-                $itemSubtotal = $product->price_sale * $item['quantity'];
+        foreach ($filteredCartItems as $item) {
+            if (isset($products[$item->product_id])) {
+                $product = $products[$item->product_id];
+                $itemSubtotal = $product->price_sale * $item->quantity;
                 
                 // Calculate tax for this item using price_tax field (which stores the percentage)
                 $taxPercentage = $product->price_tax ?? 0;
@@ -1200,29 +1885,27 @@ class AuthController extends Controller
                 
                 // Get student name from profile
                 $studentName = 'Unknown Student';
-                if (isset($item['profile_id'])) {
-                    $profile = collect($profiles)->firstWhere('id', (int)$item['profile_id']);
-                    if ($profile) {
-                        $studentName = $profile['student_name'];
-                    }
+                $profile = $profiles->firstWhere('id', (int)$item->profile_id);
+                if ($profile) {
+                    $studentName = $profile->student_name;
                 }
                 
                 // Get product image - try multiple fields
                 $productImage = null;
-                // Try featured_image first
                 if ($product->featured_image) {
                     $productImage = $product->featured_image;
-                }
-                // Try media_images array
-                elseif ($product->media_images && is_array($product->media_images) && !empty($product->media_images)) {
+                } elseif ($product->media_images && is_array($product->media_images) && !empty($product->media_images)) {
                     $productImage = $product->media_images[0];
-                }
-                // Try media_gallery array
-                elseif ($product->media_gallery && is_array($product->media_gallery) && !empty($product->media_gallery)) {
+                } elseif ($product->media_gallery && is_array($product->media_gallery) && !empty($product->media_gallery)) {
                     $productImage = $product->media_gallery[0];
                 }
                 
-                $cartItems[] = array_merge($item, [
+                $cartItems[] = [
+                    'id' => $item->id,
+                    'product_id' => $item->product_id,
+                    'profile_id' => $item->profile_id,
+                    'size' => $item->size,
+                    'quantity' => $item->quantity,
                     'name' => $product->product_name,
                     'price' => $product->price_sale,
                     'image' => $productImage ? asset('storage/' . $productImage) : null,
@@ -1231,54 +1914,54 @@ class AuthController extends Controller
                     'item_tax' => $itemTax,
                     'tax_percentage' => $taxPercentage,
                     'student_name' => $studentName,
-                ]);
+                ];
             }
         }
         
         $total = $subtotal + $totalTax;
 
-        // Get saved addresses from session
-        $savedAddresses = session('saved_addresses', []);
+        // Get saved addresses from database instead of session
+        $savedAddresses = $user->addresses;
         
-        // Store selected indices in session for processCheckout
-        session(['checkout_selected_indices' => $selectedIndices]);
+        // Store selected IDs in session for processCheckout
+        $selectedIds = $filteredCartItems->pluck('id')->toArray();
+        session(['checkout_selected_cart_ids' => $selectedIds]);
         
         return view('frontend.checkout.index', compact('cartItems', 'total', 'subtotal', 'totalTax', 'profiles', 'selectedProfile', 'savedAddresses'));
     }
 
     public function processCheckout(Request $request)
     {
-        $cart = session('cart', []);
+        $user = Auth::user();
         
-        if (empty($cart)) {
+        // Get cart items from database
+        $cartDbItems = \App\Models\Cart::where('user_id', $user->id)->get();
+        
+        if ($cartDbItems->isEmpty()) {
             return redirect()->route('frontend.parent.cart')
                 ->with('error', 'Your cart is empty.');
         }
         
         // Get selected items from session (set during checkoutPage)
-        $selectedIndices = array_map('intval', session('checkout_selected_indices', []));
+        $selectedCartIds = session('checkout_selected_cart_ids', []);
         
         // Filter cart to only include selected items
-        $filteredCart = [];
-        if (!empty($selectedIndices)) {
-            foreach ($selectedIndices as $index) {
-                if (isset($cart[$index])) {
-                    $filteredCart[] = $cart[$index];
-                }
-            }
+        if (!empty($selectedCartIds)) {
+            $filteredCartItems = $cartDbItems->whereIn('id', $selectedCartIds);
         } else {
             // If no selection was made, use all items
-            $filteredCart = $cart;
+            $filteredCartItems = $cartDbItems;
         }
         
-        if (empty($filteredCart)) {
+        if ($filteredCartItems->isEmpty()) {
             return redirect()->route('frontend.parent.cart')
                 ->with('error', 'Please select at least one item to checkout.');
         }
         
-        $savedAddresses = session('saved_addresses', []);
+        // Get addresses from database instead of session
+        $savedAddresses = $user->addresses;
 
-        if (empty($savedAddresses) && !$request->has('name')) {
+        if ($savedAddresses->count() === 0 && !$request->has('name')) {
             return redirect()->route('frontend.parent.checkout')
                 ->with('error', 'Please add a shipping address before placing your order.');
         }
@@ -1288,14 +1971,25 @@ class AuthController extends Controller
             $selectedAddressIndex = $request->get('selected_address');
             
             $shippingAddress = [];
-            if ($selectedAddressIndex !== null && isset($savedAddresses[$selectedAddressIndex])) {
-                // Use saved address
-                $shippingAddress = $savedAddresses[$selectedAddressIndex];
+            if ($selectedAddressIndex !== null && $savedAddresses->has($selectedAddressIndex)) {
+                // Use saved address from database
+                $address = $savedAddresses->get($selectedAddressIndex);
+                $shippingAddress = [
+                    'name' => $address->name,
+
+                    'phone' => $address->phone,
+                    'address' => $address->address,
+                    'city' => $address->city,
+                    'state' => $address->state,
+                    'pincode' => $address->pincode,
+                    'address_type' => $address->address_type,
+                    'address_type_display' => $address->address_type_display,
+                ];
             } else {
                 // Validate new address
                 $request->validate([
                     'name' => 'required|string|max:255',
-                    'email' => 'required|email|max:255',
+
                     'phone' => 'required|string|max:20',
                     'address' => 'required|string',
                     'city' => 'required|string|max:255',
@@ -1312,7 +2006,7 @@ class AuthController extends Controller
                 // Use new address and save it
                 $shippingAddress = [
                     'name' => $request->name,
-                    'email' => $request->email,
+
                     'phone' => $request->phone,
                     'alternative_number' => $request->alternative_number ?? '',
                     'block_name' => $request->block_name ?? '',
@@ -1325,9 +2019,8 @@ class AuthController extends Controller
                     'address_type_display' => $addressTypeDisplay, // Store the display name
                 ];
                 
-                // Save to session
-                $savedAddresses[] = $shippingAddress;
-                session(['saved_addresses' => $savedAddresses]);
+                // Save to database
+                $user->addresses()->create($shippingAddress);
             }
 
             if (empty($shippingAddress)) {
@@ -1343,73 +2036,80 @@ class AuthController extends Controller
             $nextId = $lastOrder ? $lastOrder->id + 1 : 1;
             $orderNumber = 'SOCO-' . $nextId;
             
-            // Get profile_id from cart (all items should have same profile_id)
-            $profileId = !empty($cart) ? ($cart[0]['profile_id'] ?? null) : null;
-            
-            // Get student profile information
-            $profiles = session('student_profiles', []);
-            $studentProfile = null;
-            if ($profileId) {
-                $studentProfile = collect($profiles)->firstWhere('id', (int)$profileId);
-            }
+            // Get profiles from database
+            $profiles = $user->studentProfiles;
 
             // DB Transaction to ensure data consistency
             \Illuminate\Support\Facades\DB::beginTransaction();
             
-            foreach ($filteredCart as $index => $item) {
+            $processedCartIds = [];
+            foreach ($filteredCartItems as $index => $item) {
                 // Fetch product details from DB
-                $product = \App\Models\Admin\Master\ProductMapping::find($item['product_id']);
+                $product = \App\Models\Admin\Master\ProductMapping::find($item->product_id);
                 
                 if (!$product) {
                     continue; // Skip if product not found
+                }
+
+                // Find student profile for this item
+                $studentProfile = $profiles->firstWhere('id', (int)$item->profile_id);
+
+                // Get school_id - lookup school by name from student profile
+                $schoolId = null;
+                if ($studentProfile && $studentProfile->school_name) {
+                    $school = \App\Models\Admin\Master\School::where('name', $studentProfile->school_name)->first();
+                    $schoolId = $school ? $school->id : null;
+                }
+                // Fallback to product's school_id if student profile doesn't have school
+                if (!$schoolId && $product->school_id) {
+                    $schoolId = $product->school_id;
                 }
 
                 // Create Order Record with unique suffix for each item
                 // Format: SOCO-[ID]-[Index]
                 $uniqueOrderNumber = $orderNumber . '-' . ($index + 1);
 
+                // Calculate tax
+                $taxPercentage = $product->price_tax ?? 0;
+                $itemSubtotal = $product->price_sale * $item->quantity;
+                $itemTax = ($itemSubtotal * $taxPercentage) / 100;
+                $itemTotal = $itemSubtotal + $itemTax;
+
                 \App\Models\Admin\Master\Order::create([
                     'order_number' => $uniqueOrderNumber,
-                    'school_id' => $studentProfile['school_id'] ?? $product->school_id,
+                    'school_id' => $schoolId,
                     'order_date' => now(),
-                    'student_name' => $studentProfile['student_name'] ?? 'Unknown',
-                    'grade' => $studentProfile['grade'] ?? $product->grade,
+                    'student_name' => $studentProfile ? $studentProfile->student_name : 'Unknown',
+                    'grade' => $studentProfile ? $studentProfile->grade : $product->grade,
                     'category' => $product->category ?? 'General',
                     'item_name' => $product->product_name,
-                    'size' => $item['size'],
-                    'quantity' => $item['quantity'],
+                    'size' => $item->size,
+                    'quantity' => $item->quantity,
                     'customer_name' => $shippingAddress['name'],
                     'customer_address' => $shippingAddress['address'] . ', ' . $shippingAddress['city'] . ', ' . $shippingAddress['state'] . ' - ' . $shippingAddress['pincode'],
                     'customer_phone' => $shippingAddress['phone'],
-                    'customer_email' => $shippingAddress['email'],
-                    'total_amount' => $product->price_sale * $item['quantity'], // Use current price from DB
-                    'tax_amount' => 0,
+                    'customer_email' => $shippingAddress['email'] ?? Auth::user()->email ?? '',
+                    'total_amount' => $itemTotal,
+                    'tax_amount' => $itemTax,
                     'shipping_cost' => 0,
                     'payment_status' => 'pending',
                     'order_status' => 'processing',
                 ]);
 
                 // Decrement Inventory
-                $product->decrement('inventory_stock', $item['quantity']);
+                $product->decrement('inventory_stock', $item->quantity);
+                
+                // Track processed cart item IDs
+                $processedCartIds[] = $item->id;
             }
             
             \Illuminate\Support\Facades\DB::commit();
             
-            // Clear cart (or selected items)
-            if (empty($selectedIndices)) {
-                session()->forget('cart');
-            } else {
-                $remainingCart = [];
-                foreach ($cart as $index => $item) {
-                    if (!in_array($index, $selectedIndices)) {
-                        $remainingCart[] = $item;
-                    }
-                }
-                session(['cart' => $remainingCart]); // Reindex array
-            }
+            // Clear processed cart items from database
+            \App\Models\Cart::whereIn('id', $processedCartIds)->delete();
             
             // Clear checkout session data
-            session()->forget(['checkout_selected_indices', 'orders']);
+            session()->forget(['checkout_selected_cart_ids', 'orders']);
 
             return redirect()->route('frontend.parent.orders')->with('success', 'Order placed successfully! Order # ' . $orderNumber);
             
@@ -1430,128 +2130,19 @@ class AuthController extends Controller
         }
     }
 
-    public function saveAddress(Request $request)
-    {
-        $request->validate([
-            'name' => 'required|string|max:255',
-            'email' => 'required|email|max:255',
-            'phone' => 'required|string|max:20',
-            'address' => 'required|string',
-            'city' => 'required|string|max:255',
-            'state' => 'required|string|max:255',
-            'pincode' => 'required|string|max:10',
-        ]);
-
-        $savedAddresses = session('saved_addresses', []);
-        
-        // Determine the display name for address type
-        $addressTypeDisplay = $request->address_type ?? 'home';
-        if ($request->address_type === 'others' && $request->custom_address_type) {
-            $addressTypeDisplay = $request->custom_address_type;
-        }
-        
-        $newAddress = [
-            'name' => $request->name,
-            'email' => $request->email,
-            'phone' => $request->phone,
-            'alternative_number' => $request->alternative_number ?? '',
-            'block_name' => $request->block_name ?? '',
-            'address' => $request->address,
-            'city' => $request->city,
-            'state' => $request->state,
-            'pincode' => $request->pincode,
-            'landmark' => $request->landmark ?? '',
-            'address_type' => $request->address_type ?? 'home',
-            'address_type_display' => $addressTypeDisplay, // Store the display name
-        ];
-        
-        $savedAddresses[] = $newAddress;
-        session(['saved_addresses' => $savedAddresses]);
-
-        return response()->json(['success' => true, 'message' => 'Address saved successfully']);
-    }
-
-    public function updateAddress(Request $request, $addressId)
-    {
-        $request->validate([
-            'name' => 'required|string|max:255',
-            'email' => 'required|email|max:255',
-            'phone' => 'required|string|max:20',
-            'address' => 'required|string',
-            'city' => 'required|string|max:255',
-            'state' => 'required|string|max:255',
-            'pincode' => 'required|string|max:10',
-        ]);
-
-        $savedAddresses = session('saved_addresses', []);
-        
-        if (!isset($savedAddresses[$addressId])) {
-            return response()->json(['success' => false, 'message' => 'Address not found'], 404);
-        }
-        
-        // Determine the display name for address type
-        $addressTypeDisplay = $request->address_type ?? 'home';
-        if ($request->address_type === 'others' && $request->custom_address_type) {
-            $addressTypeDisplay = $request->custom_address_type;
-        }
-        
-        // Update the address
-        $savedAddresses[$addressId] = [
-            'name' => $request->name,
-            'email' => $request->email,
-            'phone' => $request->phone,
-            'alternative_number' => $request->alternative_number ?? '',
-            'block_name' => $request->block_name ?? '',
-            'address' => $request->address,
-            'city' => $request->city,
-            'state' => $request->state,
-            'pincode' => $request->pincode,
-            'landmark' => $request->landmark ?? '',
-            'address_type' => $request->address_type ?? 'home',
-            'address_type_display' => $addressTypeDisplay, // Store the display name
-        ];
-        
-        session(['saved_addresses' => $savedAddresses]);
-
-        return response()->json(['success' => true, 'message' => 'Address updated successfully']);
-    }
-
-    public function deleteAddress($addressId)
-    {
-        $savedAddresses = session('saved_addresses', []);
-        
-        if (isset($savedAddresses[$addressId])) {
-            unset($savedAddresses[$addressId]);
-            $savedAddresses = array_values($savedAddresses); // Re-index array
-            session(['saved_addresses' => $savedAddresses]);
-            
-            return redirect()->route('frontend.parent.addresses')
-                ->with('success', 'Address deleted successfully!');
-        }
-        
-        return redirect()->route('frontend.parent.addresses')
-            ->with('error', 'Address not found.');
-    }
 
     public function orders()
     {
-        // Get logged in parent's phone number (assuming auth logic uses phone)
-        // Since we don't have a strict parent auth system yet, we'll use the session 'student_profiles' 
-        // to find orders related to the students.
-        // Ideally, we should have a parent_id or user_id.
-        
-        $profiles = session('student_profiles', []);
-        $studentNames = collect($profiles)->pluck('student_name')->toArray();
+        // Get profiles from database instead of session
+        $user = Auth::user();
+        $profiles = $user->studentProfiles;
+        $studentNames = $profiles->pluck('student_name')->toArray();
         
         // Fetch orders from DB where student_name matches any of the profiles
-        // This is a temporary linkage based on student name. 
-        // A better approach would be linking by parent phone/email if available in session.
-        
         $orders = \App\Models\Admin\Master\Order::whereIn('student_name', $studentNames)
             ->orderByDesc('created_at')
             ->get();
 
-        // Group orders by the base order number (before the hyphen)
         // Group orders by the base order number (SOCO-ID-Index -> ID)
         $groupedOrders = $orders->groupBy(function ($order) {
             $parts = explode('-', $order->order_number);
@@ -1574,12 +2165,16 @@ class AuthController extends Controller
                 'status' => $firstItem->order_status,
                 'created_at' => $firstItem->created_at,
                 'total' => $items->sum('total_amount'),
-                // No longer attach a single request at order level; per-item will be added below
                 'items' => $items->map(function ($item) use ($returnRequests) {
-                    // Get product image
+                    // Get product image - try strict match first, then loose match
                     $product = \App\Models\Admin\Master\ProductMapping::where('product_name', $item->item_name)
                         ->where('school_id', $item->school_id)
                         ->first();
+                    
+                    if (!$product) {
+                        // Fallback: try matching just by name
+                        $product = \App\Models\Admin\Master\ProductMapping::where('product_name', $item->item_name)->first();
+                    }
                     
                     $productImage = null;
                     if ($product) {
@@ -1595,7 +2190,7 @@ class AuthController extends Controller
                     return [
                         'id' => $item->id,
                         'name' => $item->item_name,
-                        'price' => $item->total_amount / $item->quantity, // Unit price
+                        'price' => $item->total_amount / ($item->quantity > 0 ? $item->quantity : 1),
                         'quantity' => $item->quantity,
                         'size' => $item->size,
                         'image' => $productImage ? asset('storage/' . $productImage) : null,
@@ -1611,13 +2206,14 @@ class AuthController extends Controller
     public function trackOrder($orderId)
     {
         // Get orders from database based on the base order number
-        $profiles = session('student_profiles', []);
-        $studentNames = collect($profiles)->pluck('student_name')->toArray();
+        $user = Auth::user();
+        $profiles = $user->studentProfiles;
+        $studentNames = $profiles->pluck('student_name')->toArray();
         
         $orders = \App\Models\Admin\Master\Order::whereIn('student_name', $studentNames)
             ->where(function($q) use ($orderId) {
                 $q->where('order_number', 'like', 'SOCO-' . $orderId . '-%')
-                  ->orWhere('order_number', 'like', $orderId . '%');
+                  ->orWhere('order_number', 'like', 'SOCO-' . $orderId);
             })
             ->get();
 
@@ -1654,12 +2250,38 @@ class AuthController extends Controller
             'created_at' => $firstOrder->created_at,
             'updated_at' => $firstOrder->updated_at,
             'total' => $orders->sum('total_amount'),
+            'tax' => $orders->sum('tax_amount'),
+            'subtotal' => $orders->sum('total_amount') - $orders->sum('tax_amount'),
+            'customer_name' => $firstOrder->customer_name,
+            'customer_address' => $firstOrder->customer_address,
+            'customer_phone' => $firstOrder->customer_phone,
             'items' => $orders->map(function ($item) {
+                // Get product image
+                $product = \App\Models\Admin\Master\ProductMapping::where('product_name', $item->item_name)
+                    ->where('school_id', $item->school_id)
+                    ->first();
+                
+                if (!$product) {
+                    $product = \App\Models\Admin\Master\ProductMapping::where('product_name', $item->item_name)->first();
+                }
+                
+                $productImage = null;
+                if ($product) {
+                    if ($product->featured_image) {
+                        $productImage = $product->featured_image;
+                    } elseif ($product->media_images && is_array($product->media_images) && !empty($product->media_images)) {
+                        $productImage = $product->media_images[0];
+                    } elseif ($product->media_gallery && is_array($product->media_gallery) && !empty($product->media_gallery)) {
+                        $productImage = $product->media_gallery[0];
+                    }
+                }
+
                 return [
                     'name' => $item->item_name,
                     'quantity' => $item->quantity,
                     'size' => $item->size,
                     'price' => $item->total_amount,
+                    'image' => $productImage ? asset('storage/' . $productImage) : null,
                 ];
             })->toArray(),
         ];
@@ -1778,6 +2400,32 @@ class AuthController extends Controller
 
         return redirect()->route('frontend.parent.orders')
             ->with('success', 'Return/Exchange request submitted successfully for selected items!');
+    }
+
+    /**
+     * Redirect user based on their role after login
+     */
+    protected function redirectBasedOnRole(User $user)
+    {
+        Log::info('Redirecting based on role', [
+            'user_id' => $user->id,
+            'role' => $user->role,
+            'role_name' => $user->getRoleName(),
+        ]);
+        
+        $route = match($user->role) {
+            User::ROLE_PARENT => route('frontend.parent.dashboard'),
+            User::ROLE_SCHOOL => route('frontend.school.dashboard'),
+            User::ROLE_MASTER_ADMIN => route('master.admin.dashboard'),
+            User::ROLE_INVENTORY_ADMIN => route('master.admin.inventory.dashboard'),
+            default => route('frontend.parent.dashboard'),
+        };
+        
+        Log::info('Redirect target', [
+            'target' => $route,
+        ]);
+        
+        return $route;
     }
 
 }
