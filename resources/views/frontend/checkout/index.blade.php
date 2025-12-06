@@ -51,7 +51,7 @@
             <form action="{{ route('frontend.parent.process-checkout') }}" method="POST" id="checkoutForm">
                 @csrf
                 <input type="hidden" name="total" value="{{ $total }}">
-                <input type="hidden" name="selected_address" id="selected_address" value="{{ isset($savedAddresses) && count($savedAddresses) > 0 ? '0' : '' }}">
+                <input type="hidden" name="selected_address" id="selected_address" value="{{ isset($savedAddresses) && $savedAddresses->count() > 0 ? '0' : '' }}">
                 
                 <div class="row">
                     <!-- Shipping Address Section -->
@@ -60,26 +60,56 @@
                             <div class="card-body">
                                 <h5 class="mb-4" style="font-weight: 600; color: #333;">Shipping Address</h5>
                                 
-                                    @if(isset($savedAddresses) && count($savedAddresses) > 0)
+                                    @if(isset($savedAddresses) && $savedAddresses->count() > 0)
                                         <!-- Saved Addresses -->
                                         <div class="row g-3 mb-3" id="savedAddressesContainer">
                                             @foreach($savedAddresses as $index => $address)
                                                 <div class="col-md-6">
-                                                    <div class="address-card p-3 border rounded position-relative" 
-                                                         style="cursor: pointer; border-color: #e9ecef !important; transition: all 0.3s ease;"
+                                                    <div class="address-card p-3 border rounded position-relative h-100" 
+                                                         style="cursor: pointer; border-color: #e9ecef !important; transition: all 0.3s ease; border-radius: 16px !important;"
                                                          onclick="selectSavedAddress({{ $index }})"
                                                          id="addressCard_{{ $index }}">
-                                                        <input type="checkbox" class="address-checkbox d-none" name="address_checkbox_{{ $index }}" id="address_checkbox_{{ $index }}" value="{{ $index }}" {{ count($savedAddresses) === 1 || $index === 0 ? 'checked' : '' }} onchange="setSelectedAddress({{ $index }})">
-                                                        <div class="d-flex align-items-start gap-2">
-                                                            <i class="fas fa-{{ $address['address_type'] === 'home' ? 'home' : ($address['address_type'] === 'office' ? 'building' : 'map-marker-alt') }} mt-1" style="color: #28a745; font-size: 1.2rem;"></i>
-                                                            <div class="flex-grow-1">
-                                                                <strong>{{ $address['name'] }}</strong>
-                                                                <p class="mb-1 small text-muted">{{ $address['phone'] }}</p>
-                                                                <p class="mb-0 small text-muted">{{ $address['address'] }}, {{ $address['city'] }}, {{ $address['state'] }} - {{ $address['pincode'] }}</p>
+                                                        <input type="checkbox" class="address-checkbox d-none" name="address_checkbox_{{ $index }}" id="address_checkbox_{{ $index }}" value="{{ $index }}" {{ $savedAddresses->count() === 1 || $index === 0 ? 'checked' : '' }} onchange="setSelectedAddress({{ $index }})">
+                                                        
+                                                        <div class="d-flex justify-content-between align-items-start mb-3">
+                                                            <!-- Address Type Badge -->
+                                                            <span class="badge" style="background-color: #490D59; color: #fff; padding: 8px 12px; border-radius: 8px; font-weight: 500; font-size: 0.9rem;">
+                                                                <i class="fas fa-{{ $address->address_type === 'home' ? 'home' : ($address->address_type === 'office' ? 'building' : 'map-marker-alt') }} me-2"></i>
+                                                                {{ ucfirst($address->address_type_display ?? $address->address_type) }}
+                                                            </span>
+
+                                                            <!-- Edit/Delete Actions -->
+                                                            <div class="d-flex gap-2" onclick="event.stopPropagation();">
+                                                                <button type="button" class="btn btn-sm btn-light text-primary" onclick="editAddress({{ $address->id }})" title="Edit">
+                                                                    <i class="fas fa-edit"></i>
+                                                                </button>
+                                                                <form action="{{ route('frontend.parent.delete-address', ['addressId' => $address->id]) }}" method="POST" class="d-inline" onsubmit="return confirm('Are you sure you want to delete this address?');">
+                                                                    @csrf
+                                                                    <button type="submit" class="btn btn-sm btn-light text-danger" title="Delete">
+                                                                        <i class="fas fa-trash"></i>
+                                                                    </button>
+                                                                </form>
                                                             </div>
                                                         </div>
+
+                                                        <div class="mb-2">
+                                                            <h6 class="mb-2" style="font-weight: 700; color: #333; font-size: 1.1rem;">{{ $address->name }}</h6>
+                                                            <p class="mb-2 text-muted" style="font-size: 0.95rem;">
+                                                                <i class="fas fa-phone-alt me-2" style="color: #490D59;"></i> {{ $address->phone }}
+                                                            </p>
+                                                            <p class="mb-2 text-muted" style="font-size: 0.95rem; line-height: 1.5;">
+                                                                <i class="fas fa-map-marker-alt me-2" style="color: #490D59;"></i> 
+                                                                {{ $address->address }}, {{ $address->city }}, {{ $address->state }} - {{ $address->pincode }}
+                                                            </p>
+                                                            @if(!empty($address->landmark))
+                                                                <p class="mb-0 text-muted" style="font-size: 0.95rem;">
+                                                                    <i class="fas fa-location-arrow me-2" style="color: #490D59;"></i> Landmark: {{ $address->landmark }}
+                                                                </p>
+                                                            @endif
+                                                        </div>
+
                                                         <!-- Checkmark indicator -->
-                                                        <div class="position-absolute top-0 end-0 m-2 checkmark-indicator" id="checkmark_{{ $index }}" style="display: {{ count($savedAddresses) === 1 || $index === 0 ? 'block' : 'none' }};">
+                                                        <div class="position-absolute bottom-0 end-0 m-3 checkmark-indicator" id="checkmark_{{ $index }}" style="display: {{ $savedAddresses->count() === 1 || $index === 0 ? 'block' : 'none' }};">
                                                             <i class="fas fa-check-circle" style="color: #28a745; font-size: 1.5rem;"></i>
                                                         </div>
                                                     </div>
@@ -203,6 +233,48 @@
 @include('frontend.checkout.add-address-modal')
 
 <script>
+// Store addresses data for editing
+const addressesData = @json($savedAddresses ?? []);
+
+function editAddress(addressId) {
+    const address = addressesData.find(addr => addr.id === addressId);
+    if (!address) return;
+    
+    // Set edit mode
+    document.getElementById('editingAddressIndex').value = addressId;
+    
+    // Update modal title and button
+    document.getElementById('addAddressModalLabel').textContent = 'Edit Address';
+    document.getElementById('saveAddressBtn').textContent = 'Update Address';
+    
+    // Pre-fill form fields
+    document.getElementById('modal_name').value = address.name || '';
+    document.getElementById('modal_phone').value = address.phone || '';
+    document.getElementById('modal_email').value = address.email || '';
+    document.getElementById('modal_alternative_number').value = address.alternative_number || '';
+    document.getElementById('modal_block_name').value = address.block_name || '';
+    document.getElementById('modal_address').value = address.address || '';
+    document.getElementById('modal_city').value = address.city || '';
+    document.getElementById('modal_state').value = address.state || '';
+    document.getElementById('modal_pincode').value = address.pincode || '';
+    document.getElementById('modal_landmark').value = address.landmark || '';
+    
+    // Set address type
+    const addressType = address.address_type || 'home';
+    selectModalAddressType(addressType);
+    
+    // Handle custom address type
+    if (addressType === 'others' && address.address_type_display) {
+        document.getElementById('customAddressTypeContainer').style.display = 'block';
+        document.getElementById('modal_custom_address_type').value = address.address_type_display;
+        document.getElementById('modal_custom_address_type').required = true;
+    }
+    
+    // Show modal
+    const modal = new bootstrap.Modal(document.getElementById('addAddressModal'));
+    modal.show();
+}
+
 // Prevent double form submission
 let formSubmitted = false;
 

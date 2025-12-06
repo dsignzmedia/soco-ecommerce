@@ -17,12 +17,18 @@
 </div>
 
 <section class="space-top space-extra-bottom" style="background-color: #f8f5ff; padding-top: 60px;">
-    <div class="container">
+    <div class="container-fluid" style="padding: 0 40px;">
         <div class="row g-4 align-items-start">
-            <div class="col-lg-3 mb-4">
+            <div class="col-lg-2 col-xl-2 mb-4">
                 @include('frontend.dashboard.partials.account-sidebar')
             </div>
-            <div class="col-lg-6">
+            
+            @php
+                $cartIsEmpty = count($cartItems) === 0;
+                $contentClass = $cartIsEmpty ? 'col-lg-10 col-xl-10' : 'col-lg-7 col-xl-7';
+            @endphp
+
+            <div class="{{ $contentClass }}">
                 <div class="row mb-4">
                     <div class="col-12">
                         <h2 class="h3 mb-2">Shopping Cart</h2>
@@ -36,8 +42,8 @@
                     </div>
                 @endif
 
-                @if(count($cartItems) > 0)
-                    <div class="card shadow-sm border-0 mb-4" style="background-color: #ffffff; border-radius: 12px; overflow: hidden;">
+                @if(!$cartIsEmpty)
+                    <div class="card cart-wrapper-card shadow-sm border-0 mb-4" style="background-color: #ffffff; border-radius: 12px; overflow: hidden;">
                         <div class="table-responsive">
                             <table class="table mb-0" style="border-collapse: separate; border-spacing: 0;">
                                 <thead>
@@ -55,7 +61,7 @@
                                 <tbody>
                                     @foreach($cartItems as $index => $item)
                                         <tr style="background-color: #ffffff; border-bottom: 1px solid #e9ecef;" class="cart-item-row" data-item-index="{{ $index }}">
-                                            <td style="padding: 15px; vertical-align: middle;">
+                                            <td style="padding: 15px; vertical-align: middle;" class="mobile-checkbox">
                                                 <input type="checkbox" 
                                                        class="item-checkbox" 
                                                        name="selected_items[]" 
@@ -64,7 +70,7 @@
                                                        checked
                                                        style="cursor: pointer;">
                                             </td>
-                                            <td style="padding: 15px; vertical-align: middle;">
+                                            <td style="padding: 15px; vertical-align: middle;" data-title="Image">
                                                 <div style="width: 80px; height: 80px; border-radius: 8px; overflow: hidden; border: 1px solid #e9ecef; background-color: #f8f9fa; display: flex; align-items: center; justify-content: center; cursor: pointer;" onclick="showProductSummary({{ $index }})">
                                                     @if(isset($item['image']) && $item['image'])
                                                         <img src="{{ $item['image'] }}" alt="{{ $item['name'] }}" style="width: 100%; height: 100%; object-fit: cover;">
@@ -73,19 +79,19 @@
                                                     @endif
                                                 </div>
                                             </td>
-                                            <td style="padding: 15px; vertical-align: middle; cursor: pointer;" onclick="showProductSummary({{ $index }})">
+                                            <td style="padding: 15px; vertical-align: middle; cursor: pointer;" onclick="showProductSummary({{ $index }})" data-title="Product">
                                                 <h6 class="mb-1" style="font-weight: 600; color: #333; margin: 0;">{{ $item['name'] }}</h6>
                                                 <p class="text-muted small mb-0" style="font-size: 0.875rem; margin: 0;">Size: {{ $item['size'] }}</p>
                                                 <p class="text-primary small mb-0" style="font-size: 0.8rem; margin: 0;">Student: {{ $item['student_name'] }}</p>
                                             </td>
-                                            <td style="padding: 15px; vertical-align: middle; text-align: center;">
+                                            <td style="padding: 15px; vertical-align: middle; text-align: center;" data-title="Price">
                                                 <span style="color: #dc3545; font-weight: 600;">₹{{ number_format($item['price']) }}</span>
                                             </td>
-                                            <td style="padding: 15px; vertical-align: middle; text-align: center;">
+                                            <td style="padding: 15px; vertical-align: middle; text-align: center;" data-title="Quantity">
                                                 <span style="font-weight: 500;">{{ str_pad($item['quantity'], 2, '0', STR_PAD_LEFT) }}</span>
                                             </td>
-                                            <td style="padding: 15px; vertical-align: middle; text-align: right;">
-                                                <div class="d-flex align-items-center justify-content-end gap-3">
+                                            <td style="padding: 15px; vertical-align: middle; text-align: right;" data-title="Total">
+                                                <div class="d-flex align-items-center justify-content-end gap-3 mobile-actions">
                                                     <span style="color: #dc3545; font-weight: 600;">₹{{ number_format($item['item_total']) }}</span>
                                                     <form action="{{ route('frontend.parent.remove-from-cart') }}" method="POST" class="d-inline">
                                                         @csrf
@@ -125,8 +131,8 @@
                 @endif
             </div>
 
-            <div class="col-lg-3">
-                @if(count($cartItems) > 0)
+            @if(!$cartIsEmpty)
+                <div class="col-lg-3 col-xl-3">
                     <div class="card shadow-sm border-0 order-summary-card mb-4" style="background-color: #ffffff; border-radius: 12px;">
                         <div class="card-body">
                             <h5 class="mb-4" style="font-weight: 600; color: #333;">Order Summary</h5>
@@ -163,8 +169,8 @@
                             @endif
                         </div>
                     </div>
-                @endif
-            </div>
+                </div>
+            @endif
         </div>
     </div>
 </section>
@@ -174,6 +180,104 @@
     .order-summary-card {
         position: sticky;
         top: 120px;
+    }
+}
+
+@media (max-width: 768px) {
+    /* Make the wrapper transparent so TRs look like floating cards */
+    .cart-wrapper-card {
+        background-color: transparent !important;
+        border: none !important;
+        box-shadow: none !important;
+        padding: 0 !important;
+    }
+
+    .table-responsive thead {
+        display: none;
+    }
+
+    .table-responsive tr {
+        display: grid;
+        grid-template-columns: auto 80px 1fr;
+        column-gap: 15px;
+        row-gap: 0;
+        background: #fff;
+        margin: 0 5px 15px 5px; /* Added side margins */
+        padding: 15px;
+        border-radius: 12px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+        position: relative;
+        border: 1px solid #e9ecef;
+    }
+
+    .table-responsive td {
+        display: block;
+        padding: 0 !important;
+        border: none !important;
+    }
+
+    /* Checkbox Column */
+    .table-responsive td.mobile-checkbox {
+        grid-column: 1;
+        grid-row: 1 / span 5;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    /* Image Column */
+    .table-responsive td[data-title="Image"] {
+        grid-column: 2;
+        grid-row: 1 / span 5;
+    }
+
+    /* Info Column - All details go to column 3 */
+    .table-responsive td[data-title="Product"],
+    .table-responsive td[data-title="Price"],
+    .table-responsive td[data-title="Quantity"],
+    .table-responsive td[data-title="Total"] {
+        grid-column: 3;
+    }
+
+    /* Product Details */
+    .table-responsive td[data-title="Product"] {
+        margin-bottom: 5px;
+        padding-right: 30px !important; /* Space for delete button */
+    }
+
+    /* Price, Quantity, Total Styling */
+    .table-responsive td[data-title="Price"]::before,
+    .table-responsive td[data-title="Quantity"]::before,
+    .table-responsive td[data-title="Total"]::before {
+        content: attr(data-title) ": ";
+        font-weight: 600;
+        color: #666;
+        font-size: 0.85rem;
+    }
+
+    .table-responsive td[data-title="Price"],
+    .table-responsive td[data-title="Quantity"],
+    .table-responsive td[data-title="Total"] {
+        font-size: 0.9rem;
+        margin-bottom: 2px;
+        text-align: left !important;
+        line-height: 1.4;
+    }
+
+    /* Delete Button Positioning */
+    .table-responsive td[data-title="Total"] .mobile-actions {
+        display: inline;
+    }
+    
+    .table-responsive td[data-title="Total"] .mobile-actions form {
+        position: absolute;
+        top: 10px;
+        right: 10px;
+    }
+
+    .table-responsive td[data-title="Total"] .mobile-actions span {
+        /* The total price text */
+        display: inline-block;
     }
 }
 </style>

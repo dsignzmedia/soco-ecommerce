@@ -40,10 +40,33 @@ class SchoolController extends Controller
             $data['logo'] = $request->file('logo')->store('schools', 'public');
         }
 
-        School::create($data);
+        $school = School::create($data);
+
+        // Create user account for the school with role 1 (OTP-based login)
+        if (!empty($data['contact_email'])) {
+            try {
+                $user = \App\Models\User::create([
+                    'name' => $data['name'],
+                    'email' => $data['contact_email'],
+                    'phone' => $data['contact_phone'] ?? null,
+                    'password' => bcrypt(Str::random(32)), // Random password (won't be used - OTP login)
+                    'role' => \App\Models\User::ROLE_SCHOOL,
+                    'school_id' => $school->id,
+                    'email_verified_at' => now(),
+                ]);
+
+                return redirect()->route('master.admin.schools.index')
+                    ->with('status', 'School created successfully. School can login using OTP sent to their email.');
+            } catch (\Exception $e) {
+                \Log::error('Failed to create user account for school: ' . $e->getMessage());
+                
+                return redirect()->route('master.admin.schools.index')
+                    ->with('status', 'School created but user account creation failed: ' . $e->getMessage());
+            }
+        }
 
         return redirect()->route('master.admin.schools.index')
-            ->with('status', 'School created.');
+            ->with('status', 'School created successfully.');
     }
 
     public function edit(School $school): View
@@ -66,7 +89,7 @@ class SchoolController extends Controller
         $school->update($data);
 
         return redirect()->route('master.admin.schools.index')
-            ->with('status', 'School updated.');
+            ->with('status', 'School updated successfully.');
     }
 
     protected function validateData(Request $request, ?int $schoolId = null): array

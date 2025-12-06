@@ -19,6 +19,7 @@
     <link rel="shortcut icon" href="{{ asset('assets/img/favicon.ico') }}" type="image/x-icon">
     <link rel="icon" href="{{ asset('assets/img/favicon.ico') }}" type="image/x-icon">
 
+    <link href="https://unpkg.com/aos@2.3.1/dist/aos.css" rel="stylesheet">
     <!--==============================
 	  Google Fonts
 	============================== -->
@@ -65,6 +66,15 @@
             background-size: cover;
             background-position: center;
             background-repeat: no-repeat;
+        }
+        
+        .vs-hero-wrapper::after {
+            position: absolute;
+            left: 0;
+            width: 100%;
+            content: "";
+            background: rgba(0, 0, 0, .50);
+            height: 100%;
         }
 
         .vs-hero-wrapper .ls-wp-container,
@@ -174,7 +184,22 @@
                 transform: scale(0.8);
                 transform-origin: center;
             }
+             .bottom-text {
+            font-size: 22px !important;
+            }
         }
+        /* Control SOCO logo image size in footer - applies to all screen sizes */
+        .sidebar-gallery .gallery-thumb img {
+            width: 250px !important;
+            height: auto !important;
+            max-width: 100%;
+        }
+        
+        /* Footer heading font size */
+       .bottom-text {
+            font-size: 30px;
+            }
+
     </style>
 
 </head>
@@ -204,7 +229,7 @@
                     <div class="col-lg-4">
                         <div class="widget footer-widget">
                             <div class="widget-about">
-                                <h3 class="mt-n2">Giving the best uniforms with care</h3>
+                                <h3 class="mt-n2 bottom-text">Giving the best uniforms with care</h3>
                                 <p class="map-link"><img src="{{ asset('assets/img/icon/map.svg') }}" alt="svg">No.219,
                                     Dr.Radhakrishnan Road, Tatabad, Coimbatore, Tamil Nadu - 641012</p>
                                 <div class="sidebar-gallery">
@@ -249,11 +274,11 @@
                                     <li><a href="#">Return/Exchange Policy</a></li>
                                     <li><a href="{{ route('frontend.about-us') }}">About Us</a></li>
                                     <li><a href="#"> Privacy Policy </a></li>
-                                    <li><a href="#">Services</a></li>
+                                    <li><a href="{{ route('frontend.services') }}">Services</a></li>
                                     <li><a href="#">Shipping Policy</a></li>
-                                    <li><a href="#">FAQ</a></li>
+                                    <li><a href="{{ route('frontend.faq') }}">FAQ</a></li>
                                     <li><a href="#">Terms & Conditions</a></li>
-                                    <li><a href="#">Contact Us</a></li>
+                                    <li><a href="{{ route('frontend.contact') }}">Contact Us</a></li>
                                 </ul>
                             </div>
                         </div>
@@ -289,6 +314,8 @@
     <!--==============================
     All Js File
 ============================== -->
+    <script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
+
     <!-- Jquery -->
     <script src="{{ asset('assets/js/vendor/jquery-3.6.0.min.js') }}"></script>
     <!-- Slick Slider -->
@@ -309,6 +336,9 @@
     <script src="{{ asset('assets/js/isotope.pkgd.min.js') }}"></script>
     <!-- Main Js File -->
     <script src="{{ asset('assets/js/main.js') }}"></script>
+    <script>
+      AOS.init();
+    </script>
 
 
 </body>

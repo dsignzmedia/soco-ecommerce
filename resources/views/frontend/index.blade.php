@@ -1,253 +1,8 @@
 @extends('frontend.layouts.app')
 
 @section('content')
-<style>
-    
-</style>
 
-<div class="vs-menu-wrapper">
-    <div class="vs-menu-area text-center">
-        <button class="vs-menu-toggle"><i class="fal fa-times"></i></button>
-        <div class="mobile-logo">
-            <a href="{{ route('frontend.index') }}"><img src="{{ asset('assets/img/logo.svg') }}" alt="Kiddino"></a>
-        </div>
-        <div class="vs-mobile-menu">
-            <ul>
-                <li class="menu-item-has-children">
-                    <a href="{{ route('frontend.index') }}">Home</a>
-
-                </li>
-                <li>
-                    <a href="{{ route('frontend.about-us') }}">About Us</a>
-                </li>
-                <li>
-                    <a href="{{ route('frontend.services') }}">Services</a>
-                </li>
-                <li class="menu-item-has-children">
-                    <a href="#">FAQ</a>
-                    <!-- <ul class="sub-menu">
-                        <li><a href="blog.html">Blog</a></li>
-                        <li><a href="blog-details.html">Blog Details</a></li>
-                    </ul> -->
-                </li>
-                <li class="menu-item-has-children">
-                    <a href="#">Contact Us</a>
-
-                </li>
-
-            </ul>
-        </div>
-    </div>
-</div>
-<!-- Mobile Marquee Auto-Scroll Script -->
-<script>
-    document.addEventListener('DOMContentLoaded', function() {
-        function setupMarquee(wrapperSelector, rowSelector) {
-            // Only run on mobile devices (matching CSS breakpoint)
-            if (window.innerWidth > 768) return;
-
-            const wrapper = document.querySelector(wrapperSelector);
-            const row = document.querySelector(rowSelector);
-            
-            if (!wrapper || !row) return;
-
-            // Duplicate content for seamless infinite scroll
-            const content = row.innerHTML;
-            row.innerHTML = content + content; // Duplicate once
-
-            let scrollSpeed = 0.6; // Reduced speed by 40% (was 1)
-            let animationId;
-            let isTouching = false;
-            
-            function autoScroll() {
-                if (isTouching) return; // Stop loop if touching
-
-                wrapper.scrollLeft += scrollSpeed;
-                
-                // Infinite scroll logic:
-                if (wrapper.scrollLeft >= (wrapper.scrollWidth / 2)) {
-                        wrapper.scrollLeft = 0; 
-                }
-                
-                animationId = requestAnimationFrame(autoScroll);
-            }
-
-            // Start auto-scroll
-            animationId = requestAnimationFrame(autoScroll);
-
-            // Pause on interaction
-            wrapper.addEventListener('touchstart', () => { 
-                isTouching = true;
-                cancelAnimationFrame(animationId); // Stop animation completely
-            });
-            
-            wrapper.addEventListener('touchend', () => { 
-                // Resume after a short delay
-                setTimeout(() => { 
-                    isTouching = false; 
-                    animationId = requestAnimationFrame(autoScroll);
-                }, 1000); 
-            });
-            
-            // Mouse events for desktop testing
-            wrapper.addEventListener('mouseenter', () => { 
-                isTouching = true;
-                cancelAnimationFrame(animationId);
-            });
-            
-            wrapper.addEventListener('mouseleave', () => { 
-                isTouching = false;
-                animationId = requestAnimationFrame(autoScroll);
-            });
-        }
-
-        // Setup for Category and Service marquees
-        setupMarquee('.category-marquee-wrapper', '.category_box_row');
-        setupMarquee('.service-marquee-wrapper', '.service-marquee-row');
-    });
-</script>
-
-<header class="vs-header header-layout6">
-    <div class="header-top">
-        <div class="container">
-            <div class="row justify-content-between align-items-center">
-
-                <div class="col-lg-auto text-center">
-                    <div class="header-links style-white">
-                        <ul>
-                            <li class="d-none d-xl-inline-block"><i class="fas fa-mobile-alt"></i>
-                                <!-- <span>9994878486</span> -->
-                                <a href="tel:+919994878486">+91 9994878486</a>
-                            </li>
-                            <li>
-                                <i class="fas fa-envelope"></i>
-                                <a href="mailto:hello@theskoolstore.com">hello@theskoolstore.com</a>
-                            </li>
-                        </ul>
-                    </div>
-                </div>
-                <div class="col-auto d-none d-lg-block">
-                    <div class="header-links v6 style-white">
-                        <ul>
-                            <!-- <li>Welcome to Kiddino Kindergarten & Pre School</li> -->
-                            <li>
-                                <ul class="social-links5">
-                                    <li><a href="#"><i class="fab fa-facebook-f"></i></a></li>
-                                    <li><a href="#"><i class="fab fa-pinterest-p"></i></a></li>
-                                    <li><a href="#"><i class="fab fa-instagram"></i></a></li>
-                                    <li><a href="#"><i class="fab fa-linkedin-in"></i></a></li>
-                                </ul>
-                            </li>
-                        </ul>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-    <div class="header-bottom">
-        <div class="container">
-            <div class="menu-area">
-                <div class="row align-items-center justify-content-between">
-                    <div class="col col-lg-auto">
-                        <div class="header-logo">
-                            <a href="{{ route('frontend.index') }}">
-                                <img src="{{ asset('assets/img/logo.svg') }}" alt="logo">
-                            </a>
-                        </div>
-                    </div>
-                    <div class="col-auto col-lg text-center">
-                        <nav class="main-menu menu-style5 d-none d-lg-block">
-                            <ul>
-                                <li class="menu-item-has-children">
-                                    <a href="{{ route('frontend.index') }}">Home</a>
-                                    <!-- <a >Home</a> -->
-                                    <!-- <ul class="sub-menu">
-                                        <li><a href="index.html">Demo Style 1</a></li>
-                                        <li><a href="index-2.html">Demo Style 2</a></li>
-                                        <li><a href="index-3.html">Demo Style 3</a></li>
-                                        <li><a href="index-4.html">Demo Style 4</a></li>
-                                        <li><a href="index-5.html">Demo Style 5</a></li>
-                                        <li><a href="index-6.html">Demo Style 6</a></li>
-                                        <li><a href="index-7.html">Demo Style 7</a></li>
-                                        <li><a href="index-8.html">Demo Style 8</a></li>
-                                    </ul> -->
-                                </li>
-                                <li>
-                                    <a href="{{ route('frontend.about-us') }}">About Us</a>
-                                </li>
-                                <li>
-                                    <a href="{{ route('frontend.services') }}">Services</a>
-                                </li>
-
-                                </li>
-                                <li class="menu-item-has-children">
-                                    <!-- <a href="blog.html">Blog</a> -->
-                                    <a href="{{ route('frontend.faq') }}">FAQ</a>
-
-
-                                </li>
-                                <li class="menu-item-has-children mega-menu-wrap">
-                                    <!-- <a href="#">Pages</a> -->
-
-                                    <a href="{{ route('frontend.contact') }}">Contact Us</a>
-
-                                </li>
-                                <!-- <li>
-                                    <a href="contact.html">Contact</a>
-                                </li> -->
-                            </ul>
-                        </nav>
-                        <button class="vs-menu-toggle style6 d-inline-block d-lg-none"><i
-                                class="fal fa-bars"></i></button>
-                    </div>
-                    <div class="col-auto  d-none d-lg-block">
-                        <div class="header-icons style2">
-
-                        </div>
-                    </div>
-                    <div class="col-auto d-none d-xl-block">
-                        <a href="{{ route('frontend.get-started') }}" class="vs-btn">Login</a>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-    <style>
-        .category-box {
-            width: 120px;
-            height: 120px;
-            background-color: #f8f5ff;
-            border: 2px solid #e0d5f0;
-            border-radius: 60px !important; /* <-- THIS BREAKS THE CIRCLE */
-            overflow: hidden;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-        
-        /* Image fill */
-        .category-img {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-            transition: transform .4s ease;
-        }
-        
-        /* Zoom on hover */
-        .category-item:hover .category-img {
-            transform: scale(1.15);
-        }
-        
-        /* Name */
-        .category-name {
-            color: #333;
-            font-weight: 500;
-            margin: 0;
-            margin-top: 8px;
-        }
-        </style>
-        
-</header>
+@include('frontend.partials.header')
 
 
 <section class="vs-hero-wrapper  ">
@@ -257,16 +12,16 @@
         <!-- Slide 1-->
         <div class="ls-slide" data-ls="duration:12000; transition2d:5;">
             
-            <ls-layer
-                style="font-size:36px; color:#000; stroke:#000; stroke-width:0px; text-align:left; font-style:normal; text-decoration:none; text-transform:none; font-weight:400; letter-spacing:0px; border-style:solid; background-position:0% 0%; background-repeat:no-repeat; background-clip:border-box; overflow:visible; width:255px; height:255px; border-width:60px 60px 60px 60px; border-color:#FFD600; border-radius:50% 50% 50% 50%; top:126px; left:740px; z-index:4; -webkit-background-clip:border-box;"
-                class="ls-l ls-hide-tablet ls-hide-phone ls-text-layer" data-ls="static:forever;">
-            </ls-layer>
-            <div style="font-size:36px; stroke:#000; stroke-width:0px; text-align:left; font-style:normal; text-decoration:none; text-transform:none; font-weight:400; letter-spacing:0px; background-position:0% 0%; background-repeat:no-repeat; background-clip:border-box; overflow:visible; width:900px; height:410px; left:500px; top:213px; background-color:rgb(73 13 89 / 81%); border-radius:100px; z-index:5; -webkit-background-clip:border-box;"
-                class="ls-l ls-hide-tablet ls-hide-phone ls-text-layer" data-ls="static:forever;"></div>
-            <div style="font-size:36px; stroke:#000; stroke-width:0px; text-align:left; font-style:normal; text-decoration:none; text-transform:none; font-weight:400; letter-spacing:0px; background-position:0% 0%; background-repeat:no-repeat; background-clip:border-box; overflow:visible; width:1200px; height:600px; left:350px; top:76px; background-color:rgb(73 13 89 / 81%); border-radius:213px 206px 50px 213px; z-index:5; -webkit-background-clip:border-box;"
-                class="ls-l ls-hide-desktop ls-hide-phone ls-text-layer" data-ls="static:forever;"></div>
-            <div style="font-size:36px; stroke:#000; stroke-width:0px; text-align:left; font-style:normal; text-decoration:none; text-transform:none; font-weight:425; letter-spacing:0px; background-position:0% 0%; background-repeat:no-repeat; background-clip:border-box; overflow:visible; width:1600px; height:600px; left:50%; top:33px; background-color:rgb(73 13 89 / 81%); border-radius:213px 206px 50px 213px; z-index:5; -webkit-background-clip:border-box;"
-                class="ls-l ls-hide-desktop ls-hide-tablet ls-text-layer" data-ls="static:forever;"></div>
+            <!--<ls-layer-->
+            <!--    style="font-size:36px; color:#000; stroke:#000; stroke-width:0px; text-align:left; font-style:normal; text-decoration:none; text-transform:none; font-weight:400; letter-spacing:0px; border-style:solid; background-position:0% 0%; background-repeat:no-repeat; background-clip:border-box; overflow:visible; width:255px; height:255px; border-width:60px 60px 60px 60px; border-color:#FFD600; border-radius:50% 50% 50% 50%; top:126px; left:740px; z-index:4; -webkit-background-clip:border-box;"-->
+            <!--    class="ls-l ls-hide-tablet ls-hide-phone ls-text-layer" data-ls="static:forever;">-->
+            <!--</ls-layer>-->
+            <!--<div style="font-size:36px; stroke:#000; stroke-width:0px; text-align:left; font-style:normal; text-decoration:none; text-transform:none; font-weight:400; letter-spacing:0px; background-position:0% 0%; background-repeat:no-repeat; background-clip:border-box; overflow:visible; width:900px; height:410px; left:500px; top:213px; background-color:rgb(73 13 89 / 81%); border-radius:100px; z-index:5; -webkit-background-clip:border-box;"-->
+            <!--    class="ls-l ls-hide-tablet ls-hide-phone ls-text-layer" data-ls="static:forever;"></div>-->
+            <!--<div style="font-size:36px; stroke:#000; stroke-width:0px; text-align:left; font-style:normal; text-decoration:none; text-transform:none; font-weight:400; letter-spacing:0px; background-position:0% 0%; background-repeat:no-repeat; background-clip:border-box; overflow:visible; width:1200px; height:600px; left:350px; top:76px; background-color:rgb(73 13 89 / 81%); border-radius:213px 206px 50px 213px; z-index:5; -webkit-background-clip:border-box;"-->
+            <!--    class="ls-l ls-hide-desktop ls-hide-phone ls-text-layer" data-ls="static:forever;"></div>-->
+            <!--<div style="font-size:36px; stroke:#000; stroke-width:0px; text-align:left; font-style:normal; text-decoration:none; text-transform:none; font-weight:425; letter-spacing:0px; background-position:0% 0%; background-repeat:no-repeat; background-clip:border-box; overflow:visible; width:1600px; height:600px; left:50%; top:33px; background-color:rgb(73 13 89 / 81%); border-radius:213px 206px 50px 213px; z-index:5; -webkit-background-clip:border-box;"-->
+            <!--    class="ls-l ls-hide-desktop ls-hide-tablet ls-text-layer" data-ls="static:forever;"></div>-->
             <h1 style="font-size:60px; stroke:#000; stroke-width:0px; text-align:center; font-style:normal; text-decoration:none; text-transform:none; font-weight:600; letter-spacing:0px; background-position:0% 0%; background-repeat:no-repeat; background-clip:border-box; overflow:visible; font-family:'Poppins', sans-serif; line-height:60px; color:#ffffff; top:284px; left:312px; width:1296px; -webkit-background-clip:border-box;"
                 class="ls-l ls-hide-tablet ls-hide-phone ls-text-layer"
                 data-ls="offsetxin:-100; delayin:200; easingin:easeOutQuint; offsetxout:-100; easingout:easeOutQuint;">
@@ -284,7 +39,7 @@
             <div style="font-size:30px; color:#000; stroke:#000; stroke-width:0px; text-align:center; font-style:normal; text-decoration:none; text-transform:none; font-weight:400; letter-spacing:0px; background-position:0% 0%; background-repeat:no-repeat; background-clip:border-box; overflow:visible; left:312px; top:494px; width:1296px; font-family:'Poppins', sans-serif; -webkit-background-clip:border-box;"
                 class="ls-l ls-hide-tablet ls-hide-phone ls-html-layer"
                 data-ls="offsetyin:100; delayin:700; easingin:easeOutQuint; offsetyout:100; easingout:easeOutQuint;">
-                <a href="{{ route('frontend.get-started') }}" class="vs-btn">Shop Now</a>
+                <a href="{{ route('login') }}" class="vs-btn">Shop Now</a>
             </div>
             <h1 style="font-size:90px; stroke:#000; stroke-width:0px; text-align:center; font-style:normal; text-decoration:none; text-transform:none; font-weight:600; letter-spacing:0px; background-position:0% 0%; background-repeat:no-repeat; background-clip:border-box; overflow:visible; font-family:'Poppins', sans-serif; line-height:90px; color:#ffffff; top:141px; left:50%; width:1200px; -webkit-background-clip:border-box;"
                 class="ls-l ls-hide-desktop ls-hide-phone ls-text-layer"
@@ -303,7 +58,7 @@
             <div style="font-size:30px; color:#000; stroke:#000; stroke-width:0px; text-align:center; font-style:normal; text-decoration:none; text-transform:none; font-weight:400; letter-spacing:0px; background-position:0% 0%; background-repeat:no-repeat; background-clip:border-box; overflow:visible; left:50%; top:495px; font-family:'Poppins', sans-serif; width:1200px; margin-left:0px; -webkit-background-clip:border-box;"
                 class="ls-l ls-hide-desktop ls-hide-phone ls-html-layer"
                 data-ls="offsetyin:100; delayin:700; easingin:easeOutQuint; offsetyout:100; easingout:easeOutQuint;">
-                <a href="{{ route('frontend.get-started') }}" class="vs-btn">Shop Now</a>
+                <a href="{{ route('login') }}" class="vs-btn">Shop Now</a>
             </div>
             <h1 style="font-size:110px; stroke:#000; stroke-width:0px; text-align:center; font-style:normal; text-decoration:none; text-transform:none; font-weight:600; letter-spacing:0px; background-position:0% 0%; background-repeat:no-repeat; background-clip:border-box; overflow:visible; font-family:'Poppins', sans-serif; line-height:110px; color:#ffffff; top:113px; left:50%; width:1200px; -webkit-background-clip:border-box;"
                 class="ls-l ls-hide-desktop ls-hide-tablet ls-text-layer"
@@ -318,7 +73,7 @@
             <div style="font-size:30px; color:#000; stroke:#000; stroke-width:0px; text-align:center; font-style:normal; text-decoration:none; text-transform:none; font-weight:400; letter-spacing:0px; background-position:0% 0%; background-repeat:no-repeat; background-clip:border-box; overflow:visible; left:50%; top:430px; font-family:'Poppins', sans-serif; width:1200px; margin-left:0px; -webkit-background-clip:border-box;"
                 class="ls-l ls-hide-desktop ls-hide-tablet ls-html-layer"
                 data-ls="offsetyin:100; delayin:700; easingin:easeOutQuint; offsetyout:100; easingout:easeOutQuint;">
-                <a href="{{ route('frontend.get-started') }}" class="vs-btn">Shop Now</a>
+                <a href="{{ route('login') }}" class="vs-btn">Shop Now</a>
             </div>
         </div>
 
@@ -333,57 +88,57 @@ Shop by Category Area
 <section>
     <div class="category-marquee-wrapper">
         <div class="category_box_row">
-            
 
-            <!-- 1. Uniform -->
-            <div class="simple-cat">
-                <div class="simple-box">
-                    <img src="{{ asset('assets/img/catagories/SchoolUniform.jpeg') }}" alt="Uniform">
-                    
-                </div>
-                <p class="sec-text simple-title">Uniform</p>
-            </div>
-       
-            <!-- 2. Shoes -->
-            <div class="simple-cat">
-                <div class="simple-box">
-                    <img src="{{ asset('assets/img/catagories/Shoe_school.jpg') }}" alt="Shoes">
-                </div>
-                <p class="sec-text simple-title">Shoes</p>
-            </div>
-       
-            <!-- 3. Bags -->
-            <div class="simple-cat">
-                <div class="simple-box">
-                    <img src="{{ asset('assets/img/catagories/SchoolBag_2.jpg') }}" alt="Bags">
-                </div>
-                <p class="simple-title sec-text">Bags</p>
-            </div>
-       
-            <!-- 4. Stationery -->
-            <div class="simple-cat">
-                <div class="simple-box">
-                    <img src="{{ asset('assets/img/catagories/Stationery.jpg') }}" alt="Stationery">
-                </div>
-                <p class="simple-title sec-text">Stationery</p>
-            </div>
-       
-            <!-- 5. Food Container -->
-            <div class="simple-cat">
-                <div class="simple-box">
-                    <img src="{{ asset('assets/img/catagories/Box_1.jpeg') }}" alt="Food Container">
-                </div>
-                <p class="simple-title sec-text">Food Container</p>
-            </div>
-       
-            <!-- 6. Drinkware -->
-            <div class="simple-cat">
-                <div class="simple-box">
-                    <img src="{{ asset('assets/img/catagories/Drinkware.jpg') }}" alt="Drinkware">
-                </div>
-                <p class="simple-title sec-text">Drinkware</p>
-            </div>
+    <!-- 1. Uniform -->
+    <a href="{{ route('login') }}" class="simple-cat">
+        <div class="simple-box">
+            <img src="{{ asset('assets/img/catagories/SchoolUniform.jpeg') }}" alt="Uniform">
         </div>
+        <p class="sec-text simple-title">Uniform</p>
+    </a>
+
+    <!-- 2. Shoes -->
+    <a href="{{ route('login') }}" class="simple-cat">
+        <div class="simple-box">
+            <img src="{{ asset('assets/img/catagories/Shoe_school.jpg') }}" alt="Shoes">
+        </div>
+        <p class="sec-text simple-title">Shoes</p>
+    </a>
+
+    <!-- 3. Bags -->
+    <a href="{{ route('login') }}" class="simple-cat">
+        <div class="simple-box">
+            <img src="{{ asset('assets/img/catagories/SchoolBag_2.jpg') }}" alt="Bags">
+        </div>
+        <p class="sec-text simple-title">Bags</p>
+    </a>
+
+    <!-- 4. Stationery -->
+    <a href="{{ route('login') }}" class="simple-cat">
+        <div class="simple-box">
+            <img src="{{ asset('assets/img/catagories/Stationery.jpg') }}" alt="Stationery">
+        </div>
+        <p class="sec-text simple-title">Stationery</p>
+    </a>
+
+    <!-- 5. Food Container -->
+    <a href="{{ route('login') }}" class="simple-cat">
+        <div class="simple-box">
+            <img src="{{ asset('assets/img/catagories/Box_1.jpeg') }}" alt="Food Container">
+        </div>
+        <p class="sec-text simple-title">Food Container</p>
+    </a>
+
+    <!-- 6. Drinkware -->
+    <a href="{{ route('login') }}" class="simple-cat">
+        <div class="simple-box">
+            <img src="{{ asset('assets/img/catagories/Drinkware.jpg') }}" alt="Drinkware">
+        </div>
+        <p class="sec-text simple-title">Drinkware</p>
+    </a>
+
+</div>
+
     </div>
        
        
@@ -398,7 +153,22 @@ Shop by Category Area
             gap: 30px;
             justify-content: center;
             padding-top: 60px;
-            flex-wrap: wrap; /* Allow wrapping */
+            flex-wrap: nowrap; /* Keep in single row on large screens */
+        }
+
+        /* Tablet/Medium screens: enable horizontal scroll */
+        @media (min-width: 769px) and (max-width: 1116px) {
+            .category-marquee-wrapper {
+                overflow-x: auto;
+                overflow-y: hidden;
+                -webkit-overflow-scrolling: touch;
+            }
+            
+            .category_box_row {
+                flex-wrap: nowrap;
+                justify-content: flex-start;
+                width: max-content;
+            }
         }
 
         .simple-box {
@@ -429,10 +199,11 @@ Shop by Category Area
         /* Mobile Responsiveness */
         @media (max-width: 768px) {
             .category-marquee-wrapper {
-                overflow-x: auto;
+                overflow-x: hidden;
                 width: 100%;
-                -webkit-overflow-scrolling: touch; /* Smooth scrolling on iOS */
-                scrollbar-width: none; /* Firefox */
+                -webkit-overflow-scrolling: auto; /* Smooth scrolling on iOS */
+                /*scrollbar-width: none; */
+                position: relative;
             }
             .category-marquee-wrapper::-webkit-scrollbar {
                 display: none; /* Chrome/Safari */
@@ -447,7 +218,9 @@ Shop by Category Area
                 padding-right: 0;
                 /* animation: scroll 15s linear infinite; REMOVED */
                 width: max-content;
+                will-change: transform; 
                 display: flex;
+                align-items: flex-start;
             }
             
             /* Service Section Marquee */
@@ -604,17 +377,20 @@ Shop by Category Area
         transform: scale(0.8);
         transform-origin: center;
     }
+    .space-top-mobile {
+        padding-top: 2px !important;
+    }
 }
 </style>
 
 <!--==============================
 About Area
-==============================-->
-<section class=" space-top space-extra-bottom" style="background-color: #ffffff;">
+==============================--> 
+<section class=" space-top space-extra-bottom space-top-mobile" style="background-color: #ffffff;">
     <div class="container">
         <div class="row gx-70 align-items-center">
 
-            <div class="col-lg-6">
+            <div class="col-lg-6" data-aos="fade-up" data-aos-delay="300" data-aos-duration="1200">
                 <div class="img-box1">
                     <div class="vs-circle"></div>
                     <div class="img-1 mega-hover"><img src="{{ asset('assets/img/about/about_1.svg') }}" alt="about">
@@ -625,7 +401,7 @@ About Area
                     </div>
                     <div class="img-4 mega-hover"><img src="{{ asset('assets/img/about/about_4.svg') }}" alt="about">
                     </div>
-                </div>
+                </div>`
             </div>
 
             <div class="col-lg-6 text-center text-lg-start">
@@ -636,7 +412,7 @@ About Area
                     manufacturer, we are now bringing our expertise online. With a commitment
                     to quality, timely delivery, and customer satisfaction, we ensure every uniform
                     meets the highest standards.</p>
-                <div class="row gx-70 justify-content-center justify-content-lg-start text-md-start">
+                <div class="row gx-70 justify-content-center justify-content-lg-start text-md-start" data-aos="fade-up" data-aos-delay="300" data-aos-duration="1200">
                     <div class="col-6 col-md-6">
                         <div class="vs-media media-style1">
                             <div class="media-icon"><img src="{{ asset('assets/img/icon/ab-1-2.svg') }}" alt="icon">
@@ -648,7 +424,7 @@ About Area
                         </div>
                     </div>
 
-                    <div class="col-6 col-md-6">
+                    <div class="col-6 col-md-6" >
                         <div class="vs-media media-style1">
                             <div class="media-icon"><img src="{{ asset('assets/img/icon/ab-1-1.svg') }}" alt="icon">
                             </div>
@@ -659,7 +435,7 @@ About Area
                         </div>
                     </div>
 
-                    <div class="col-6 col-md-6">
+                    <div class="col-6 col-md-6" >
                         <div class="vs-media media-style1">
                             <div class="media-icon"><img src="{{ asset('assets/img/icon/coun-1-3.svg') }}" alt="icon">
                             </div>
@@ -670,7 +446,7 @@ About Area
                         </div>
                     </div>
 
-                    <div class="col-6 col-md-6">
+                    <div class="col-6 col-md-6" >
                         <div class="vs-media media-style1">
                             <div class="media-icon"><img src="{{ asset('assets/img/icon/coun-1-4.svg') }}" alt="icon">
                             </div>
@@ -686,12 +462,13 @@ About Area
 
         </div>
     </div>
-</section><!--==============================
+</section>
+<!--==============================
 Service Area
 ==============================-->
 <section class=" space-extra-bottom">
     <div class="container">
-        <div class="title-area text-center">
+        <div class="title-area text-center" data-aos="fade-up" data-aos-delay="300" data-aos-duration="1200">
             <div class="sec-bubble">
                 <div class="bubble"></div>
                 <div class="bubble"></div>
@@ -766,56 +543,58 @@ Service Area
             </div>
         </div>
         
-        <!-- Mobile Vertical List for Services -->
-        <div class="row gy-4 d-md-none">
-            <div class="col-12 service-style1">
-                <div class="service-body">
-                    <div class="service-img"><a href="#"><img src="{{ asset('assets/img/services/service.svg') }}" alt="service"></a></div>
-                    <div class="service-content">
-                        <div class="service-icon"><img src="{{ asset('assets/img/icon/sr-1-1.svg') }}" alt="icon"></div>
-                        <h3 class="service-title"><a href="#">Comfort & Care</a></h3>
-                        <p class="service-text">Soft, skin-friendly fabrics designed for all-day comfort, ensuring durability, easy care, and lasting freshness.</p>
-                        <div class="service-bottom">
-                            <a href="#" class="service-btn">Learn More</a>
+        <!-- Mobile Horizontal Slider for Services -->
+        <div class="service-marquee-wrapper d-md-none">
+            <div class="service-marquee-row">
+                <div class="service-style1">
+                    <div class="service-body">
+                        <div class="service-img"><a href="#"><img src="{{ asset('assets/img/services/service.svg') }}" alt="service"></a></div>
+                        <div class="service-content">
+                            <div class="service-icon"><img src="{{ asset('assets/img/icon/sr-1-1.svg') }}" alt="icon"></div>
+                            <h3 class="service-title"><a href="#">Comfort & Care</a></h3>
+                            <p class="service-text">Soft, skin-friendly fabrics designed for all-day comfort, ensuring durability, easy care, and lasting freshness.</p>
+                            <div class="service-bottom">
+                                <a href="#" class="service-btn">Learn More</a>
+                            </div>
                         </div>
                     </div>
                 </div>
-            </div>
-            <div class="col-12 service-style1">
-                <div class="service-body">
-                    <div class="service-img"><a href="#"><img src="{{ asset('assets/img/services/service (1).svg') }}" alt="service"></a></div>
-                    <div class="service-content">
-                        <div class="service-icon"><img src="{{ asset('assets/img/icon/sr-1-2.svg') }}" alt="icon"></div>
-                        <h3 class="service-title"><a href="#">Child Care</a></h3>
-                        <p class="service-text">We have a very large indoor space allowing us to have designated areas for different types</p>
-                        <div class="service-bottom">
-                            <a href="#" class="service-btn">Learn More</a>
+                <div class="service-style1">
+                    <div class="service-body">
+                        <div class="service-img"><a href="#"><img src="{{ asset('assets/img/services/service (1).svg') }}" alt="service"></a></div>
+                        <div class="service-content">
+                            <div class="service-icon"><img src="{{ asset('assets/img/icon/sr-1-2.svg') }}" alt="icon"></div>
+                            <h3 class="service-title"><a href="#">Child Care</a></h3>
+                            <p class="service-text">We have a very large indoor space allowing us to have designated areas for different types</p>
+                            <div class="service-bottom">
+                                <a href="#" class="service-btn">Learn More</a>
+                            </div>
                         </div>
                     </div>
                 </div>
-            </div>
-            <div class="col-12 service-style1">
-                <div class="service-body">
-                    <div class="service-img"><a href="#"><img src="{{ asset('assets/img/services/service (2).svg') }}" alt="service"></a></div>
-                    <div class="service-content">
-                        <div class="service-icon"><img src="{{ asset('assets/img/icon/sr-1-3.svg') }}" alt="icon"></div>
-                        <h3 class="service-title"><a href="#">Healthy Meals</a></h3>
-                        <p class="service-text">We have a very large indoor space allowing us to have designated areas for different types</p>
-                        <div class="service-bottom">
-                            <a href="#" class="service-btn">Learn More</a>
+                <div class="service-style1">
+                    <div class="service-body">
+                        <div class="service-img"><a href="#"><img src="{{ asset('assets/img/services/service (2).svg') }}" alt="service"></a></div>
+                        <div class="service-content">
+                            <div class="service-icon"><img src="{{ asset('assets/img/icon/sr-1-3.svg') }}" alt="icon"></div>
+                            <h3 class="service-title"><a href="#">Healthy Meals</a></h3>
+                            <p class="service-text">We have a very large indoor space allowing us to have designated areas for different types</p>
+                            <div class="service-bottom">
+                                <a href="#" class="service-btn">Learn More</a>
+                            </div>
                         </div>
                     </div>
                 </div>
-            </div>
-            <div class="col-12 service-style1">
-                <div class="service-body">
-                    <div class="service-img"><a href="#"><img src="{{ asset('assets/img/services/service (3).svg') }}" alt="service"></a></div>
-                    <div class="service-content">
-                        <div class="service-icon"><img src="{{ asset('assets/img/icon/sr-1-4.svg') }}" alt="icon"></div>
-                        <h3 class="service-title"><a href="#">Secure Environment</a></h3>
-                        <p class="service-text">We have a very large indoor space allowing us to have designated areas for different types</p>
-                        <div class="service-bottom">
-                            <a href="#" class="service-btn">Learn More</a>
+                <div class="service-style1">
+                    <div class="service-body">
+                        <div class="service-img"><a href="#"><img src="{{ asset('assets/img/services/service (3).svg') }}" alt="service"></a></div>
+                        <div class="service-content">
+                            <div class="service-icon"><img src="{{ asset('assets/img/icon/sr-1-4.svg') }}" alt="icon"></div>
+                            <h3 class="service-title"><a href="#">Secure Environment</a></h3>
+                            <p class="service-text">We have a very large indoor space allowing us to have designated areas for different types</p>
+                            <div class="service-bottom">
+                                <a href="#" class="service-btn">Learn More</a>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -827,24 +606,29 @@ Service Area
 </div>
 
 </div>
+
+<div data-bg-src="{{ asset('assets/img/bg/bg-h-1-1.jpg') }}">
+</div>
+
+</div>
 <section class=" space-top space-extra-bottom" style="background-color: #ffffff;">
     <div class="container">
         <div class="row gx-80">
 
             <div class="col-lg-12 align-self-center">
-                <div class="title-area text-center text-lg-start">
+                <div class="title-area text-center text-lg-start" data-aos="fade-up" data-aos-delay="300" data-aos-duration="1200">
                     <span class="sec-subtitle">Clear Your Doubts</span>
                     <h2 class="sec-title">Frequently Asked Questions</h2>
                 </div>
-                <div class="accordion accordion-style1 faq-two-column" id="faqVersion1">
-                    <div class="accordion-item active">
+                <div class="accordion accordion-style1 faq-two-column" id="faqVersion1" data-aos="fade-up" data-aos-delay="300" data-aos-duration="1200">
+                    <div class="accordion-item">
                         <div class="accordion-header" id="headingOne1">
-                            <button class="accordion-button" type="button" data-bs-toggle="collapse"
-                                data-bs-target="#collapseOne1" aria-expanded="true" aria-controls="collapseOne1">
+                            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse"
+                                data-bs-target="#collapseOne1" aria-expanded="false" aria-controls="collapseOne1">
                                 How can I contact customer support?
                             </button>
                         </div>
-                        <div id="collapseOne1" class="accordion-collapse collapse show"
+                        <div id="collapseOne1" class="accordion-collapse collapse"
                             aria-labelledby="headingOne1" data-bs-parent="#faqVersion1">
                             <div class="accordion-body">
                                 <p>You can reach us via email at hello@theskoolstore.com or call us at +91
@@ -939,5 +723,226 @@ Service Area
         </div>
 </section>
 
+
+
+<!-- Mobile Marquee Auto-Scroll Script -->
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+
+  function setupTransformMarquee(wrapperSelector, rowSelector, options = {}) {
+    const wrapper = document.querySelector(wrapperSelector);
+    const row = document.querySelector(rowSelector);
+    if (!wrapper || !row) return;
+
+    const maxWidth = options.maxWidth || 768;
+    
+    // Store original content before any duplication
+    if (!row.dataset.originalContent) {
+      row.dataset.originalContent = row.innerHTML;
+    }
+    const originalContent = row.dataset.originalContent;
+
+    // Settings
+    const speedPxPerSec = typeof options.speed === 'number' ? options.speed : 20;
+    const resumeDelay = typeof options.resumeDelay === 'number' ? options.resumeDelay : 800;
+    let isPaused = false;
+    let lastTime = null;
+    let currentX = 0;
+    let contentWidth = 0;
+    let rafId = null;
+    let touchDragging = false;
+    let dragStartX = 0;
+    let dragStartOffset = 0;
+    let resumeTimeout = null;
+
+    function measure() {
+      contentWidth = row.scrollWidth / 2;
+    }
+
+    function step(timestamp) {
+      if (isPaused || touchDragging) {
+        lastTime = timestamp;
+        rafId = requestAnimationFrame(step);
+        return;
+      }
+
+      if (!lastTime) lastTime = timestamp;
+      const delta = (timestamp - lastTime) / 1000;
+      lastTime = timestamp;
+
+      currentX -= speedPxPerSec * delta;
+      if (Math.abs(currentX) >= contentWidth) {
+        currentX += contentWidth;
+      }
+
+      row.style.transform = `translateX(${currentX}px)`;
+      rafId = requestAnimationFrame(step);
+    }
+
+    function start() {
+      cancelAnimationFrame(rafId);
+      measure();
+      currentX = ((currentX % contentWidth) + contentWidth) % contentWidth;
+      currentX = -Math.abs(currentX);
+      lastTime = null;
+      rafId = requestAnimationFrame(step);
+    }
+
+    function pause() {
+      isPaused = true;
+      if (resumeTimeout) { clearTimeout(resumeTimeout); resumeTimeout = null; }
+    }
+    
+    function resume(after = 0) {
+      if (resumeTimeout) clearTimeout(resumeTimeout);
+      if (after > 0) {
+        resumeTimeout = setTimeout(() => { isPaused = false; lastTime = null; }, after);
+      } else {
+        isPaused = false;
+        lastTime = null;
+      }
+    }
+
+    function checkMode() {
+      const width = window.innerWidth;
+      
+      if (width <= 1116) {
+        // Mobile and Tablet mode: duplicate content and auto-scroll
+        if (row.dataset.duplicated !== 'true') {
+          row.innerHTML = originalContent + originalContent;
+          row.dataset.duplicated = 'true';
+          setTimeout(start, 80);
+        }
+      } else {
+        // Desktop mode: restore original content
+        if (row.dataset.duplicated === 'true') {
+          cancelAnimationFrame(rafId);
+          row.innerHTML = originalContent;
+          row.dataset.duplicated = 'false';
+          row.style.transform = 'translateX(0)';
+          isPaused = true;
+        }
+      }
+    }
+
+    // Touch / Pointer drag support for iOS
+    let touchStartY = 0;
+    let isHorizontalScroll = null;
+    
+    function onTouchStart(e) {
+      if (window.innerWidth > maxWidth) return;
+      pause();
+      touchDragging = true;
+      if (e.type === 'touchstart') {
+        dragStartX = e.touches[0].clientX;
+        touchStartY = e.touches[0].clientY;
+      } else {
+        dragStartX = e.clientX;
+      }
+      dragStartOffset = currentX;
+      isHorizontalScroll = null;
+    }
+    
+    function onTouchMove(e) {
+      if (!touchDragging) return;
+      
+      let clientX, clientY;
+      if (e.type === 'touchmove') {
+        clientX = e.touches[0].clientX;
+        clientY = e.touches[0].clientY;
+      } else {
+        clientX = e.clientX;
+        return;
+      }
+      
+      const dx = clientX - dragStartX;
+      const dy = clientY - touchStartY;
+      
+      if (isHorizontalScroll === null && (Math.abs(dx) > 5 || Math.abs(dy) > 5)) {
+        isHorizontalScroll = Math.abs(dx) > Math.abs(dy);
+      }
+      
+      if (isHorizontalScroll) {
+        e.preventDefault();
+        currentX = dragStartOffset + dx;
+        if (Math.abs(currentX) >= contentWidth) {
+          currentX += contentWidth * Math.sign(currentX) * -1;
+        }
+        row.style.transform = `translateX(${currentX}px)`;
+      } else if (isHorizontalScroll === false) {
+        touchDragging = false;
+        resume(0);
+      }
+    }
+    
+    function onTouchEnd(e) {
+      touchDragging = false;
+      resume(options.resumeDelay || resumeDelay);
+    }
+
+    function onMouseEnter() { 
+      if (window.innerWidth <= maxWidth) pause(); 
+    }
+    
+    function onMouseLeave() { 
+      if (window.innerWidth <= maxWidth) resume(200); 
+    }
+
+    let resizeTimer = null;
+    function onResize() {
+      if (resizeTimer) clearTimeout(resizeTimer);
+      resizeTimer = setTimeout(function() {
+        checkMode();
+      }, 120);
+    }
+
+    // Attach events
+    wrapper.addEventListener('touchstart', onTouchStart, {passive: true});
+    wrapper.addEventListener('touchmove', onTouchMove, {passive: false});
+    wrapper.addEventListener('touchend', onTouchEnd, {passive: true});
+    wrapper.addEventListener('touchcancel', onTouchEnd, {passive: true});
+
+    wrapper.addEventListener('pointerdown', onTouchStart, {passive: true});
+    wrapper.addEventListener('pointermove', onTouchMove, {passive: true});
+    wrapper.addEventListener('pointerup', onTouchEnd, {passive: true});
+    wrapper.addEventListener('pointercancel', onTouchEnd, {passive: true});
+
+    wrapper.addEventListener('mouseenter', onMouseEnter);
+    wrapper.addEventListener('mouseleave', onMouseLeave);
+
+    window.addEventListener('resize', onResize);
+
+    // Initialize
+    checkMode();
+
+    // Handle image loading
+    const imgs = row.querySelectorAll('img');
+    let imgsLoaded = 0;
+    if (imgs.length > 0) {
+      imgs.forEach(img => {
+        if (img.complete) {
+          imgsLoaded++;
+        } else {
+          img.addEventListener('load', () => {
+            imgsLoaded++;
+            if (imgsLoaded === imgs.length && window.innerWidth <= maxWidth) {
+              measure();
+            }
+          }, {passive: true});
+          img.addEventListener('error', () => {
+            imgsLoaded++;
+            if (imgsLoaded === imgs.length && window.innerWidth <= maxWidth) measure();
+          }, {passive: true});
+        }
+      });
+    }
+  }
+
+  // Setup marquees
+  setupTransformMarquee('.category-marquee-wrapper', '.category_box_row', { maxWidth: 768, speed: 18, resumeDelay: 700 });
+  setupTransformMarquee('.service-marquee-wrapper', '.service-marquee-row', { maxWidth: 768, speed: 18, resumeDelay: 700 });
+
+});
+</script>
 
 @endsection

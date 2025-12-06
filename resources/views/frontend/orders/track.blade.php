@@ -3,50 +3,132 @@
 @section('content')
 @include('frontend.partials.header')
 
-<section class="space-top space-extra-bottom" style="background-color: #f8f5ff;">
+<!-- Breadcrumb -->
+<div class="breadcrumb-wrapper" style="background-color: #e0e0e0; padding-top: 50px; border-bottom: 1px solid #d0d0d0;">
+    <div class="container" style="padding: 20px;">
+        <div class="breadcumb-menu-wrap" style="margin: 9px 0 0 0;">
+            <ul class="breadcumb-menu">
+                <li><a href="{{ route('frontend.index') }}">Home</a></li>
+                <li><a href="{{ route('frontend.parent.dashboard') }}">Parent Dashboard</a></li>
+                <li><a href="{{ route('frontend.parent.orders') }}">My Orders</a></li>
+                <li>Order #SOCO-{{ $order['id'] }}</li>
+            </ul>
+        </div>
+    </div>
+</div>
+
+<section class="space-top space-extra-bottom" style="background-color: #f8f5ff; padding: 60px 0;">
     <div class="container">
-        <div class="row mb-4">
-            <div class="col-12">
-                <div class="d-flex justify-content-between align-items-center">
-                    <div>
-                        <h2 class="h3 mb-2">Track Order</h2>
-                        <p class="text-muted mb-0">Order #{{ $order['id'] }}</p>
-                    </div>
-                    <a href="{{ route('frontend.parent.orders') }}" class="vs-btn btn-sm">
-                        <i class="fas fa-arrow-left me-2"></i> Back to Orders
+        <div class="row">
+            <!-- Left Sidebar - Account Menu -->
+            <div class="col-lg-3 mb-4">
+                @include('frontend.dashboard.partials.account-sidebar')
+            </div>
+
+            <!-- Right Content Area -->
+            <div class="col-lg-9">
+                <!-- Back Button & Header -->
+                <div class="d-flex align-items-center mb-4">
+                    <a href="{{ route('frontend.parent.orders') }}" class="btn btn-light me-3" style="border-radius: 10px; padding: 10px 16px;">
+                        <i class="fas fa-arrow-left"></i>
+                    </a>
+                    <h2 class="mb-0" style="font-weight: 600; color: #333; font-size: 1.5rem;">Order Details</h2>
+                    <a href="#" class="ms-auto btn btn-outline-primary" style="border-radius: 10px; padding: 10px 20px;">
+                        Help
                     </a>
                 </div>
-            </div>
-        </div>
 
-        <div class="row">
-            <div class="col-lg-8">
-                <div class="card shadow-sm rounded-4 border-0" style="background-color: #ffffff;">
+                <!-- Order Items -->
+                <div class="card shadow-sm border-0 mb-4" style="border-radius: 16px; overflow: hidden;">
                     <div class="card-body p-4">
-                        <h5 class="mb-4">Order Status</h5>
-                        
-                        <!-- Status Timeline -->
-                        <div class="order-timeline">
-                            @foreach($statuses as $index => $status)
-                                <div class="timeline-item {{ $index <= $currentStatusIndex ? 'completed' : '' }} {{ $index == $currentStatusIndex ? 'current' : '' }}">
-                                    <div class="timeline-marker">
-                                        @if($index <= $currentStatusIndex)
-                                            <i class="fas fa-check-circle"></i>
-                                        @else
-                                            <i class="far fa-circle"></i>
-                                        @endif
-                                    </div>
-                                    <div class="timeline-content">
-                                        <div class="d-flex align-items-center gap-2 mb-1">
-                                            <i class="fas fa-{{ $status['icon'] }}" style="font-size: 1.1rem;"></i>
-                                            <h6 class="mb-0">{{ $status['label'] }}</h6>
+                        @foreach($order['items'] as $item)
+                            <div class="d-flex gap-3 {{ !$loop->last ? 'mb-3 pb-3 border-bottom' : '' }}">
+                                <!-- Product Image -->
+                                <div class="flex-shrink-0">
+                                    @if(isset($item['image']) && $item['image'])
+                                        <img src="{{ $item['image'] }}" alt="{{ $item['name'] }}" 
+                                            style="width: 80px; height: 80px; object-fit: cover; border-radius: 8px; border: 1px solid #e0e0e0;">
+                                    @else
+                                        <div class="bg-light rounded d-flex align-items-center justify-content-center" 
+                                            style="width: 80px; height: 80px; border: 1px solid #e0e0e0;">
+                                            <i class="fas fa-image text-muted fa-2x"></i>
                                         </div>
-                                        @if($index < $currentStatusIndex)
-                                            <p class="text-muted small mb-0">✅ Completed</p>
-                                        @elseif($index == $currentStatusIndex)
-                                            <p class="text-primary small mb-0 fw-bold">🔵 Current Status</p>
-                                        @else
-                                            <p class="text-muted small mb-0">⏳ Pending</p>
+                                    @endif
+                                </div>
+
+                                <!-- Product Details -->
+                                <div class="flex-grow-1">
+                                    <h6 class="mb-2" style="font-weight: 600; color: #333; font-size: 1rem;">
+                                        {{ !empty($item['name']) ? $item['name'] : 'Product Name Unavailable' }}
+                                    </h6>
+                                    <div class="d-flex gap-3 mt-2">
+                                        <span class="text-muted small">Size: <strong>{{ $item['size'] ?? 'N/A' }}</strong></span>
+                                        <span class="text-muted small">Qty: <strong>{{ $item['quantity'] }}</strong></span>
+                                    </div>
+                                </div>
+                            </div>
+                        @endforeach
+                    </div>
+                </div>
+
+                <!-- Order ID & Status Combined --  >
+                <div class="card shadow-sm border-0 mb-4" style="border-radius: 16px; overflow: hidden;">
+                    <div class="card-body p-4">
+                        <!-- Order ID -->
+                        <div class="d-flex align-items-center justify-content-between mb-4">
+                            <div>
+                                <p class="text-muted small mb-1">Order #SOCO-{{ $order['id'] }}</p>
+                                <button class="btn btn-sm btn-link p-0" onclick="copyOrderId()" style="color: #490D59; text-decoration: none;">
+                                    <i class="fas fa-copy me-1"></i> Copy
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Order Status -->
+                        <h5 class="mb-4" style="font-weight: 600; color: #333;">
+                            @if($order['status'] === 'cancelled')
+                                Order Cancelled
+                            @elseif($order['status'] === 'delivered')
+                                Order Delivered
+                            @else
+                                Order Processing
+                            @endif
+                        </h5>
+                        
+                        @if($order['status'] === 'cancelled')
+                            <p class="text-muted mb-4">The delivery partner was unable to deliver to your location</p>
+                        @endif
+
+                        <!-- Status Timeline -->
+                        <div class="position-relative" style="padding-left: 40px;">
+                            @foreach($statuses as $index => $status)
+                                @php
+                                    $isCompleted = $index <= $currentStatusIndex;
+                                    $isCurrent = $index === $currentStatusIndex;
+                                    $circleColor = $isCompleted ? '#28a745' : '#e0e0e0';
+                                    if ($order['status'] === 'cancelled' && $isCurrent) {
+                                        $circleColor = '#dc3545';
+                                    }
+                                @endphp
+                                
+                                <div class="mb-4 position-relative">
+                                    <!-- Timeline Line -->
+                                    @if(!$loop->last)
+                                        <div style="position: absolute; left: -28px; top: 20px; width: 2px; height: 40px; background-color: {{ $isCompleted ? '#28a745' : '#e0e0e0' }};"></div>
+                                    @endif
+                                    
+                                    <!-- Status Circle -->
+                                    <div style="position: absolute; left: -35px; top: 0; width: 16px; height: 16px; border-radius: 50%; background-color: {{ $circleColor }}; border: 3px solid #ffffff; box-shadow: 0 0 0 2px {{ $circleColor }};"></div>
+                                    
+                                    <!-- Status Content -->
+                                    <div>
+                                        <h6 class="mb-1" style="font-weight: 600; color: {{ $isCompleted ? '#333' : '#999' }};">
+                                            {{ $status['label'] }}
+                                        </h6>
+                                        @if($isCurrent)
+                                            <p class="text-muted small mb-0">
+                                                {{ $order['status'] === 'cancelled' ? 'Today, ' . date('M d', strtotime($order['updated_at'])) : date('D M d', strtotime($order['updated_at'])) }}
+                                            </p>
                                         @endif
                                     </div>
                                 </div>
@@ -54,16 +136,92 @@
                         </div>
                     </div>
                 </div>
-            </div>
 
-            <div class="col-lg-4">
-                <div class="card shadow-sm rounded-4 border-0" style="background-color: #ffffff;">
-                    <div class="card-body">
-                        <h5 class="mb-3">Order Details</h5>
-                        <p class="mb-2"><strong>Order ID:</strong> {{ $order['id'] }}</p>
-                        <p class="mb-2"><strong>Status:</strong> {{ $order['status'] }}</p>
-                        <p class="mb-2"><strong>Total:</strong> ₹{{ number_format($order['total']) }}</p>
-                        <p class="mb-0"><strong>Date:</strong> {{ date('M d, Y', strtotime($order['created_at'])) }}</p>
+                <!-- Rate Experience (if cancelled) -->
+                @if($order['status'] === 'cancelled')
+                    <div class="card shadow-sm border-0 mb-4" style="border-radius: 16px;">
+                        <div class="card-body p-4">
+                            <h6 class="mb-3" style="font-weight: 600; color: #333;">Rate your experience</h6>
+                            <a href="#" class="d-flex align-items-center justify-content-between text-decoration-none" style="color: #333;">
+                                <div class="d-flex align-items-center gap-3">
+                                    <i class="fas fa-comment-dots fa-2x" style="color: #490D59;"></i>
+                                    <span>How was your cancellation experience?</span>
+                                </div>
+                                <i class="fas fa-chevron-right" style="color: #999;"></i>
+                            </a>
+                        </div>
+                    </div>
+                @endif
+
+                <div class="row">
+                    <!-- Delivery Details -->
+                    <div class="col-md-6 mb-4">
+                        <div class="card shadow-sm border-0 h-100" style="border-radius: 16px;">
+                            <div class="card-body p-4">
+                                <h6 class="mb-3" style="font-weight: 600; color: #333;">Delivery details</h6>
+                                
+                                <div class="mb-3">
+                                    <div class="d-flex align-items-start gap-3">
+                                        <i class="fas fa-home" style="color: #490D59; font-size: 1.2rem; margin-top: 4px;"></i>
+                                        <div>
+                                            <p class="mb-1" style="font-weight: 500; color: #333;">Home</p>
+                                            <p class="text-muted small mb-0">{{ $order['customer_address'] }}</p>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div>
+                                    <div class="d-flex align-items-start gap-3">
+                                        <i class="fas fa-user" style="color: #490D59; font-size: 1.2rem; margin-top: 4px;"></i>
+                                        <div>
+                                            <p class="mb-0" style="font-weight: 500; color: #333;">{{ $order['customer_name'] }}</p>
+                                            <p class="text-muted small mb-0">{{ $order['customer_phone'] }}</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Price Details -->
+                    <div class="col-md-6 mb-4">
+                        <div class="card shadow-sm border-0 h-100" style="border-radius: 16px;">
+                            <div class="card-body p-4">
+                                <h6 class="mb-3" style="font-weight: 600; color: #333;">Price details</h6>
+                                
+                                <div class="d-flex justify-content-between mb-2">
+                                    <span class="text-muted">Order ID</span>
+                                    <span style="font-weight: 500;">#SOCO-{{ $order['id'] }}</span>
+                                </div>
+
+                                <div class="d-flex justify-content-between mb-2">
+                                    <span class="text-muted">Listing price</span>
+                                    <span style="font-weight: 500;">₹{{ number_format($order['subtotal'] ?? $order['total']) }}</span>
+                                </div>
+
+                                <div class="d-flex justify-content-between mb-2">
+                                    <span class="text-muted">Tax</span>
+                                    <span style="font-weight: 500;">₹{{ number_format($order['tax'] ?? 0) }}</span>
+                                </div>
+                                
+                                <hr style="margin: 10px 0; border-color: #e0e0e0;">
+
+                                <div class="d-flex justify-content-between mb-0">
+                                    <span style="font-weight: 600; color: #333;">Total amount</span>
+                                    <span style="font-weight: 600; font-size: 1.1rem; color: #333;">₹{{ number_format($order['total']) }}</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Shop More Button -->
+                <div class="card shadow-sm border-0" style="border-radius: 16px;">
+                    <div class="card-body p-3">
+                        <a href="{{ route('frontend.parent.store') }}" class="btn btn-primary w-100" 
+                            style="background: linear-gradient(135deg, #490D59 0%, #6B1B7F 100%); border: none; border-radius: 10px; padding: 12px; font-weight: 600;">
+                            <i class="fas fa-shopping-cart me-2"></i> Shop more from SOCO
+                        </a>
                     </div>
                 </div>
             </div>
@@ -71,83 +229,13 @@
     </div>
 </section>
 
-<style>
-    .order-timeline {
-        position: relative;
-        padding-left: 30px;
-    }
+<script>
+function copyOrderId() {
+    const orderId = 'SOCO-{{ $order["id"] }}';
+    navigator.clipboard.writeText(orderId).then(() => {
+        alert('Order ID copied to clipboard!');
+    });
+}
+</script>
 
-    .timeline-item {
-        position: relative;
-        padding-bottom: 30px;
-    }
-
-    .timeline-item:last-child {
-        padding-bottom: 0;
-    }
-
-    .timeline-marker {
-        position: absolute;
-        left: -35px;
-        top: 0;
-        width: 30px;
-        height: 30px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        background-color: #ffffff;
-        border: 2px solid #e0d5f0;
-        border-radius: 50%;
-        z-index: 2;
-        transition: all 0.3s ease;
-    }
-
-    .timeline-item.completed .timeline-marker {
-        background-color: #28a745;
-        border-color: #28a745;
-        color: #ffffff;
-    }
-    
-    .timeline-item.current .timeline-marker {
-        background-color: #490D59;
-        border-color: #490D59;
-        color: #ffffff;
-        animation: pulse 2s infinite;
-    }
-
-    @keyframes pulse {
-        0%, 100% { transform: scale(1); }
-        50% { transform: scale(1.1); }
-    }
-
-    .timeline-item:not(:last-child)::after {
-        content: '';
-        position: absolute;
-        left: -20px;
-        top: 30px;
-        width: 2px;
-        height: calc(100% - 10px);
-        background-color: #e0d5f0;
-        z-index: 1;
-    }
-
-    .timeline-item.completed:not(:last-child)::after {
-        background-color: #28a745;
-    }
-
-    .timeline-content h6 {
-        color: #333;
-        font-weight: 600;
-    }
-
-    .timeline-item.completed .timeline-content h6 {
-        color: #28a745;
-    }
-    
-    .timeline-item.current .timeline-content h6 {
-        color: #490D59;
-        font-weight: 700;
-    }
-</style>
 @endsection
-

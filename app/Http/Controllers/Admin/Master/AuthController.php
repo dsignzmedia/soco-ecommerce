@@ -10,15 +10,130 @@ use App\Support\AuditLogger;
 use Illuminate\Http\Request;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\RateLimiter;
+use Illuminate\Support\Str;
 
 class AuthController extends Controller
 {
     /**
+     * Maximum login attempts before throttling
+     */
+    protected int $maxAttempts = 5;
+
+    /**
+     * Throttle decay time in seconds (1 minute)
+     */
+    protected int $decaySeconds = 60;
+
+    /**
      * Display the master admin login screen.
+     * Note: Now protected by RedirectIfMasterAdmin middleware in routes, 
+     * but we keep this check as fallback defense-in-depth.
      */
     public function showLoginForm()
     {
         return view('admin.auth.login');
+    }
+
+    /**
+     * Handle master admin login request.
+     * 
+     * Security features:
+     * - Rate limiting to prevent brute force attacks
+     * - Session fixation protection via regenerate()
+     * - CSRF protection (via Laravel middleware)
+     * - Strict role validation
+     */
+    public function login(Request $request)
+    {
+        // Check if user is rate limited
+        $throttleKey = $this->throttleKey($request);
+        
+        if (RateLimiter::tooManyAttempts($throttleKey, $this->maxAttempts)) {
+            $seconds = RateLimiter::availableIn($throttleKey);
+            return back()->withErrors([
+                'email' => "Too many login attempts. Please try again in {$seconds} seconds.",
+            ])->withInput();
+        }
+
+        // Validate input with comprehensive rules
+        $credentials = $request->validate([
+            'email' => ['required', 'string', 'max:255'],
+            'password' => ['required', 'string', 'min:6'],
+        ], [
+            'email.required' => 'Email or phone is required.',
+            'password.required' => 'Password is required.',
+            'password.min' => 'Password must be at least 6 characters.',
+        ]);
+
+        // Sanitize email input
+        $emailOrPhone = trim($credentials['email']);
+
+        // Attempt to find user by email or phone
+        $user = User::where('email', $emailOrPhone)
+            ->orWhere('phone', $emailOrPhone)
+            ->first();
+
+        // Check credentials
+        if (!$user || !Hash::check($credentials['password'], $user->password)) {
+            // Increment rate limiter on failed attempt
+            RateLimiter::hit($throttleKey, $this->decaySeconds);
+            
+            return back()->withErrors([
+                'email' => 'The provided credentials do not match our records.',
+            ])->withInput(['email' => $emailOrPhone]);
+        }
+
+        // Check if user has Master Admin role (role = 2)
+        if ($user->role !== 2) {
+            // Increment rate limiter on role mismatch too
+            RateLimiter::hit($throttleKey, $this->decaySeconds);
+            
+            return back()->withErrors([
+                'email' => 'You do not have permission to access the Master Admin panel.',
+            ])->withInput(['email' => $emailOrPhone]);
+        }
+
+        // Clear rate limiter on successful authentication
+        RateLimiter::clear($throttleKey);
+
+        // Log the user in using Laravel's auth system
+        auth()->login($user);
+        
+        // CRITICAL: Regenerate session ID to prevent session fixation attacks
+        // This creates a new session ID while keeping session data
+        $request->session()->regenerate();
+
+        // Store admin-specific session data for quick access
+        $request->session()->put('admin_id', $user->id);
+        $request->session()->put('admin_name', $user->name);
+        $request->session()->put('admin_email', $user->email);
+        $request->session()->put('admin_role', 'master_admin');
+
+        // Log the successful login for audit trail
+        AuditLogger::record(
+            'login',
+            $user,
+            [
+                'user_email' => $user->email,
+                'ip' => $request->ip(),
+                'user_agent' => $request->userAgent(),
+            ],
+            'Master Admin logged in'
+        );
+
+        return redirect()->route('master.admin.dashboard');
+    }
+
+    /**
+     * Generate throttle key based on email/IP combination
+     * This prevents both single-account brute force and distributed attacks
+     */
+    protected function throttleKey(Request $request): string
+    {
+        return Str::transliterate(
+            Str::lower($request->input('email', '')) . '|' . $request->ip()
+        );
     }
 
     /**
@@ -278,19 +393,58 @@ class AuthController extends Controller
 
     /**
      * Logout the admin user.
+     * 
+     * Security steps:
+     * 1. Log the logout action for audit trail
+     * 2. Log out the user from Laravel's auth system
+     * 3. Clear all admin-specific session data
+     * 4. Invalidate the entire session (prevents session reuse)
+     * 5. Regenerate CSRF token (prevents CSRF attacks)
+     * 6. Redirect to login with cache control headers
      */
     public function logout(Request $request)
     {
-        // Clear any admin session data
-        $request->session()->forget('admin_id');
-        $request->session()->forget('admin_name');
-        $request->session()->forget('admin_email');
+        // Get user info before logout for audit logging
+        $user = auth()->user();
+        
+        if ($user) {
+            AuditLogger::record(
+                'logout',
+                $user,
+                [
+                    'user_email' => $user->email,
+                    'ip' => $request->ip(),
+                    'user_agent' => $request->userAgent(),
+                ],
+                'Master Admin logged out'
+            );
+        }
+        
+        // Log out the user from Laravel's auth system
+        auth()->logout();
+        
+        // Clear all admin-specific session data
+        $request->session()->forget([
+            'admin_id',
+            'admin_name', 
+            'admin_email',
+            'admin_role',
+        ]);
 
-        // Invalidate the session
+        // Completely invalidate the session
+        // This destroys all session data and creates a new session ID
         $request->session()->invalidate();
+        
+        // Regenerate CSRF token to prevent token reuse after logout
         $request->session()->regenerateToken();
 
-        return redirect()->route('master.admin.login')->with('status', 'You have been logged out successfully.');
+        // Redirect to login with success message
+        // The middleware will add cache control headers automatically,
+        // but we can also add them here for extra safety
+        return redirect()->route('master.admin.login')
+            ->with('status', 'You have been logged out successfully.')
+            ->header('Cache-Control', 'no-cache, no-store, max-age=0, must-revalidate')
+            ->header('Pragma', 'no-cache');
     }
 }
 

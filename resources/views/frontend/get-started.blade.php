@@ -19,7 +19,7 @@
                     </div>
                     <h3 class="h4">Parent</h3>
                     <p>Create student profiles, manage carts and track orders for every child.</p>
-                    <a href="{{ route('frontend.parent.login') }}" class="vs-btn w-100 mt-3">Sign in as Parent</a>
+                    <a href="{{ route('login') }}" class="vs-btn w-100 mt-3">Sign in as Parent</a>
                 </div>
             </div>
             <div class="col-md-4">
@@ -43,6 +43,28 @@
 @endsection
 
 <style>
+/* Fix footer social icons alignment on get-started page */
+.footer-social {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important; 
+    gap: 10px !important;
+}
+
+.footer-social a {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    width: 40px !important;
+    height: 40px !important;
+}
+
+.footer-social a i {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+}
+
 @media (max-width: 768px) {
     /* Resize Menu Toggle Button */
     .vs-menu-toggle {

@@ -5,9 +5,9 @@
         ['route' => 'frontend.parent.dashboard', 'icon' => 'fas fa-th-large', 'label' => 'Dashboard'],
         ['route' => 'frontend.parent.cart', 'icon' => 'fas fa-shopping-cart', 'label' => 'Cart'],
         ['route' => 'frontend.parent.orders', 'icon' => 'fas fa-shopping-bag', 'label' => 'My Orders'],
-        ['route' => 'frontend.parent.addresses', 'icon' => 'fas fa-map-marker-alt', 'label' => 'My Address'],
+        ['route' => 'frontend.parent.profile', 'icon' => 'fas fa-user', 'label' => 'Profile'],
     ];
-    $cartCount = count(session('cart', []));
+    $cartCount = Auth::check() ? \App\Models\Cart::where('user_id', Auth::id())->count() : 0;
 @endphp
 
 <div class="dashboard-sidebar">

@@ -35,27 +35,27 @@
                             </button>
                         </div>
                         
-                        @if(isset($savedAddresses) && count($savedAddresses) > 0)
+                        @if(isset($savedAddresses) && $savedAddresses->count() > 0)
                             <div class="row g-3">
-                                @foreach($savedAddresses as $index => $address)
+                                @foreach($savedAddresses as $address)
                                     <div class="col-md-6">
                                         <div class="card border position-relative" style="border-radius: 8px;">
                                             <div class="card-body">
                                                 <div class="d-flex justify-content-between align-items-start mb-2">
                                                     <div class="flex-grow-1">
-                                                        <h6 class="mb-1"><strong>{{ $address['name'] }}</strong></h6>
-                                                        <p class="text-muted small mb-1">{{ $address['phone'] }}</p>
-                                                        <p class="text-muted small mb-2">{{ $address['email'] }}</p>
+                                                        <h6 class="mb-1"><strong>{{ $address->name }}</strong></h6>
+                                                        <p class="text-muted small mb-1">{{ $address->phone }}</p>
+                                                        <p class="text-muted small mb-2">{{ $address->email }}</p>
                                                     </div>
                                                     <div class="d-flex gap-2">
                                                         <button type="button" 
                                                                 class="btn btn-sm" 
                                                                 style="background-color: #28a745; color: #ffffff; border: none; padding: 6px 10px; border-radius: 6px;"
                                                                 title="Edit Address"
-                                                                onclick="editAddress({{ $index }})">
+                                                                onclick="editAddress({{ $address->id }})">
                                                             <i class="fas fa-edit"></i>
                                                         </button>
-                                                        <form action="{{ route('frontend.parent.delete-address', ['addressId' => $index]) }}" 
+                                                        <form action="{{ route('frontend.parent.delete-address', ['addressId' => $address->id]) }}" 
                                                               method="POST" 
                                                               class="d-inline"
                                                               onsubmit="return confirm('Are you sure you want to delete this address?');">
@@ -69,10 +69,10 @@
                                                         </form>
                                                     </div>
                                                 </div>
-                                                <p class="mb-2 small">{{ $address['address'] }}</p>
-                                                <p class="mb-0 small text-muted">{{ $address['city'] }}, {{ $address['state'] }} - {{ $address['pincode'] }}</p>
-                                                @if(!empty($address['landmark']))
-                                                    <p class="mb-0 small text-muted">Landmark: {{ $address['landmark'] }}</p>
+                                                <p class="mb-2 small">{{ $address->address }}</p>
+                                                <p class="mb-0 small text-muted">{{ $address->city }}, {{ $address->state }} - {{ $address->pincode }}</p>
+                                                @if(!empty($address->landmark))
+                                                    <p class="mb-0 small text-muted">Landmark: {{ $address->landmark }}</p>
                                                 @endif
                                             </div>
                                         </div>
@@ -100,14 +100,14 @@
 
 <script>
 // Store addresses data for editing
-const addressesData = @json($savedAddresses ?? []);
+const addressesData = @json($savedAddresses);
 
-function editAddress(index) {
-    const address = addressesData[index];
+function editAddress(addressId) {
+    const address = addressesData.find(addr => addr.id === addressId);
     if (!address) return;
     
     // Set edit mode
-    document.getElementById('editingAddressIndex').value = index;
+    document.getElementById('editingAddressIndex').value = addressId;
     
     // Update modal title and button
     document.getElementById('addAddressModalLabel').textContent = 'Edit Address';

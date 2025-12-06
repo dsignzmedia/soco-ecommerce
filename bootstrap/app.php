@@ -11,7 +11,18 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware): void {
-        //
+        $middleware->alias([
+            'prevent-back-history' => \App\Http\Middleware\PreventBackHistory::class,
+            'school' => \App\Http\Middleware\CheckSchool::class,
+            'master.admin' => \App\Http\Middleware\CheckMasterAdmin::class,
+            'inventory.admin' => \App\Http\Middleware\CheckInventoryAdmin::class,
+            'master.admin.guest' => \App\Http\Middleware\RedirectIfMasterAdmin::class,
+            'inventory.admin.guest' => \App\Http\Middleware\RedirectIfInventoryAdmin::class,
+        ]);
+        $middleware->redirectTo(
+            guests: '/parent/login',
+            users: '/parent/dashboard'
+        );
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         //

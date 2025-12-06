@@ -34,5 +34,16 @@ return [
             'channel' => env('SLACK_BOT_USER_DEFAULT_CHANNEL'),
         ],
     ],
+    // Google OAuth
+    'google' => [
+        'client_id' => env('GOOGLE_CLIENT_ID'),
+        'client_secret' => env('GOOGLE_CLIENT_SECRET'),
+        'redirect' => env('APP_URL') . '/auth/google/callback',
+        // Disable SSL verification for local development (XAMPP SSL certificate issue)
+        // TODO: Remove this in production and configure proper SSL certificates
+        'guzzle' => [
+            'verify' => false,
+        ],
+    ],
 
 ];

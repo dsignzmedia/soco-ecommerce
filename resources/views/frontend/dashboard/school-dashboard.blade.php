@@ -1,176 +1,264 @@
-@extends('frontend.layouts.app')
+@extends('frontend.layouts.school')
+
+@section('title', 'Dashboard Overview | School Portal')
 
 @section('content')
-@include('frontend.partials.header')
-
-<section class="space-top space-extra-bottom" style="background-color: #f8f5ff;">
-    <div class="container">
-        <div class="row mb-4">
-            <div class="col-12">
-                <h2 class="h3 mb-2">School Dashboard</h2>
-                <p class="text-muted mb-0">Welcome, {{ session('school_username', 'School Admin') }}</p>
-                @if(isset($schoolName) && $schoolName)
-                    <h4 class="mt-2 mb-1" style="color: #490D59;">{{ $schoolName }}</h4>
-                    @if(isset($schoolAddress) && $schoolAddress)
-                        <p class="text-muted mb-0" style="font-size: 1rem; font-weight: 500;">{{ $schoolAddress }}</p>
+<div class="container-fluid p-0">
+    <!-- Welcome Section -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="welcome-card p-4 rounded-4 text-white position-relative overflow-hidden" style="background: linear-gradient(135deg, #490D59 0%, #6b2180 100%); box-shadow: 0 10px 30px rgba(73, 13, 89, 0.2);">
+                <div class="position-relative z-1">
+                    <h2 class="h3 fw-bold mb-2">Welcome Back, {{ session('school_username', 'Administrator') }}!</h2>
+                    <p class="mb-0 opacity-75">Here's what's happening in your school store today.</p>
+                    
+                    @if(isset($schoolName) && $schoolName)
+                        <div class="mt-4 pt-3 border-top border-white border-opacity-25 d-inline-block">
+                            <div class="d-flex align-items-center">
+                                <div class="bg-white p-2 rounded-3 me-3">
+                                    <i class="fas fa-school" style="color: #490D59; font-size: 20px;"></i>
+                                </div>
+                                <div>
+                                    <h5 class="m-0 fw-bold">{{ $schoolName }}</h5>
+                                    @if(isset($schoolAddress) && $schoolAddress)
+                                        <small class="opacity-75">{{ $schoolAddress }}</small>
+                                    @endif
+                                </div>
+                            </div>
+                        </div>
                     @endif
-                @endif
+                </div>
+                <!-- Decorative Circle -->
+                <div class="position-absolute bottom-0 end-0 translate-middle-y me-5 mb-n5 rounded-circle bg-white opacity-10" style="width: 300px; height: 300px;"></div>
+                <div class="position-absolute top-0 end-0 mt-n4 me-n4 rounded-circle bg-white opacity-10" style="width: 150px; height: 150px;"></div>
             </div>
         </div>
+    </div>
 
-        @if(session('success'))
-            <div class="alert alert-success alert-dismissible fade show" role="alert">
-                <i class="fas fa-check-circle me-2"></i>{{ session('success') }}
-                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-            </div>
-        @endif
-
-        <!-- Dashboard Stats Cards -->
-        <div class="row g-4 mb-4">
-            <div class="col-md-6 col-lg-3">
-                <div class="card shadow-sm rounded-4 border-0 h-100" style="background-color: #ffffff; border-left: 4px solid #490D59 !important;">
-                    <div class="card-body">
-                        <div class="d-flex justify-content-between align-items-center">
-                            <div>
-                                <h6 class="text-muted mb-2">Total Orders</h6>
-                                <h3 class="mb-0" style="color: #490D59;">{{ number_format($dashboardData['total_orders'] ?? 0) }}</h3>
-                            </div>
-                            <div class="fs-1" style="color: #490D59; opacity: 0.3;">
-                                <i class="fas fa-shopping-bag"></i>
-                            </div>
-                        </div>
+    <!-- Stats Grid -->
+    <div class="row g-4 mb-4">
+        <!-- Total Revenue -->
+        <div class="col-md-6 col-lg-3">
+            <div class="stat-card p-4 rounded-4 bg-white h-100 border-0 shadow-sm transition-hover">
+                <div class="d-flex justify-content-between align-items-start mb-3">
+                    <div class="icon-box bg-success bg-opacity-10 text-success rounded-3 p-3">
+                        <i class="fas fa-rupee-sign fa-lg"></i>
+                    </div>
+                    <div class="dropdown">
+                         <button class="btn btn-link text-muted p-0" data-bs-toggle="dropdown"><i class="fas fa-ellipsis-v"></i></button>
                     </div>
                 </div>
-            </div>
-            <div class="col-md-6 col-lg-3">
-                <div class="card shadow-sm rounded-4 border-0 h-100" style="background-color: #ffffff; border-left: 4px solid #28a745 !important;">
-                    <div class="card-body">
-                        <div class="d-flex justify-content-between align-items-center">
-                            <div>
-                                <h6 class="text-muted mb-2">Total Revenue</h6>
-                                <h3 class="mb-0" style="color: #28a745;">₹{{ number_format($dashboardData['total_revenue'] ?? 0) }}</h3>
-                            </div>
-                            <div class="fs-1" style="color: #28a745; opacity: 0.3;">
-                                <i class="fas fa-rupee-sign"></i>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            <div class="col-md-6 col-lg-3">
-                <div class="card shadow-sm rounded-4 border-0 h-100" style="background-color: #ffffff; border-left: 4px solid #ffc107 !important;">
-                    <div class="card-body">
-                        <div class="d-flex justify-content-between align-items-center">
-                            <div>
-                                <h6 class="text-muted mb-2">Pending Orders</h6>
-                                <h3 class="mb-0" style="color: #ffc107;">{{ number_format($dashboardData['pending_orders'] ?? 0) }}</h3>
-                            </div>
-                            <div class="fs-1" style="color: #ffc107; opacity: 0.3;">
-                                <i class="fas fa-clock"></i>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            <div class="col-md-6 col-lg-3">
-                <div class="card shadow-sm rounded-4 border-0 h-100" style="background-color: #ffffff; border-left: 4px solid #17a2b8 !important;">
-                    <div class="card-body">
-                        <div class="d-flex justify-content-between align-items-center">
-                            <div>
-                                <h6 class="text-muted mb-2">Completed</h6>
-                                <h3 class="mb-0" style="color: #17a2b8;">{{ number_format($dashboardData['completed_orders'] ?? 0) }}</h3>
-                            </div>
-                            <div class="fs-1" style="color: #17a2b8; opacity: 0.3;">
-                                <i class="fas fa-check-circle"></i>
-                            </div>
-                        </div>
-                    </div>
+                <h6 class="text-muted text-uppercase fw-semibold font-sm mb-1">Total Revenue</h6>
+                <h3 class="fw-bold mb-0 text-dark">₹{{ number_format($dashboardData['total_revenue'] ?? 0) }}</h3>
+                <div class="mt-3 d-flex align-items-center font-sm">
+                    <span class="text-success fw-bold"><i class="fas fa-arrow-up me-1"></i>3.2%</span>
+                    <span class="text-muted ms-2">vs last month</span>
                 </div>
             </div>
         </div>
 
-        <div class="row g-4">
-            <!-- Quick Actions Menu -->
-            <div class="col-lg-3">
-                <div class="card shadow-sm rounded-4 border-0" style="background-color: #ffffff;">
-                    <div class="card-body">
-                        <h5 class="card-title mb-4">Quick Actions</h5>
-                        <ul class="list-unstyled">
-                            <li class="mb-3">
-                                <a href="{{ route('frontend.school.reports') }}" class="text-decoration-none d-flex align-items-center p-2 rounded" style="background-color: #f8f5ff; transition: all 0.3s;">
-                                    <i class="fas fa-chart-line me-3" style="color: #490D59; width: 20px;"></i> 
-                                    <span style="font-weight: 600;">Reports & Analytics</span>
-                                </a>
-                            </li>
-                            <li class="mb-3">
-                                <a href="#" class="text-decoration-none d-flex align-items-center p-2 rounded" style="transition: all 0.3s;">
-                                    <i class="fas fa-shopping-cart me-3" style="color: #666; width: 20px;"></i> 
-                                    <span>Orders Management</span>
-                                </a>
-                            </li>
-                            <li class="mb-3">
-                                <a href="#" class="text-decoration-none d-flex align-items-center p-2 rounded" style="transition: all 0.3s;">
-                                    <i class="fas fa-users me-3" style="color: #666; width: 20px;"></i> 
-                                    <span>Student Management</span>
-                                </a>
-                            </li>
-                            <li class="mb-3">
-                                <a href="#" class="text-decoration-none d-flex align-items-center p-2 rounded" style="transition: all 0.3s;">
-                                    <i class="fas fa-box me-3" style="color: #666; width: 20px;"></i> 
-                                    <span>Product Catalog</span>
-                                </a>
-                            </li>
-                            <li class="mb-3">
-                                <a href="#" class="text-decoration-none d-flex align-items-center p-2 rounded" style="transition: all 0.3s;">
-                                    <i class="fas fa-cog me-3" style="color: #666; width: 20px;"></i> 
-                                    <span>Settings</span>
-                                </a>
-                            </li>
-                        </ul>
+        <!-- Total Orders -->
+        <div class="col-md-6 col-lg-3">
+            <div class="stat-card p-4 rounded-4 bg-white h-100 border-0 shadow-sm transition-hover">
+                <div class="d-flex justify-content-between align-items-start mb-3">
+                    <div class="icon-box bg-primary bg-opacity-10 text-primary rounded-3 p-3" style="color: #490D59 !important; background-color: rgba(73, 13, 89, 0.1) !important;">
+                        <i class="fas fa-shopping-bag fa-lg"></i>
                     </div>
                 </div>
+                <h6 class="text-muted text-uppercase fw-semibold font-sm mb-1">Total Orders</h6>
+                <h3 class="fw-bold mb-0 text-dark">{{ number_format($dashboardData['total_orders'] ?? 0) }}</h3>
+                <div class="mt-3 d-flex align-items-center font-sm">
+                    <span class="text-success fw-bold"><i class="fas fa-arrow-up me-1"></i>12%</span>
+                    <span class="text-muted ms-2">new orders</span>
+                </div>
             </div>
+        </div>
 
-            <!-- Main Content Area -->
-            <div class="col-lg-9">
-                <div class="card shadow-sm rounded-4 border-0" style="background-color: #ffffff;">
-                    <div class="card-body">
-                        <h5 class="card-title mb-4">Welcome to School Portal</h5>
-                        <p class="text-muted mb-4">Manage your school's uniform orders, view analytics, and generate comprehensive reports.</p>
-                        
-                        <div class="row g-3">
-                            <div class="col-md-6">
-                                <div class="p-4 rounded-4" style="background-color: #f8f5ff; border: 1px solid #e0d5f0;">
-                                    <h6 class="mb-3"><i class="fas fa-chart-bar me-2" style="color: #490D59;"></i>View Reports</h6>
-                                    <p class="text-muted small mb-3">Generate detailed reports with filters and visual analytics.</p>
-                                    <a href="{{ route('frontend.school.reports') }}" class="vs-btn btn-sm">Go to Reports & Analytics</a>
-                                </div>
-                            </div>
-                            <div class="col-md-6">
-                                <div class="p-4 rounded-4" style="background-color: #f8f5ff; border: 1px solid #e0d5f0;">
-                                    <h6 class="mb-3"><i class="fas fa-shopping-bag me-2" style="color: #490D59;"></i>Manage Orders</h6>
-                                    <p class="text-muted small mb-3">View and manage all uniform orders from parents.</p>
-                                    <a href="#" class="vs-btn btn-sm">View Orders</a>
-                                </div>
-                            </div>
-                        </div>
+        <!-- Pending Orders -->
+        <div class="col-md-6 col-lg-3">
+            <div class="stat-card p-4 rounded-4 bg-white h-100 border-0 shadow-sm transition-hover">
+                <div class="d-flex justify-content-between align-items-start mb-3">
+                    <div class="icon-box bg-warning bg-opacity-10 text-warning rounded-3 p-3">
+                        <i class="fas fa-clock fa-lg"></i>
                     </div>
+                </div>
+                <h6 class="text-muted text-uppercase fw-semibold font-sm mb-1">Pending</h6>
+                <h3 class="fw-bold mb-0 text-dark">{{ number_format($dashboardData['pending_orders'] ?? 0) }}</h3>
+                <div class="mt-3 d-flex align-items-center font-sm">
+                    <span class="text-warning fw-bold">Action Needed</span>
+                    <span class="text-muted ms-2">dispatch pending</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Completed Orders -->
+        <div class="col-md-6 col-lg-3">
+            <div class="stat-card p-4 rounded-4 bg-white h-100 border-0 shadow-sm transition-hover">
+                <div class="d-flex justify-content-between align-items-start mb-3">
+                    <div class="icon-box bg-info bg-opacity-10 text-info rounded-3 p-3">
+                        <i class="fas fa-check-circle fa-lg"></i>
+                    </div>
+                </div>
+                <h6 class="text-muted text-uppercase fw-semibold font-sm mb-1">Delivered</h6>
+                <h3 class="fw-bold mb-0 text-dark">{{ number_format($dashboardData['completed_orders'] ?? 0) }}</h3>
+                <div class="mt-3 d-flex align-items-center font-sm">
+                    <span class="text-success fw-bold">100%</span>
+                    <span class="text-muted ms-2">completion rate</span>
                 </div>
             </div>
         </div>
     </div>
-</section>
+
+    <!-- Quick Access & Overview -->
+    <div class="row g-4">
+        <div class="col-lg-8">
+            <div class="card border-0 shadow-sm rounded-4 h-100">
+                <div class="card-header bg-white border-0 py-3 px-4 rounded-top-4 d-flex justify-content-between align-items-center">
+                    <h5 class="m-0 fw-bold">Quick Actions</h5>
+                </div>
+                <div class="card-body p-4">
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <a href="{{ route('frontend.school.orders') }}" class="action-card d-block p-3 rounded-4 border text-decoration-none transition-hover h-100 group">
+                                <div class="d-flex align-items-center">
+                                    <div class="icon-wrapper p-3 rounded-circle me-3" style="background: #f8f5ff;">
+                                        <i class="fas fa-box-open" style="color: #490D59; font-size: 20px;"></i>
+                                    </div>
+                                    <div>
+                                        <h6 class="fw-bold text-dark mb-1 group-hover:text-primary">Manage Orders</h6>
+                                        <p class="text-muted small mb-0">View & process orders</p>
+                                    </div>
+                                    <i class="fas fa-chevron-right ms-auto text-muted opacity-50"></i>
+                                </div>
+                            </a>
+                        </div>
+                        <div class="col-md-6">
+                             <a href="{{ route('frontend.school.reports') }}" class="action-card d-block p-3 rounded-4 border text-decoration-none transition-hover h-100">
+                                <div class="d-flex align-items-center">
+                                    <div class="icon-wrapper p-3 rounded-circle me-3" style="background: #ecfdf5;">
+                                        <i class="fas fa-chart-pie text-success" style="font-size: 20px;"></i>
+                                    </div>
+                                    <div>
+                                        <h6 class="fw-bold text-dark mb-1">Analytics Report</h6>
+                                        <p class="text-muted small mb-0">Sales & performance</p>
+                                    </div>
+                                    <i class="fas fa-chevron-right ms-auto text-muted opacity-50"></i>
+                                </div>
+                            </a>
+                        </div>
+                        <div class="col-md-6">
+                             <a href="{{ route('frontend.school.students') }}" class="action-card d-block p-3 rounded-4 border text-decoration-none transition-hover h-100">
+                                <div class="d-flex align-items-center">
+                                    <div class="icon-wrapper p-3 rounded-circle me-3" style="background: #eff6ff;">
+                                        <i class="fas fa-user-graduate text-primary" style="font-size: 20px;"></i>
+                                    </div>
+                                    <div>
+                                        <h6 class="fw-bold text-dark mb-1">Students Directory</h6>
+                                        <p class="text-muted small mb-0">Manage student data</p>
+                                    </div>
+                                    <i class="fas fa-chevron-right ms-auto text-muted opacity-50"></i>
+                                </div>
+                            </a>
+                        </div>
+                         <div class="col-md-6">
+                             <a href="{{ route('frontend.school.products') }}" class="action-card d-block p-3 rounded-4 border text-decoration-none transition-hover h-100">
+                                <div class="d-flex align-items-center">
+                                    <div class="icon-wrapper p-3 rounded-circle me-3" style="background: #fff7ed;">
+                                        <i class="fas fa-tshirt text-warning" style="font-size: 20px;"></i>
+                                    </div>
+                                    <div>
+                                        <h6 class="fw-bold text-dark mb-1">Product Catalog</h6>
+                                        <p class="text-muted small mb-0">Inventory & Prices</p>
+                                    </div>
+                                    <i class="fas fa-chevron-right ms-auto text-muted opacity-50"></i>
+                                </div>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-lg-4">
+            <div class="card border-0 shadow-sm rounded-4 h-100 bg-primary text-white position-relative overflow-hidden" style="background: #490D59 !important;">
+                 <div class="position-absolute top-0 end-0 p-3 opacity-25">
+                     <i class="fas fa-quote-right fa-4x"></i>
+                 </div>
+                 <div class="card-body p-4 d-flex flex-column justify-content-center position-relative z-1">
+                     <h5 class="fw-bold mb-3">Administrator Tips</h5>
+                     <p class="mb-4 opacity-90">Keep your inventory updated before the start of the new academic year to ensure smooth ordering for parents.</p>
+                     <button class="btn btn-light text-primary fw-bold border-0 py-2 px-4 rounded-pill align-self-start" style="color: #490D59 !important;">
+                         View Guidelines
+                     </button>
+                 </div>
+            </div>
+        </div>
+    </div>
+</div>
 
 <style>
-    .card:hover {
-        transform: translateY(-2px);
-        transition: all 0.3s ease;
+    .transition-hover {
+        transition: transform 0.2s ease, box-shadow 0.2s ease;
     }
-    
-    .list-unstyled a:hover {
-        background-color: #f0f0f0 !important;
-        transform: translateX(5px);
+    .transition-hover:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 10px 25px rgba(0,0,0,0.08) !important;
+    }
+    .font-sm {
+        font-size: 0.875rem;
+    }
+    .icon-box {
+        width: 48px;
+        height: 48px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
     }
 </style>
-@endsection
 
+@push('scripts')
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // ========================================
+        // Back Button Logout Confirmation Logic
+        // ========================================
+        const logoutModal = document.getElementById('logoutModal');
+        const cancelLogoutBtn = document.getElementById('cancelLogout');
+        const confirmLogoutBtn = document.getElementById('confirmLogout');
+        
+        if (logoutModal) {
+            history.pushState(null, null, location.href);
+            window.addEventListener('popstate', function(event) {
+                logoutModal.style.display = 'flex';
+                history.pushState(null, null, location.href);
+            });
+            if (cancelLogoutBtn) {
+                cancelLogoutBtn.addEventListener('click', function() {
+                    logoutModal.style.display = 'none';
+                });
+            }
+            if (confirmLogoutBtn) {
+                confirmLogoutBtn.addEventListener('click', function() {
+                    const logoutForm = document.querySelector('form[action*="logout"]');
+                    if (logoutForm) {
+                        logoutForm.submit();
+                    } else {
+                        window.location.href = '{{ route("frontend.school.login") }}';
+                    }
+                });
+            }
+            logoutModal.addEventListener('click', function(e) {
+                if (e.target === logoutModal) {
+                    logoutModal.style.display = 'none';
+                }
+            });
+            document.addEventListener('keydown', function(e) {
+                if (e.key === 'Escape' && logoutModal.style.display === 'flex') {
+                    logoutModal.style.display = 'none';
+                }
+            });
+        }
+    });
+</script>
+@endpush
+@endsection

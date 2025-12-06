@@ -564,8 +564,8 @@ input[type=checkbox] {
 input[type=checkbox]:checked~label:before {
   content: "\f00c";
   color: var(--white-color);
-  background-color: var(--theme-color);
-  border-color: var(--theme-color);
+  background-color: #ffffff;
+  border-color: #ffffff;
 }
 
 input[type=checkbox]~label {
@@ -4157,7 +4157,7 @@ a.text-theme:hover,
 
   .header-layout3 .menu-area,
   .header-layout6 .menu-area {
-    border-radius: 0;
+    border-radius: 9999px;
     width: 100%;
     margin: 0;
   }
@@ -17639,5 +17639,14 @@ span.select2-selection.select2-selection--single:focus {
 
   .hero__panel {
     padding: 12px 14px
+  }
+}
+
+/* Header Bottom Height Adjustment for Mobile/Tablet */
+@media (max-width: 991px) {
+
+  .header-layout6 .header-bottom::after,
+  .header-layout7 .header-bottom::after {
+    height: 30px;
   }
 }
