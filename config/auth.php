@@ -40,18 +40,6 @@ return [
             'driver' => 'session',
             'provider' => 'users',
         ],
-        'master_admin' => [
-            'driver' => 'session',
-            'provider' => 'users',
-        ],
-        'inventory_admin' => [
-            'driver' => 'session',
-            'provider' => 'users',
-        ],
-        'school' => [
-            'driver' => 'session',
-            'provider' => 'users',
-        ],
     ],
 
     /*
