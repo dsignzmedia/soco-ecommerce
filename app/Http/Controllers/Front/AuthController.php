@@ -157,14 +157,10 @@ class AuthController extends Controller
 
 
 
-    public function parentLogin()
+    // Unified login page for both parents and schools
+    public function showLogin()
     {
-        return view('frontend.auth.parent-login');
-    }
-
-    public function schoolLogin()
-    {
-        return view('frontend.auth.school-login');
+        return view('frontend.auth.login');
     }
 
     /**
@@ -694,10 +690,9 @@ class AuthController extends Controller
     public function schoolReports()
     {
         // Check if school is authenticated
-        // Check if user is authenticated and has school role
-        if (!auth('school')->check() || !auth('school')->user()->isSchool()) {
-            return redirect()->route('login')
-                ->with('error', 'Please login to access this page.');
+        if (!session('school_authenticated')) {
+            return redirect()->route('frontend.school.login')
+                ->with('error', 'Please login to access reports.');
         }
 
         return view('frontend.dashboard.school-reports');
@@ -706,10 +701,9 @@ class AuthController extends Controller
     public function generateReport(Request $request)
     {
         // Check if school is authenticated
-        // Check if user is authenticated and has school role
-        if (!auth('school')->check() || !auth('school')->user()->isSchool()) {
-            return redirect()->route('login')
-                ->with('error', 'Please login to access this page.');
+        if (!session('school_authenticated')) {
+            return redirect()->route('frontend.school.login')
+                ->with('error', 'Please login to generate reports.');
         }
 
         // Validate filters
@@ -752,10 +746,9 @@ class AuthController extends Controller
     public function downloadReport(Request $request)
     {
         // Check if school is authenticated
-        // Check if user is authenticated and has school role
-        if (!auth('school')->check() || !auth('school')->user()->isSchool()) {
-            return redirect()->route('login')
-                ->with('error', 'Please login to access this page.');
+        if (!session('school_authenticated')) {
+            return redirect()->route('frontend.school.login')
+                ->with('error', 'Please login to download reports.');
         }
 
         $format = $request->get('format', 'excel'); // excel or pdf
@@ -773,10 +766,9 @@ class AuthController extends Controller
     public function emailReport(Request $request)
     {
         // Check if school is authenticated
-        // Check if user is authenticated and has school role
-        if (!auth('school')->check() || !auth('school')->user()->isSchool()) {
-            return redirect()->route('login')
-                ->with('error', 'Please login to access this page.');
+        if (!session('school_authenticated')) {
+            return redirect()->route('frontend.school.login')
+                ->with('error', 'Please login to email reports.');
         }
 
         $request->validate([
