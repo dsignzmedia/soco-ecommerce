@@ -36,6 +36,14 @@
         a {
             color: inherit;
             text-decoration: none;
+            cursor: pointer;
+        }
+
+        button,
+        input[type="submit"],
+        input[type="reset"],
+        input[type="button"] {
+            cursor: pointer;
         }
 
         .layout {
@@ -269,6 +277,33 @@
             color: #98a2b3;
             cursor: not-allowed;
         }
+
+        /* Custom Global Button Style - Outline Purple Pill */
+        .btn-vs-sm {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            padding: 6px 14px;
+            font-size: 12px;
+            font-weight: 600;
+            color: #490d59 !important; /* Purple Text */
+            background-color: transparent; /* Transparent BG */
+            border: 1.5px solid #490d59; /* Purple Border */
+            border-radius: 9999px;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            line-height: normal;
+            white-space: nowrap;
+            margin-bottom: 8px;
+        }
+        .btn-vs-sm:hover {
+            background-color: #490d59;
+            color: #ffffff !important;
+            transform: translateY(-1px);
+            box-shadow: 0 4px 6px rgba(73, 13, 89, 0.2);
+        }
+        .btn-vs-sm i { font-size: 12px; }
     </style>
     @stack('styles')
 </head>

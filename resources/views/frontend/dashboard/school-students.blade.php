@@ -80,6 +80,7 @@
                         <thead class="bg-light">
                             <tr>
                                 <th class="ps-4 py-3 text-uppercase text-xs font-weight-bolder opacity-7" style="font-size: 0.75rem; color: #6b7280; letter-spacing: 0.05em;">Student Name</th>
+                                <th class="py-3 text-uppercase text-xs font-weight-bolder opacity-7" style="font-size: 0.75rem; color: #6b7280; letter-spacing: 0.05em;">Parent Name</th>
                                 <th class="py-3 text-uppercase text-xs font-weight-bolder opacity-7" style="font-size: 0.75rem; color: #6b7280; letter-spacing: 0.05em;">Gender</th>
                                 <th class="py-3 text-uppercase text-xs font-weight-bolder opacity-7" style="font-size: 0.75rem; color: #6b7280; letter-spacing: 0.05em;">Grade</th>
                                 <th class="py-3 text-uppercase text-xs font-weight-bolder opacity-7" style="font-size: 0.75rem; color: #6b7280; letter-spacing: 0.05em;">Section</th>
@@ -96,6 +97,11 @@
                                             <div>
                                                 <h6 class="mb-0 text-dark fw-bold" style="font-size: 0.9rem;">{{ $student->student_name }}</h6>
                                             </div>
+                                        </div>
+                                    </td>
+                                    <td class="py-3">
+                                        <div class="d-flex flex-column">
+                                            <span class="text-dark fw-medium" style="font-size: 0.9rem;">{{ $student->user->name ?? 'N/A' }}</span>
                                         </div>
                                     </td>
                                     <td class="py-3">

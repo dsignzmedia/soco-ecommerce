@@ -54,7 +54,7 @@
                             <td style="padding:10px;">{{ $req->reason }}</td>
                             <td style="padding:10px;">{{ $req->admin_notes }}</td>
                             <td style="padding:10px;display:flex;gap:8px;flex-wrap:wrap;">
-                                <a href="{{ route('master.admin.returns-exchange.show', $req) }}" style="border:1px solid #e5e7eb;border-radius:8px;padding:6px 10px;text-decoration:none;color:#111827;background:#fff;">View</a>
+                                <a href="{{ route('master.admin.returns-exchange.show', $req) }}" class="btn-vs-sm">View</a>
 
                                 @if($req->status === 'pending')
                                     <form method="POST" action="{{ route('master.admin.returns-exchange.approve', $req) }}">

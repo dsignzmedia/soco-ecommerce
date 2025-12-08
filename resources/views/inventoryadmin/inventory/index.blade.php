@@ -11,9 +11,9 @@
         th { text-transform: uppercase; letter-spacing: 0.05em; color:#111827; font-size: 12px; }
         td small { color:#98a2b3; display:block; }
         .filters { display:grid; grid-template-columns:repeat(auto-fit,minmax(160px,1fr)); gap:12px; margin-bottom: 20px; }
-        .filters button, .filters a.reset { border-radius:8px; font-weight:600; text-align:center; padding:10px 16px; font-size: 13px; }
-        .filters button { border:none; background:#4f46e5; color:#fff; cursor: pointer; }
-        .filters a.reset { border:1px solid #d0d5dd; color:#475467; display: inline-block; text-decoration: none; }
+        .filters button, .filters a.reset { border-radius:9999px; font-weight:600; text-align:center; padding:6px 14px; font-size: 12px; }
+        .filters button { border:none; background:#490d59; color:#fff; cursor: pointer; }
+        .filters a.reset { border:1.5px solid #d0d5dd; color:#475467; display: inline-block; text-decoration: none; }
         .status-pill { padding:4px 10px; border-radius:999px; font-size:12px; font-weight:600; text-transform:capitalize; display: inline-block; }
         .status-active { background:#f0fdf4; color:#15803d; }
         .status-inactive { background:#fef2f2; color:#b91c1c; }
@@ -88,7 +88,7 @@
                             <small>{{ optional($product->updated_at)->format('h:i A') }}</small>
                         </td>
                         <td>
-                            <a href="{{ route('inventory.admin.inventory.adjust', $product) }}" style="color:#4f46e5;font-weight:600;font-size:13px;text-decoration:none;">Adjust Stock</a>
+                            <a href="{{ route('inventory.admin.inventory.adjust', $product) }}" class="btn-vs-sm">Adjust Stock</a>
                         </td>
                     </tr>
                 @empty

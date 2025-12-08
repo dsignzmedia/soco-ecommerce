@@ -98,10 +98,10 @@ class AuthController extends Controller
         // Clear rate limiter on successful authentication
         RateLimiter::clear($throttleKey);
 
-        // Log the user in
-        auth()->login($user);
+        // Log the user in using Inventory Admin guard
+        auth('inventory_admin')->login($user);
         
-        // CRITICAL: Regenerate session ID to prevent session fixation attacks
+        // Regenerate session ID to prevent session fixation attacks
         $request->session()->regenerate();
 
         // Store admin session data
@@ -338,8 +338,8 @@ class AuthController extends Controller
             }
         }
         
-        // Log out the user from Laravel's auth system
-        auth()->logout();
+        // Log out the user from Inventory Admin guard only
+        auth('inventory_admin')->logout();
         
         // Clear all admin-specific session data
         $request->session()->forget([
@@ -349,8 +349,8 @@ class AuthController extends Controller
             'admin_role',
         ]);
 
-        // Completely invalidate the session
-        $request->session()->invalidate();
+        // DO NOT invalidate the entire session as it would logout Parent/School users too
+        // $request->session()->invalidate();
         
         // Regenerate CSRF token
         $request->session()->regenerateToken();
