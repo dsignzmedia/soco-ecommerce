@@ -16,7 +16,7 @@
             gap: 12px;
         }
         .filters button, .filters a.reset {
-            border-radius: 12px;
+            border-radius: 9999px;
             font-weight: 600;
             text-align: center;
         }
@@ -24,12 +24,14 @@
             border: none;
             background: #490d59;
             color: #fff;
-            padding: 10px 16px;
+            padding: 6px 14px;
+            font-size: 12px;
         }
         .filters a.reset {
-            border: 1px solid #d0d5dd;
+            border: 1.5px solid #d0d5dd;
             color: #475467;
-            padding: 10px 16px;
+            padding: 5px 14px;
+            font-size: 12px;
         }
         .export-links a {
             border: 1px solid #d0d5dd;
@@ -108,7 +110,7 @@
                 <a href="{{ route('master.admin.catalog.export', ['type' => 'excel'] + request()->query()) }}">Export Excel</a>
                 <a href="{{ route('master.admin.catalog.export', ['type' => 'pdf'] + request()->query()) }}">Export PDF</a>
             </div>
-            <a href="{{ route('master.admin.catalog.create') }}" style="padding:10px 16px;border-radius:12px;background:#490d59;color:#fff;font-weight:600;">+ Add Product</a>
+            <a href="{{ route('master.admin.catalog.create') }}" style="padding:8px 16px;border-radius:9999px;background:#490d59;color:#fff;font-weight:600;font-size:13px;">+ Add Product</a>
         </div>
     </div>
     <div class="card">
@@ -162,32 +164,16 @@
                             {{ $mapping->inventory_stock }}
                             <small>Alert @ {{ $mapping->low_stock_threshold }}</small>
                         </td>
-                        <td style="white-space:nowrap;">
-                            <a href="{{ route('master.admin.catalog.show', $mapping) }}" title="View" style="margin-right:8px;color:#111827;">
-                                <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
-                                    <circle cx="12" cy="12" r="3"></circle>
-                                    <path d="M2.5 12s3.5-6 9.5-6 9.5 6 9.5 6-3.5 6-9.5 6-9.5-6-9.5-6z"></path>
-                                </svg>
-                            </a>
-                            <a href="{{ route('master.admin.catalog.edit', $mapping) }}" title="Edit" style="margin-right:8px;color:#111827;">
-                                <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
-                                    <path d="M12 20h9"></path>
-                                    <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4 12.5-12.5z"></path>
-                                </svg>
-                            </a>
-                            <form method="POST" action="{{ route('master.admin.catalog.destroy', $mapping) }}" style="display:inline-block;" onsubmit="return confirm('Delete this product?');">
-                                @csrf
-                                @method('DELETE')
-                                <button type="submit" title="Delete" style="border:none;background:none;color:#b42318;padding:0;">
-                                    <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
-                                        <polyline points="3 6 5 6 21 6"></polyline>
-                                        <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"></path>
-                                        <path d="M10 11v6"></path>
-                                        <path d="M14 11v6"></path>
-                                        <path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"></path>
-                                    </svg>
-                                </button>
-                            </form>
+                        <td class="actions">
+                            <div class="d-flex flex-wrap gap-2">
+                                <a href="{{ route('master.admin.catalog.show', $mapping) }}" class="btn-vs-sm">View</a>
+                                <a href="{{ route('master.admin.catalog.edit', $mapping) }}" class="btn-vs-sm">Edit</a>
+                                <form method="POST" action="{{ route('master.admin.catalog.destroy', $mapping) }}" class="d-inline-block" onsubmit="return confirm('Delete this product?');">
+                                    @csrf
+                                    @method('DELETE')
+                                    <button type="submit" class="btn-vs-sm" title="Delete">Delete</button>
+                                </form>
+                            </div>
                         </td>
                     </tr>
                 @empty

@@ -6,19 +6,21 @@
 
 @push('styles')
     <style>
-        table { width: 100%; border-collapse: collapse; }
-        th, td { padding: 12px 14px; border-bottom: 1px solid #e5e7eb; text-align:left; font-size: 13px; }
+        table { width: 100%; border-collapse: collapse; table-layout: fixed; }
+        th, td { padding: 12px 14px; border-bottom: 1px solid #e5e7eb; text-align:left; font-size: 13px; word-wrap: break-word; }
         th { text-transform: uppercase; letter-spacing: 0.05em; color:#111827; font-size: 12px; }
         td small { color:#98a2b3; display:block; }
         .filters { display:grid; grid-template-columns:repeat(auto-fit,minmax(180px,1fr)); gap:12px; }
-        .filters button, .filters a.reset { border-radius:12px; font-weight:600; text-align:center; }
-        .filters button { border:none; background:#490d59; color:#fff; padding:10px 16px; }
-        .filters a.reset { border:1px solid #d0d5dd; color:#475467; padding:10px 16px; }
+        .filters button, .filters a.reset { border-radius:9999px; font-weight:600; text-align:center; }
+        .filters button { border:none; background:#490d59; color:#fff; padding:6px 14px; font-size:12px; }
+        .filters a.reset { border:1.5px solid #d0d5dd; color:#475467; padding:5px 14px; font-size:12px; }
         .actions a { margin-right:8px; font-weight:600; color:#490d59; }
         .status-pill { padding:4px 10px; border-radius:999px; font-size:12px; font-weight:600; text-transform:capitalize; }
         .status-processing { background:#eff6ff; color:#1d4ed8; }
         .status-shipped { background:#ecfdf3; color:#027a48; }
         .status-failed { background:#fef3f2; color:#b42318; }
+        
+        /* Custom Button Style matching 'Shop Now' layout */
     </style>
 @endpush
 
@@ -64,7 +66,7 @@
         </form>
     </section>
 
-    <section class="card" style="overflow-x:auto;">
+    <section class="card">
         <table>
             <thead>
                 <tr>
@@ -154,23 +156,19 @@
                         <td>₹{{ number_format($order->shipping_cost, 2) }}</td>
                         <td>₹{{ number_format($order->tax_amount, 2) }}</td>
                         <td>{{ $order->tracking_number ?? '—' }}</td>
-                        <td class="actions" style="white-space: nowrap;">
-                            <a href="{{ route('master.admin.orders.show', $order) }}" class="btn btn-sm btn-info text-white" title="View">
-                                <i class="fas fa-eye"></i>
-                            </a>
-                            <a href="{{ route('master.admin.orders.invoice', $order) }}" class="btn btn-sm btn-secondary text-white" title="Invoice">
-                                <i class="fas fa-file-invoice"></i>
-                            </a>
-                            <a href="{{ route('master.admin.orders.invoice.download', $order) }}" class="btn btn-sm btn-primary" title="Download">
-                                <i class="fas fa-download"></i>
-                            </a>
-                            <form method="POST" action="{{ route('master.admin.orders.status', $order) }}" style="display:inline-block;">
-                                @csrf
-                                <input type="hidden" name="order_status" value="shipped">
-                                <button type="submit" class="btn btn-sm btn-success text-white" title="Mark Shipped">
-                                    <i class="fas fa-shipping-fast"></i>
-                                </button>
-                            </form>
+                        <td class="actions">
+                            <div class="d-flex flex-wrap gap-2">
+                                <a href="{{ route('master.admin.orders.show', $order) }}" class="btn-vs-sm" title="View">
+                                    View
+                                </a>
+                                <a href="{{ route('master.admin.orders.invoice', $order) }}" class="btn-vs-sm" title="Invoice">
+                                    Invoice
+                                </a>
+                                <a href="{{ route('master.admin.orders.invoice.download', $order) }}" class="btn-vs-sm" title="Download">
+                                    Download
+                                </a>
+
+                            </div>
                         </td>
                     </tr>
                 @empty

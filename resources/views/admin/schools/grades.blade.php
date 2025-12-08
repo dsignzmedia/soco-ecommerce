@@ -66,14 +66,16 @@
                                     @endforeach
                                 </select>
                         </td>
-                        <td style="display:flex;gap:8px;align-items:center;">
-                                <button type="submit" style="border:none;background:#f0f0ff;color:#490d59;border-radius:8px;padding:6px 12px;">Update</button>
+                        <td class="actions">
+                            <div class="d-flex flex-wrap gap-2">
+                                <button type="submit" class="btn-vs-sm">Update</button>
                             </form>
-                            <form method="POST" action="{{ route('master.admin.schools.grades.destroy', [$school, $grade]) }}">
+                            <form method="POST" action="{{ route('master.admin.schools.grades.destroy', [$school, $grade]) }}" class="d-inline-block" onsubmit="return confirm('Delete grade?');">
                                 @csrf
                                 @method('DELETE')
-                                <button type="submit" style="border:none;background:#fee4e2;color:#b42318;border-radius:8px;padding:6px 12px;">Delete</button>
+                                <button type="submit" class="btn-vs-sm">Delete</button>
                             </form>
+                            </div>
                         </td>
                     </tr>
                 @empty

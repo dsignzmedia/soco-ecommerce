@@ -10,9 +10,9 @@
         th,td { padding:12px 14px;border-bottom:1px solid #e5e7eb;text-align:left;font-size:13px; }
         th { text-transform:uppercase;letter-spacing:.05em;color:#111827;font-size:12px; }
         .filters { display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px; }
-        .filters button, .filters a.reset { border-radius:12px;font-weight:600;text-align:center; }
-        .filters button { border:none;background:#490d59;color:#fff;padding:10px 16px; }
-        .filters a.reset { border:1px solid #d0d5dd;color:#475467;padding:10px 16px; }
+        .filters button, .filters a.reset { border-radius:9999px;font-weight:600;text-align:center; }
+        .filters button { border:none;background:#490d59;color:#fff;padding:6px 14px;font-size:12px; }
+        .filters a.reset { border:1.5px solid #d0d5dd;color:#475467;padding:5px 14px;font-size:12px; }
     </style>
 @endpush
 
@@ -67,7 +67,9 @@
                         <td>{{ $product->inventory_stock }}</td>
                         <td>{{ ucfirst($product->status) }}</td>
                         <td>{{ optional($product->updated_at)->diffForHumans() }}</td>
-                        <td><a href="{{ route('master.admin.inventory.adjust', $product) }}" style="color:#490d59;font-weight:600;">Adjust stock</a></td>
+                        <td>
+                            <a href="{{ route('master.admin.inventory.adjust', $product) }}" class="btn-vs-sm">Adjust stock</a>
+                        </td>
                     </tr>
                 @empty
                     <tr><td colspan="8">No products available.</td></tr>

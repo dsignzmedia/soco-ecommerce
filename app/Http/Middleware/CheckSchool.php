@@ -24,27 +24,23 @@ class CheckSchool
      */
     public function handle(Request $request, Closure $next): Response
     {
-        // Check if user is authenticated via Laravel's auth system
-        if (!auth()->check()) {
+        // Check if user is authenticated via School guard
+        if (!auth('school')->check()) {
             return redirect()->route('frontend.school.login')
                 ->with('error', 'Please login to access the School Dashboard.');
         }
 
         // Verify user has School role
-        if (!auth()->user()->isSchool()) {
-            // Log out the unauthorized user (unless we want to just redirect them to their own dashboard)
-            // But if they are trying to access school routes and are not school, they shouldn't be here.
+        if (!auth('school')->user()->isSchool()) {
+            // Log out from school guard
+            auth('school')->logout();
             
-            // If they are a parent, maybe redirect to parent dashboard?
-            // But for strict security similar to admin, usually we deny access.
-            // For now, let's redirect to their appropriate dashboard if logged in, or logout.
-            
-            if (auth()->user()->isParent()) {
+            // If they are a parent, redirect to parent dashboard
+            if (auth('web')->check() && auth('web')->user()->isParent()) {
                 return redirect()->route('frontend.parent.dashboard');
             }
             
-            // For safety/default:
-             return redirect()->route('frontend.school.login')
+            return redirect()->route('frontend.school.login')
                 ->with('error', 'You do not have permission to access the School Dashboard.');
         }
 

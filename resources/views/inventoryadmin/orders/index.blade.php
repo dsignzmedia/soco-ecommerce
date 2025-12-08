@@ -11,11 +11,10 @@
         th { text-transform: uppercase; letter-spacing: 0.05em; color:#111827; font-size: 12px; }
         td small { color:#98a2b3; display:block; }
         .filters { display:grid; grid-template-columns:repeat(auto-fit,minmax(160px,1fr)); gap:12px; margin-bottom: 20px; }
-        .filters button, .filters a.reset { border-radius:8px; font-weight:600; text-align:center; padding:10px 16px; font-size: 13px; }
-        .filters button { border:none; background:#4f46e5; color:#fff; cursor: pointer; }
-        .filters a.reset { border:1px solid #d0d5dd; color:#475467; display: inline-block; text-decoration: none; }
-        .actions { display: flex; gap: 8px; }
-        .actions a { font-weight:600; color:#4f46e5; font-size: 12px; }
+        .filters button, .filters a.reset { border-radius:9999px; font-weight:600; text-align:center; padding:6px 14px; font-size: 12px; }
+        .filters button { border:none; background:#490d59; color:#fff; cursor: pointer; }
+        .filters a.reset { border:1.5px solid #d0d5dd; color:#475467; display: inline-block; text-decoration: none; }
+
         .status-pill { padding:4px 10px; border-radius:999px; font-size:12px; font-weight:600; text-transform:capitalize; display: inline-block; }
         .status-pending { background:#fef3c7; color:#d97706; }
         .status-processing { background:#eff6ff; color:#1d4ed8; }
@@ -89,20 +88,22 @@
                         </td>
                         <td>{{ $order->tracking_number ?? '—' }}</td>
                         <td class="actions">
-                            <a href="{{ route('inventory.admin.orders.show', $order) }}">Manage</a>
-                            @if($order->order_status === 'pending')
-                                <form method="POST" action="{{ route('inventory.admin.orders.status', $order) }}">
-                                    @csrf
-                                    <input type="hidden" name="order_status" value="processing">
-                                    <button type="submit" style="background:none;border:none;color:#4f46e5;font-weight:600;font-size:12px;cursor:pointer;padding:0;">Pick</button>
-                                </form>
-                            @elseif($order->order_status === 'processing')
-                                <form method="POST" action="{{ route('inventory.admin.orders.status', $order) }}">
-                                    @csrf
-                                    <input type="hidden" name="order_status" value="ready_to_ship">
-                                    <button type="submit" style="background:none;border:none;color:#4f46e5;font-weight:600;font-size:12px;cursor:pointer;padding:0;">Pack</button>
-                                </form>
-                            @endif
+                            <div class="d-flex flex-wrap gap-2" style="display:flex;gap:8px;">
+                                <a href="{{ route('inventory.admin.orders.show', $order) }}" class="btn-vs-sm">Manage</a>
+                                @if($order->order_status === 'pending')
+                                    <form method="POST" action="{{ route('inventory.admin.orders.status', $order) }}">
+                                        @csrf
+                                        <input type="hidden" name="order_status" value="processing">
+                                        <button type="submit" class="btn-vs-sm">Pick</button>
+                                    </form>
+                                @elseif($order->order_status === 'processing')
+                                    <form method="POST" action="{{ route('inventory.admin.orders.status', $order) }}">
+                                        @csrf
+                                        <input type="hidden" name="order_status" value="ready_to_ship">
+                                        <button type="submit" class="btn-vs-sm">Pack</button>
+                                    </form>
+                                @endif
+                            </div>
                         </td>
                     </tr>
                 @empty

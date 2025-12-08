@@ -29,11 +29,7 @@
             color: #475467;
         }
 
-        .actions a {
-            margin-right: 12px;
-            color: #490d59;
-            font-weight: 600;
-        }
+
 
         .status-pill {
             padding: 4px 10px;
@@ -54,7 +50,7 @@
         <div>
             <p style="margin:0;color:#475467;">Track every partner institution in one table.</p>
         </div>
-        <a href="{{ route('master.admin.schools.create') }}" class="nav__item" style="background:#490d59;color:#fff;border-radius:12px;padding:10px 16px;width:auto;">+ Add School</a>
+        <a href="{{ route('master.admin.schools.create') }}" class="nav__item" style="background:#490d59;color:#fff;border-radius:9999px;padding:8px 16px;width:auto;font-size:13px;font-weight:600;">+ Add School</a>
     </div>
 
     <div class="card">
@@ -85,9 +81,11 @@
                         <td>{{ $school->grades_count }}</td>
                         <td>{{ $school->product_mappings_count }}</td>
                         <td class="actions">
-                            <a href="{{ route('master.admin.schools.edit', $school) }}">Edit</a>
-                            <a href="{{ route('master.admin.schools.grades.index', $school) }}">Grades</a>
-                            <a href="{{ route('master.admin.schools.product-mapping.index', $school) }}">Product mapping</a>
+                            <div class="d-flex flex-wrap gap-2">
+                                <a href="{{ route('master.admin.schools.edit', $school) }}" class="btn-vs-sm">Edit</a>
+                                <a href="{{ route('master.admin.schools.grades.index', $school) }}" class="btn-vs-sm">Grades</a>
+                                <a href="{{ route('master.admin.schools.product-mapping.index', $school) }}" class="btn-vs-sm">Product mapping</a>
+                            </div>
                         </td>
                     </tr>
                 @empty

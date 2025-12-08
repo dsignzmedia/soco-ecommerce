@@ -33,16 +33,14 @@
                                 <span style="color:#94a3b8;font-style:italic;">Not assigned</span>
                             @endif
                         </td>
-                        <td style="padding:16px 12px;">
-                            <div style="display:flex;gap:8px;">
-                                <a href="{{ route('inventory.admin.orders.show', $order) }}" style="color:#4f46e5;font-weight:600;font-size:13px;">Manage</a>
-                                <span style="color:#cbd5e1;">|</span>
-                                <a href="{{ route('inventory.admin.orders.print-label', $order) }}" target="_blank" style="color:#475467;font-weight:600;font-size:13px;">Print Label</a>
-                                <span style="color:#cbd5e1;">|</span>
-                                <form method="POST" action="{{ route('inventory.admin.orders.status', $order) }}" style="display:inline;">
+                        <td class="actions">
+                            <div class="d-flex flex-wrap gap-2" style="display:flex;gap:8px;">
+                                <a href="{{ route('inventory.admin.orders.show', $order) }}" class="btn-vs-sm">Manage</a>
+                                <a href="{{ route('inventory.admin.orders.print-label', $order) }}" target="_blank" class="btn-vs-sm">Print Label</a>
+                                <form method="POST" action="{{ route('inventory.admin.orders.status', $order) }}" style="margin:0;">
                                     @csrf
                                     <input type="hidden" name="order_status" value="shipped">
-                                    <button type="submit" style="background:none;border:none;color:#059669;font-weight:600;font-size:13px;cursor:pointer;padding:0;">Mark Shipped</button>
+                                    <button type="submit" class="btn-vs-sm">Mark Shipped</button>
                                 </form>
                             </div>
                         </td>

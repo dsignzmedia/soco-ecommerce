@@ -97,11 +97,12 @@ class AuthController extends Controller
         // Clear rate limiter on successful authentication
         RateLimiter::clear($throttleKey);
 
-        // Log the user in using Laravel's auth system
-        auth()->login($user);
+        // Log the user in using Master Admin guard
+        auth('master_admin')->login($user);
         
-        // CRITICAL: Regenerate session ID to prevent session fixation attacks
-        // This creates a new session ID while keeping session data
+        // Regenerate session ID is still good practice, but with multiple guards
+        // we should be careful. Laravel handles guard sessions separately.
+        // For now, let's regenerateg to be safe but rely on the guard isolation.
         $request->session()->regenerate();
 
         // Store admin-specific session data for quick access
@@ -420,8 +421,8 @@ class AuthController extends Controller
             );
         }
         
-        // Log out the user from Laravel's auth system
-        auth()->logout();
+        // Log out the user from Master Admin guard only
+        auth('master_admin')->logout();
         
         // Clear all admin-specific session data
         $request->session()->forget([
@@ -431,9 +432,8 @@ class AuthController extends Controller
             'admin_role',
         ]);
 
-        // Completely invalidate the session
-        // This destroys all session data and creates a new session ID
-        $request->session()->invalidate();
+        // DO NOT invalidate the entire session as it would logout Parent/School users too
+        // $request->session()->invalidate();
         
         // Regenerate CSRF token to prevent token reuse after logout
         $request->session()->regenerateToken();

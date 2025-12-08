@@ -116,11 +116,11 @@
                         </td>
                         <td>{{ $mapping->inventory_stock }} <small>Alert @ {{ $mapping->low_stock_threshold }}</small></td>
                         <td style="text-transform:capitalize;">{{ $mapping->status }}</td>
-                        <td style="display:flex;gap:8px;">
-                            <form method="POST" action="{{ route('master.admin.schools.product-mapping.destroy', [$school, $mapping]) }}">
+                        <td class="actions">
+                            <form method="POST" action="{{ route('master.admin.schools.product-mapping.destroy', [$school, $mapping]) }}" onsubmit="return confirm('Delete mapping?');" class="d-inline-block">
                                 @csrf
                                 @method('DELETE')
-                                <button type="submit" style="border:none;background:#fee4e2;color:#b42318;border-radius:8px;padding:6px 12px;">Delete</button>
+                                <button type="submit" class="btn-vs-sm">Delete</button>
                             </form>
                         </td>
                     </tr>

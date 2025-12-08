@@ -27,104 +27,84 @@
             </div>
         @endif
 
-        <div class="row g-4">
-            <!-- Filters Section -->
-            <div class="col-lg-4">
-                <div class="card shadow-sm rounded-4 border-0" style="background-color: #ffffff;">
-                    <div class="card-body">
-                        <h5 class="card-title mb-4">
-                            <i class="fas fa-filter me-2" style="color: #490D59;"></i>Apply Filters
-                        </h5>
-                        <form id="reportFilterForm" action="{{ route('frontend.school.generate-report') }}" method="POST">
-                            @csrf
-                            
-                            <!-- Date Filter -->
-                            <div class="mb-3">
-                                <label for="date" class="form-label">Date</label>
-                                <input type="date" class="form-control" id="date" name="date" value="{{ session('report_filters.date') ?? '' }}">
-                            </div>
+        <!-- Horizontal Filter Section -->
+        <div class="card shadow-sm rounded-4 border-0 mb-4" style="background-color: #ffffff;">
+            <div class="card-body p-4">
+                <form id="reportFilterForm" action="{{ route('frontend.school.generate-report') }}" method="POST">
+                    @csrf
+                    <div class="row g-3 align-items-end">
+                        <!-- Month Filter -->
+                        <div class="col-md-2">
+                            <label for="month" class="form-label text-muted small fw-bold text-uppercase">Month</label>
+                            <select class="form-select border-0 bg-light rounded-pill px-3" id="month" name="month">
+                                <option value="">All Months</option>
+                                <option value="1" {{ session('report_filters.month') == '1' ? 'selected' : '' }}>January</option>
+                                <option value="2" {{ session('report_filters.month') == '2' ? 'selected' : '' }}>February</option>
+                                <option value="3" {{ session('report_filters.month') == '3' ? 'selected' : '' }}>March</option>
+                                <option value="4" {{ session('report_filters.month') == '4' ? 'selected' : '' }}>April</option>
+                                <option value="5" {{ session('report_filters.month') == '5' ? 'selected' : '' }}>May</option>
+                                <option value="6" {{ session('report_filters.month') == '6' ? 'selected' : '' }}>June</option>
+                                <option value="7" {{ session('report_filters.month') == '7' ? 'selected' : '' }}>July</option>
+                                <option value="8" {{ session('report_filters.month') == '8' ? 'selected' : '' }}>August</option>
+                                <option value="9" {{ session('report_filters.month') == '9' ? 'selected' : '' }}>September</option>
+                                <option value="10" {{ session('report_filters.month') == '10' ? 'selected' : '' }}>October</option>
+                                <option value="11" {{ session('report_filters.month') == '11' ? 'selected' : '' }}>November</option>
+                                <option value="12" {{ session('report_filters.month') == '12' ? 'selected' : '' }}>December</option>
+                            </select>
+                        </div>
 
-                            <!-- Month Filter -->
-                            <div class="mb-3">
-                                <label for="month" class="form-label">Month</label>
-                                <select class="form-select" id="month" name="month">
-                                    <option value="">Select Month</option>
-                                    <option value="1" {{ session('report_filters.month') == '1' ? 'selected' : '' }}>January</option>
-                                    <option value="2" {{ session('report_filters.month') == '2' ? 'selected' : '' }}>February</option>
-                                    <option value="3" {{ session('report_filters.month') == '3' ? 'selected' : '' }}>March</option>
-                                    <option value="4" {{ session('report_filters.month') == '4' ? 'selected' : '' }}>April</option>
-                                    <option value="5" {{ session('report_filters.month') == '5' ? 'selected' : '' }}>May</option>
-                                    <option value="6" {{ session('report_filters.month') == '6' ? 'selected' : '' }}>June</option>
-                                    <option value="7" {{ session('report_filters.month') == '7' ? 'selected' : '' }}>July</option>
-                                    <option value="8" {{ session('report_filters.month') == '8' ? 'selected' : '' }}>August</option>
-                                    <option value="9" {{ session('report_filters.month') == '9' ? 'selected' : '' }}>September</option>
-                                    <option value="10" {{ session('report_filters.month') == '10' ? 'selected' : '' }}>October</option>
-                                    <option value="11" {{ session('report_filters.month') == '11' ? 'selected' : '' }}>November</option>
-                                    <option value="12" {{ session('report_filters.month') == '12' ? 'selected' : '' }}>December</option>
-                                </select>
-                            </div>
+                        <!-- Year Filter -->
+                        <div class="col-md-2">
+                            <label for="year" class="form-label text-muted small fw-bold text-uppercase">Year</label>
+                            <select class="form-select border-0 bg-light rounded-pill px-3" id="year" name="year">
+                                <option value="">All Years</option>
+                                @for($y = date('Y'); $y >= 2020; $y--)
+                                    <option value="{{ $y }}" {{ session('report_filters.year') == $y ? 'selected' : '' }}>{{ $y }}</option>
+                                @endfor
+                            </select>
+                        </div>
 
-                            <!-- Year Filter -->
-                            <div class="mb-3">
-                                <label for="year" class="form-label">Year</label>
-                                <select class="form-select" id="year" name="year">
-                                    <option value="">Select Year</option>
-                                    @for($y = date('Y'); $y >= 2020; $y--)
-                                        <option value="{{ $y }}" {{ session('report_filters.year') == $y ? 'selected' : '' }}>{{ $y }}</option>
-                                    @endfor
-                                </select>
-                            </div>
+                        <!-- Grade Filter -->
+                        <div class="col-md-2">
+                            <label for="grade" class="form-label text-muted small fw-bold text-uppercase">Grade</label>
+                            <select class="form-select border-0 bg-light rounded-pill px-3" id="grade" name="grade">
+                                <option value="">All Grades</option>
+                                <option value="LKG" {{ session('report_filters.grade') == 'LKG' ? 'selected' : '' }}>LKG</option>
+                                <option value="UKG" {{ session('report_filters.grade') == 'UKG' ? 'selected' : '' }}>UKG</option>
+                                @for($g = 1; $g <= 12; $g++)
+                                    <option value="Grade {{ $g }}" {{ session('report_filters.grade') == "Grade $g" ? 'selected' : '' }}>Grade {{ $g }}</option>
+                                @endfor
+                            </select>
+                        </div>
 
-                            <!-- Grade Filter -->
-                            <div class="mb-3">
-                                <label for="grade" class="form-label">Grade</label>
-                                <select class="form-select" id="grade" name="grade">
-                                    <option value="">All Grades</option>
-                                    <option value="LKG" {{ session('report_filters.grade') == 'LKG' ? 'selected' : '' }}>LKG</option>
-                                    <option value="UKG" {{ session('report_filters.grade') == 'UKG' ? 'selected' : '' }}>UKG</option>
-                                    @for($g = 1; $g <= 12; $g++)
-                                        <option value="Grade {{ $g }}" {{ session('report_filters.grade') == "Grade $g" ? 'selected' : '' }}>Grade {{ $g }}</option>
-                                    @endfor
-                                </select>
-                            </div>
+                        <!-- Product Filter -->
+                        <div class="col-md-2">
+                            <label for="product" class="form-label text-muted small fw-bold text-uppercase">Product</label>
+                            <select class="form-select border-0 bg-light rounded-pill px-3" id="product" name="product">
+                                <option value="">All Products</option>
+                                <option value="School Shirt" {{ session('report_filters.product') == 'School Shirt' ? 'selected' : '' }}>School Shirt</option>
+                                <option value="School Pants" {{ session('report_filters.product') == 'School Pants' ? 'selected' : '' }}>School Pants</option>
+                                <option value="School Skirt" {{ session('report_filters.product') == 'School Skirt' ? 'selected' : '' }}>School Skirt</option>
+                            </select>
+                        </div>
 
-                            <!-- Product Filter -->
-                            <div class="mb-3">
-                                <label for="product" class="form-label">Product</label>
-                                <select class="form-select" id="product" name="product">
-                                    <option value="">All Products</option>
-                                    <option value="School Shirt" {{ session('report_filters.product') == 'School Shirt' ? 'selected' : '' }}>School Shirt</option>
-                                    <option value="School Pants" {{ session('report_filters.product') == 'School Pants' ? 'selected' : '' }}>School Pants</option>
-                                    <option value="School Skirt" {{ session('report_filters.product') == 'School Skirt' ? 'selected' : '' }}>School Skirt</option>
-                                    <option value="School Tie" {{ session('report_filters.product') == 'School Tie' ? 'selected' : '' }}>School Tie</option>
-                                    <option value="School Belt" {{ session('report_filters.product') == 'School Belt' ? 'selected' : '' }}>School Belt</option>
-                                </select>
-                            </div>
-
-                            <!-- Class Filter -->
-                            <div class="mb-4">
-                                <label for="class" class="form-label">Class</label>
-                                <select class="form-select" id="class" name="class">
-                                    <option value="">All Classes</option>
-                                    <option value="A" {{ session('report_filters.class') == 'A' ? 'selected' : '' }}>Class A</option>
-                                    <option value="B" {{ session('report_filters.class') == 'B' ? 'selected' : '' }}>Class B</option>
-                                    <option value="C" {{ session('report_filters.class') == 'C' ? 'selected' : '' }}>Class C</option>
-                                    <option value="D" {{ session('report_filters.class') == 'D' ? 'selected' : '' }}>Class D</option>
-                                </select>
-                            </div>
-
-                            <div class="d-grid">
-                                <button type="submit" class="vs-btn">
-                                    <i class="fas fa-chart-line me-2"></i> Generate Report
-                                </button>
-                            </div>
-                        </form>
+                        <!-- Actions -->
+                        <div class="col-md-auto ms-auto d-flex gap-2">
+                            <button type="submit" class="btn rounded-pill px-4 fw-bold" style="background-color: #490D59; color: white;">
+                                Apply Filters
+                            </button>
+                            <a href="{{ route('frontend.school.reports') }}" class="btn btn-outline-secondary rounded-pill px-4 fw-bold">
+                                Reset
+                            </a>
+                        </div>
                     </div>
-                </div>
+                </form>
             </div>
+        </div>
 
-            <!-- Report Results Section -->
-            <div class="col-lg-8">
+        <div class="row">
+            <!-- Full Width Results -->
+            <div class="col-12">
                 @if(session('report_generated') && session('report_data'))
                     @php
                         $reportData = session('report_data');
