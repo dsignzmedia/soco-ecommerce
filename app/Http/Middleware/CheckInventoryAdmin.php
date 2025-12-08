@@ -8,7 +8,7 @@ use Symfony\Component\HttpFoundation\Response;
 
 /**
  * CheckInventoryAdmin Middleware
- * 
+ *
  * Protects Inventory Admin routes with comprehensive security:
  * 1. Verifies user is authenticated
  * 2. Validates user has Inventory Admin role (role = 3)
@@ -22,17 +22,24 @@ class CheckInventoryAdmin
      */
     public function handle(Request $request, Closure $next): Response
     {
-        // Check if user is authenticated via Inventory Admin guard
-        if (!auth('inventory_admin')->check()) {
+        // Check if user is authenticated
+        if (!auth()->check()) {
+            // Clear any stale session data
+            $request->session()->flush();
+
             return redirect()->route('inventory.admin.login')
                 ->with('error', 'Please login to access the Inventory Admin panel.');
         }
 
         // Verify user has Inventory Admin role (role = 3)
-        if (auth('inventory_admin')->user()->role !== 3) {
-            // Log out the unauthorized user from this guard
-            auth('inventory_admin')->logout();
-            
+        if (auth()->user()->role !== 3) {
+            // Log out the unauthorized user
+            auth()->logout();
+
+            // Completely invalidate and regenerate session
+            $request->session()->invalidate();
+            $request->session()->regenerateToken();
+
             return redirect()->route('inventory.admin.login')
                 ->with('error', 'You do not have permission to access the Inventory Admin panel.');
         }

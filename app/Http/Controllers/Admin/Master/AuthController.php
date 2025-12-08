@@ -27,7 +27,7 @@ class AuthController extends Controller
 
     /**
      * Display the master admin login screen.
-     * Note: Now protected by RedirectIfMasterAdmin middleware in routes, 
+     * Note: Now protected by RedirectIfMasterAdmin middleware in routes,
      * but we keep this check as fallback defense-in-depth.
      */
     public function showLoginForm()
@@ -37,7 +37,7 @@ class AuthController extends Controller
 
     /**
      * Handle master admin login request.
-     * 
+     *
      * Security features:
      * - Rate limiting to prevent brute force attacks
      * - Session fixation protection via regenerate()
@@ -48,7 +48,7 @@ class AuthController extends Controller
     {
         // Check if user is rate limited
         $throttleKey = $this->throttleKey($request);
-        
+
         if (RateLimiter::tooManyAttempts($throttleKey, $this->maxAttempts)) {
             $seconds = RateLimiter::availableIn($throttleKey);
             return back()->withErrors([
@@ -78,7 +78,7 @@ class AuthController extends Controller
         if (!$user || !Hash::check($credentials['password'], $user->password)) {
             // Increment rate limiter on failed attempt
             RateLimiter::hit($throttleKey, $this->decaySeconds);
-            
+
             return back()->withErrors([
                 'email' => 'The provided credentials do not match our records.',
             ])->withInput(['email' => $emailOrPhone]);
@@ -88,7 +88,7 @@ class AuthController extends Controller
         if ($user->role !== 2) {
             // Increment rate limiter on role mismatch too
             RateLimiter::hit($throttleKey, $this->decaySeconds);
-            
+
             return back()->withErrors([
                 'email' => 'You do not have permission to access the Master Admin panel.',
             ])->withInput(['email' => $emailOrPhone]);
@@ -97,12 +97,11 @@ class AuthController extends Controller
         // Clear rate limiter on successful authentication
         RateLimiter::clear($throttleKey);
 
-        // Log the user in using Master Admin guard
-        auth('master_admin')->login($user);
-        
-        // Regenerate session ID is still good practice, but with multiple guards
-        // we should be careful. Laravel handles guard sessions separately.
-        // For now, let's regenerateg to be safe but rely on the guard isolation.
+        // Log the user in using Laravel's auth system
+        auth()->login($user);
+
+        // CRITICAL: Regenerate session ID to prevent session fixation attacks
+        // This creates a new session ID while keeping session data
         $request->session()->regenerate();
 
         // Store admin-specific session data for quick access
@@ -216,7 +215,7 @@ class AuthController extends Controller
         ];
 
         // --- Charts ---
-        
+
         // 1. Sales over time (Last 7 days or selected range)
         // Group by date
         $salesData = (clone $ordersQuery)
@@ -224,10 +223,10 @@ class AuthController extends Controller
             ->groupBy('date')
             ->orderBy('date')
             ->get();
-            
+
         $chartLabels = $salesData->pluck('date')->map(fn($d) => \Carbon\Carbon::parse($d)->format('M d'))->toArray();
         $chartSeries = $salesData->pluck('total')->toArray();
-        
+
         // If empty, show last 7 days empty
         if (empty($chartLabels)) {
             $period = \Carbon\CarbonPeriod::create(now()->subDays(6), now());
@@ -284,7 +283,7 @@ class AuthController extends Controller
         ];
 
         // --- Alerts ---
-        
+
         // 1. Low Stock
         $lowStockAlerts = ProductMapping::whereColumn('inventory_stock', '<=', 'low_stock_threshold')
             ->orderBy('inventory_stock')
@@ -394,7 +393,7 @@ class AuthController extends Controller
 
     /**
      * Logout the admin user.
-     * 
+     *
      * Security steps:
      * 1. Log the logout action for audit trail
      * 2. Log out the user from Laravel's auth system
@@ -407,7 +406,7 @@ class AuthController extends Controller
     {
         // Get user info before logout for audit logging
         $user = auth()->user();
-        
+
         if ($user) {
             AuditLogger::record(
                 'logout',
@@ -420,21 +419,22 @@ class AuthController extends Controller
                 'Master Admin logged out'
             );
         }
-        
-        // Log out the user from Master Admin guard only
-        auth('master_admin')->logout();
-        
+
+        // Log out the user from Laravel's auth system
+        auth()->logout();
+
         // Clear all admin-specific session data
         $request->session()->forget([
             'admin_id',
-            'admin_name', 
+            'admin_name',
             'admin_email',
             'admin_role',
         ]);
 
-        // DO NOT invalidate the entire session as it would logout Parent/School users too
-        // $request->session()->invalidate();
-        
+        // Completely invalidate the session
+        // This destroys all session data and creates a new session ID
+        $request->session()->invalidate();
+
         // Regenerate CSRF token to prevent token reuse after logout
         $request->session()->regenerateToken();
 

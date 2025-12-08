@@ -38,7 +38,7 @@ class AuthController extends Controller
 
     /**
      * Handle inventory admin login request.
-     * 
+     *
      * Security features:
      * - Rate limiting to prevent brute force attacks
      * - Session fixation protection via regenerate()
@@ -49,7 +49,7 @@ class AuthController extends Controller
     {
         // Check if user is rate limited
         $throttleKey = $this->throttleKey($request);
-        
+
         if (RateLimiter::tooManyAttempts($throttleKey, $this->maxAttempts)) {
             $seconds = RateLimiter::availableIn($throttleKey);
             return back()->withErrors([
@@ -79,7 +79,7 @@ class AuthController extends Controller
         if (!$user || !Hash::check($credentials['password'], $user->password)) {
             // Increment rate limiter on failed attempt
             RateLimiter::hit($throttleKey, $this->decaySeconds);
-            
+
             return back()->withErrors([
                 'email' => 'The provided credentials do not match our records.',
             ])->withInput(['email' => $emailOrPhone]);
@@ -89,7 +89,7 @@ class AuthController extends Controller
         if ($user->role !== 3) {
             // Increment rate limiter on role mismatch too
             RateLimiter::hit($throttleKey, $this->decaySeconds);
-            
+
             return back()->withErrors([
                 'email' => 'You do not have permission to access the Inventory Admin panel.',
             ])->withInput(['email' => $emailOrPhone]);
@@ -98,10 +98,10 @@ class AuthController extends Controller
         // Clear rate limiter on successful authentication
         RateLimiter::clear($throttleKey);
 
-        // Log the user in using Inventory Admin guard
-        auth('inventory_admin')->login($user);
-        
-        // Regenerate session ID to prevent session fixation attacks
+        // Log the user in
+        auth()->login($user);
+
+        // CRITICAL: Regenerate session ID to prevent session fixation attacks
         $request->session()->regenerate();
 
         // Store admin session data
@@ -142,7 +142,7 @@ class AuthController extends Controller
         $pendingPicking = \App\Models\Admin\Master\Order::where('order_status', 'pending')->count();
         $pendingPacking = \App\Models\Admin\Master\Order::where('order_status', 'processing')->count();
         $pendingShipment = \App\Models\Admin\Master\Order::where('order_status', 'ready_to_ship')->count();
-        
+
         $delayedOrders = \App\Models\Admin\Master\Order::where('created_at', '<', now()->subDays(2))
             ->whereNotIn('order_status', ['completed', 'cancelled', 'delivered'])
             ->count();
@@ -150,7 +150,7 @@ class AuthController extends Controller
         $schoolsWithOrders = \App\Models\Admin\Master\Order::whereIn('order_status', ['pending', 'processing', 'ready_to_ship'])
             ->distinct('school_id')
             ->count();
-            
+
         $gradesWithOrders = \App\Models\Admin\Master\Order::whereIn('order_status', ['pending', 'processing', 'ready_to_ship'])
             ->distinct('grade')
             ->count();
@@ -308,7 +308,7 @@ class AuthController extends Controller
 
     /**
      * Logout the inventory admin user.
-     * 
+     *
      * Security steps:
      * 1. Log the logout action for audit trail
      * 2. Log out the user from Laravel's auth system
@@ -320,7 +320,7 @@ class AuthController extends Controller
     {
         // Get user info before logout for audit logging
         $user = auth()->user();
-        
+
         if ($user) {
             try {
                 AuditLogger::record(
@@ -337,10 +337,10 @@ class AuthController extends Controller
                 // Silently ignore logging errors
             }
         }
-        
-        // Log out the user from Inventory Admin guard only
-        auth('inventory_admin')->logout();
-        
+
+        // Log out the user from Laravel's auth system
+        auth()->logout();
+
         // Clear all admin-specific session data
         $request->session()->forget([
             'admin_id',
@@ -349,9 +349,9 @@ class AuthController extends Controller
             'admin_role',
         ]);
 
-        // DO NOT invalidate the entire session as it would logout Parent/School users too
-        // $request->session()->invalidate();
-        
+        // Completely invalidate the session
+        $request->session()->invalidate();
+
         // Regenerate CSRF token
         $request->session()->regenerateToken();
 

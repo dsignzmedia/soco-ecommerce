@@ -9,7 +9,7 @@ use App\Models\User;
 
 /**
  * CheckSchool Middleware
- * 
+ *
  * Protects School Dashboard routes with comprehensive security:
  * 1. Verifies user is authenticated
  * 2. Validates user has School role
@@ -31,16 +31,20 @@ class CheckSchool
         }
 
         // Verify user has School role
-        if (!auth('school')->user()->isSchool()) {
-            // Log out from school guard
-            auth('school')->logout();
-            
-            // If they are a parent, redirect to parent dashboard
-            if (auth('web')->check() && auth('web')->user()->isParent()) {
+        if (!auth()->user()->isSchool()) {
+            // Log out the unauthorized user (unless we want to just redirect them to their own dashboard)
+            // But if they are trying to access school routes and are not school, they shouldn't be here.
+
+            // If they are a parent, maybe redirect to parent dashboard?
+            // But for strict security similar to admin, usually we deny access.
+            // For now, let's redirect to their appropriate dashboard if logged in, or logout.
+
+            if (auth()->user()->isParent()) {
                 return redirect()->route('frontend.parent.dashboard');
             }
-            
-            return redirect()->route('frontend.school.login')
+
+            // For safety/default:
+             return redirect()->route('frontend.school.login')
                 ->with('error', 'You do not have permission to access the School Dashboard.');
         }
 
