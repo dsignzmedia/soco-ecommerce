@@ -51,8 +51,12 @@ Route::get('/services', [HomeController::class, 'services'])->name('frontend.ser
 Route::get('/contact', [HomeController::class, 'contact'])->name('frontend.contact');
 Route::get('/faq', [HomeController::class, 'faq'])->name('frontend.faq');
 
-// Parent Authentication Routes
-Route::get('/parent/login', [AuthController::class, 'parentLogin'])->name('login')->middleware('guest');
+// Unified Login Route (for both parents and schools)
+Route::get('/login', [AuthController::class, 'showLogin'])->name('login')->middleware('guest');
+
+// Backward compatibility routes - also point to unified login
+Route::get('/parent/login', [AuthController::class, 'showLogin'])->middleware('guest');
+Route::get('/school/login', [AuthController::class, 'showLogin'])->middleware('guest');
 Route::middleware(['auth', 'prevent-back-history'])->group(function () {
     Route::get('/parent/dashboard', [AuthController::class, 'parentDashboard'])->name('frontend.parent.dashboard');
     Route::get('/parent/create-profile', [AuthController::class, 'createProfile'])->name('frontend.parent.create-profile');
@@ -99,8 +103,7 @@ Route::post('/auth/verify-otp', [AuthController::class, 'verifyOtp'])->name('aut
 // Logout Route
 Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
 
-// School Authentication Routes
-Route::get('/school/login', [AuthController::class, 'schoolLogin'])->name('frontend.school.login')->middleware('guest');
+// School Authentication Routes (POST only, GET uses unified /login route)
 Route::post('/school/login', [AuthController::class, 'authenticateSchool'])->name('frontend.school.authenticate');
 Route::post('/school/logout', [AuthController::class, 'logout'])->name('frontend.school.logout');
 

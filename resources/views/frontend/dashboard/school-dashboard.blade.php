@@ -243,7 +243,7 @@
                     if (logoutForm) {
                         logoutForm.submit();
                     } else {
-                        window.location.href = '{{ route("frontend.school.login") }}';
+                        window.location.href = '{{ route("login") }}';
                     }
                 });
             }

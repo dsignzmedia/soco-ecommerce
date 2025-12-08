@@ -157,14 +157,10 @@ class AuthController extends Controller
 
 
 
-    public function parentLogin()
+    // Unified login page for both parents and schools
+    public function showLogin()
     {
-        return view('frontend.auth.parent-login');
-    }
-
-    public function schoolLogin()
-    {
-        return view('frontend.auth.school-login');
+        return view('frontend.auth.login');
     }
 
     /**
@@ -668,7 +664,7 @@ class AuthController extends Controller
     {
         // Check if school is authenticated
         if (!session('school_authenticated')) {
-            return redirect()->route('frontend.school.login')
+            return redirect()->route('login')
                 ->with('error', 'Please login to access reports.');
         }
 
@@ -679,7 +675,7 @@ class AuthController extends Controller
     {
         // Check if school is authenticated
         if (!session('school_authenticated')) {
-            return redirect()->route('frontend.school.login')
+            return redirect()->route('login')
                 ->with('error', 'Please login to generate reports.');
         }
 
@@ -724,7 +720,7 @@ class AuthController extends Controller
     {
         // Check if school is authenticated
         if (!session('school_authenticated')) {
-            return redirect()->route('frontend.school.login')
+            return redirect()->route('login')
                 ->with('error', 'Please login to download reports.');
         }
 
@@ -744,7 +740,7 @@ class AuthController extends Controller
     {
         // Check if school is authenticated
         if (!session('school_authenticated')) {
-            return redirect()->route('frontend.school.login')
+            return redirect()->route('login')
                 ->with('error', 'Please login to email reports.');
         }
 

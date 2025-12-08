@@ -20,7 +20,7 @@ return Application::configure(basePath: dirname(__DIR__))
             'inventory.admin.guest' => \App\Http\Middleware\RedirectIfInventoryAdmin::class,
         ]);
         $middleware->redirectTo(
-            guests: '/parent/login',
+            guests: '/login',
             users: '/parent/dashboard'
         );
     })

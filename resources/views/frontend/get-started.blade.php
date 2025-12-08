@@ -29,7 +29,7 @@
                     </div>
                     <h3 class="h4">School Partner</h3>
                     <p>Access school dashboards, manage catalogs and review bulk orders.</p>
-                    <a href="{{ route('frontend.school.login') }}" class="vs-btn w-100 mt-3">Sign in as School</a>
+                    <a href="{{ route('login') }}" class="vs-btn w-100 mt-3">Sign in as School</a>
                 </div>
             </div>
 

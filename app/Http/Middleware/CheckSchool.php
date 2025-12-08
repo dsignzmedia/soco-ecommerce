@@ -26,7 +26,7 @@ class CheckSchool
     {
         // Check if user is authenticated via Laravel's auth system
         if (!auth()->check()) {
-            return redirect()->route('frontend.school.login')
+            return redirect()->route('login')
                 ->with('error', 'Please login to access the School Dashboard.');
         }
 
@@ -44,7 +44,7 @@ class CheckSchool
             }
 
             // For safety/default:
-             return redirect()->route('frontend.school.login')
+             return redirect()->route('login')
                 ->with('error', 'You do not have permission to access the School Dashboard.');
         }
 
