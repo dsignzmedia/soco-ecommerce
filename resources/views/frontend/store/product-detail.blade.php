@@ -61,12 +61,12 @@
                     
                     <h2 class="product-title">{{ $product['name'] }}</h2>
                     
-                    <div class="product-rating">
-                        <div class="star-rating" role="img" aria-label="Rated 5.00 out of 5">
-                            <span style="width:100%">Rated <strong class="rating">5.00</strong> out of 5 based on <span class="rating">5</span> customer rating</span>
+                    {{-- <div class="product-rating">
+                        <div class="star-rating" role="img" aria-label="Rated {{ number_format($averageRating, 2) }} out of 5">
+                            <span style="width:{{ ($averageRating / 5) * 100 }}%">Rated <strong class="rating">{{ number_format($averageRating, 2) }}</strong> out of 5 based on <span class="rating">{{ $reviewCount }}</span> customer rating</span>
                         </div>
-                        <span>(13)</span>
-                    </div>
+                        <span>({{ $reviewCount }} reviews)</span>
+                    </div> --}}
 
                     <p class="product-text">{{ $product['description'] ?? 'Premium quality product with excellent craftsmanship and attention to detail. We think your skin should look and refreshed matter Nourish your outer inner beauty with our essential oil infused beauty products.' }}</p>
 
@@ -137,105 +137,7 @@
             </div>
         </div>
 
-        <!-- Reviews Section -->
-            <div class="row mt-5">
-                <div class="col-12">
-                <h2>Reviews</h2>
-                <div class="title-divider1"></div>
-                <div class="woocommerce-Reviews">
-                    <div class="vs-comments-wrap">
-                        <ul class="comment-list">
-                            <li class="review vs-comment-item">
-                                <div class="vs-post-comment">
-                                    <div class="comment-avater">
-                                        <img src="{{ asset('assets/img/author/Author1.png') }}" alt="Comment Author">
-                                        </div>
-                                    <div class="comment-content">
-                                        <h4 class="name h4">Mark Jack</h4>
-                                        <span class="commented-on"><i class="fal fa-calendar-alt"></i>22 April, 2023</span>
-                                        <div class="review-rating">
-                                            <div class="star-rating" role="img" aria-label="Rated 5.00 out of 5">
-                                                <span style="width: 100%">Rated <strong class="rating">5.00</strong> out of 5 based on <span class="rating">1</span> customer rating</span>
-                                        </div>
-                                    </div>
-                                        <p class="text">Lorem ipsum dolor sit amet,  elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum</p>
-                                        </div>
-                                    </div>
-                            </li>
-                            <li class="review vs-comment-item">
-                                <div class="vs-post-comment">
-                                    <div class="comment-avater">
-                                        <img src="{{ asset('assets/img/author/Author2.png') }}" alt="Comment Author">
-                                </div>
-                                    <div class="comment-content">
-                                        <h4 class="name h4">John Deo</h4>
-                                        <span class="commented-on"><i class="fal fa-calendar-alt"></i>26 April, 2023</span>
-                                        <div class="review-rating">
-                                            <div class="star-rating" role="img" aria-label="Rated 5.00 out of 5">
-                                                <span style="width:80%">Rated <strong class="rating">5.00</strong> out of 5 based on <span class="rating">1</span> customer rating</span>
-                            </div>
-                    </div>
-                                        <p class="text">The purpose of lorem ipsum is to create a natural looking block of text  that doesn't distract from the layout. A practice not without controversy, laying out pages with meaningless filler text can be very useful when the focus is meant to be on design, not content.</p>
-                </div>
-            </div>
-                            </li>
-                            <li class="review vs-comment-item">
-                                <div class="vs-post-comment">
-                                    <div class="comment-avater">
-                                        <img src="{{ asset('assets/img/author/Comment Author.png') }}" alt="Comment Author">
-                        </div>
-                                    <div class="comment-content">
-                                        <h4 class="name h4">Tara sing</h4>
-                                        <span class="commented-on"><i class="fal fa-calendar-alt"></i>26 April, 2023</span>
-                                        <div class="review-rating">
-                                            <div class="star-rating" role="img" aria-label="Rated 5.00 out of 5">
-                                                <span style="width:100%">Rated <strong class="rating">4.00</strong> out of 5 based on <span class="rating">1</span> customer rating</span>
-                                </div>
-                                    </div>
-                                        <p class="text">The passage experienced a surge in 1960s when Letraset used it on their dry-transfer sheets, and again during the 90s as desktop publishers bundled the text with their software. Today it's seen all around the web; on templates, websites, and stock designs. Use our generator</p>
-                                </div>
-                            </div>
-                            </li>
-                        </ul>
-                                </div>
-                                    </div>
 
-                <!-- Comment Form -->
-                <div class="vs-comment-form review-form">
-                    <div id="respond" class="comment-respond">
-                        <div class="form-title">
-                            <h3 class="blog-inner-title">Post Review</h3>
-                        </div>
-                        <div class="row">
-                            <div class="form-group rating-select">
-                                <label>Your Rating</label>
-                                <p class="stars">
-                                    <span>
-                                        <a class="star-1" href="#">1</a>
-                                        <a class="star-2" href="#">2</a>
-                                        <a class="star-3" href="#">3</a>
-                                        <a class="star-4" href="#">4</a>
-                                        <a class="star-5" href="#">5</a>
-                                    </span>
-                                        </p>
-                                    </div>
-                            <div class="col-md-6 form-group">
-                                <input type="text" class="form-control" placeholder="Complete Name">
-                                </div>
-                            <div class="col-md-6 form-group">
-                                <input type="email" class="form-control" placeholder="Email Address">
-                            </div>
-                            <div class="col-12 form-group">
-                                <textarea class="form-control" placeholder="Review"></textarea>
-                                </div>
-                            <div class="col-12 form-group mb-0">
-                                <button class="vs-btn">Post Review</button>
-                                    </div>
-                                </div>
-                            </div>
-                                </div>
-                                    </div>
-                                </div>
 
         <!-- Related Products Section -->
         @php
@@ -309,9 +211,9 @@
                                             {{ $relatedProduct['name'] }}
                                         </a>
                                     </h3>
-                                    <div class="star-rating" role="img" aria-label="Rated 5.00 out of 5">
+                                    {{-- <div class="star-rating" role="img" aria-label="Rated 5.00 out of 5">
                                         <span style="width:100%">Rated <strong class="rating">5.00</strong> out of 5</span>
-                                </div>
+                                </div> --}}
                                     <div class="actions">
                                         <a href="{{ route('frontend.parent.product-detail', ['productId' => $relatedProduct['id'], 'profile_id' => $selectedProfile['id'] ?? '']) }}" class="vs-btn">
                                             <i class="far fa-shopping-cart"></i>Add to Cart

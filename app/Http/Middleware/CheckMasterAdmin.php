@@ -55,9 +55,10 @@ class CheckMasterAdmin
         // - Proxy servers don't cache (must-revalidate, private)
         // - Page expires immediately (max-age=0, Expires in past)
         // - Back button always fetches fresh content from server
-        return $response
-            ->header('Cache-Control', 'no-cache, no-store, max-age=0, must-revalidate, private')
-            ->header('Pragma', 'no-cache')
-            ->header('Expires', 'Sat, 01 Jan 2000 00:00:00 GMT');
+        // Add cache control headers compatible with all response types
+        $response->headers->set('Cache-Control', 'no-cache, no-store, max-age=0, must-revalidate, private');
+        $response->headers->set('Pragma', 'no-cache');
+        $response->headers->set('Expires', 'Sat, 01 Jan 2000 00:00:00 GMT');
+        return $response;
     }
 }

@@ -1689,7 +1689,7 @@ class AuthController extends Controller
             'sku' => $dbProduct->id,
         ];
 
-        return view('frontend.store.product-detail', compact('selectedProfile', 'product'));
+    return view('frontend.store.product-detail', compact('selectedProfile', 'product'));
     }
 
     public function addToCart(Request $request)
@@ -2183,6 +2183,8 @@ class AuthController extends Controller
                 ->get()
                 ->keyBy('order_id');
 
+
+
             $formattedOrders[] = [
                 'id' => $baseOrderNumber,
                 'status' => $firstItem->order_status,
@@ -2212,6 +2214,7 @@ class AuthController extends Controller
 
                     return [
                         'id' => $item->id,
+                        'product_id' => $product ? $product->id : null, 
                         'name' => $item->item_name,
                         'price' => $item->total_amount / ($item->quantity > 0 ? $item->quantity : 1),
                         'quantity' => $item->quantity,

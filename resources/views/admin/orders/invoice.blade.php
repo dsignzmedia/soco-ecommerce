@@ -5,6 +5,15 @@
 @section('page_subheading', 'Formal breakdown suitable for download & print')
 
 @section('content')
+    <div style="max-width:960px;margin:0 auto 24px;">
+        <a href="{{ route('master.admin.orders.show', $order) }}" class="btn-back-outline">
+            <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M12.5 5L7.5 10L12.5 15" stroke="currentColor" stroke-width="1.67" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+            Back to order
+        </a>
+    </div>
+
     <section class="card" style="max-width:960px;margin:auto;">
         <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:24px;">
             <div>

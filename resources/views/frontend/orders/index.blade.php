@@ -115,17 +115,11 @@
                                                     </a>
                                                 </h6>
 
-                                                <!-- Rating Stars (Placeholder) -->
+                                                <!-- Simple Quantity Display -->
                                                 <div class="mb-2 position-relative" style="z-index: 2;">
-                                                    <div style="color: #d0d0d0; font-size: 1.2rem;">
-                                                        <i class="fas fa-star"></i>
-                                                        <i class="fas fa-star"></i>
-                                                        <i class="fas fa-star"></i>
-                                                        <i class="fas fa-star"></i>
-                                                        <i class="fas fa-star"></i>
-                                                    </div>
-                                                    <small class="text-muted">Rate this product now</small>
+                                                    <span class="text-muted small">Qty: <strong>{{ $item['quantity'] }}</strong></span>
                                                 </div>
+
                                             </div>
 
                                             <!-- Arrow Icon -->
@@ -158,5 +152,7 @@
         </div>
     </div>
 </section>
+
+
 
 @endsection

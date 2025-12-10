@@ -176,9 +176,9 @@
                                             {{ $product['name'] }}
                                         </a>
                                     </h3>
-                                    <div class="star-rating" role="img" aria-label="Rated 5.00 out of 5">
+                                    <!-- <div class="star-rating" role="img" aria-label="Rated 5.00 out of 5">
                                         <span style="width:100%">Rated <strong class="rating">5.00</strong> out of 5</span>
-                                    </div>
+                                    </div> -->
                                     <div class="actions">
                                         @if(isset($selectedProfile) && $selectedProfile)
                                             @php

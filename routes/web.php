@@ -85,6 +85,9 @@ Route::middleware(['auth', 'prevent-back-history'])->group(function () {
     Route::get('/parent/addresses', [AuthController::class, 'myAddresses'])->name('frontend.parent.addresses');
     Route::post('/parent/save-address', [AuthController::class, 'saveAddress'])->name('frontend.parent.save-address');
     Route::post('/parent/delete-address/{addressId}', [AuthController::class, 'deleteAddress'])->name('frontend.parent.delete-address');
+    
+    // Product Reviews
+    Route::post('/reviews', [App\Http\Controllers\Front\ReviewController::class, 'store'])->name('reviews.store');
 });
 
 // Google OAuth Routes
@@ -149,6 +152,7 @@ Route::prefix('MasterAdmin')->name('master.admin.')->group(function () {
 
         Route::get('/reports', [ReportController::class, 'index'])->name('reports.index');
         Route::get('/reports/export/{type}', [ReportController::class, 'export'])->name('reports.export');
+
 
         Route::get('/orders', [OrderController::class, 'index'])->name('orders.index');
         Route::get('/orders/{order}/invoice/download', [OrderController::class, 'invoiceDownload'])->name('orders.invoice.download');
