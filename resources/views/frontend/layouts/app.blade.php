@@ -209,6 +209,7 @@
 
 
 
+    @unless(View::hasSection('no_footer'))
     <footer class="footer-wrapper footer-layout1" data-bg-src="{{ asset('assets/img/bg/footer-bg-1-1.png') }}">
         <div class="footer-top">
             <div class="container">
@@ -304,7 +305,8 @@
                 </div>
             </div>
         </div>
-    </footer> <!-- Scroll To Top -->
+    </footer>
+    @endunless <!-- Scroll To Top -->
     <a href="#" class="scrollToTop scroll-btn"><i class="far fa-arrow-up"></i></a>
 
     <!--********************************

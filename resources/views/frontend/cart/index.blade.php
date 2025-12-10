@@ -17,15 +17,15 @@
 </div>
 
 <section class="space-top space-extra-bottom" style="background-color: #f8f5ff; padding-top: 60px;">
-    <div class="container-fluid" style="padding: 0 40px;">
+    <div class="container">
         <div class="row g-4 align-items-start">
-            <div class="col-lg-2 col-xl-2 mb-4">
+            <div class="col-lg-3 mb-4">
                 @include('frontend.dashboard.partials.account-sidebar')
             </div>
             
             @php
                 $cartIsEmpty = count($cartItems) === 0;
-                $contentClass = $cartIsEmpty ? 'col-lg-10 col-xl-10' : 'col-lg-7 col-xl-7';
+                $contentClass = $cartIsEmpty ? 'col-lg-9' : 'col-lg-6';
             @endphp
 
             <div class="{{ $contentClass }}">
@@ -132,7 +132,7 @@
             </div>
 
             @if(!$cartIsEmpty)
-                <div class="col-lg-3 col-xl-3">
+                <div class="col-lg-3">
                     <div class="card shadow-sm border-0 order-summary-card mb-4" style="background-color: #ffffff; border-radius: 12px;">
                         <div class="card-body">
                             <h5 class="mb-4" style="font-weight: 600; color: #333;">Order Summary</h5>

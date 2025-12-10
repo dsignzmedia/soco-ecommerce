@@ -33,9 +33,19 @@
                         <i class="fas fa-arrow-left"></i>
                     </a>
                     <h2 class="mb-0" style="font-weight: 600; color: #333; font-size: 1.5rem;">Order Details</h2>
-                    <a href="#" class="ms-auto btn btn-outline-primary" style="border-radius: 10px; padding: 10px 20px;">
+                    <a href="{{ route('frontend.contact') }}" class="ms-auto btn btn-outline-primary" style="border-radius: 10px; padding: 10px 20px;">
                         Help
                     </a>
+                </div>
+
+                <!-- Order ID Header -->
+                <div class="d-flex align-items-center justify-content-between mb-3">
+                    <div>
+                        <span class="text-muted small">Order #SOCO-{{ $order['id'] }}</span>
+                    </div>
+                    <button class="btn btn-sm btn-link p-0" onclick="copyOrderId()" style="color: #490D59; text-decoration: none; font-weight: 500;">
+                        <i class="fas fa-copy me-1"></i> Copy
+                    </button>
                 </div>
 
                 <!-- Order Items -->
@@ -71,19 +81,9 @@
                     </div>
                 </div>
 
-                <!-- Order ID & Status Combined --  >
+                <!-- Order ID & Status Combined -->
                 <div class="card shadow-sm border-0 mb-4" style="border-radius: 16px; overflow: hidden;">
                     <div class="card-body p-4">
-                        <!-- Order ID -->
-                        <div class="d-flex align-items-center justify-content-between mb-4">
-                            <div>
-                                <p class="text-muted small mb-1">Order #SOCO-{{ $order['id'] }}</p>
-                                <button class="btn btn-sm btn-link p-0" onclick="copyOrderId()" style="color: #490D59; text-decoration: none;">
-                                    <i class="fas fa-copy me-1"></i> Copy
-                                </button>
-                            </div>
-                        </div>
-
                         <!-- Order Status -->
                         <h5 class="mb-4" style="font-weight: 600; color: #333;">
                             @if($order['status'] === 'cancelled')
@@ -123,8 +123,35 @@
                                     <!-- Status Content -->
                                     <div>
                                         <h6 class="mb-1" style="font-weight: 600; color: {{ $isCompleted ? '#333' : '#999' }};">
-                                            {{ $status['label'] }}
+                                            @php
+                                                $icon = 'fa-circle';
+                                                $desc = '';
+                                                switch(strtolower($status['label'])) {
+                                                    case 'order placed':
+                                                        $icon = 'fa-clipboard-check';
+                                                        $desc = 'We have received your order';
+                                                        break;
+                                                    case 'processing':
+                                                        $icon = 'fa-cog';
+                                                        $desc = 'We are preparing your order';
+                                                        break;
+                                                    case 'packed':
+                                                        $icon = 'fa-box-open';
+                                                        $desc = 'Your order is packed and ready';
+                                                        break;
+                                                    case 'shipped':
+                                                        $icon = 'fa-shipping-fast';
+                                                        $desc = 'Your order is on the way';
+                                                        break;
+                                                    case 'delivered':
+                                                        $icon = 'fa-home';
+                                                        $desc = 'Package delivered';
+                                                        break;
+                                                }
+                                            @endphp
+                                            <i class="fas {{ $icon }} me-2"></i> {{ $status['label'] }}
                                         </h6>
+                                        <p class="text-muted small mb-1" style="font-size: 0.85rem;">{{ $desc }}</p>
                                         @if($isCurrent)
                                             <p class="text-muted small mb-0">
                                                 {{ $order['status'] === 'cancelled' ? 'Today, ' . date('M d', strtotime($order['updated_at'])) : date('D M d', strtotime($order['updated_at'])) }}
@@ -155,7 +182,7 @@
 
                 <div class="row">
                     <!-- Delivery Details -->
-                    <div class="col-md-6 mb-4">
+                    <div class="col-12 mb-4">
                         <div class="card shadow-sm border-0 h-100" style="border-radius: 16px;">
                             <div class="card-body p-4">
                                 <h6 class="mb-3" style="font-weight: 600; color: #333;">Delivery details</h6>
@@ -184,7 +211,7 @@
                     </div>
 
                     <!-- Price Details -->
-                    <div class="col-md-6 mb-4">
+                    <div class="col-12 mb-4">
                         <div class="card shadow-sm border-0 h-100" style="border-radius: 16px;">
                             <div class="card-body p-4">
                                 <h6 class="mb-3" style="font-weight: 600; color: #333;">Price details</h6>
@@ -196,19 +223,19 @@
 
                                 <div class="d-flex justify-content-between mb-2">
                                     <span class="text-muted">Listing price</span>
-                                    <span style="font-weight: 500;">₹{{ number_format($order['subtotal'] ?? $order['total']) }}</span>
+                                    <span style="font-weight: 500;">&#8377;{{ number_format($order['subtotal'] ?? $order['total']) }}</span>
                                 </div>
 
                                 <div class="d-flex justify-content-between mb-2">
                                     <span class="text-muted">Tax</span>
-                                    <span style="font-weight: 500;">₹{{ number_format($order['tax'] ?? 0) }}</span>
+                                    <span style="font-weight: 500;">&#8377;{{ number_format($order['tax'] ?? 0) }}</span>
                                 </div>
                                 
                                 <hr style="margin: 10px 0; border-color: #e0e0e0;">
 
                                 <div class="d-flex justify-content-between mb-0">
                                     <span style="font-weight: 600; color: #333;">Total amount</span>
-                                    <span style="font-weight: 600; font-size: 1.1rem; color: #333;">₹{{ number_format($order['total']) }}</span>
+                                    <span style="font-weight: 600; font-size: 1.1rem; color: #333;">&#8377;{{ number_format($order['total']) }}</span>
                                 </div>
                             </div>
                         </div>

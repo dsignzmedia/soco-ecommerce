@@ -161,9 +161,73 @@ class CatalogController extends Controller
 
         return match ($type) {
             'csv' => $this->downloadDelimited($products, ',', 'catalog-export.csv', 'text/csv'),
-            'excel' => $this->downloadDelimited($products, "\t", 'catalog-export.xls', 'application/vnd.ms-excel'),
+            'excel' => $this->downloadExcelXml($products),
             'pdf' => $this->downloadPdf($products),
         };
+    }
+
+    protected function downloadExcelXml(Collection $products)
+    {
+        $grouped = $products->groupBy(function ($product) {
+            return $product->school ? $product->school->name : 'Unassigned';
+        });
+
+        return response()->streamDownload(function () use ($grouped) {
+            echo '<?xml version="1.0"?>' . "\n";
+            echo '<?mso-application progid="Excel.Sheet"?>' . "\n";
+            echo '<Workbook xmlns="urn:schemas-microsoft-com:office:spreadsheet"' . "\n";
+            echo ' xmlns:o="urn:schemas-microsoft-com:office:office"' . "\n";
+            echo ' xmlns:x="urn:schemas-microsoft-com:office:excel"' . "\n";
+            echo ' xmlns:ss="urn:schemas-microsoft-com:office:spreadsheet"' . "\n";
+            echo ' xmlns:html="http://www.w3.org/TR/REC-html40">' . "\n";
+            
+            echo ' <Styles>' . "\n";
+            echo '  <Style ss:ID="Header">' . "\n";
+            echo '   <Font ss:Bold="1"/>' . "\n";
+            echo '   <Interior ss:Color="#E0E0E0" ss:Pattern="Solid"/>' . "\n";
+            echo '  </Style>' . "\n";
+            echo ' </Styles>' . "\n";
+
+            foreach ($grouped as $schoolName => $schoolProducts) {
+                // Excel sheet names must not exceed 31 chars and must not contain : \ / ? * [ ]
+                $safeName = preg_replace('/[\\\\\\/?*\\[\\]:]/', '', $schoolName);
+                $safeName = substr(trim($safeName), 0, 30);
+                if (empty($safeName)) $safeName = 'Sheet';
+                
+                echo ' <Worksheet ss:Name="' . htmlspecialchars($safeName) . '">' . "\n";
+                echo '  <Table>' . "\n";
+                
+                // Header
+                echo '   <Row ss:StyleID="Header">' . "\n";
+                $headers = ['Product Name', 'Grade', 'Category', 'Type', 'Gender', 'Price (Reg)', 'Price (Sale)', 'Stock', 'Status'];
+                foreach ($headers as $h) {
+                    echo '    <Cell><Data ss:Type="String">' . htmlspecialchars($h) . '</Data></Cell>' . "\n";
+                }
+                echo '   </Row>' . "\n";
+                
+                // Data
+                foreach ($schoolProducts as $p) {
+                    echo '   <Row>' . "\n";
+                    echo '    <Cell><Data ss:Type="String">' . htmlspecialchars($p->product_name) . '</Data></Cell>' . "\n";
+                    echo '    <Cell><Data ss:Type="String">' . htmlspecialchars($p->grade ?? 'All') . '</Data></Cell>' . "\n";
+                    echo '    <Cell><Data ss:Type="String">' . htmlspecialchars($p->category) . '</Data></Cell>' . "\n";
+                    echo '    <Cell><Data ss:Type="String">' . htmlspecialchars($p->product_type) . '</Data></Cell>' . "\n";
+                    echo '    <Cell><Data ss:Type="String">' . htmlspecialchars($p->gender) . '</Data></Cell>' . "\n";
+                    echo '    <Cell><Data ss:Type="Number">' . $p->price_regular . '</Data></Cell>' . "\n";
+                    echo '    <Cell><Data ss:Type="Number">' . ($p->price_sale ?? 0) . '</Data></Cell>' . "\n";
+                    echo '    <Cell><Data ss:Type="Number">' . $p->inventory_stock . '</Data></Cell>' . "\n";
+                    echo '    <Cell><Data ss:Type="String">' . $p->status . '</Data></Cell>' . "\n";
+                    echo '   </Row>' . "\n";
+                }
+                
+                echo '  </Table>' . "\n";
+                echo ' </Worksheet>' . "\n";
+            }
+            
+            echo '</Workbook>';
+        }, 'catalog-export-schools.xls', [
+            'Content-Type' => 'application/vnd.ms-excel',
+        ]);
     }
 
     protected function formView(ProductMapping $product, string $mode): View
@@ -345,71 +409,8 @@ class CatalogController extends Controller
 
     protected function downloadPdf(Collection $products)
     {
-        $lines = [
-            'Products & Catalog export',
-            str_repeat('-', 40),
-        ];
-
-        foreach ($products as $product) {
-            $lines[] = 'Product: ' . $product->product_name;
-            $lines[] = 'School: ' . optional($product->school)->name . ' / Grade: ' . ($product->grade ?? 'All');
-            $lines[] = 'Pricing: ' . $product->price_regular . ' (Sale: ' . ($product->price_sale ?? '—') . ', Tax: ' . ($product->price_tax ?? '—') . ')';
-            $lines[] = 'Inventory: stock ' . $product->inventory_stock . ' • alert ' . $product->low_stock_threshold;
-            $lines[] = 'Status: ' . ucfirst($product->status);
-            $lines[] = '';
-        }
-
-        $pdf = $this->buildSimplePdf($lines);
-
-        return response()->streamDownload(fn () => print($pdf), 'catalog-export.pdf', [
-            'Content-Type' => 'application/pdf',
-        ]);
-    }
-
-    protected function buildSimplePdf(array $lines): string
-    {
-        $escaped = array_map(fn ($line) => $this->escapePdfText($line), $lines);
-        $contentBody = "BT\n/F1 10 Tf\n72 720 Td\n";
-        foreach ($escaped as $index => $line) {
-            $contentBody .= '(' . $line . ") Tj\n";
-            if ($index !== array_key_last($escaped)) {
-                $contentBody .= "T*\n";
-            }
-        }
-        $contentBody .= "ET";
-        $length = strlen($contentBody);
-
-        $pdf = "%PDF-1.4\n";
-        $objects = [
-            '<< /Type /Catalog /Pages 2 0 R >>',
-            '<< /Type /Pages /MediaBox [0 0 612 792] /Count 1 /Kids [3 0 R] >>',
-            '<< /Type /Page /Parent 2 0 R /Contents 4 0 R /Resources << /Font << /F1 5 0 R >> >> >>',
-            "<< /Length $length >>\nstream\n$contentBody\nendstream",
-            '<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>',
-        ];
-
-        $offsets = [];
-        foreach ($objects as $index => $object) {
-            $offsets[] = strlen($pdf);
-            $pdf .= ($index + 1) . " 0 obj\n" . $object . "\nendobj\n";
-        }
-
-        $xrefPosition = strlen($pdf);
-        $pdf .= "xref\n0 " . (count($objects) + 1) . "\n";
-        $pdf .= "0000000000 65535 f \n";
-        foreach ($offsets as $offset) {
-            $pdf .= sprintf("%010d 00000 n \n", $offset);
-        }
-
-        $pdf .= "trailer << /Size " . (count($objects) + 1) . " /Root 1 0 R >>\n";
-        $pdf .= "startxref\n$xrefPosition\n%%EOF";
-
-        return $pdf;
-    }
-
-    protected function escapePdfText(string $value): string
-    {
-        return str_replace(['\\', '(', ')'], ['\\\\', '\\(', '\\)'], $value);
+        $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('admin.catalog.export-pdf', ['products' => $products]);
+        return $pdf->download('catalog-export.pdf');
     }
 }
 

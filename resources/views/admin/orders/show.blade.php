@@ -5,6 +5,13 @@
 @section('page_subheading', 'Full order detail, payment audit and fulfilment trail')
 
 @section('content')
+
+
+<style>
+    .card{
+        margin-top:10px !important;
+    }
+</style>
     <section class="card" style="display:flex;justify-content:space-between;align-items:center;">
         <div>
             <p style="margin:0;color:#475467;">Placed on {{ optional($order->order_date)->format('d M Y') }} • {{ $order->school?->name ?? 'Unoffiliated school' }}</p>
@@ -76,7 +83,7 @@
         </div>
         <div>
             <h4 style="margin:0 0 8px;color:#111827;">Update status</h4>
-            <form method="POST" action="{{ route('master.admin.orders.status', $order) }}" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:10px;">
+            <form method="POST" action="{{ route('master.admin.orders.status', $order) }}" style="display:flex;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:10px;">
                 @csrf
                 <select name="order_status">
                     @foreach(['processing','packed','shipped','delivered','returned','cancelled'] as $status)

@@ -15,7 +15,7 @@
     </div>
 </div>
 
-<section class="space-top space-extra-bottom parent-dashboard-wrapper" style="padding-top: 60px;">
+<section class="space-top space-extra-bottom parent-dashboard-wrapper" style="padding-top: 60px;background-color:f8f5ff !important;">
     <div class="container">
         @if(session('success'))
             <div class="alert alert-success alert-dismissible fade show" role="alert">
@@ -649,7 +649,7 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     .parent-dashboard-wrapper {
-        background-color: #ffffff;
+        background-color: #f8f5ff;
     }
 
     .tab-navigation {

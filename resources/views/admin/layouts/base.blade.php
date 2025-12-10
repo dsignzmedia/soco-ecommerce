@@ -31,6 +31,7 @@
             font-family: 'Inter', sans-serif;
             background: var(--bg);
             color: var(--text);
+            font-size: 14px;
         }
 
         a {
@@ -56,6 +57,10 @@
             background: var(--sidebar);
             padding: 32px 24px;
             border-right: 1px solid rgba(15, 23, 42, 0.05);
+            position: sticky;
+            top: 0;
+            height: 100vh;
+            overflow-y: auto;
         }
 
         .brand {
@@ -90,6 +95,7 @@
             color: #0f172a;
             display: flex;
             align-items: center;
+            font-size: 14px !important;
             gap: 10px;
             transition: background 0.2s ease, color 0.2s ease;
         }
@@ -97,6 +103,7 @@
         .nav__item.active {
             background: var(--primary-light);
             color: var(--primary);
+            font-size: 14px !important;
         }
 
         .content {
@@ -304,6 +311,27 @@
             box-shadow: 0 4px 6px rgba(73, 13, 89, 0.2);
         }
         .btn-vs-sm i { font-size: 12px; }
+
+        /* Custom Back Button Style - Outline with Dash effect preference or plain stroke */
+        .btn-back-outline {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 16px;
+            border: 1.5px solid #d0d5dd;
+            border-radius: 8px;
+            background: #fff;
+            color: #344054;
+            font-weight: 600;
+            font-size: 14px;
+            text-decoration: none;
+            transition: all 0.2s ease;
+        }
+        .btn-back-outline:hover {
+            border-color: var(--primary);
+            color: var(--primary);
+            background: var(--primary-light);
+        }
     </style>
     @stack('styles')
 </head>
@@ -317,18 +345,18 @@
             <nav class="nav">
                 @php($navItems = [
                     ['label' => 'Dashboard', 'route' => 'master.admin.dashboard', 'icon' => 'fas fa-th-large'],
+                    ['label' => 'School Management', 'route' => 'master.admin.schools.index', 'icon' => 'fas fa-school'],
                     ['label' => 'Orders', 'route' => 'master.admin.orders.index', 'icon' => 'fas fa-shopping-bag'],
                     ['label' => 'Products & Catalog', 'route' => 'master.admin.catalog.index', 'icon' => 'fas fa-box-open'],
                     ['label' => 'Inventory', 'route' => 'master.admin.inventory.dashboard', 'icon' => 'fas fa-warehouse'],
                     ['label' => 'Returns & Exchanges', 'route' => 'master.admin.returns-exchange.index', 'icon' => 'fas fa-exchange-alt'],
                     ['label' => 'Shipping', 'route' => 'master.admin.shipping.edit', 'icon' => 'fas fa-shipping-fast'],
-                    ['label' => 'School Management', 'route' => 'master.admin.schools.index', 'icon' => 'fas fa-school'],
                     ['label' => 'Reports', 'route' => 'master.admin.reports.index', 'icon' => 'fas fa-chart-bar'],
                     ['label' => 'System Settings', 'route' => 'master.admin.settings.index', 'icon' => 'fas fa-cog'],
                     ['label' => 'Audit Logs', 'route' => 'master.admin.settings.audit-logs', 'icon' => 'fas fa-clipboard-list'],
                 ])
                 @foreach($navItems as $item)
-                    <a class="nav__item {{ request()->routeIs($item['route']) ? 'active' : '' }}" href="{{ route($item['route']) }}">
+                    <a class="nav__item {{ ($item['route'] === 'master.admin.dashboard' ? request()->routeIs($item['route']) : (request()->routeIs($item['route']) || request()->routeIs($item['route'] . '.*'))) ? 'active' : '' }}" href="{{ route($item['route']) }}">
                         <i class="{{ $item['icon'] }}" style="width: 18px; text-align: center;"></i>
                         {{ $item['label'] }}
                     </a>
