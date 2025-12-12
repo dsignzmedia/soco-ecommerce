@@ -296,7 +296,7 @@ class AuthController extends Controller
     }
 
     /**
-     * Handle login submission
+     * Handle login submission - Unified login for all user types
      */
     public function login(Request $request)
     {
@@ -317,6 +317,9 @@ class AuthController extends Controller
                 'user_email' => $user->email,
                 'user_name' => $user->name,
                 'role' => $user->role,
+                'role_type' => gettype($user->role),
+                'isSchool()' => $user->isSchool() ? 'YES' : 'NO',
+                'ROLE_SCHOOL_CONSTANT' => User::ROLE_SCHOOL,
             ]);
 
             // Store parent phone in session for dashboard compatibility
@@ -326,8 +329,29 @@ class AuthController extends Controller
                 session(['parent_phone' => $user->email]);
             }
 
-            // Role-based redirect
-            return $this->redirectBasedOnRole($user);
+            // Login parent users via web guard
+            if (Auth::attempt($credentials)) {
+                $request->session()->regenerate();
+
+                $user = Auth::user();
+
+                Log::info('Parent login successful', [
+                    'user_id' => $user->id,
+                    'user_email' => $user->email,
+                    'user_name' => $user->name,
+                    'role' => $user->role,
+                ]);
+
+                // Store parent phone in session for dashboard compatibility
+                if ($user->phone) {
+                    session(['parent_phone' => $user->phone]);
+                } else {
+                    session(['parent_phone' => $user->email]);
+                }
+
+                // Redirect to parent dashboard
+                return redirect()->route('frontend.parent.dashboard');
+            }
         }
 
         Log::warning('Login failed - Invalid credentials', ['email' => $request->email]);
@@ -344,7 +368,8 @@ class AuthController extends Controller
     {
         Auth::logout();
 
-        $request->session()->invalidate();
+        // DO NOT invalidate the entire session as it would logout Master/Inventory Admin users too
+        // $request->session()->invalidate();
         $request->session()->regenerateToken();
 
         return redirect()->route('frontend.index')
@@ -369,7 +394,7 @@ class AuthController extends Controller
             'password' => $request->password,
         ];
 
-        if (Auth::attempt($credentials)) {
+        if (auth('school')->attempt($credentials)) {
             $request->session()->regenerate();
             $user = Auth::user();
 
@@ -402,8 +427,10 @@ class AuthController extends Controller
         $school = $user->school;
 
         if (!$school) {
-            return redirect()->route('login')
-                ->with('error', 'School not found. Please contact administrator.');
+            // If the authenticated school user has no associated school record,
+            // redirect them to the school login page with an informative message.
+            return redirect()->route('frontend.school.login')
+                ->with('error', 'School profile not found. Please complete your school setup or contact administrator.');
         }
 
         // Get real order statistics for this school
@@ -425,7 +452,7 @@ class AuthController extends Controller
     public function schoolOrders(Request $request)
     {
         // Check if user is authenticated and has school role
-        if (!Auth::check() || !Auth::user()->isSchool()) {
+        if (!auth('school')->check() || !auth('school')->user()->isSchool()) {
             return redirect()->route('login')
                 ->with('error', 'Please login to access this page.');
         }
@@ -481,7 +508,7 @@ class AuthController extends Controller
     public function schoolStudents(Request $request)
     {
         // Check if user is authenticated and has school role
-        if (!Auth::check() || !Auth::user()->isSchool()) {
+        if (!auth('school')->check() || !auth('school')->user()->isSchool()) {
             return redirect()->route('login')
                 ->with('error', 'Please login to access this page.');
         }
@@ -545,7 +572,7 @@ class AuthController extends Controller
     public function schoolProducts(Request $request)
     {
         // Check if user is authenticated and has school role
-        if (!Auth::check() || !Auth::user()->isSchool()) {
+        if (!auth('school')->check() || !auth('school')->user()->isSchool()) {
             return redirect()->route('login')
                 ->with('error', 'Please login to access this page.');
         }
@@ -609,7 +636,7 @@ class AuthController extends Controller
     public function schoolSettings()
     {
         // Check if user is authenticated and has school role
-        if (!Auth::check() || !Auth::user()->isSchool()) {
+        if (!auth('school')->check() || !auth('school')->user()->isSchool()) {
             return redirect()->route('login')
                 ->with('error', 'Please login to access this page.');
         }
@@ -628,7 +655,7 @@ class AuthController extends Controller
     public function updateSchoolSettings(Request $request)
     {
         // Check if user is authenticated and has school role
-        if (!Auth::check() || !Auth::user()->isSchool()) {
+        if (!auth('school')->check() || !auth('school')->user()->isSchool()) {
             return redirect()->route('login')
                 ->with('error', 'Please login to access this page.');
         }
@@ -669,7 +696,7 @@ class AuthController extends Controller
     {
         // Check if school is authenticated
         if (!session('school_authenticated')) {
-            return redirect()->route('login')
+            return redirect()->route('frontend.school.login')
                 ->with('error', 'Please login to access reports.');
         }
 
@@ -680,7 +707,7 @@ class AuthController extends Controller
     {
         // Check if school is authenticated
         if (!session('school_authenticated')) {
-            return redirect()->route('login')
+            return redirect()->route('frontend.school.login')
                 ->with('error', 'Please login to generate reports.');
         }
 
@@ -725,7 +752,7 @@ class AuthController extends Controller
     {
         // Check if school is authenticated
         if (!session('school_authenticated')) {
-            return redirect()->route('login')
+            return redirect()->route('frontend.school.login')
                 ->with('error', 'Please login to download reports.');
         }
 
@@ -745,7 +772,7 @@ class AuthController extends Controller
     {
         // Check if school is authenticated
         if (!session('school_authenticated')) {
-            return redirect()->route('login')
+            return redirect()->route('frontend.school.login')
                 ->with('error', 'Please login to email reports.');
         }
 
