@@ -333,15 +333,28 @@ class AuthController extends Controller
             if (Auth::attempt($credentials)) {
                 $request->session()->regenerate();
 
+<<<<<<< HEAD
                 $user = Auth::user();
                 
+=======
+            // Login parent users via web guard
+            if (Auth::attempt($credentials)) {
+                $request->session()->regenerate();
+
+                $user = Auth::user();
+
+>>>>>>> d05dcb653f778055f4b651209f021abe0ed2fccc
                 Log::info('Parent login successful', [
                     'user_id' => $user->id,
                     'user_email' => $user->email,
                     'user_name' => $user->name,
                     'role' => $user->role,
                 ]);
+<<<<<<< HEAD
                 
+=======
+
+>>>>>>> d05dcb653f778055f4b651209f021abe0ed2fccc
                 // Store parent phone in session for dashboard compatibility
                 if ($user->phone) {
                     session(['parent_phone' => $user->phone]);
@@ -1581,7 +1594,11 @@ class AuthController extends Controller
                 if (isset($arabicMap[strtoupper($rawGrade)])) {
                     $gradeVariants[] = $arabicMap[strtoupper($rawGrade)];
                 }
+<<<<<<< HEAD
                 
+=======
+
+>>>>>>> d05dcb653f778055f4b651209f021abe0ed2fccc
                 // Add partial matches like "Class 12" or "Grade XII" if not already covered
                 // (Note: This might be overkill if data specific, but robust)
                 $extras = [];
@@ -1595,7 +1612,11 @@ class AuthController extends Controller
                 $dbProductsQuery->where(function($q) use ($gradeVariants) {
                     $q->whereIn('grade', $gradeVariants)
                       ->orWhereNull('grade')
+<<<<<<< HEAD
                       ->orWhere('grade', ''); 
+=======
+                      ->orWhere('grade', '');
+>>>>>>> d05dcb653f778055f4b651209f021abe0ed2fccc
                 });
             }
 
@@ -2434,6 +2455,11 @@ class AuthController extends Controller
         // Get pre-selected items from query string
         $selectedItems = $request->query('selected_items', []);
         
+        // Ensure selectedItems is an array (handle single value query param case)
+        if (!is_array($selectedItems)) {
+            $selectedItems = [$selectedItems];
+        }
+
         // Ensure selectedItems is an array (handle single value query param case)
         if (!is_array($selectedItems)) {
             $selectedItems = [$selectedItems];
