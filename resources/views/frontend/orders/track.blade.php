@@ -3,7 +3,14 @@
 @section('content')
 @include('frontend.partials.header')
 
-<!-- Breadcrumb -->
+<style>
+    @media (max-width: 768px) {
+        .breadcrumb-wrapper { padding-top: 20px !important; }
+        .space-top { padding-top: 30px !important; }
+        .space-extra-bottom { padding-bottom: 30px !important; }
+    }
+</style>
+
 <div class="breadcrumb-wrapper" style="background-color: #e0e0e0; padding-top: 50px; border-bottom: 1px solid #d0d0d0;">
     <div class="container" style="padding: 20px;">
         <div class="breadcumb-menu-wrap" style="margin: 9px 0 0 0;">
@@ -28,11 +35,11 @@
             <!-- Right Content Area -->
             <div class="col-lg-9">
                 <!-- Back Button & Header -->
-                <div class="d-flex align-items-center mb-4">
-                    <a href="{{ route('frontend.parent.orders') }}" class="btn btn-light me-3" style="border-radius: 10px; padding: 10px 16px;">
+                <div class="d-flex align-items-center mb-4 flex-wrap gap-3">
+                    <a href="{{ route('frontend.parent.orders') }}" class="btn btn-light" style="border-radius: 10px; padding: 10px 16px;">
                         <i class="fas fa-arrow-left"></i>
                     </a>
-                    <h2 class="mb-0" style="font-weight: 600; color: #333; font-size: 1.5rem;">Order Details</h2>
+                    <h2 class="mb-0 text-truncate" style="font-weight: 600; color: #333; font-size: 1.5rem; max-width: 200px;">Order Details</h2>
                     <a href="{{ route('frontend.contact') }}" class="ms-auto btn btn-outline-primary" style="border-radius: 10px; padding: 10px 20px;">
                         Help
                     </a>
@@ -52,7 +59,7 @@
                 <div class="card shadow-sm border-0 mb-4" style="border-radius: 16px; overflow: hidden;">
                     <div class="card-body p-4">
                         @foreach($order['items'] as $item)
-                            <div class="d-flex gap-3 {{ !$loop->last ? 'mb-3 pb-3 border-bottom' : '' }}">
+                            <div class="d-flex gap-3 {{ !$loop->last ? 'mb-4 pb-4 border-bottom' : '' }}">
                                 <!-- Product Image -->
                                 <div class="flex-shrink-0">
                                     @if(isset($item['image']) && $item['image'])
@@ -66,17 +73,17 @@
                                     @endif
                                 </div>
 
-                                <!-- Product Details -->
-                                <div class="flex-grow-1">
-                                    <h6 class="mb-2" style="font-weight: 600; color: #333; font-size: 1rem;">
-                                        {{ !empty($item['name']) ? $item['name'] : 'Product Name Unavailable' }}
-                                    </h6>
-                                    <div class="d-flex gap-3 mt-2">
-                                        <span class="text-muted small">Size: <strong>{{ $item['size'] ?? 'N/A' }}</strong></span>
-                                        <span class="text-muted small">Qty: <strong>{{ $item['quantity'] }}</strong></span>
+                                    <div class="d-flex flex-column flex-sm-row justify-content-between align-items-start gap-2">
+                                        <div class="mb-2 mb-sm-0">
+                                            <h6 class="mb-2" style="font-weight: 600; color: #333; font-size: 1rem;">
+                                                {{ !empty($item['name']) ? $item['name'] : 'Product Name Unavailable' }}
+                                            </h6>
+                                            <div class="d-flex gap-3 mt-2">
+                                                <span class="text-muted small">Size: <strong>{{ $item['size'] ?? 'N/A' }}</strong></span>
+                                                <span class="text-muted small">Qty: <strong>{{ $item['quantity'] }}</strong></span>
+                                            </div>
+                                        </div>
                                     </div>
-                                </div>
-                            </div>
                         @endforeach
                     </div>
                 </div>
@@ -114,7 +121,7 @@
                                 <div class="mb-4 position-relative">
                                     <!-- Timeline Line -->
                                     @if(!$loop->last)
-                                        <div style="position: absolute; left: -28px; top: 20px; width: 2px; height: 40px; background-color: {{ $isCompleted ? '#28a745' : '#e0e0e0' }};"></div>
+                                        <div style="position: absolute; left: -28px; top: 20px; bottom: -24px; width: 2px; background-color: {{ $isCompleted ? '#28a745' : '#e0e0e0' }};"></div>
                                     @endif
                                     
                                     <!-- Status Circle -->
@@ -160,6 +167,46 @@
                                     </div>
                                 </div>
                             @endforeach
+
+                            <!-- Return / Exchange Button or Status (Shown after timeline if delivered) -->
+                            @if($order['status'] === 'delivered')
+                                @if(isset($returnRequest) && $returnRequest->status != 'pending')
+                                    <div class="mb-4">
+                                        @if($returnRequest->status == 'approved')
+                                            <div class="p-3 rounded" style="background-color: #ecfdf5; border: 1px solid #dcfce7; color: #065f46;">
+                                                <i class="fas fa-check-circle me-2"></i> 
+                                                <strong>{{ ucfirst($returnRequest->type) }} Request Approved</strong>
+                                            </div>
+                                        @elseif(in_array($returnRequest->status, ['received_restocked', 'received_discarded']))
+                                            <div class="p-3 rounded" style="background-color: #eff6ff; border: 1px solid #dbeafe; color: #1e40af;">
+                                                <i class="fas fa-box-open me-2"></i> 
+                                                <strong>Return Received</strong>
+                                            </div>
+                                        @elseif($returnRequest->status == 'completed')
+                                            <div class="p-3 rounded" style="background-color: #f0f9ff; border: 1px solid #e0f2fe; color: #0369a1;">
+                                                <i class="fas fa-check-double me-2"></i> 
+                                                <strong>Exchange Completed</strong>
+                                            </div>
+                                        @elseif($returnRequest->status == 'rejected')
+                                            <div class="p-3 rounded" style="background-color: #fef2f2; border: 1px solid #fee2e2; color: #991b1b;">
+                                                <i class="fas fa-times-circle me-2"></i> 
+                                                <strong>Request Rejected</strong>
+                                            </div>
+                                        @endif
+                                    </div>
+                                @else
+                                    <div class="mb-4">
+                                        <a href="{{ route('frontend.parent.return-exchange', ['orderId' => $order['id']]) }}" class="btn btn-outline-danger btn-sm" style="border-radius: 8px; font-weight: 600;">
+                                            Proceed to Return/Exchange
+                                        </a>
+                                        @if(isset($returnRequest) && $returnRequest->status == 'pending')
+                                            <div class="mt-2 text-warning small">
+                                                <i class="fas fa-clock me-1"></i> Request Pending Approval
+                                            </div>
+                                        @endif
+                                    </div>
+                                @endif
+                            @endif
                         </div>
                     </div>
                 </div>

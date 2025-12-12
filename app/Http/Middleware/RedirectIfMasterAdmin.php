@@ -20,7 +20,7 @@ class RedirectIfMasterAdmin
     public function handle(Request $request, Closure $next): Response
     {
         // If user is authenticated AND has Master Admin role
-        if (auth()->check() && auth()->user()->role === 2) {
+        if (auth()->guard('master_admin')->check() && auth()->guard('master_admin')->user()->role === 2) {
             return redirect()->route('master.admin.dashboard')
                 ->with('info', 'You are already logged in.');
         }

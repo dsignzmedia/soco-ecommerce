@@ -39,7 +39,7 @@
             </select>
             <input type="text" name="q" placeholder="Search product" value="{{ $filters['q'] ?? '' }}">
             <button type="submit">Filter</button>
-            <a class="reset" href="{{ route('master.admin.inventory.list') }}">Reset</a>
+            <button type="button" onclick="window.location.href='{{ route('master.admin.inventory.list') }}'" class="btn-reset">Reset</button>
         </form>
     </section>
 

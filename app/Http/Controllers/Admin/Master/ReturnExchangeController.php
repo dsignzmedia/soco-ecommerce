@@ -37,7 +37,44 @@ class ReturnExchangeController extends Controller
     public function show(ReturnExchangeRequest $returnRequest): View
     {
         $returnRequest->load('order');
-        return view('admin.returns.show', compact('returnRequest'));
+        
+        // Fetch product and variants for size dropdown
+        $product = null;
+        $sizes = collect();
+        
+        if ($returnRequest->order) {
+            $product = ProductMapping::where('product_name', $returnRequest->order->item_name)
+                ->where('school_id', $returnRequest->order->school_id)
+                ->first();
+                
+            if ($product) {
+                // Assuming sizes are stored in ProductVariant model linked to ProductMapping
+                // If using variants relation:
+                $sizes = $product->variants()->where('stock', '>', 0)->get();
+            }
+        }
+
+        return view('admin.returns.show', compact('returnRequest', 'product', 'sizes'));
+    }
+
+    public function switchType(Request $request, ReturnExchangeRequest $returnRequest): RedirectResponse
+    {
+        if ($returnRequest->type === 'return') {
+            $returnRequest->update([
+                'type' => 'exchange',
+                // Keep status as is, or ensure it's actionable
+            ]);
+            
+            AuditLogger::record('return_exchange_switch_type', $returnRequest, [
+                'order_id' => $returnRequest->order_id,
+                'from' => 'return',
+                'to' => 'exchange',
+            ], 'Switched request type from Return to Exchange');
+
+            return back()->with('status', 'Request type switched to Exchange');
+        }
+
+        return back()->with('error', 'Request is already an exchange or cannot be switched.');
     }
 
     public function approve(Request $request, ReturnExchangeRequest $returnRequest): RedirectResponse
@@ -111,7 +148,7 @@ class ReturnExchangeController extends Controller
         ]);
 
         $order = $returnRequest->order;
-        $exchangeNumber = $this->generateExchangeNumber();
+        $exchangeNumber = $this->generateExchangeNumber($order);
 
         // Create a new order to represent the exchange shipment
         $newOrder = Order::create([
@@ -174,8 +211,8 @@ class ReturnExchangeController extends Controller
         return redirect()->route('master.admin.returns-exchange.show', $returnRequest)->with('status', 'Exchange order generated');
     }
 
-    protected function generateExchangeNumber(): string
+    protected function generateExchangeNumber(Order $order): string
     {
-        return 'EXCH-'.now()->format('Ymd').'-'.str_pad((string)random_int(1, 999999), 6, '0', STR_PAD_LEFT);
+        return 'EXC-' . $order->order_number;
     }
 }

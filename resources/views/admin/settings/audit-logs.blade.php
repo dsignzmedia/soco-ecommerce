@@ -27,7 +27,7 @@
             </label>
             <div style="display:flex;gap:12px;align-items:flex-end;">
                 <button type="submit" style="padding:10px 18px;border:none;border-radius:12px;background:#490d59;color:#fff;font-weight:600;cursor:pointer;">Filter</button>
-                <a href="{{ route('master.admin.settings.audit-logs') }}" style="padding:10px 18px;border-radius:12px;border:1px solid #d0d5dd;color:#475467;text-decoration:none;">Reset</a>
+                <button type="button" onclick="window.location.href='{{ route('master.admin.settings.audit-logs') }}'" class="btn-reset">Reset</button>
             </div>
         </form>
 

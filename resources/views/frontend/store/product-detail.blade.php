@@ -85,12 +85,29 @@
                         <div class="mb-4">
                             <div class="d-flex align-items-center gap-2 mb-2">
                                 <label class="form-label fw-bold mb-0">Size:</label>
-                                <a href="#" class="text-primary small" data-bs-toggle="modal" data-bs-target="#sizeGuideModal" style="text-decoration: underline;">Size Guide</a>
+                                @if(!empty($product['size_chart_path']) || !empty($product['video_url']))
+                                    <a href="#" class="text-primary small" data-bs-toggle="modal" data-bs-target="#sizeGuideModal" style="text-decoration: underline;">Size Guide</a>
+                                @endif
                             </div>
                             <div class="d-flex gap-2 flex-wrap">
                                 @foreach($product['sizes'] as $size)
-                                    <label class="size-option">
-                                        <input type="radio" name="size" value="{{ $size }}" {{ $loop->first ? 'checked' : '' }} required>
+                                    @php
+                                        $isOutOfStock = false;
+                                        if(isset($product['variants']) && count($product['variants']) > 0) {
+                                            $variant = $product['variants']->firstWhere('option', $size);
+                                            if($variant) {
+                                                $isOutOfStock = $variant->stock <= 0;
+                                            }
+                                        }
+                                        // Auto-select first available size
+                                        $checked = false;
+                                        if (!$isOutOfStock && !isset($hasChecked)) {
+                                            $checked = true;
+                                            $hasChecked = true;
+                                        }
+                                    @endphp
+                                    <label class="size-option {{ $isOutOfStock ? 'disabled' : '' }}" {{ $isOutOfStock ? 'title=Out-of-stock' : '' }}>
+                                        <input type="radio" name="size" value="{{ $size }}" {{ $checked ? 'checked' : '' }} {{ $isOutOfStock ? 'disabled' : '' }} required>
                                         <span>{{ $size }}</span>
                                     </label>
                                 @endforeach
@@ -240,18 +257,23 @@
             </div>
             <div class="modal-body">
                 <div class="row g-4">
-                    <div class="col-md-6">
-                        <div class="size-guide-image">
-                            <img src="{{ asset('assets/img/product/size_guide/15851743422781.jpg') }}" alt="Size Guide" class="w-100" style="border-radius: 8px;">
-                        </div>
-                    </div>
-                    <div class="col-md-6">
-                        <div class="size-guide-video">
-                            <div class="ratio ratio-16x9">
-                                <iframe src="https://www.youtube.com/embed/dQw4w9WgXcQ" title="Size Guide Video" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+                     @if(!empty($product['size_chart_path']))
+                        <div class="{{ !empty($product['video_url']) ? 'col-md-6' : 'col-12' }}">
+                            <div class="size-guide-image">
+                                <img src="{{ asset('storage/' . $product['size_chart_path']) }}" alt="Size Guide" class="w-100" style="border-radius: 8px;">
                             </div>
                         </div>
-                    </div>
+                    @endif
+                    
+                    @if(!empty($product['video_url']))
+                        <div class="{{ !empty($product['size_chart_path']) ? 'col-md-6' : 'col-12' }}">
+                            <div class="size-guide-video">
+                                <div class="ratio ratio-16x9">
+                                    <iframe src="{{ str_replace('watch?v=', 'embed/', $product['video_url']) }}" title="Size Guide Video" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+                                </div>
+                            </div>
+                        </div>
+                    @endif
                 </div>
             </div>
         </div>
@@ -460,6 +482,23 @@
 
     .size-option:hover span {
         border-color: #490D59;
+    }
+
+    .size-option.disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+    }
+    
+    .size-option.disabled span {
+        background-color: #f2f4f7;
+        color: #98a2b3;
+        border-color: #eaecf0;
+        cursor: not-allowed;
+        text-decoration: line-through;
+    }
+    
+    .size-option.disabled:hover span {
+        border-color: #eaecf0;
     }
 
     .form-select {

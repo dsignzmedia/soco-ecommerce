@@ -62,7 +62,7 @@
             <input type="date" name="date_from" value="{{ $filters['date_from'] ?? '' }}">
             <input type="date" name="date_to" value="{{ $filters['date_to'] ?? '' }}">
             <button type="submit">Apply</button>
-            <a class="reset" href="{{ route('master.admin.orders.index') }}">Reset</a>
+            <button type="button" onclick="window.location.href='{{ route('master.admin.orders.index') }}'" class="btn-reset">Reset</button>
         </form>
     </section>
 

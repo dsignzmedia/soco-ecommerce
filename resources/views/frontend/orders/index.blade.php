@@ -47,9 +47,11 @@
                     <div class="orders-list">
                         @foreach($orders as $order)
                             @foreach($order['items'] as $item)
-                                <div class="card shadow-sm border-0 mb-3 position-relative" style="border-radius: 12px; transition: all 0.3s;"
+                                <a href="{{ route('frontend.parent.track-order', ['orderId' => $order['id']]) }}" class="card shadow-sm border-0 mb-3 position-relative text-decoration-none" style="border-radius: 12px; transition: all 0.3s; display: block;"
                                     onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 6px 20px rgba(73, 13, 89, 0.15)'"
                                     onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 2px 8px rgba(0,0,0,0.1)'">
+
+
                                     <div class="card-body p-3">
                                         <div class="row align-items-center">
                                             <!-- Product Image -->
@@ -67,7 +69,7 @@
 
                                             <!-- Order Details -->
                                             <div class="col">
-                                                <!-- Status Badge -->
+                                                <!-- Status Badge (Commented out in original) -->
                                                 @php
                                                     $statusColor = '#6c757d';
                                                     $statusText = ucfirst($order['status']);
@@ -99,24 +101,16 @@
                                                     }
                                                 @endphp
                                                 
-                                                {{-- Status Badge --}}
-                                                {{-- 
-                                                <div class="mb-2">
-                                                    <span class="badge" style="background-color: {{ $statusColor }}; color: #ffffff; font-size: 0.85rem; padding: 6px 12px; border-radius: 6px;">
-                                                        {{ $statusText }}
-                                                    </span>
-                                                </div>
-                                                --}}
+
 
                                                 <!-- Product Name -->
                                                 <h6 class="mb-2" style="font-weight: 600; color: #333; font-size: 1rem;">
-                                                    <a href="{{ route('frontend.parent.track-order', ['orderId' => $order['id']]) }}" class="text-decoration-none text-dark stretched-link">
-                                                        {{ trim($item['name']) !== '' ? $item['name'] : 'Product Name Unavailable' }}
-                                                    </a>
+                                                    {{ trim($item['name']) !== '' ? $item['name'] : 'Product Name Unavailable' }}
                                                 </h6>
 
                                                 <!-- Simple Quantity Display -->
                                                 <div class="mb-2 position-relative" style="z-index: 2;">
+                                                    <span class="text-muted small me-3">Size: <strong>{{ $item['size'] ?? 'N/A' }}</strong></span>
                                                     <span class="text-muted small">Qty: <strong>{{ $item['quantity'] }}</strong></span>
                                                 </div>
 
@@ -128,7 +122,7 @@
                                             </div>
                                         </div>
                                     </div>
-                                </div>
+                                </a>
                             @endforeach
                         @endforeach
                     </div>

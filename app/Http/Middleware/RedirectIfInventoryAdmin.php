@@ -15,8 +15,8 @@ class RedirectIfInventoryAdmin
 {
     public function handle(Request $request, Closure $next): Response
     {
-        // If user is authenticated AND has Inventory Admin role
-        if (auth()->check() && auth()->user()->role === 3) {
+        // If user is authenticated AND has Inventory Admin role via guard
+        if (auth()->guard('inventory_admin')->check() && auth()->guard('inventory_admin')->user()->role === 3) {
             return redirect()->route('inventory.admin.dashboard')
                 ->with('info', 'You are already logged in.');
         }

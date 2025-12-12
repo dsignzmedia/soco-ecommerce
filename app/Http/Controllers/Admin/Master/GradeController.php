@@ -47,7 +47,7 @@ class GradeController extends Controller
         return $request->validate([
             'name' => ['required', 'string', 'max:255'],
             'display_order' => ['required', 'integer', 'min:1'],
-            'gender_rule' => ['required', 'in:boys,girls,unisex'],
+            'gender_rule' => ['required', 'in:male,female,unisex'],
         ]);
     }
 }

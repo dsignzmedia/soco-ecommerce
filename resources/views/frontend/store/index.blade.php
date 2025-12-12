@@ -184,16 +184,9 @@
                                             @php
                                                 $defaultSize = $product['sizes'][0] ?? 'Standard';
                                             @endphp
-                                            <form action="{{ route('frontend.parent.add-to-cart') }}" method="POST" class="add-to-cart-form">
-                                                @csrf
-                                                <input type="hidden" name="product_id" value="{{ $product['id'] }}">
-                                                <input type="hidden" name="profile_id" value="{{ $selectedProfile['id'] }}">
-                                                <input type="hidden" name="size" value="{{ $defaultSize }}">
-                                                <input type="hidden" name="quantity" value="1">
-                                                <button type="submit" class="vs-btn w-100">
-                                                    <i class="far fa-shopping-cart"></i>Add to Cart
-                                                </button>
-                                            </form>
+                                            <a href="{{ route('frontend.parent.product-detail', ['productId' => $product['id'], 'profile_id' => $selectedProfile['id']]) }}" class="vs-btn w-100">
+                                                <i class="far fa-shopping-cart"></i>Choose Size
+                                            </a>
                                         @else
                                             <a href="{{ route('frontend.parent.dashboard') }}" class="vs-btn flex-fill">
                                                 <i class="far fa-shopping-cart"></i>Select Profile

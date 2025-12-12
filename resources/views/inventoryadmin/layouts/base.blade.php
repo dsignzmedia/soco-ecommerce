@@ -84,6 +84,10 @@
             display: flex;
             flex-direction: column;
             gap: 32px;
+            position: sticky;
+            top: 0;
+            height: 100vh;
+            overflow-y: auto;
         }
 
         .brand {
@@ -122,11 +126,18 @@
         }
 
         .nav__item.active {
-            background: rgba(79, 70, 229, 0.08);
-            color: var(--accent);
+            background: rgb(73 13 89);
+            color: #ffffff;
         }
 
         .content {
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            min-width: 0;
+        }
+
+        .content-body {
             padding: 32px 40px;
         }
 
@@ -142,7 +153,13 @@
             display: flex;
             align-items: center;
             justify-content: space-between;
-            margin-bottom: 28px;
+            background: var(--surface);
+            padding: 24px 40px;
+            margin: 0;
+            position: sticky;
+            top: 0;
+            z-index: 999;
+            border-bottom: 1px solid var(--border);
         }
 
         .profile-chip {
@@ -213,7 +230,7 @@
                 border-bottom: 1px solid var(--border);
             }
 
-            .content {
+            .content-body {
                 padding: 24px;
             }
 
@@ -221,6 +238,12 @@
                 flex-direction: column;
                 align-items: flex-start;
                 gap: 12px;
+                padding: 20px 24px;
+                margin: 0;
+                position: sticky;
+                top: 0;
+                z-index: 999;
+                border-bottom: 1px solid var(--border);
             }
         }
     </style>
@@ -290,7 +313,9 @@
                 </div>
             </div>
 
-            @yield('content')
+            <div class="content-body">
+                @yield('content')
+            </div>
         </main>
     </div>
     @stack('scripts')

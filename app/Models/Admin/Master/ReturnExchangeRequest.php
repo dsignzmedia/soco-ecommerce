@@ -19,6 +19,8 @@ class ReturnExchangeRequest extends Model
         'exchange_product_name',
         'exchange_size',
         'new_order_id',
+        'photo_path',
+        'customer_notes',
     ];
 
     public function order(): BelongsTo

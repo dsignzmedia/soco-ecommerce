@@ -38,6 +38,8 @@ class ProductMapping extends Model
         'media_size_chart',
         'size_measurement_image',
         'media_measurement_video',
+        'size_chart_path',
+        'video_url'
     ];
 
     protected $casts = [
@@ -50,14 +52,30 @@ class ProductMapping extends Model
         return $this->belongsTo(School::class);
     }
 
-    public function grade(): BelongsTo
+    public function gradeModel(): BelongsTo
     {
-        return $this->belongsTo(Grade::class);
+        return $this->belongsTo(Grade::class, 'grade_id');
     }
 
     public function inventoryAdjustments(): HasMany
     {
         return $this->hasMany(InventoryAdjustment::class, 'product_mapping_id');
+    }
+
+    public function variants(): HasMany
+    {
+        return $this->hasMany(\App\Models\ProductVariant::class, 'product_mapping_id');
+    }
+
+    /**
+     * Helper to update total inventory stock based on sum of variants.
+     */
+    public function updateTotalStock()
+    {
+        if ($this->variants()->exists()) {
+            $total = $this->variants()->sum('stock');
+            $this->update(['inventory_stock' => $total]);
+        }
     }
 }
 
