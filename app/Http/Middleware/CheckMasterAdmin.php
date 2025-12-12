@@ -23,10 +23,10 @@ class CheckMasterAdmin
      */
     public function handle(Request $request, Closure $next): Response
     {
-        // Check if user is authenticated via Laravel's auth system
-        if (!auth()->check()) {
-            // Clear any stale session data
-            $request->session()->flush();
+        // Check if user is authenticated via Master Admin guard
+        if (!auth()->guard('master_admin')->check()) {
+            // Do NOT flush session
+            // $request->session()->flush();
 
             return redirect()->route('master.admin.login')
                 ->with('error', 'Please login to access the Master Admin panel.');
@@ -34,13 +34,14 @@ class CheckMasterAdmin
 
         // Verify user has Master Admin role (role = 2)
         // Using strict comparison to prevent type coercion attacks
-        if (auth()->user()->role !== 2) {
-            // Log out the unauthorized user
-            auth()->logout();
+        $user = auth()->guard('master_admin')->user();
+        if ($user->role !== 2) {
+            // Log out the unauthorized user from guard
+            auth()->guard('master_admin')->logout();
 
-            // Completely invalidate and regenerate session for security
-            $request->session()->invalidate();
-            $request->session()->regenerateToken();
+            // Do NOT invalidate globally
+            // $request->session()->invalidate();
+            // $request->session()->regenerateToken();
 
             return redirect()->route('master.admin.login')
                 ->with('error', 'You do not have permission to access the Master Admin panel.');

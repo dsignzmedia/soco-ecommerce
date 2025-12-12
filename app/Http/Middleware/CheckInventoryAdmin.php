@@ -22,23 +22,24 @@ class CheckInventoryAdmin
      */
     public function handle(Request $request, Closure $next): Response
     {
-        // Check if user is authenticated
-        if (!auth()->check()) {
-            // Clear any stale session data
-            $request->session()->flush();
+        // Check if user is authenticated via Inventory Admin guard
+        if (!auth()->guard('inventory_admin')->check()) {
+            // Do NOT flush session, just redirect
+            // $request->session()->flush();
 
             return redirect()->route('inventory.admin.login')
                 ->with('error', 'Please login to access the Inventory Admin panel.');
         }
 
         // Verify user has Inventory Admin role (role = 3)
-        if (auth()->user()->role !== 3) {
-            // Log out the unauthorized user
-            auth()->logout();
+        $user = auth()->guard('inventory_admin')->user();
+        if ($user->role !== 3) {
+            // Log out the unauthorized user from this guard only
+            auth()->guard('inventory_admin')->logout();
 
-            // Completely invalidate and regenerate session
-            $request->session()->invalidate();
-            $request->session()->regenerateToken();
+            // Do NOT invalidate globally
+            // $request->session()->invalidate();
+            // $request->session()->regenerateToken();
 
             return redirect()->route('inventory.admin.login')
                 ->with('error', 'You do not have permission to access the Inventory Admin panel.');

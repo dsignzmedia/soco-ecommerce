@@ -99,16 +99,16 @@ class AuthController extends Controller
         RateLimiter::clear($throttleKey);
 
         // Log the user in
-        auth()->login($user);
+        auth()->guard('inventory_admin')->login($user);
 
         // CRITICAL: Regenerate session ID to prevent session fixation attacks
         $request->session()->regenerate();
 
         // Store admin session data
-        $request->session()->put('admin_id', $user->id);
-        $request->session()->put('admin_name', $user->name);
-        $request->session()->put('admin_email', $user->email);
-        $request->session()->put('admin_role', 'inventory_admin');
+        $request->session()->put('inventory_admin_id', $user->id); // Prefixed to avoid collision
+        $request->session()->put('inventory_admin_name', $user->name);
+        $request->session()->put('inventory_admin_email', $user->email);
+        $request->session()->put('inventory_admin_role', 'inventory_admin');
 
         try {
             AuditLogger::record(
@@ -127,6 +127,8 @@ class AuthController extends Controller
 
         return redirect()->route('inventory.admin.dashboard');
     }
+
+
 
     /**
      * Render a trimmed-down dashboard for inventory admins.
@@ -192,7 +194,7 @@ class AuthController extends Controller
             ['key' => 'settings.manage', 'label' => 'Manage System Settings', 'granted' => false],
         ];
 
-        $adminId = request()->session()->get('admin_id');
+        $adminId = request()->session()->get('inventory_admin_id');
 
         // If the permissions tables exist, read from DB; otherwise fall back
         if (Schema::hasTable('permissions') && Schema::hasTable('user_permissions')) {
@@ -260,7 +262,7 @@ class AuthController extends Controller
             'password' => ['required', 'string', 'min:8', 'confirmed'],
         ]);
 
-        $adminId = $request->session()->get('admin_id');
+        $adminId = $request->session()->get('inventory_admin_id');
         if (!$adminId) {
             return back()->withErrors(['current_password' => 'Admin session not found. Please log in again.']);
         }
@@ -319,7 +321,7 @@ class AuthController extends Controller
     public function logout(Request $request): RedirectResponse
     {
         // Get user info before logout for audit logging
-        $user = auth()->user();
+        $user = auth()->guard('inventory_admin')->user();
 
         if ($user) {
             try {
@@ -339,21 +341,19 @@ class AuthController extends Controller
         }
 
         // Log out the user from Laravel's auth system
-        auth()->logout();
+        auth()->guard('inventory_admin')->logout();
 
         // Clear all admin-specific session data
         $request->session()->forget([
-            'admin_id',
-            'admin_name',
-            'admin_email',
-            'admin_role',
+            'inventory_admin_id',
+            'inventory_admin_name',
+            'inventory_admin_email',
+            'inventory_admin_role',
         ]);
 
-        // Completely invalidate the session
-        $request->session()->invalidate();
-
-        // Regenerate CSRF token
-        $request->session()->regenerateToken();
+        // Do NOT invalidate session to keep Master Admin logged in
+        // $request->session()->invalidate();
+        // $request->session()->regenerateToken();
 
         return redirect()->route('inventory.admin.login')
             ->with('status', 'You have been logged out successfully.')

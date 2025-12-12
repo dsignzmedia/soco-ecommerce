@@ -391,7 +391,12 @@ class AuthController extends Controller
 
     public function schoolDashboard()
     {
+        // Middleware already ensures user is logged in and is a school
         $user = Auth::user();
+
+        if (!$user) {
+             return redirect()->route('frontend.school.login');
+        }
 
         // Get school data from database
         $school = $user->school;
@@ -1526,26 +1531,56 @@ class AuthController extends Controller
         $allProducts = [];
 
         if ($school) {
-            $dbProductsQuery = \App\Models\Admin\Master\ProductMapping::where('school_id', $school->id)
+            $dbProductsQuery = \App\Models\Admin\Master\ProductMapping::with('variants')->where('school_id', $school->id)
                 ->where('status', 'live'); // Assuming 'live' is the active status
 
             // Filter by grade if available in profile
             if ($selectedProfile->grade) {
-                $dbProductsQuery->where(function($q) use ($selectedProfile) {
-                    $q->where('grade', $selectedProfile->grade)
+                $rawGrade = $selectedProfile->grade;
+                $gradeVariants = [$rawGrade];
+
+                // Simple normalization helper for Roman/Arabic
+                $romanMap = [
+                    '1' => 'I', '2' => 'II', '3' => 'III', '4' => 'IV', '5' => 'V',
+                    '6' => 'VI', '7' => 'VII', '8' => 'VIII', '9' => 'IX', '10' => 'X',
+                    '11' => 'XI', '12' => 'XII'
+                ];
+                $arabicMap = array_flip($romanMap);
+
+                // Add alternatives
+                if (isset($romanMap[$rawGrade])) {
+                    $gradeVariants[] = $romanMap[$rawGrade];
+                }
+                if (isset($arabicMap[strtoupper($rawGrade)])) {
+                    $gradeVariants[] = $arabicMap[strtoupper($rawGrade)];
+                }
+
+                // Add partial matches like "Class 12" or "Grade XII" if not already covered
+                // (Note: This might be overkill if data specific, but robust)
+                $extras = [];
+                foreach ($gradeVariants as $v) {
+                    $extras[] = "Class $v";
+                    $extras[] = "Grade $v";
+                }
+                $gradeVariants = array_merge($gradeVariants, $extras);
+
+
+                $dbProductsQuery->where(function($q) use ($gradeVariants) {
+                    $q->whereIn('grade', $gradeVariants)
                       ->orWhereNull('grade')
-                      ->orWhere('grade', ''); // Handle empty strings if any
+                      ->orWhere('grade', '');
                 });
             }
 
             // Filter by gender if available in profile
             if ($selectedProfile->gender) {
                 $gender = strtolower($selectedProfile->gender);
+                // Map legacy terms if necessary, though profile should ideally be 'male'/'female'
                 $genderMap = [
-                    'male' => 'Boys',
-                    'female' => 'Girls',
-                    'boys' => 'Boys',
-                    'girls' => 'Girls'
+                    'boys' => 'male',
+                    'girls' => 'female',
+                    'male' => 'male',
+                    'female' => 'female'
                 ];
                 $mappedGender = $genderMap[$gender] ?? $selectedProfile->gender;
 
@@ -1572,6 +1607,12 @@ class AuthController extends Controller
                     }
                 }
 
+                // Determine sizes
+                $sizes = ['S', 'M', 'L', 'XL', 'XXL']; // Fallback
+                if ($dbProduct->variants && $dbProduct->variants->count() > 0) {
+                    $sizes = $dbProduct->variants->pluck('option')->toArray();
+                }
+
                 $allProducts[] = [
                     'id' => $dbProduct->id,
                     'name' => $dbProduct->product_name,
@@ -1583,11 +1624,11 @@ class AuthController extends Controller
                     'type' => strtolower($dbProduct->product_type ?? 'authorized'),
                     'category' => $dbProduct->category ?? 'regular_uniforms',
                     'gender' => match(strtolower($dbProduct->gender ?? 'unisex')) {
-                        'boys', 'male' => 'male',
-                        'girls', 'female' => 'female',
-                        default => 'unisex'
+                        'male' => 'Male',
+                        'female' => 'Female',
+                        default => 'Unisex'
                     },
-                    'sizes' => ['S', 'M', 'L', 'XL', 'XXL'], // Default sizes as DB doesn't have them yet
+                    'sizes' => $sizes,
                     'tags' => $dbProduct->tag_name ? explode(',', $dbProduct->tag_name) : [],
                     'sku' => $dbProduct->id, // Use ID as SKU for now
                 ];
@@ -1627,7 +1668,7 @@ class AuthController extends Controller
         }
 
         // Fetch real product from database
-        $dbProduct = \App\Models\Admin\Master\ProductMapping::find($productId);
+        $dbProduct = \App\Models\Admin\Master\ProductMapping::with('variants')->find($productId);
 
         if (!$dbProduct) {
             return redirect()->route('frontend.parent.store', ['profile_id' => $profileId])
@@ -1647,6 +1688,12 @@ class AuthController extends Controller
             }
         }
 
+        // Determine sizes from variants or fallback
+        $sizes = ['S', 'M', 'L', 'XL', 'XXL']; // Default
+        if ($dbProduct->variants && $dbProduct->variants->count() > 0) {
+            $sizes = $dbProduct->variants->pluck('option')->toArray();
+        }
+
         $product = [
             'id' => $dbProduct->id,
             'name' => $dbProduct->product_name,
@@ -1657,9 +1704,12 @@ class AuthController extends Controller
             'description' => $dbProduct->description,
             'type' => $dbProduct->product_type ?? 'authorized',
             'category' => $dbProduct->category ?? 'regular_uniforms',
-            'sizes' => ['S', 'M', 'L', 'XL', 'XXL'], // Default sizes
+            'sizes' => $sizes,
+            'size_chart_path' => $dbProduct->size_chart_path,
+            'video_url' => $dbProduct->video_url,
             'tags' => $dbProduct->tag_name ? explode(',', $dbProduct->tag_name) : [],
             'sku' => $dbProduct->id,
+            'variants' => $dbProduct->variants, // Pass full variants for stock checking if needed later
         ];
 
     return view('frontend.store.product-detail', compact('selectedProfile', 'product'));
@@ -1676,6 +1726,26 @@ class AuthController extends Controller
 
         $user = Auth::user();
 
+        // Validate Stock
+        $product = \App\Models\Admin\Master\ProductMapping::with('variants')->find($request->product_id);
+        if ($product) {
+            if ($product->variants->count() > 0) {
+                // Check variant stock
+                $variant = $product->variants->where('option', $request->size)->first();
+                if (!$variant) {
+                    return back()->with('error', 'Invalid size selected.');
+                }
+                if ($variant->stock < $request->quantity) {
+                    return back()->with('error', 'Selected size is out of stock.');
+                }
+            } else {
+                // Check main stock
+                if ($product->inventory_stock < $request->quantity) {
+                    return back()->with('error', 'Product is out of stock.');
+                }
+            }
+        }
+
         // Check if the same product with same size and profile already exists in cart
         $existingItem = \App\Models\Cart::where('user_id', $user->id)
             ->where('product_id', $request->product_id)
@@ -1684,6 +1754,17 @@ class AuthController extends Controller
             ->first();
 
         if ($existingItem) {
+             // Check if adding more exceeds stock
+             $newQuantity = $existingItem->quantity + $request->quantity;
+             if ($product && $product->variants->count() > 0) {
+                 $variant = $product->variants->where('option', $request->size)->first();
+                 if ($variant && $variant->stock < $newQuantity) {
+                     return back()->with('error', 'Cannot add more items. Exceeds available stock.');
+                 }
+             } elseif ($product && $product->inventory_stock < $newQuantity) {
+                 return back()->with('error', 'Cannot add more items. Exceeds available stock.');
+             }
+
             // Update quantity of existing item
             $existingItem->increment('quantity', $request->quantity);
         } else {
@@ -2093,7 +2174,15 @@ class AuthController extends Controller
                 ]);
 
                 // Decrement Inventory
-                $product->decrement('inventory_stock', $item->quantity);
+                if ($product->variants()->exists()) {
+                    $variant = $product->variants()->where('option', $item->size)->first();
+                    if ($variant) {
+                        $variant->decrement('stock', $item->quantity);
+                        $product->updateTotalStock(); // Recalculate total
+                    }
+                } else {
+                    $product->decrement('inventory_stock', $item->quantity);
+                }
 
                 // Track processed cart item IDs
                 $processedCartIds[] = $item->id;
@@ -2187,7 +2276,7 @@ class AuthController extends Controller
 
                     return [
                         'id' => $item->id,
-                        'product_id' => $product ? $product->id : null, 
+                        'product_id' => $product ? $product->id : null,
                         'name' => $item->item_name,
                         'price' => $item->total_amount / ($item->quantity > 0 ? $item->quantity : 1),
                         'quantity' => $item->quantity,
@@ -2276,6 +2365,7 @@ class AuthController extends Controller
                 }
 
                 return [
+                    'id' => $item->id,
                     'name' => $item->item_name,
                     'quantity' => $item->quantity,
                     'size' => $item->size,
@@ -2285,14 +2375,19 @@ class AuthController extends Controller
             })->toArray(),
         ];
 
-        return view('frontend.orders.track', compact('order', 'statuses', 'currentStatusIndex'));
+        // Fetch the latest return/exchange request for this order grouping
+        $itemIds = $orders->pluck('id');
+        $returnRequest = \App\Models\Admin\Master\ReturnExchangeRequest::whereIn('order_id', $itemIds)->latest()->first();
+
+        return view('frontend.orders.track', compact('order', 'statuses', 'currentStatusIndex', 'returnRequest'));
     }
 
     public function returnExchange($orderId, Request $request)
     {
         // Fetch orders from database based on the base order number
-        $profiles = session('student_profiles', []);
-        $studentNames = collect($profiles)->pluck('student_name')->toArray();
+        $user = Auth::user();
+        $profiles = $user->studentProfiles;
+        $studentNames = $profiles->pluck('student_name')->toArray();
 
         $orders = \App\Models\Admin\Master\Order::whereIn('student_name', $studentNames)
             ->where(function($q) use ($orderId) {
@@ -2312,6 +2407,11 @@ class AuthController extends Controller
         // Get pre-selected items from query string
         $selectedItems = $request->query('selected_items', []);
 
+        // Ensure selectedItems is an array (handle single value query param case)
+        if (!is_array($selectedItems)) {
+            $selectedItems = [$selectedItems];
+        }
+
         // Format order data
         $order = [
             'id' => $orderId,
@@ -2325,11 +2425,14 @@ class AuthController extends Controller
                     ->first();
 
                 $image = null;
-                if ($product && $product->product_images) {
-                    $images = is_string($product->product_images)
-                        ? json_decode($product->product_images, true)
-                        : $product->product_images;
-                    $image = is_array($images) && !empty($images) ? $images[0] : null;
+                if ($product) {
+                    if ($product->featured_image) {
+                        $image = $product->featured_image;
+                    } elseif ($product->media_images && is_array($product->media_images) && !empty($product->media_images)) {
+                        $image = $product->media_images[0];
+                    } elseif ($product->media_gallery && is_array($product->media_gallery) && !empty($product->media_gallery)) {
+                        $image = $product->media_gallery[0];
+                    }
                 }
 
                 return [
@@ -2339,7 +2442,7 @@ class AuthController extends Controller
                     'price' => $item->total_amount / $item->quantity,
                     'quantity' => $item->quantity,
                     'size' => $item->size,
-                    'image' => $image,
+                    'image' => $image ? asset('storage/'.$image) : null,
                 ];
             })->toArray(),
         ];
@@ -2364,8 +2467,9 @@ class AuthController extends Controller
         }
 
         // Get authenticated student names for security check
-        $profiles = session('student_profiles', []);
-        $studentNames = collect($profiles)->pluck('student_name')->toArray();
+        $user = Auth::user();
+        $profiles = $user->studentProfiles;
+        $studentNames = $profiles->pluck('student_name')->toArray();
 
         // Fetch selected orders
         $orders = \App\Models\Admin\Master\Order::whereIn('id', $request->selected_items)

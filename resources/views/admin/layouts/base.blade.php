@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -9,6 +10,7 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
         :root {
             --primary: #490d59;
@@ -101,12 +103,19 @@
         }
 
         .nav__item.active {
-            background: var(--primary-light);
-            color: var(--primary);
+            background: #490d59;
+            color: #ffffff;
             font-size: 14px !important;
         }
 
         .content {
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            min-width: 0;
+        }
+
+        .content-body {
             padding: 32px 40px;
         }
 
@@ -128,6 +137,20 @@
             font-family: inherit;
             font-size: 14px;
             color: var(--heading);
+            background-color: #fff;
+            transition: border-color 0.2s, box-shadow 0.2s;
+        }
+
+        select {
+            appearance: none;
+            -webkit-appearance: none;
+            -moz-appearance: none;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%236B7280' stroke-width='2'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' d='M19 9l-7 7-7-7'%3E%3C/path%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: right 14px center;
+            background-size: 16px;
+            padding-right: 40px; /* Space for arrow */
+            cursor: pointer;
         }
 
         input:focus,
@@ -135,14 +158,21 @@
         textarea:focus {
             outline: none;
             border-color: var(--primary);
-            box-shadow: 0 0 0 3px rgba(73, 13, 89, 0.1);
+            box-shadow: 0 0 0 4px rgba(73, 13, 89, 0.1);
         }
 
         .topbar {
             display: flex;
             align-items: center;
             justify-content: space-between;
-            margin-bottom: 32px;
+            background: var(--bg);
+            padding: 24px 40px;
+            /* No negative margins needed */
+            margin: 0; 
+            position: sticky;
+            top: 0;
+            z-index: 999;
+            border-bottom: 1px solid rgba(15, 23, 42, 0.05);
         }
 
         .profile-chip {
@@ -233,7 +263,7 @@
                 border-bottom: 1px solid rgba(15, 23, 42, 0.08);
             }
 
-            .content {
+            .content-body {
                 padding: 24px;
             }
 
@@ -241,6 +271,12 @@
                 flex-direction: column;
                 align-items: flex-start;
                 gap: 16px;
+                padding: 20px 24px;
+                margin: 0;
+                position: sticky;
+                top: 0;
+                z-index: 999;
+                border-bottom: 1px solid rgba(15, 23, 42, 0.05);
             }
         }
 
@@ -345,18 +381,26 @@
             <nav class="nav">
                 @php($navItems = [
                     ['label' => 'Dashboard', 'route' => 'master.admin.dashboard', 'icon' => 'fas fa-th-large'],
-                    ['label' => 'School Management', 'route' => 'master.admin.schools.index', 'icon' => 'fas fa-school'],
-                    ['label' => 'Orders', 'route' => 'master.admin.orders.index', 'icon' => 'fas fa-shopping-bag'],
-                    ['label' => 'Products & Catalog', 'route' => 'master.admin.catalog.index', 'icon' => 'fas fa-box-open'],
-                    ['label' => 'Inventory', 'route' => 'master.admin.inventory.dashboard', 'icon' => 'fas fa-warehouse'],
-                    ['label' => 'Returns & Exchanges', 'route' => 'master.admin.returns-exchange.index', 'icon' => 'fas fa-exchange-alt'],
-                    ['label' => 'Shipping', 'route' => 'master.admin.shipping.edit', 'icon' => 'fas fa-shipping-fast'],
-                    ['label' => 'Reports', 'route' => 'master.admin.reports.index', 'icon' => 'fas fa-chart-bar'],
-                    ['label' => 'System Settings', 'route' => 'master.admin.settings.index', 'icon' => 'fas fa-cog'],
-                    ['label' => 'Audit Logs', 'route' => 'master.admin.settings.audit-logs', 'icon' => 'fas fa-clipboard-list'],
+                    ['label' => 'School Management', 'route' => 'master.admin.schools.index', 'active' => 'master.admin.schools.*', 'icon' => 'fas fa-school'],
+                    ['label' => 'Orders', 'route' => 'master.admin.orders.index', 'active' => 'master.admin.orders.*', 'icon' => 'fas fa-shopping-bag'],
+                    ['label' => 'Products & Catalog', 'route' => 'master.admin.catalog.index', 'active' => 'master.admin.catalog.*', 'icon' => 'fas fa-box-open'],
+                    ['label' => 'Inventory', 'route' => 'master.admin.inventory.dashboard', 'active' => 'master.admin.inventory.*', 'icon' => 'fas fa-warehouse'],
+                    ['label' => 'Returns & Exchanges', 'route' => 'master.admin.returns-exchange.index', 'active' => 'master.admin.returns-exchange.*', 'icon' => 'fas fa-exchange-alt'],
+                    ['label' => 'Shipping', 'route' => 'master.admin.shipping.edit', 'active' => 'master.admin.shipping.*', 'icon' => 'fas fa-shipping-fast'],
+                    ['label' => 'Reports', 'route' => 'master.admin.reports.index', 'active' => 'master.admin.reports.*', 'icon' => 'fas fa-chart-bar'],
+                    ['label' => 'System Settings', 'route' => 'master.admin.settings.index', 'active' => [
+                        'master.admin.settings.index',
+                        'master.admin.settings.payment-gateways*',
+                        'master.admin.settings.invoice-templates*',
+                        'master.admin.settings.email-templates*',
+                        'master.admin.settings.sms-templates*',
+                        'master.admin.settings.app-branding*',
+                        'master.admin.settings.backups*'
+                    ], 'icon' => 'fas fa-cog'],
+                    ['label' => 'Audit Logs', 'route' => 'master.admin.settings.audit-logs', 'active' => 'master.admin.settings.audit-logs', 'icon' => 'fas fa-clipboard-list'],
                 ])
                 @foreach($navItems as $item)
-                    <a class="nav__item {{ ($item['route'] === 'master.admin.dashboard' ? request()->routeIs($item['route']) : (request()->routeIs($item['route']) || request()->routeIs($item['route'] . '.*'))) ? 'active' : '' }}" href="{{ route($item['route']) }}">
+                    <a class="nav__item {{ (isset($item['active']) ? request()->routeIs($item['active']) : request()->routeIs($item['route'])) ? 'active' : '' }}" href="{{ route($item['route']) }}">
                         <i class="{{ $item['icon'] }}" style="width: 18px; text-align: center;"></i>
                         {{ $item['label'] }}
                     </a>
@@ -398,21 +442,24 @@
                     </div>
                 </div>
             </div>
-            @if(session('status'))
-                <div class="card" style="margin-bottom:16px;background:#ecfdf3;color:#027a48;">
-                    {{ session('status') }}
-                </div>
-            @endif
-            @if($errors->any())
-                <div class="card" style="margin-bottom:16px;background:#fef3f2;color:#b42318;">
-                    <ul style="margin:0;padding-left:18px;">
-                        @foreach($errors->all() as $error)
-                            <li>{{ $error }}</li>
-                        @endforeach
-                    </ul>
-                </div>
-            @endif
-            @yield('content')
+
+            <div class="content-body">
+                @if(session('status'))
+                    <div class="card" style="margin-bottom:16px;background:#ecfdf3;color:#027a48;">
+                        {{ session('status') }}
+                    </div>
+                @endif
+                @if($errors->any())
+                    <div class="card" style="margin-bottom:16px;background:#fef3f2;color:#b42318;">
+                        <ul style="margin:0;padding-left:18px;">
+                            @foreach($errors->all() as $error)
+                                <li>{{ $error }}</li>
+                            @endforeach
+                        </ul>
+                    </div>
+                @endif
+                @yield('content')
+            </div>
         </main>
     </div>
     @stack('scripts')
@@ -519,4 +566,3 @@
     </script>
 </body>
 </html>
-

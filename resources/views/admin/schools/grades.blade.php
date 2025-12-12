@@ -28,7 +28,7 @@
             <label>
                 <span>Gender rule *</span>
                 <select name="gender_rule">
-                    @foreach(['boys','girls','unisex'] as $rule)
+                    @foreach(['male','female','unisex'] as $rule)
                         <option value="{{ $rule }}">{{ ucfirst($rule) }}</option>
                     @endforeach
                 </select>
@@ -61,7 +61,7 @@
                         </td>
                         <td>
                                 <select name="gender_rule">
-                                    @foreach(['boys','girls','unisex'] as $rule)
+                                    @foreach(['male','female','unisex'] as $rule)
                                         <option value="{{ $rule }}" @selected($grade->gender_rule === $rule)>{{ ucfirst($rule) }}</option>
                                     @endforeach
                                 </select>

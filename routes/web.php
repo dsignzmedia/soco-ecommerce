@@ -224,6 +224,7 @@ Route::prefix('MasterAdmin')->name('master.admin.')->group(function () {
         Route::post('/returns-exchange/{returnRequest}/approve', [\App\Http\Controllers\Admin\Master\ReturnExchangeController::class, 'approve'])->name('returns-exchange.approve');
         Route::post('/returns-exchange/{returnRequest}/receive', [\App\Http\Controllers\Admin\Master\ReturnExchangeController::class, 'receive'])->name('returns-exchange.receive');
         Route::post('/returns-exchange/{returnRequest}/generate-exchange', [\App\Http\Controllers\Admin\Master\ReturnExchangeController::class, 'generateExchange'])->name('returns-exchange.generate');
+        Route::post('/returns-exchange/{returnRequest}/switch-type', [\App\Http\Controllers\Admin\Master\ReturnExchangeController::class, 'switchType'])->name('returns-exchange.switch-type');
     });
 });
 

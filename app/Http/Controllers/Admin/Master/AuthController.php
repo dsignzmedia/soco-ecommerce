@@ -98,17 +98,17 @@ class AuthController extends Controller
         RateLimiter::clear($throttleKey);
 
         // Log the user in using Laravel's auth system
-        auth()->login($user);
+        auth()->guard('master_admin')->login($user);
 
         // CRITICAL: Regenerate session ID to prevent session fixation attacks
         // This creates a new session ID while keeping session data
         $request->session()->regenerate();
 
         // Store admin-specific session data for quick access
-        $request->session()->put('admin_id', $user->id);
-        $request->session()->put('admin_name', $user->name);
-        $request->session()->put('admin_email', $user->email);
-        $request->session()->put('admin_role', 'master_admin');
+        $request->session()->put('master_admin_id', $user->id);
+        $request->session()->put('master_admin_name', $user->name);
+        $request->session()->put('master_admin_email', $user->email);
+        $request->session()->put('master_admin_role', 'master_admin');
 
         // Log the successful login for audit trail
         AuditLogger::record(
@@ -145,7 +145,7 @@ class AuthController extends Controller
      */
     public function dashboard(Request $request)
     {
-        $filters = $request->only(['date_range', 'school_id', 'category']);
+        $filters = $request->only(['date_range', 'school_id', 'category', 'start_date', 'end_date']);
 
         // Base queries
         $ordersQuery = \App\Models\Admin\Master\Order::query();
@@ -158,14 +158,13 @@ class AuthController extends Controller
         if (!empty($filters['category'])) {
             $ordersQuery->where('category', $filters['category']);
         }
-        if (!empty($filters['date_range'])) {
-            $dates = explode(' - ', $filters['date_range']);
-            if (count($dates) == 2) {
-                $ordersQuery->whereBetween('order_date', [
-                    \Carbon\Carbon::parse($dates[0])->startOfDay(),
-                    \Carbon\Carbon::parse($dates[1])->endOfDay()
-                ]);
-            }
+        
+        // Date Range Filtering
+        if (!empty($filters['start_date'])) {
+            $ordersQuery->whereDate('order_date', '>=', $filters['start_date']);
+        }
+        if (!empty($filters['end_date'])) {
+            $ordersQuery->whereDate('order_date', '<=', $filters['end_date']);
         }
 
         // Apply Filters to Products (for stock KPIs)
@@ -360,7 +359,7 @@ class AuthController extends Controller
             'password' => ['required', 'string', 'min:8', 'confirmed'],
         ]);
 
-        $adminId = $request->session()->get('admin_id');
+        $adminId = $request->session()->get('master_admin_id');
         if (!$adminId) {
             return back()->withErrors(['current_password' => 'Admin session not found. Please log in again.']);
         }
@@ -405,7 +404,7 @@ class AuthController extends Controller
     public function logout(Request $request)
     {
         // Get user info before logout for audit logging
-        $user = auth()->user();
+        $user = auth()->guard('master_admin')->user();
 
         if ($user) {
             AuditLogger::record(
@@ -421,22 +420,19 @@ class AuthController extends Controller
         }
 
         // Log out the user from Laravel's auth system
-        auth()->logout();
+        auth()->guard('master_admin')->logout();
 
         // Clear all admin-specific session data
         $request->session()->forget([
-            'admin_id',
-            'admin_name',
-            'admin_email',
-            'admin_role',
+            'master_admin_id',
+            'master_admin_name',
+            'master_admin_email',
+            'master_admin_role',
         ]);
 
-        // Completely invalidate the session
-        // This destroys all session data and creates a new session ID
-        $request->session()->invalidate();
-
-        // Regenerate CSRF token to prevent token reuse after logout
-        $request->session()->regenerateToken();
+        // Do NOT invalidate session to keep Inventory Admin logged in
+        // $request->session()->invalidate();
+        // $request->session()->regenerateToken();
 
         // Redirect to login with success message
         // The middleware will add cache control headers automatically,

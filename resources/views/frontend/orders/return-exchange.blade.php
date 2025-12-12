@@ -94,12 +94,12 @@
                             @endif
 
                             @foreach($order['items'] as $item)
-                                <div class="d-flex gap-2 mb-3 pb-3 border-bottom position-relative">
-                                    <div class="form-check position-absolute" style="top: 0; left: 0; z-index: 10;">
-                                        <input class="form-check-input" type="checkbox" name="selected_items[]" value="{{ $item['id'] }}" id="item_{{ $item['id'] }}" @checked(in_array($item['id'], $selectedItems ?? []))>
+                                <label class="d-flex align-items-center gap-3 mb-3 pb-3 border-bottom position-relative w-100" style="cursor: pointer;">
+                                    <div class="flex-shrink-0">
+                                        <input class="form-check-input border-secondary" type="checkbox" name="selected_items[]" value="{{ $item['id'] }}" @checked(empty($selectedItems) || in_array($item['id'], $selectedItems ?? [])) style="width: 1.3em; height: 1.3em; cursor: pointer;">
                                     </div>
-                                    <div class="flex-shrink-0 ms-4">
-                                        <div class="bg-light rounded d-flex align-items-center justify-content-center" style="width: 60px; height: 60px;">
+                                    <div class="flex-shrink-0">
+                                        <div class="bg-light rounded d-flex align-items-center justify-content-center border" style="width: 60px; height: 60px;">
                                             @if($item['image'])
                                                 <img src="{{ $item['image'] }}" alt="{{ $item['name'] }}" class="img-fluid rounded" style="max-height: 100%; max-width: 100%;">
                                             @else
@@ -108,13 +108,13 @@
                                         </div>
                                     </div>
                                     <div class="flex-grow-1">
-                                        <label class="form-check-label w-100" for="item_{{ $item['id'] }}" style="cursor: pointer;">
-                                            <h6 class="mb-1 small">{{ $item['name'] }}</h6>
-                                            <p class="text-muted small mb-0">Size: {{ $item['size'] }}</p>
-                                            <p class="text-muted small mb-0 fw-bold">₹{{ number_format($item['price'], 2) }}</p>
-                                        </label>
+                                        <h6 class="mb-1 small text-dark fw-bold">{{ $item['name'] }}</h6>
+                                        <div class="d-flex justify-content-between align-items-center">
+                                            <span class="text-muted small">Size: {{ $item['size'] }}</span>
+                                            <span class="text-primary small fw-bold">₹{{ number_format($item['price'], 2) }}</span>
+                                        </div>
                                     </div>
-                                </div>
+                                </label>
                             @endforeach
                         </div>
                     </div>

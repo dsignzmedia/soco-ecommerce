@@ -50,7 +50,7 @@ class ProductMappingController extends Controller
             'product_name' => ['required', 'string', 'max:255'],
             'category' => ['nullable', 'string', 'max:255'],
             'product_type' => ['nullable', 'string', 'max:255'],
-            'gender' => ['required', 'in:boys,girls,unisex'],
+            'gender' => ['required', 'in:male,female,unisex'],
             'price_regular' => ['nullable', 'numeric', 'min:0'],
             'price_sale' => ['nullable', 'numeric', 'min:0'],
             'inventory_stock' => ['required', 'integer', 'min:0'],

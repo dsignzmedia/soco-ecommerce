@@ -47,7 +47,7 @@
                 @endforeach
             </select>
             <button type="submit">Apply filters</button>
-            <a class="reset" href="{{ route('master.admin.reports.index') }}">Reset</a>
+            <button type="button" onclick="window.location.href='{{ route('master.admin.reports.index') }}'" class="btn-reset">Reset</button>
         </form>
     </section>
 

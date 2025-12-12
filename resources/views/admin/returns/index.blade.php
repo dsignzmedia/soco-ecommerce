@@ -7,7 +7,7 @@
 @section('content')
     <div class="card" style="max-width:1200px;margin:auto;">
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;gap:12px;flex-wrap:wrap;">
-            <form method="GET" action="{{ route('master.admin.returns-exchange.index') }}" style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+            <form method="GET" action="{{ route('master.admin.returns-exchange.index') }}" style="display:flex;gap:8px;align-items:center;">
                 <select name="type" style="padding:8px;border:1px solid #e5e7eb;border-radius:8px;">
                     <option value="">All Types</option>
                     <option value="return" {{ ($filters['type'] ?? '') === 'return' ? 'selected' : '' }}>Return</option>
@@ -21,7 +21,7 @@
                 </select>
                 <input type="text" name="q" value="{{ $filters['q'] ?? '' }}" placeholder="Search order# or item" style="padding:8px;border:1px solid #e5e7eb;border-radius:8px;min-width:240px;">
                 <button type="submit" style="padding:8px 12px;border:none;border-radius:8px;background:#f3f4f6;color:#111827;">Filter</button>
-                <a href="{{ route('master.admin.returns-exchange.index') }}" style="padding:8px 12px;border:none;border-radius:8px;background:#fff;color:#111827;border:1px solid #e5e7eb;text-decoration:none;">Reset</a>
+                <button type="button" style="padding:8px 12px;border:none;border-radius:8px;background:#f3f4f6;color:#111827;" onclick="window.location.href='{{ route('master.admin.returns-exchange.index') }}'">Reset</button>
             </form>
         </div>
 
@@ -36,6 +36,7 @@
                         <th style="padding:10px;text-align:left;">Qty</th>
                         <th style="padding:10px;text-align:left;">Status</th>
                         <th style="padding:10px;text-align:left;">Reason</th>
+                        <th style="padding:10px;text-align:left;">Evidence</th>
                         <th style="padding:10px;text-align:left;">Admin Notes</th>
                         <th style="padding:10px;text-align:left;">Actions</th>
                     </tr>
@@ -52,6 +53,15 @@
                             <td style="padding:10px;">{{ $req->order->quantity ?? 1 }}</td>
                             <td style="padding:10px;text-transform:capitalize;">{{ str_replace('_',' ', $req->status) }}</td>
                             <td style="padding:10px;">{{ $req->reason }}</td>
+                            <td style="padding:10px;">
+                                @if($req->photo_path)
+                                    <a href="{{ asset('storage/'.$req->photo_path) }}" target="_blank" style="display:block;width:50px;height:50px;">
+                                        <img src="{{ asset('storage/'.$req->photo_path) }}" alt="Evidence" style="width:100%;height:100%;object-fit:cover;border-radius:6px;border:1px solid #e5e7eb;">
+                                    </a>
+                                @else
+                                    <span style="color:#9ca3af;font-size:0.85rem;">—</span>
+                                @endif
+                            </td>
                             <td style="padding:10px;">{{ $req->admin_notes }}</td>
                             <td style="padding:10px;display:flex;gap:8px;flex-wrap:wrap;">
                                 <a href="{{ route('master.admin.returns-exchange.show', $req) }}" class="btn-vs-sm">View</a>
@@ -85,7 +95,7 @@
                             </td>
                         </tr>
                     @empty
-                        <tr><td colspan="9" style="padding:12px;text-align:center;">No return/exchange requests found.</td></tr>
+                        <tr><td colspan="10" style="padding:12px;text-align:center;">No return/exchange requests found.</td></tr>
                     @endforelse
                 </tbody>
             </table>

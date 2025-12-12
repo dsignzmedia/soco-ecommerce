@@ -95,7 +95,7 @@
                                                     <span style="color: #dc3545; font-weight: 600;">₹{{ number_format($item['item_total']) }}</span>
                                                     <form action="{{ route('frontend.parent.remove-from-cart') }}" method="POST" class="d-inline">
                                                         @csrf
-                                                        <input type="hidden" name="index" value="{{ $index }}">
+                                                        <input type="hidden" name="id" value="{{ $item['id'] }}">
                                                         <button type="submit" class="btn btn-sm" style="background-color: #f8f5ff; color: #dc3545; border: 1px solid #e0d5f0; border-radius: 6px; padding: 6px 12px; transition: all 0.3s ease;" title="Remove item" onmouseover="this.style.backgroundColor='#dc3545'; this.style.color='#ffffff'; this.style.borderColor='#dc3545';" onmouseout="this.style.backgroundColor='#f8f5ff'; this.style.color='#dc3545'; this.style.borderColor='#e0d5f0';">
                                                             <i class="fas fa-trash-alt"></i>
                                                         </button>
