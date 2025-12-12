@@ -85,11 +85,9 @@ Route::middleware(['auth', 'prevent-back-history'])->group(function () {
     Route::get('/parent/addresses', [AuthController::class, 'myAddresses'])->name('frontend.parent.addresses');
     Route::post('/parent/save-address', [AuthController::class, 'saveAddress'])->name('frontend.parent.save-address');
     Route::post('/parent/delete-address/{addressId}', [AuthController::class, 'deleteAddress'])->name('frontend.parent.delete-address');
-<<<<<<< HEAD
-=======
-
+    
     // Product Reviews
->>>>>>> d05dcb653f778055f4b651209f021abe0ed2fccc
+    Route::post('/reviews', [App\Http\Controllers\Front\ReviewController::class, 'store'])->name('reviews.store');
 });
 
 

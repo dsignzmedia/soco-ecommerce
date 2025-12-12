@@ -328,43 +328,9 @@ class AuthController extends Controller
             } else {
                 session(['parent_phone' => $user->email]);
             }
-            
-            // Login parent users via web guard
-            if (Auth::attempt($credentials)) {
-                $request->session()->regenerate();
 
-<<<<<<< HEAD
-                $user = Auth::user();
-                
-=======
-            // Login parent users via web guard
-            if (Auth::attempt($credentials)) {
-                $request->session()->regenerate();
-
-                $user = Auth::user();
-
->>>>>>> d05dcb653f778055f4b651209f021abe0ed2fccc
-                Log::info('Parent login successful', [
-                    'user_id' => $user->id,
-                    'user_email' => $user->email,
-                    'user_name' => $user->name,
-                    'role' => $user->role,
-                ]);
-<<<<<<< HEAD
-                
-=======
-
->>>>>>> d05dcb653f778055f4b651209f021abe0ed2fccc
-                // Store parent phone in session for dashboard compatibility
-                if ($user->phone) {
-                    session(['parent_phone' => $user->phone]);
-                } else {
-                    session(['parent_phone' => $user->email]);
-                }
-
-                // Redirect to parent dashboard
-                return redirect()->route('frontend.parent.dashboard');
-            }
+            // Role-based redirect
+            return $this->redirectBasedOnRole($user);
         }
 
         Log::warning('Login failed - Invalid credentials', ['email' => $request->email]);
@@ -1576,47 +1542,10 @@ class AuthController extends Controller
 
             // Filter by grade if available in profile
             if ($selectedProfile->grade) {
-                $rawGrade = $selectedProfile->grade;
-                $gradeVariants = [$rawGrade];
-
-                // Simple normalization helper for Roman/Arabic
-                $romanMap = [
-                    '1' => 'I', '2' => 'II', '3' => 'III', '4' => 'IV', '5' => 'V',
-                    '6' => 'VI', '7' => 'VII', '8' => 'VIII', '9' => 'IX', '10' => 'X',
-                    '11' => 'XI', '12' => 'XII'
-                ];
-                $arabicMap = array_flip($romanMap);
-
-                // Add alternatives
-                if (isset($romanMap[$rawGrade])) {
-                    $gradeVariants[] = $romanMap[$rawGrade];
-                }
-                if (isset($arabicMap[strtoupper($rawGrade)])) {
-                    $gradeVariants[] = $arabicMap[strtoupper($rawGrade)];
-                }
-<<<<<<< HEAD
-                
-=======
-
->>>>>>> d05dcb653f778055f4b651209f021abe0ed2fccc
-                // Add partial matches like "Class 12" or "Grade XII" if not already covered
-                // (Note: This might be overkill if data specific, but robust)
-                $extras = [];
-                foreach ($gradeVariants as $v) {
-                    $extras[] = "Class $v";
-                    $extras[] = "Grade $v";
-                }
-                $gradeVariants = array_merge($gradeVariants, $extras);
-
-
-                $dbProductsQuery->where(function($q) use ($gradeVariants) {
-                    $q->whereIn('grade', $gradeVariants)
+                $dbProductsQuery->where(function($q) use ($selectedProfile) {
+                    $q->where('grade', $selectedProfile->grade)
                       ->orWhereNull('grade')
-<<<<<<< HEAD
-                      ->orWhere('grade', ''); 
-=======
-                      ->orWhere('grade', '');
->>>>>>> d05dcb653f778055f4b651209f021abe0ed2fccc
+                      ->orWhere('grade', ''); // Handle empty strings if any
                 });
             }
 
@@ -2454,16 +2383,6 @@ class AuthController extends Controller
 
         // Get pre-selected items from query string
         $selectedItems = $request->query('selected_items', []);
-        
-        // Ensure selectedItems is an array (handle single value query param case)
-        if (!is_array($selectedItems)) {
-            $selectedItems = [$selectedItems];
-        }
-
-        // Ensure selectedItems is an array (handle single value query param case)
-        if (!is_array($selectedItems)) {
-            $selectedItems = [$selectedItems];
-        }
 
         // Format order data
         $order = [
