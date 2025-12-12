@@ -22,17 +22,17 @@ Route::get('/test-user-creation', function () {
     try {
         $testEmail = 'testuser' . time() . '@example.com';
         $testUsername = 'testuser' . time();
-        
+
         Log::info('Test - Attempting to create user', ['email' => $testEmail, 'username' => $testUsername]);
-        
+
         $user = User::create([
             'name' => $testUsername,
             'email' => $testEmail,
             'password' => bcrypt('password123'),
         ]);
-        
+
         Log::info('Test - User created successfully', ['user_id' => $user->id, 'user_email' => $user->email]);
-        
+
         return response()->json([
             'success' => true,
             'message' => 'User created successfully',
@@ -85,10 +85,10 @@ Route::middleware(['auth', 'prevent-back-history'])->group(function () {
     Route::get('/parent/addresses', [AuthController::class, 'myAddresses'])->name('frontend.parent.addresses');
     Route::post('/parent/save-address', [AuthController::class, 'saveAddress'])->name('frontend.parent.save-address');
     Route::post('/parent/delete-address/{addressId}', [AuthController::class, 'deleteAddress'])->name('frontend.parent.delete-address');
-    
+
     // Product Reviews
-    Route::post('/reviews', [App\Http\Controllers\Front\ReviewController::class, 'store'])->name('reviews.store');
 });
+
 
 // Google OAuth Routes
 Route::get('auth/google', [AuthController::class, 'redirectToGoogle'])->name('login.google');
@@ -242,7 +242,7 @@ Route::prefix('InventoryAdmin')->name('inventory.admin.')->group(function () {
         Route::get('/profile', [InventoryAuthController::class, 'profile'])->name('profile');
         Route::post('/profile/password', [InventoryAuthController::class, 'updatePassword'])->name('profile.password.update');
         Route::post('/logout', [InventoryAuthController::class, 'logout'])->name('logout');
-        
+
         // Orders
         Route::get('/orders', [App\Http\Controllers\Admin\Inventory\OrderController::class, 'index'])->name('orders.index');
         Route::get('/orders/shipping', [App\Http\Controllers\Admin\Inventory\OrderController::class, 'shipping'])->name('orders.shipping');
@@ -250,7 +250,7 @@ Route::prefix('InventoryAdmin')->name('inventory.admin.')->group(function () {
         Route::post('/orders/{order}/status', [App\Http\Controllers\Admin\Inventory\OrderController::class, 'updateStatus'])->name('orders.status');
         Route::get('/orders/{order}/packing-slip', [App\Http\Controllers\Admin\Inventory\OrderController::class, 'packingSlip'])->name('orders.packing-slip');
         Route::get('/orders/{order}/print-label', [App\Http\Controllers\Admin\Inventory\OrderController::class, 'printLabel'])->name('orders.print-label');
-        
+
         // Inventory
         Route::get('/inventory', [App\Http\Controllers\Admin\Inventory\InventoryController::class, 'index'])->name('inventory.index');
         Route::get('/inventory/{product}/adjust', [App\Http\Controllers\Admin\Inventory\InventoryController::class, 'adjust'])->name('inventory.adjust');
