@@ -87,6 +87,10 @@ Route::middleware(['auth', 'prevent-back-history'])->group(function () {
     Route::get('/parent/profile', [AuthController::class, 'profile'])->name('frontend.parent.profile');
     Route::post('/parent/profile', [AuthController::class, 'updateProfileDetails'])->name('frontend.parent.update-profile-details');
     Route::get('/parent/addresses', [AuthController::class, 'myAddresses'])->name('frontend.parent.addresses');
+    Route::post('/parent/save-address', [AuthController::class, 'saveAddress'])->name('frontend.parent.save-address');
+    Route::post('/parent/delete-address/{addressId}', [AuthController::class, 'deleteAddress'])->name('frontend.parent.delete-address');
+
+    // Product Reviews
     // Payment Routes
     Route::post('/parent/payment/initiate', [AuthController::class, 'initiateRazorpay'])->name('frontend.parent.payment.initiate');
     Route::post('/parent/payment/verify', [AuthController::class, 'verifyRazorpay'])->name('frontend.parent.payment.verify');
@@ -229,7 +233,11 @@ Route::prefix('MasterAdmin')->name('master.admin.')->group(function () {
         Route::post('/returns-exchange/{returnRequest}/generate-exchange', [\App\Http\Controllers\Admin\Master\ReturnExchangeController::class, 'generateExchange'])->name('returns-exchange.generate');
         Route::post('/returns-exchange/{returnRequest}/switch-type', [\App\Http\Controllers\Admin\Master\ReturnExchangeController::class, 'switchType'])->name('returns-exchange.switch-type');
         Route::post('/returns-exchange/{returnRequest}/deny', [\App\Http\Controllers\Admin\Master\ReturnExchangeController::class, 'deny'])->name('returns-exchange.deny');
+<<<<<<< HEAD
         
+=======
+
+>>>>>>> c7eca869b9f27861460126df49f0cd3a41a65580
         // Notifications
         Route::match(['get', 'post'], '/notifications/{notification}/read', [MasterAuthController::class, 'markNotificationRead'])->name('notifications.read');
         Route::post('/notifications/read-all', [MasterAuthController::class, 'markAllNotificationsRead'])->name('notifications.read-all');

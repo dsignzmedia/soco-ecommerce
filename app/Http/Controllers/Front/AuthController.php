@@ -23,30 +23,28 @@ class AuthController extends Controller
     {
         $user = Auth::user();
         $total = $request->total;
-        
         // Fetch Razorpay credentials from database
         $gateway = \App\Models\Admin\Master\PaymentGateway::where('provider', 'razorpay')
             ->where('is_active', true)
             ->first();
-            
+
         $keyId = null;
         $keySecret = null;
-        
+
         if ($gateway && !empty($gateway->credentials)) {
             $keyId = $gateway->credentials['key_id'] ?? ($gateway->credentials['key'] ?? null);
             $keySecret = $gateway->credentials['key_secret'] ?? ($gateway->credentials['secret'] ?? null);
         }
-        
         // Fallback to .env if not configured in DB
         if (empty($keyId) || empty($keySecret)) {
             $keyId = env('RAZORPAY_KEY');
             $keySecret = env('RAZORPAY_SECRET');
         }
-        
+
         if (empty($keyId) || empty($keySecret)) {
             return response()->json(['success' => false, 'message' => 'Payment gateway not configured.']);
         }
-        
+
         // Create order via Razorpay API
         try {
             $amountInPaise = (int)($total * 100);
@@ -65,11 +63,11 @@ class AuthController extends Controller
                     'receipt' => 'order_rcptid_' . time(),
                     'payment_capture' => 1
                 ]);
-                
+
             $order = $response->json();
-            
+
             Log::info('Razorpay Init - Response', ['status' => $response->status(), 'body' => $order]);
-            
+
             if (isset($order['id'])) {
                 return response()->json([
                     'success' => true,
@@ -102,28 +100,25 @@ class AuthController extends Controller
         $signature = $request->razorpay_signature;
         $paymentId = $request->razorpay_payment_id;
         $orderId = $request->razorpay_order_id;
-        
         // Fetch Razorpay credentials from database
         $gateway = \App\Models\Admin\Master\PaymentGateway::where('provider', 'razorpay')
             ->where('is_active', true)
             ->first();
-            
         $keySecret = null;
         if ($gateway && !empty($gateway->credentials)) {
             $keySecret = $gateway->credentials['key_secret'] ?? ($gateway->credentials['secret'] ?? null);
         }
-        
         // Fallback to .env
         if (empty($keySecret)) {
             $keySecret = env('RAZORPAY_SECRET');
         }
-        
+
         if (empty($keySecret)) {
             return response()->json(['success' => false, 'message' => 'Payment configuration error.']);
         }
-        
+
         $generatedSignature = hash_hmac('sha256', $orderId . "|" . $paymentId, $keySecret);
-        
+
         if ($generatedSignature === $signature) {
             // Payment successful
 
@@ -139,12 +134,10 @@ class AuthController extends Controller
             // Fetch Payment Details from Razorpay
             $paymentDetails = [];
             $amountPaid = 0;
-            
             try {
                 $response = Http::withOptions(['verify' => !app()->isLocal()])
                     ->withBasicAuth($keyId, $keySecret)
                     ->get('https://api.razorpay.com/v1/payments/' . $paymentId);
-                
                 if ($response->successful()) {
                     $paymentDetails = $response->json();
                     $amountPaid = ($paymentDetails['amount'] ?? 0) / 100;
@@ -160,10 +153,10 @@ class AuthController extends Controller
                 'amount_paid' => $amountPaid,
                 'payment_details' => $paymentDetails
             ]);
-            
+
             // Call processCheckout
             return $this->processCheckout($request);
-            
+
         } else {
             return response()->json(['success' => false, 'message' => 'Payment verification failed.']);
         }
@@ -2406,7 +2399,11 @@ class AuthController extends Controller
                 'target_role' => 'master',
                 'data' => ['order_number' => $orderNumber],
             ]);
+<<<<<<< HEAD
             
+=======
+
+>>>>>>> c7eca869b9f27861460126df49f0cd3a41a65580
             // Create Notification for Inventory Admins
             \App\Models\Notification::create([
                 'type' => 'new_order',
