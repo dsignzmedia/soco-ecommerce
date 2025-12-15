@@ -56,12 +56,22 @@ class OrderController extends Controller
 
     public function shipping(Request $request): View
     {
+        $filters = $request->only(['school_id', 'q']);
+
         $orders = Order::with('school')
             ->where('order_status', 'ready_to_ship')
+            ->when($filters['school_id'] ?? null, fn($query, $schoolId) => $query->where('school_id', $schoolId))
+            ->when($filters['q'] ?? null, fn($query, $search) => $query->where(function($q) use ($search) {
+                $q->where('order_number', 'like', "%{$search}%")
+                  ->orWhere('customer_name', 'like', "%{$search}%");
+            }))
             ->orderBy('order_date')
-            ->paginate(15);
+            ->paginate(15)
+            ->withQueryString();
 
-        return view('inventoryadmin.orders.shipping', compact('orders'));
+        $schools = School::orderBy('name')->get();
+
+        return view('inventoryadmin.orders.shipping', compact('orders', 'schools', 'filters'));
     }
 
     public function updateStatus(Request $request, Order $order): RedirectResponse

@@ -89,8 +89,8 @@
                             data-bs-parent="#faqVersion1">
                             <div class="accordion-body">
                                 <p>
-                                    We currently have uniforms available only for listed schools. However, we are
-                                    continuously expanding our collection, so stay tuned!
+                                    Uniforms and accessories are 
+available only for the schools listed on our website. However, other back-toschool products—like bags, bottles, and more—are available for any guest to purchase.
                                 </p>
                             </div>
                         </div>
@@ -105,9 +105,7 @@
                         <div id="collapseFive1" class="accordion-collapse collapse" aria-labelledby="headingFive1"
                             data-bs-parent="#faqVersion1">
                             <div class="accordion-body">
-                                <p>Enrolment Events are like open days or open weeks at Busy Bees. It's a chance for
-                                    you to visit your local nursery, take a look around, and see some of exciting
-                                    activities in action. </p>
+                                <p>You will receive an order confirmation on your screen and an email/SMS with your order details. If you receive this confirmation, your order has been placed successfully </p>
                             </div>
                         </div>
                     </div>

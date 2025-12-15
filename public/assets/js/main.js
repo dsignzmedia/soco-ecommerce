@@ -47,16 +47,16 @@
   /*---------- 03. Mobile Menu Active ----------*/
   $.fn.vsmobilemenu = function (options) {
     var opt = $.extend({
-        menuToggleBtn: ".vs-menu-toggle",
-        bodyToggleClass: "vs-body-visible",
-        subMenuClass: "vs-submenu",
-        subMenuParent: "vs-item-has-children",
-        subMenuParentToggle: "vs-active",
-        meanExpandClass: "vs-mean-expand",
-        appendElement: '<span class="vs-mean-expand"></span>',
-        subMenuToggleClass: "vs-open",
-        toggleSpeed: 400,
-      },
+      menuToggleBtn: ".vs-menu-toggle",
+      bodyToggleClass: "vs-body-visible",
+      subMenuClass: "vs-submenu",
+      subMenuParent: "vs-item-has-children",
+      subMenuParentToggle: "vs-active",
+      meanExpandClass: "vs-mean-expand",
+      appendElement: '<span class="vs-mean-expand"></span>',
+      subMenuToggleClass: "vs-open",
+      toggleSpeed: 400,
+    },
       options
     );
 
@@ -168,8 +168,8 @@
     $(this).on("click", function (e) {
       e.preventDefault();
       $("html, body").animate({
-          scrollTop: 0,
-        },
+        scrollTop: 0,
+      },
         lastScrollTop / 3
       );
       return false;
@@ -195,7 +195,7 @@
     }
 
     vsHslide.layerSlider({
-      globalBGColor: d('globalbgcolor') ? d('globalbgcolor'): false,
+      globalBGColor: d('globalbgcolor') ? d('globalbgcolor') : false,
       allowRestartOnResize: true,
       maxRatio: d("maxratio") ? d("maxratio") : 1,
       type: d("slidertype") ? d("slidertype") : "responsive",
@@ -231,9 +231,9 @@
       d("prev-arrow") +
       '"></i></button>',
       nextButton =
-      '<button type="button" class="slick-next"><i class="' +
-      d("next-arrow") +
-      '"></i></button>';
+        '<button type="button" class="slick-next"><i class="' +
+        d("next-arrow") +
+        '"></i></button>';
 
     // Function For Custom Arrow Btn
     $("[data-slick-next]").each(function () {
@@ -263,7 +263,7 @@
       arrows: d("arrows") ? true : false,
       speed: d("speed") ? d("speed") : 1000,
       asNavFor: d("asnavfor") ? d("asnavfor") : false,
-      autoplay: d("autoplay") == false ? false : false,
+      autoplay: d("autoplay") ? true : false,
       infinite: d("infinite") == false ? false : true,
       slidesToShow: d("slide-show") ? d("slide-show") : 1,
       adaptiveHeight: d("adaptive-height") ? true : false,
@@ -282,68 +282,68 @@
         nextButton : '<button type="button" class="slick-next"><i class="far fa-chevron-right"></i></button>',
       rtl: $("html").attr("dir") == "rtl" ? true : false,
       responsive: [{
-          breakpoint: 1600,
-          settings: {
-            arrows: d("xl-arrows") ? true : false,
-            dots: d("xl-dots") ? true : false,
-            slidesToShow: d("xl-slide-show") ?
-              d("xl-slide-show") : d("slide-show"),
-            centerMode: d("xl-center-mode") ? true : false,
-            centerPadding: 0,
-          },
+        breakpoint: 1600,
+        settings: {
+          arrows: d("xl-arrows") ? true : false,
+          dots: d("xl-dots") ? true : false,
+          slidesToShow: d("xl-slide-show") ?
+            d("xl-slide-show") : d("slide-show"),
+          centerMode: d("xl-center-mode") ? true : false,
+          centerPadding: 0,
         },
-        {
-          breakpoint: 1400,
-          settings: {
-            arrows: d("ml-arrows") ? true : false,
-            dots: d("ml-dots") ? true : false,
-            slidesToShow: d("ml-slide-show") ?
-              d("ml-slide-show") : d("slide-show"),
-            centerMode: d("ml-center-mode") ? true : false,
-            centerPadding: 0,
-          },
+      },
+      {
+        breakpoint: 1400,
+        settings: {
+          arrows: d("ml-arrows") ? true : false,
+          dots: d("ml-dots") ? true : false,
+          slidesToShow: d("ml-slide-show") ?
+            d("ml-slide-show") : d("slide-show"),
+          centerMode: d("ml-center-mode") ? true : false,
+          centerPadding: 0,
         },
-        {
-          breakpoint: 1200,
-          settings: {
-            arrows: d("lg-arrows") ? true : false,
-            dots: d("lg-dots") ? true : false,
-            slidesToShow: d("lg-slide-show") ?
-              d("lg-slide-show") : d("slide-show"),
-            centerMode: d("lg-center-mode") ? d("lg-center-mode") : false,
-            centerPadding: 0,
-          },
+      },
+      {
+        breakpoint: 1200,
+        settings: {
+          arrows: d("lg-arrows") ? true : false,
+          dots: d("lg-dots") ? true : false,
+          slidesToShow: d("lg-slide-show") ?
+            d("lg-slide-show") : d("slide-show"),
+          centerMode: d("lg-center-mode") ? d("lg-center-mode") : false,
+          centerPadding: 0,
         },
-        {
-          breakpoint: 992,
-          settings: {
-            arrows: d("md-arrows") ? true : false,
-            dots: d("md-dots") ? true : false,
-            slidesToShow: d("md-slide-show") ? d("md-slide-show") : 1,
-            centerMode: d("md-center-mode") ? d("md-center-mode") : false,
-            centerPadding: 0,
-          },
+      },
+      {
+        breakpoint: 992,
+        settings: {
+          arrows: d("md-arrows") ? true : false,
+          dots: d("md-dots") ? true : false,
+          slidesToShow: d("md-slide-show") ? d("md-slide-show") : 1,
+          centerMode: d("md-center-mode") ? d("md-center-mode") : false,
+          centerPadding: 0,
         },
-        {
-          breakpoint: 767,
-          settings: {
-            arrows: d("sm-arrows") ? true : false,
-            dots: d("sm-dots") ? true : false,
-            slidesToShow: d("sm-slide-show") ? d("sm-slide-show") : 1,
-            centerMode: d("sm-center-mode") ? d("sm-center-mode") : false,
-            centerPadding: 0,
-          },
+      },
+      {
+        breakpoint: 767,
+        settings: {
+          arrows: d("sm-arrows") ? true : false,
+          dots: d("sm-dots") ? true : false,
+          slidesToShow: d("sm-slide-show") ? d("sm-slide-show") : 1,
+          centerMode: d("sm-center-mode") ? d("sm-center-mode") : false,
+          centerPadding: 0,
         },
-        {
-          breakpoint: 576,
-          settings: {
-            arrows: d("xs-arrows") ? true : false,
-            dots: d("xs-dots") ? true : false,
-            slidesToShow: d("xs-slide-show") ? d("xs-slide-show") : 1,
-            centerMode: d("xs-center-mode") ? d("xs-center-mode") : false,
-            centerPadding: 0,
-          },
+      },
+      {
+        breakpoint: 576,
+        settings: {
+          arrows: d("xs-arrows") ? true : false,
+          dots: d("xs-dots") ? true : false,
+          slidesToShow: d("xs-slide-show") ? d("xs-slide-show") : 1,
+          centerMode: d("xs-center-mode") ? d("xs-center-mode") : false,
+          centerPadding: 0,
         },
+      },
         // You can unslick at a given breakpoint now by adding:
         // settings: "unslick"
         // instead of a settings object
@@ -416,8 +416,8 @@
     if (
       !$($email).val() ||
       !$($email)
-      .val()
-      .match(/^([\w-\.]+@([\w-]+\.)+[\w-]{2,4})?$/)
+        .val()
+        .match(/^([\w-\.]+@([\w-]+\.)+[\w-]{2,4})?$/)
     ) {
       $($email).addClass(invalidCls);
       valid = false;

@@ -1234,6 +1234,11 @@ textarea.is-invalid {
   }
 }
 
+.vs-btn-xl {
+  font-size: 20px;
+  padding: 22px 50px;
+}
+
 .vs-btn:after,
 .vs-btn:before {
   content: "";

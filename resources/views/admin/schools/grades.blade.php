@@ -14,6 +14,12 @@
 @endpush
 
 @section('content')
+    <div style="display:flex;justify-content:flex-end;align-items:center;margin-bottom:24px;">
+        <a href="{{ route('master.admin.schools.index') }}" class="btn-back-outline">
+            <i class="fas fa-arrow-left"></i> Back to schools
+        </a>
+    </div>
+
     <div class="card" style="margin-bottom:24px;">
         <form method="POST" action="{{ route('master.admin.schools.grades.store', $school) }}" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px;">
             @csrf

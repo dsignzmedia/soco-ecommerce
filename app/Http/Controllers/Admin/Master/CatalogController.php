@@ -56,8 +56,13 @@ class CatalogController extends Controller
         // Hardcoded options to ensure dropdowns are populated even without products
         $categories = [
             'regular_uniforms' => 'Regular Uniforms',
+            'house_uniforms' => 'House Uniforms',
+            'sports' => 'Sports Uniforms',
+            'shoes' => 'Shoes',
+            'belts' => 'Belts',
+            'socks' => 'Socks',
+            'ties' => 'Ties',
             'fabrics' => 'Fabrics',
-            'sports' => 'Sports',
         ];
 
         $productTypes = [
@@ -103,8 +108,13 @@ class CatalogController extends Controller
 
         $categories = [
             'regular_uniforms' => 'Regular Uniforms',
+            'house_uniforms' => 'House Uniforms',
+            'sports' => 'Sports Uniforms',
+            'shoes' => 'Shoes',
+            'belts' => 'Belts',
+            'socks' => 'Socks',
+            'ties' => 'Ties',
             'fabrics' => 'Fabrics',
-            'sports' => 'Sports',
         ];
 
         $productTypes = [

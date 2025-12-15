@@ -7,8 +7,13 @@
 @section('content')
     <div class="card" style="max-width:1100px;margin:auto;">
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:24px;">
-            <h3 style="margin:0;color:#111827;">SMS Templates</h3>
-            <a href="{{ route('master.admin.settings.index') }}" style="padding:10px 16px;border-radius:12px;border:1px solid #d0d5dd;color:#475467;text-decoration:none;font-weight:600;">← Back</a>
+            <div style="display:flex;align-items:center;gap:15px;">
+                <a href="{{ route('master.admin.settings.index') }}" style="color:#6b7280;text-decoration:none;display:flex;align-items:center;justify-content:center;width:32px;height:32px;border-radius:8px;border:1px solid #d1d5db;background:#fff;transition:all 0.2s;" onmouseover="this.style.borderColor='#490d59';this.style.color='#490d59'" onmouseout="this.style.borderColor='#d1d5db';this.style.color='#6b7280'">
+                    <i class="fas fa-arrow-left"></i>
+                </a>
+                <h3 style="margin:0;color:#111827;">SMS Templates</h3>
+            </div>
+            <!-- <a href="{{ route('master.admin.settings.index') }}" style="padding:10px 16px;border-radius:12px;border:1px solid #d0d5dd;color:#475467;text-decoration:none;font-weight:600;">← Back</a> -->
         </div>
 
         <div style="display:flex;flex-direction:column;gap:16px;">

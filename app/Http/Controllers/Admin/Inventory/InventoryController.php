@@ -94,7 +94,7 @@ class InventoryController extends Controller
 
         $stockByGrade = ProductMapping::selectRaw('grade_id, SUM(inventory_stock) as total')
             ->groupBy('grade_id')
-            ->with('grade')
+            ->with('gradeModel')
             ->get();
 
         return view('inventoryadmin.reports.index', compact('lowStock', 'outOfStock', 'stockBySchool', 'stockByGrade'));

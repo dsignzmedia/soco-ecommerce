@@ -35,11 +35,11 @@
             <p style="font-size:18px; stroke:#000; stroke-width:0px; text-align:center; font-style:normal; text-decoration:none; text-transform:none; font-weight:400; letter-spacing:0px; background-position:0% 0%; background-repeat:no-repeat; background-clip:border-box; overflow:visible; font-family:'Roboto', sans-serif; color:#ffffff; width:1296px; left:312px; top:438px; -webkit-background-clip:border-box;"
                 class="ls-l ls-hide-tablet ls-hide-phone ls-text-layer"
                 data-ls="offsetyin:100; delayin:500; easingin:easeOutQuint; offsetyout:100; easingout:easeOutQuint;">
-                Shop specific school uniforms and accessories with ease and trust.</p>
+               Effortless School Shopping- One Place for All Student Needs</p>
             <div style="font-size:30px; color:#000; stroke:#000; stroke-width:0px; text-align:center; font-style:normal; text-decoration:none; text-transform:none; font-weight:400; letter-spacing:0px; background-position:0% 0%; background-repeat:no-repeat; background-clip:border-box; overflow:visible; left:312px; top:494px; width:1296px; font-family:'Poppins', sans-serif; -webkit-background-clip:border-box;"
                 class="ls-l ls-hide-tablet ls-hide-phone ls-html-layer"
                 data-ls="offsetyin:100; delayin:700; easingin:easeOutQuint; offsetyout:100; easingout:easeOutQuint;">
-                <a href="{{ route('login') }}" class="vs-btn">Shop Now</a>
+                <a href="{{ route('login') }}" class="vs-btn vs-btn-xl">Shop Now</a>
             </div>
             <h1 style="font-size:90px; stroke:#000; stroke-width:0px; text-align:center; font-style:normal; text-decoration:none; text-transform:none; font-weight:600; letter-spacing:0px; background-position:0% 0%; background-repeat:no-repeat; background-clip:border-box; overflow:visible; font-family:'Poppins', sans-serif; line-height:90px; color:#ffffff; top:141px; left:50%; width:1200px; -webkit-background-clip:border-box;"
                 class="ls-l ls-hide-desktop ls-hide-phone ls-text-layer"
@@ -54,11 +54,11 @@
             <p style="stroke:#000; stroke-width:0px; text-align:center; font-style:normal; text-decoration:none; text-transform:none; font-weight:400; letter-spacing:0px; background-position:0% 0%; background-repeat:no-repeat; background-clip:border-box; overflow:visible; font-family:'Roboto', sans-serif; color:#ffffff; width:1200px; left:50%; top:384px; font-size:38px; -webkit-background-clip:border-box;"
                 class="ls-l ls-hide-desktop ls-hide-phone ls-text-layer"
                 data-ls="offsetyin:100; delayin:500; easingin:easeOutQuint; offsetyout:100; easingout:easeOutQuint;">
-                Shop specific school uniforms and accessories with ease and trust.</p>
+                Effortless School Shopping- One Place for All Student Needs</p>
             <div style="font-size:30px; color:#000; stroke:#000; stroke-width:0px; text-align:center; font-style:normal; text-decoration:none; text-transform:none; font-weight:400; letter-spacing:0px; background-position:0% 0%; background-repeat:no-repeat; background-clip:border-box; overflow:visible; left:50%; top:495px; font-family:'Poppins', sans-serif; width:1200px; margin-left:0px; -webkit-background-clip:border-box;"
                 class="ls-l ls-hide-desktop ls-hide-phone ls-html-layer"
                 data-ls="offsetyin:100; delayin:700; easingin:easeOutQuint; offsetyout:100; easingout:easeOutQuint;">
-                <a href="{{ route('login') }}" class="vs-btn">Shop Now</a>
+                <a href="{{ route('login') }}" class="vs-btn vs-btn-xl">Shop Now</a>
             </div>
             <h1 style="font-size:110px; stroke:#000; stroke-width:0px; text-align:center; font-style:normal; text-decoration:none; text-transform:none; font-weight:600; letter-spacing:0px; background-position:0% 0%; background-repeat:no-repeat; background-clip:border-box; overflow:visible; font-family:'Poppins', sans-serif; line-height:110px; color:#ffffff; top:113px; left:50%; width:1200px; -webkit-background-clip:border-box;"
                 class="ls-l ls-hide-desktop ls-hide-tablet ls-text-layer"
@@ -73,7 +73,7 @@
             <div style="font-size:30px; color:#000; stroke:#000; stroke-width:0px; text-align:center; font-style:normal; text-decoration:none; text-transform:none; font-weight:400; letter-spacing:0px; background-position:0% 0%; background-repeat:no-repeat; background-clip:border-box; overflow:visible; left:50%; top:430px; font-family:'Poppins', sans-serif; width:1200px; margin-left:0px; -webkit-background-clip:border-box;"
                 class="ls-l ls-hide-desktop ls-hide-tablet ls-html-layer"
                 data-ls="offsetyin:100; delayin:700; easingin:easeOutQuint; offsetyout:100; easingout:easeOutQuint;">
-                <a href="{{ route('login') }}" class="vs-btn">Shop Now</a>
+                <a href="{{ route('login') }}" class="vs-btn vs-btn-xl">Shop Now</a>
             </div>
         </div>
 
@@ -381,6 +381,19 @@ Shop by Category Area
         padding-top: 2px !important;
     }
 }
+
+/* Fix for Service Card Height Consistency */
+.service-style1 .service-img {
+    height: 350px; /* Fixed height for all service images */
+    width: 100%;
+    overflow: hidden;
+}
+
+.service-style1 .service-img img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover; /* Ensure image covers the area without distortion */
+}
 </style>
 
 <!--==============================
@@ -393,9 +406,9 @@ About Area
             <div class="col-lg-6" data-aos="fade-up" data-aos-delay="300" data-aos-duration="1200">
                 <div class="img-box1">
                     <div class="vs-circle"></div>
-                    <div class="img-1 mega-hover"><img src="{{ asset('assets/img/about/about_1.svg') }}" alt="about">
+                    <div class="img-1 mega-hover"><img src="{{ asset('assets/img/indian_faces/about_1.jpeg') }}" alt="about">
                     </div>
-                    <div class="img-2 mega-hover"><img src="{{ asset('assets/img/about/about_2.svg') }}" alt="about">
+                    <div class="img-2 mega-hover"><img src="{{ asset('assets/img/indian_faces/about_2.png') }}" alt="about">
                     </div>
                     <div class="img-3 mega-hover"><img src="{{ asset('assets/img/about/about_3.svg') }}" alt="about">
                     </div>
@@ -406,7 +419,7 @@ About Area
 
             <div class="col-lg-6 text-center text-lg-start">
                 <span class="sec-subtitle">7+ years, trusted quality,</span>
-                <h2 class="sec-title">The Easiest Way to Buy School Uniforms</h2>
+                <h2 class="sec-title">Your Easy, All in one destination for school Uniform and Essentials.</h2>
                 <p class="sec-text pe-xl-5 mb-4 pb-xl-3">We make school uniform shopping easy and hassle-free. As a
                     trusted uniform
                     manufacturer, we are now bringing our expertise online. With a commitment
@@ -479,17 +492,15 @@ Service Area
                 durability — trusted by schools across India.</p>
         </div>
         <div class="row vs-carousel d-none d-md-flex" data-slide-show="4" data-ml-slide-show="3" data-lg-slide-show="3"
-            data-md-slide-show="2">
+            data-md-slide-show="2" data-autoplay="true">
             <div class="service-style1 col-xl-3">
                 <div class="service-body">
                     <div class="service-img"><a href="#"><img
-                                src="{{ asset('assets/img/services/service.svg') }}" alt="service"></a></div>
+                                src="{{ asset('assets/img/indian_faces/service_1.png') }}" alt="service"></a></div>
                     <div class="service-content">
                         <div class="service-icon"><img src="{{ asset('assets/img/icon/sr-1-1.svg') }}" alt="icon"></div>
                         <h3 class="service-title"><a href="#">Comfort & Care</a></h3>
-                        <p class="service-text">Soft, skin-friendly fabrics designed
-                            for all-day comfort, ensuring durability,
-                            easy care, and lasting freshness.</p>
+                        <p class="service-text">Soft, skin-friendly fabrics designed for all-day comfort, ensuring durability, easy care, and lasting freshness.</p>
                         <div class="service-bottom">
                             <a href="#" class="service-btn">Learn More</a>
                         </div>
@@ -499,12 +510,11 @@ Service Area
             <div class="service-style1 col-xl-3">
                 <div class="service-body">
                     <div class="service-img"><a href="#"><img
-                                src="{{ asset('assets/img/services/service (1).svg') }}" alt="service"></a></div>
+                                src="{{ asset('assets/img/indian_faces/service_5.png') }}" alt="service"></a></div>
                     <div class="service-content">
                         <div class="service-icon"><img src="{{ asset('assets/img/icon/sr-1-2.svg') }}" alt="icon"></div>
-                        <h3 class="service-title"><a href="#">Child Care</a></h3>
-                        <p class="service-text">We have a very large indoor space allowing us to have designated
-                            areas for different types</p>
+                        <h3 class="service-title"><a href="#">On Time Delivery</a></h3>
+                        <p class="service-text">Reliable, punctual delivery—your school essentials arrive exactly when you need them</p>
                         <div class="service-bottom">
                             <a href="#" class="service-btn">Learn More</a>
                         </div>
@@ -517,9 +527,8 @@ Service Area
                                 src="{{ asset('assets/img/services/service (2).svg') }}" alt="service"></a></div>
                     <div class="service-content">
                         <div class="service-icon"><img src="{{ asset('assets/img/icon/sr-1-3.svg') }}" alt="icon"></div>
-                        <h3 class="service-title"><a href="#">Healthy Meals</a></h3>
-                        <p class="service-text">We have a very large indoor space allowing us to have designated
-                            areas for different types</p>
+                        <h3 class="service-title"><a href="#">Student Delight</a></h3>
+                        <p class="service-text">Designed to make every student feel confident and happy.creating a delightful experience from classroom to playground.</p>
                         <div class="service-bottom">
                             <a href="#" class="service-btn">Learn More</a>
                         </div>
@@ -529,12 +538,25 @@ Service Area
             <div class="service-style1 col-xl-3">
                 <div class="service-body">
                     <div class="service-img"><a href="#"><img
-                                src="{{ asset('assets/img/services/service (3).svg') }}" alt="service"></a></div>
+                                src="{{ asset('assets/img/indian_faces/service_4.png') }}" alt="service"></a></div>
                     <div class="service-content">
                         <div class="service-icon"><img src="{{ asset('assets/img/icon/sr-1-4.svg') }}" alt="icon"></div>
-                        <h3 class="service-title"><a href="#">Secure Environment</a></h3>
-                        <p class="service-text">We have a very large indoor space allowing us to have designated
-                            areas for different types</p>
+                        <h3 class="service-title"><a href="#">Wide Range</a></h3>
+                        <p class="service-text">A complete collection under one roof. Explore a wide range tailored to meet every school and student’s needs.</p>
+                        <div class="service-bottom">
+                            <a href="#" class="service-btn">Learn More</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="service-style1 col-xl-3">
+                <div class="service-body">
+                    <div class="service-img"><a href="#"><img style="height: 350px; object-fit: cover;"
+                                src="{{ asset('assets/img/indian_faces/service_2.png') }}" alt="service"></a></div>
+                    <div class="service-content">
+                        <div class="service-icon"><img src="{{ asset('assets/img/icon/check-list.svg') }}" alt="icon"></div>
+                        <h3 class="service-title"><a href="#">Transparency</a></h3>
+                        <p class="service-text">Clear, honest, and straightforward at every step. From pricing to product quality, we ensure complete visibility</p>
                         <div class="service-bottom">
                             <a href="#" class="service-btn">Learn More</a>
                         </div>
@@ -548,7 +570,7 @@ Service Area
             <div class="service-marquee-row">
                 <div class="service-style1">
                     <div class="service-body">
-                        <div class="service-img"><a href="#"><img src="{{ asset('assets/img/services/service.svg') }}" alt="service"></a></div>
+                        <div class="service-img"><a href="#"><img src="{{ asset('assets/img/indian_faces/service_1.png') }}" alt="service"></a></div>
                         <div class="service-content">
                             <div class="service-icon"><img src="{{ asset('assets/img/icon/sr-1-1.svg') }}" alt="icon"></div>
                             <h3 class="service-title"><a href="#">Comfort & Care</a></h3>
@@ -561,11 +583,11 @@ Service Area
                 </div>
                 <div class="service-style1">
                     <div class="service-body">
-                        <div class="service-img"><a href="#"><img src="{{ asset('assets/img/services/service (1).svg') }}" alt="service"></a></div>
+                        <div class="service-img"><a href="#"><img src="{{ asset('assets/img/indian_faces/service_5.png') }}" alt="service"></a></div>
                         <div class="service-content">
                             <div class="service-icon"><img src="{{ asset('assets/img/icon/sr-1-2.svg') }}" alt="icon"></div>
-                            <h3 class="service-title"><a href="#">Child Care</a></h3>
-                            <p class="service-text">We have a very large indoor space allowing us to have designated areas for different types</p>
+                            <h3 class="service-title"><a href="#">On Time Delivery</a></h3>
+                            <p class="service-text">Reliable, punctual delivery—your school essentials arrive exactly when you need them</p>
                             <div class="service-bottom">
                                 <a href="#" class="service-btn">Learn More</a>
                             </div>
@@ -577,8 +599,8 @@ Service Area
                         <div class="service-img"><a href="#"><img src="{{ asset('assets/img/services/service (2).svg') }}" alt="service"></a></div>
                         <div class="service-content">
                             <div class="service-icon"><img src="{{ asset('assets/img/icon/sr-1-3.svg') }}" alt="icon"></div>
-                            <h3 class="service-title"><a href="#">Healthy Meals</a></h3>
-                            <p class="service-text">We have a very large indoor space allowing us to have designated areas for different types</p>
+                            <h3 class="service-title"><a href="#">Student Delight</a></h3>
+                            <p class="service-text">Designed to make every student feel confident and happy.creating a delightful experience from classroom to playground.</p>
                             <div class="service-bottom">
                                 <a href="#" class="service-btn">Learn More</a>
                             </div>
@@ -587,11 +609,24 @@ Service Area
                 </div>
                 <div class="service-style1">
                     <div class="service-body">
-                        <div class="service-img"><a href="#"><img src="{{ asset('assets/img/services/service (3).svg') }}" alt="service"></a></div>
+                        <div class="service-img"><a href="#"><img src="{{ asset('assets/img/indian_faces/service_4.png') }}" alt="service"></a></div>
                         <div class="service-content">
                             <div class="service-icon"><img src="{{ asset('assets/img/icon/sr-1-4.svg') }}" alt="icon"></div>
-                            <h3 class="service-title"><a href="#">Secure Environment</a></h3>
-                            <p class="service-text">We have a very large indoor space allowing us to have designated areas for different types</p>
+                            <h3 class="service-title"><a href="#">Wide Range</a></h3>
+                            <p class="service-text">A complete collection under one roof. Explore a wide range tailored to meet every school and student’s needs.</p>
+                            <div class="service-bottom">
+                                <a href="#" class="service-btn">Learn More</a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="service-style1">
+                    <div class="service-body">
+                        <div class="service-img"><a href="#"><img style="height: 350px; object-fit: cover;" src="{{ asset('assets/img/indian_faces/service_2.png') }}" alt="service"></a></div>
+                        <div class="service-content">
+                            <div class="service-icon"><img src="{{ asset('assets/img/icon/check-list.svg') }}" alt="icon"></div>
+                            <h3 class="service-title"><a href="#">Transparency</a></h3>
+                            <p class="service-text">Clear, honest, and straightforward at every step. From pricing to product quality, we ensure complete visibility</p>
                             <div class="service-bottom">
                                 <a href="#" class="service-btn">Learn More</a>
                             </div>
@@ -611,6 +646,174 @@ Service Area
 </div>
 
 </div>
+<!--==============================
+Process Area
+==============================-->
+<section class="space-top space-extra-bottom" style="background-color: #ffffff;">
+   
+    <div class="container">
+        <div class="title-area text-center" data-aos="fade-up" data-aos-delay="300" data-aos-duration="1200">
+            <div class="sec-bubble">
+                <div class="bubble"></div>
+                <div class="bubble"></div>
+                <div class="bubble"></div>
+            </div>
+            <h2 class="sec-title">How To Buy Product</h2>
+            <span class="sec-subtitle">SIMPLE STEPS TO PURCHASE</span>
+        </div>
+        <div class="row gy-4 position-relative" data-aos="fade-up" data-aos-delay="300" data-aos-duration="1200">
+            <div class="process-center-circle d-none d-lg-block"></div>
+            <!-- Step 1 -->
+            <div class="col-lg-6 col-xl-6">
+                <div class="process-box" style="background-color: #8BC34A;">
+                    <div class="process-img">
+                         <img src="{{ asset('assets/gif/soco%20gifs/step%201.gif') }}" alt="Step 1">
+                    </div>
+                    <div class="process-content">
+                        <span class="process-step">Step 1</span>
+                        <h3 class="process-title">Enter Your Details</h3>
+                        <p class="process-text">Provide your information to quickly locate your school and its specific products</p>
+                    </div>
+                </div>
+            </div>
+            <!-- Step 2 -->
+            <div class="col-lg-6 col-xl-6">
+                <div class="process-box" style="background-color: #00BCD4;">
+                    <div class="process-img">
+                         <img src="{{ asset('assets/gif/soco%20gifs/step%202.gif') }}" alt="Step 2">
+                    </div>
+                    <div class="process-content">
+                        <span class="process-step">Step 2</span>
+                        <h3 class="process-title">Select Your Product</h3>
+                        <p class="process-text">Choose the required items and add them to your cart</p>
+                    </div>
+                </div>
+            </div>
+            <!-- Step 3 -->
+            <div class="col-lg-6 col-xl-6">
+                <div class="process-box" style="background-color: #512DA8;">
+                    <div class="process-img">
+                         <img src="{{ asset('assets/gif/soco%20gifs/step%203.gif') }}" alt="Step 3">
+                    </div>
+                    <div class="process-content">
+                        <span class="process-step">Step 3</span>
+                        <h3 class="process-title">Review & Checkout</h3>
+                        <p class="process-text">Verify your items and proceed to check out</p>
+                    </div>
+                </div>
+            </div>
+            <!-- Step 4 -->
+            <div class="col-lg-6 col-xl-6">
+                <div class="process-box" style="background-color: #E64A19;">
+                    <div class="process-img">
+                         <img src="{{ asset('assets/gif/soco%20gifs/step%204.gif') }}" alt="Step 4">
+                    </div>
+                    <div class="process-content">
+                        <span class="process-step">Step 4</span>
+                        <h3 class="process-title">Get it Delivered</h3>
+                        <p class="process-text">Receive your products at your doorstep with timely delivery</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <style>
+        .process-box {
+            display: flex;
+            align-items: center;
+            padding: 30px 40px;
+            border-radius: 20px;
+            color: #fff;
+            height: 100%;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.08);
+            position: relative;
+            overflow: hidden;
+            z-index: 1;
+        }
+        .process-center-circle {
+            position: absolute;
+            left: 50%;
+            top: 50%;
+            transform: translate(-50%, -50%);
+            width: 300px;
+            height: 300px;
+            border: 50px solid var(--theme-color2, #fec624);
+            border-radius: 50%;
+            z-index: 0;
+            background-color: transparent;
+        }
+        .process-box:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 35px rgba(0,0,0,0.12);
+        }
+        .process-img {
+            flex: 0 0 130px;
+            width: 130px;
+            height: 130px;
+            border-radius: 50%;
+            background: #fefcfb;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 30px;
+            padding: 15px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+        .process-img img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+        }
+        .process-content {
+            flex: 1;
+        }
+        .process-step {
+            display: inline-block;
+            background: #fff;
+            color: #222;
+            padding: 6px 16px;
+            border-radius: 6px;
+            font-weight: 700;
+            font-size: 0.85rem;
+            margin-bottom: 15px;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+        .process-title {
+            font-size: 1.6rem;
+            font-weight: 700;
+            margin-bottom: 10px;
+            color: #fff;
+        }
+        .process-text {
+            font-size: 1rem;
+            color: rgba(255, 255, 255, 0.9);
+            line-height: 1.6;
+            margin-bottom: 0;
+        }
+        
+        /* Mobile Responsive */
+        @media (max-width: 767px) {
+            .process-box {
+                flex-direction: column;
+                text-align: center;
+                padding: 30px 20px;
+            }
+            .process-img {
+                margin-right: 0;
+                margin-bottom: 20px;
+                width: 120px;
+                height: 120px;
+            }
+            .process-title {
+                font-size: 1.4rem;
+            }
+        }
+    </style>
+</section>
+
 <section class=" space-top space-extra-bottom" style="background-color: #ffffff;">
     <div class="container">
         <div class="row gx-80">
@@ -681,8 +884,7 @@ Service Area
                             data-bs-parent="#faqVersion1">
                             <div class="accordion-body">
                                 <p>
-                                    We currently have uniforms available only for listed schools. However, we are
-                                    continuously expanding our collection, so stay tuned!
+                                   Uniforms and accessories are available only for the schools listed on our website. However, other back-toschool products—like bags, bottles, and more—are available for any guest to purchase.
                                 </p>
                             </div>
                         </div>
@@ -697,9 +899,7 @@ Service Area
                         <div id="collapseFive1" class="accordion-collapse collapse" aria-labelledby="headingFive1"
                             data-bs-parent="#faqVersion1">
                             <div class="accordion-body">
-                                <p>Enrolment Events are like open days or open weeks at Busy Bees. It's a chance for
-                                    you to visit your local nursery, take a look around, and see some of exciting
-                                    activities in action. </p>
+                                <p>You will receive an order confirmation on your screen and an email/SMS with your order details. If you receive this confirmation, your order has been placed successfully </p>
                             </div>
                         </div>
                     </div>

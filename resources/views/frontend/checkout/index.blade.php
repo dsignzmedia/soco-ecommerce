@@ -200,13 +200,18 @@
                                 
                                 <hr style="margin: 20px 0;">
                                 
-                                <div class="d-flex justify-content-between mb-4">
+    <div class="d-flex justify-content-between mb-4">
                                     <strong style="color: #333; font-size: 1.1rem;">Total:</strong>
                                     <strong style="color: #dc3545; font-size: 1.1rem;">₹{{ number_format($total) }}</strong>
                                 </div>
                                 
-                                <button type="submit" class="vs-btn w-100 mb-2" id="placeOrderBtn" onclick="preventDoubleSubmit(this)">
-                                    <i class="fas fa-check-circle me-2"></i> Place Order
+                                @if(isset($razorpayEnabled) && $razorpayEnabled)
+    <button type="button" class="vs-btn w-100 mb-2" id="payWithRazorpayBtn" onclick="initiatePayment()">
+        <i class="fas fa-credit-card me-2"></i> Pay with Razorpay
+    </button>
+@endif                                
+                                <button type="submit" class="vs-btn w-100 mb-2" id="placeOrderBtn" onclick="preventDoubleSubmit(this)" style="background-color: #2C3E50; color: #ffffff; border-color: #2C3E50;">
+                                    <i class="fas fa-money-bill-wave me-2"></i> Cash on Delivery
                                 </button>
                                 
                                 <a href="{{ route('frontend.parent.cart') }}" class="btn w-100" style="background-color: #6c757d; color: #ffffff; border: none; border-radius: 8px; padding: 12px; text-decoration: none; display: flex; align-items: center; justify-content: center; transition: all 0.3s ease;" onmouseover="this.style.backgroundColor='#5a6268';" onmouseout="this.style.backgroundColor='#6c757d';">
@@ -217,6 +222,19 @@
                     </div>
                 </div>
             </form>
+            <!-- Razorpay Script -->
+            <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+            <script src="{{ asset('assets/js/razorpay-checkout.js') }}"></script>
+            <script>
+                function initiatePayment() {
+                    initiateRazorpayPayment({
+                        initiateRoute: "{{ route('frontend.parent.payment.initiate') }}",
+                        verifyRoute: "{{ route('frontend.parent.payment.verify') }}",
+                        csrfToken: "{{ csrf_token() }}",
+                        totalAmount: {{ $total }}
+                    });
+                }
+            </script>
         @else
             <div class="card shadow-sm rounded-4 border-0" style="background-color: #ffffff;">
                 <div class="card-body text-center py-5">

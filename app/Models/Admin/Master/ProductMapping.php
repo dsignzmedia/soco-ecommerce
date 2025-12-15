@@ -52,7 +52,7 @@ class ProductMapping extends Model
         return $this->belongsTo(School::class);
     }
 
-    public function gradeModel(): BelongsTo
+    public function grade(): BelongsTo
     {
         return $this->belongsTo(Grade::class, 'grade_id');
     }
