@@ -5,71 +5,205 @@
 @section('page_subheading', 'Review and approve requests; process received items')
 
 @section('content')
-    <div class="card" style="max-width:1200px;margin:auto;">
-        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;gap:12px;flex-wrap:wrap;">
-            <form method="GET" action="{{ route('master.admin.returns-exchange.index') }}" style="display:flex;gap:8px;align-items:center;">
-                <select name="type" style="padding:8px;border:1px solid #e5e7eb;border-radius:8px;">
+    <style>
+        .filters-card {
+            background: #ffffff;
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            margin-bottom: 24px;
+            border: 1px solid #e5e7eb;
+        }
+        .filter-form-grid {
+            display: flex;
+            gap: 12px;
+            align-items: center;
+            flex-wrap: wrap; /* Allow wrap on small screens but keep side-by-side on large */
+        }
+        .filter-input-rounded {
+            padding: 10px 16px;
+            border: 1px solid #e5e7eb;
+            border-radius: 12px;
+            font-size: 14px;
+            color: #374151;
+            outline: none;
+            background-color: #fff;
+            height: 46px;
+            font-family: inherit;
+            min-width: 150px; /* Reduced min-width slightly to fit more */
+            flex: 1; /* Allow them to grow */
+        }
+        .filter-input-rounded:focus {
+            border-color: #490d59;
+            box-shadow: 0 0 0 4px rgba(73, 13, 89, 0.1);
+        }
+        .btn-filter, .btn-reset {
+            height: 46px;
+            padding: 0 24px;
+            border-radius: 12px;
+            font-weight: 600;
+            font-size: 14px;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            white-space: nowrap;
+        }
+        .btn-filter {
+            background-color: #490d59;
+            color: #ffffff;
+            border: none;
+        }
+        .btn-filter:hover {
+            background-color: #3b0a48;
+        }
+        .btn-reset {
+            background: #ffffff;
+            border: 1px solid #e2e8f0;
+            color: #475467;
+            text-decoration: none;
+        }
+        .btn-reset:hover {
+            border-color: #d0d5dd;
+            color: #0f172a;
+            background: #f8fafc;
+        }
+
+        /* Action Buttons */
+        .action-group {
+            display: flex;
+            gap: 6px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+        .btn-action-sm {
+            padding: 6px 12px;
+            border-radius: 6px;
+            font-size: 12px;
+            font-weight: 600;
+            border: none;
+            cursor: pointer;
+            white-space: nowrap;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            height: 32px;
+            transition: opacity 0.2s;
+        }
+        .btn-action-sm:hover { opacity: 0.9; }
+        
+        .btn-view { background: #fff; border: 1px solid #d0d5dd; color: #344054; }
+        .btn-approve { background: #dcfce7; color: #027a48; }
+        .btn-deny { background: #fee4e2; color: #b42318; }
+        .btn-blue { background: #e0f2fe; color: #026aa7; }
+        
+        .table-wrap {
+            border: 1px solid #e5e7eb;
+            border-radius: 12px;
+            overflow-x: auto;
+            background: #fff;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+        }
+        table { width: 100%; border-collapse: collapse; }
+        th, td { padding: 12px 16px; text-align: left; border-bottom: 1px solid #e5e7eb; font-size: 13px; vertical-align: middle; }
+        th { background: #f9fafb; font-weight: 600; color: #475467; font-size: 12px; text-transform: uppercase; letter-spacing: 0.05em; }
+        tr:last-child td { border-bottom: none; }
+
+        /* Specific modifications requested */
+        th:first-child, td:first-child {
+            padding-left: 32px; /* Increased padding */
+        }
+    </style>
+
+    <div class="filters-card">
+        <form method="GET" action="{{ route('master.admin.returns-exchange.index') }}" class="filter-form-grid">
+            <div style="flex:1; min-width: 150px;">
+                <select name="type" class="filter-input-rounded no-tom" style="width:100%;">
                     <option value="">All Types</option>
                     <option value="return" {{ ($filters['type'] ?? '') === 'return' ? 'selected' : '' }}>Return</option>
                     <option value="exchange" {{ ($filters['type'] ?? '') === 'exchange' ? 'selected' : '' }}>Exchange</option>
                 </select>
-                <select name="status" style="padding:8px;border:1px solid #e5e7eb;border-radius:8px;">
+            </div>
+            <div style="flex:1; min-width: 150px;">
+                <select name="status" class="filter-input-rounded no-tom" style="width:100%;">
                     <option value="">All Status</option>
                     @foreach(['pending','approved','rejected','received_restocked','received_discarded','completed'] as $st)
                         <option value="{{ $st }}" {{ ($filters['status'] ?? '') === $st ? 'selected' : '' }} style="text-transform:capitalize;">{{ str_replace('_',' ', $st) }}</option>
                     @endforeach
                 </select>
-                <input type="text" name="q" value="{{ $filters['q'] ?? '' }}" placeholder="Search order# or item" style="padding:8px;border:1px solid #e5e7eb;border-radius:8px;min-width:240px;">
-                <button type="submit" style="padding:8px 12px;border:none;border-radius:8px;background:#f3f4f6;color:#111827;">Filter</button>
-                <button type="button" style="padding:8px 12px;border:none;border-radius:8px;background:#f3f4f6;color:#111827;" onclick="window.location.href='{{ route('master.admin.returns-exchange.index') }}'">Reset</button>
-            </form>
-        </div>
+            </div>
+            <div style="flex:2; min-width: 200px;">
+                <input type="text" name="q" value="{{ $filters['q'] ?? '' }}" placeholder="Search order# or item" class="filter-input-rounded" style="width:100%;">
+            </div>
+            
+            <button type="submit" class="btn-filter">Filter</button>
+            <a href="{{ route('master.admin.returns-exchange.index') }}" class="btn-reset">Reset</a>
+        </form>
+    </div>
 
-        <div class="table-wrap" style="overflow:auto;border:1px solid #e5e7eb;border-radius:12px;">
-            <table class="table" style="width:100%;border-collapse:collapse;">
-                <thead>
-                    <tr style="background:#f9fafb;">
-                        <th style="padding:10px;text-align:left;">ID</th>
-                        <th style="padding:10px;text-align:left;">Type</th>
-                        <th style="padding:10px;text-align:left;">Order #</th>
-                        <th style="padding:10px;text-align:left;">Item</th>
-                        <th style="padding:10px;text-align:left;">Qty</th>
-                        <th style="padding:10px;text-align:left;">Status</th>
-                        <th style="padding:10px;text-align:left;">Reason</th>
-                        <th style="padding:10px;text-align:left;">Evidence</th>
-                        <th style="padding:10px;text-align:left;">Admin Notes</th>
-                        <th style="padding:10px;text-align:left;">Actions</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    @forelse($requests as $req)
-                        <tr>
-                            <td style="padding:10px;">{{ $req->id }}</td>
-                            <td style="padding:10px;text-transform:capitalize;">{{ $req->type }}</td>
-                            <td style="padding:10px;">
-                                <a href="{{ route('master.admin.orders.show', $req->order) }}" style="color:#490d59;text-decoration:none;">{{ $req->order->order_number ?? '—' }}</a>
-                            </td>
-                            <td style="padding:10px;">{{ $req->order->item_name ?? '—' }}</td>
-                            <td style="padding:10px;">{{ $req->order->quantity ?? 1 }}</td>
-                            <td style="padding:10px;text-transform:capitalize;">{{ str_replace('_',' ', $req->status) }}</td>
-                            <td style="padding:10px;">{{ $req->reason }}</td>
-                            <td style="padding:10px;">
-                                @if($req->photo_path)
-                                    <a href="{{ asset('storage/'.$req->photo_path) }}" target="_blank" style="display:block;width:50px;height:50px;">
-                                        <img src="{{ asset('storage/'.$req->photo_path) }}" alt="Evidence" style="width:100%;height:100%;object-fit:cover;border-radius:6px;border:1px solid #e5e7eb;">
-                                    </a>
-                                @else
-                                    <span style="color:#9ca3af;font-size:0.85rem;">—</span>
-                                @endif
-                            </td>
-                            <td style="padding:10px;">{{ $req->admin_notes }}</td>
-                            <td style="padding:10px;display:flex;gap:8px;flex-wrap:wrap;">
-                                <a href="{{ route('master.admin.returns-exchange.show', $req) }}" class="btn-vs-sm">View</a>
+    <div class="table-wrap">
+        <table>
+            <thead>
+                <tr>
+                    <th style="width: 60px;">S.No</th>
+                    <th>Order Details</th>
+                    <th>Item</th>
+                    <th>Qty</th>
+                    <th>Status</th>
+                    <th>Reason</th>
+                    <th>Evidence</th>
+                    <th>Admin Notes</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                @forelse($requests as $req)
+                    <tr>
+                        <td>{{ $loop->iteration }}</td>
+                        <td>
+                            <div style="display:flex;flex-direction:column;gap:4px;">
+                                <a href="{{ route('master.admin.orders.show', $req->order) }}" style="color:#490d59;font-weight:700;text-decoration:none;">{{ $req->order->order_number ?? '—' }}</a>
+                                <span style="display:inline-block;width:fit-content;padding:2px 8px;border-radius:12px;font-size:11px;font-weight:600;background:{{ $req->type === 'return' ? '#fef3c7' : '#e0e7ff' }};color:{{ $req->type === 'return' ? '#92400e' : '#3730a3' }};text-transform:capitalize;">
+                                    {{ $req->type }}
+                                </span>
+                            </div>
+                        </td>
+                        <td>{{ $req->order->item_name ?? '—' }}</td>
+                        <td>{{ $req->order->quantity ?? 1 }}</td>
+                        <td>
+                            <span style="font-size:12px;text-transform:capitalize;color:#4b5563;">{{ str_replace('_',' ', $req->status) }}</span>
+                        </td>
+                        <td>{{ $req->reason }}</td>
+                        <td>
+                            @if($req->photo_path)
+                                <a href="{{ asset('storage/'.$req->photo_path) }}" target="_blank" style="display:block;width:40px;height:40px;">
+                                    <img src="{{ asset('storage/'.$req->photo_path) }}" alt="Img" style="width:100%;height:100%;object-fit:cover;border-radius:6px;border:1px solid #e5e7eb;">
+                                </a>
+                            @else
+                                <span style="color:#9ca3af;">—</span>
+                            @endif
+                        </td>
+                        <td>
+                            <div style="max-width:150px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;" title="{{ $req->admin_notes }}">
+                                {{ $req->admin_notes ?? '-' }}
+                            </div>
+                        </td>
+                        <td>
+                            <div class="action-group">
+                                <a href="{{ route('master.admin.returns-exchange.show', $req) }}" class="btn-action-sm btn-view">
+                                    <i class="fas fa-eye" style="margin-right:4px;"></i> View
+                                </a>
 
                                 @if($req->status === 'pending')
                                     <form method="POST" action="{{ route('master.admin.returns-exchange.approve', $req) }}">
                                         @csrf
-                                        <button type="submit" style="border:none;border-radius:8px;padding:6px 10px;background:#e9d7fe;color:#6941c6;">Approve</button>
+                                        <button type="submit" class="btn-action-sm btn-approve" title="Approve">Approve</button>
+                                    </form>
+                                    <form method="POST" action="{{ route('master.admin.returns-exchange.deny', $req) }}">
+                                        @csrf
+                                        <button type="submit" class="btn-action-sm btn-deny" title="Deny">Deny</button>
                                     </form>
                                 @endif
 
@@ -78,29 +212,28 @@
                                         <form method="POST" action="{{ route('master.admin.returns-exchange.receive', $req) }}" style="display:flex;gap:6px;">
                                             @csrf
                                             <input type="hidden" name="admin_notes" value="Auto-marked from list">
-                                            <button type="submit" name="action" value="restock" style="border:none;border-radius:8px;padding:6px 10px;background:#dcfce7;color:#065f46;">Mark Received - Restock</button>
-                                            <button type="submit" name="action" value="discard" style="border:none;border-radius:8px;padding:6px 10px;background:#fee2e2;color:#991b1b;">Mark Received - Discard</button>
+                                            <button type="submit" name="action" value="restock" class="btn-action-sm btn-approve" title="Mark Received & Restock">Restock</button>
+                                            <button type="submit" name="action" value="discard" class="btn-action-sm btn-deny" title="Mark Received & Discard">Discard</button>
                                         </form>
                                     @endif
 
                                     @if($req->type === 'exchange')
-                                        <form method="POST" action="{{ route('master.admin.returns-exchange.generate', $req) }}" style="display:flex;gap:6px;">
-                                            @csrf
-                                            <input type="text" name="exchange_product_name" placeholder="Replacement Product" required style="padding:6px;border:1px solid #e5e7eb;border-radius:8px;">
-                                            <input type="text" name="exchange_size" placeholder="Size" style="padding:6px;border:1px solid #e5e7eb;border-radius:8px;">
-                                            <button type="submit" style="border:none;border-radius:8px;padding:6px 10px;background:#dbeafe;color:#1d4ed8;">Generate Exchange Order</button>
-                                        </form>
+                                        <a href="{{ route('master.admin.returns-exchange.show', $req) }}" class="btn-action-sm btn-blue">
+                                            Process Exchange
+                                        </a>
                                     @endif
                                 @endif
-                            </td>
-                        </tr>
-                    @empty
-                        <tr><td colspan="10" style="padding:12px;text-align:center;">No return/exchange requests found.</td></tr>
-                    @endforelse
-                </tbody>
-            </table>
-        </div>
+                            </div>
+                        </td>
+                    </tr>
+                @empty
+                    <tr><td colspan="9" style="padding:40px;text-align:center;color:#6b7280;">No return/exchange requests found.</td></tr>
+                @endforelse
+            </tbody>
+        </table>
+    </div>
 
-        <div style="padding:12px;">{{ $requests->links() }}</div>
+    <div style="margin-top:20px;">
+        {{ $requests->links() }}
     </div>
 @endsection

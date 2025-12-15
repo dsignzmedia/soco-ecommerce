@@ -50,6 +50,10 @@ Route::get('/about-us', [HomeController::class, 'aboutUs'])->name('frontend.abou
 Route::get('/services', [HomeController::class, 'services'])->name('frontend.services');
 Route::get('/contact', [HomeController::class, 'contact'])->name('frontend.contact');
 Route::get('/faq', [HomeController::class, 'faq'])->name('frontend.faq');
+Route::get('/return-exchange', [HomeController::class, 'returnExchange'])->name('frontend.return-exchange');
+Route::get('/privacy-policy', [HomeController::class, 'privacyPolicy'])->name('frontend.privacy-policy');
+Route::get('/shipping-policy', [HomeController::class, 'shippingPolicy'])->name('frontend.shipping-policy');
+Route::get('/terms-conditions', [HomeController::class, 'termsConditions'])->name('frontend.terms-conditions');
 
 // Unified Login Route (for both parents and schools)
 Route::get('/login', [AuthController::class, 'showLogin'])->name('login')->middleware('guest');
@@ -87,8 +91,11 @@ Route::middleware(['auth', 'prevent-back-history'])->group(function () {
     Route::post('/parent/delete-address/{addressId}', [AuthController::class, 'deleteAddress'])->name('frontend.parent.delete-address');
 
     // Product Reviews
+    // Payment Routes
+    Route::post('/parent/payment/initiate', [AuthController::class, 'initiateRazorpay'])->name('frontend.parent.payment.initiate');
+    Route::post('/parent/payment/verify', [AuthController::class, 'verifyRazorpay'])->name('frontend.parent.payment.verify');
+    Route::post('/parent/process-checkout-redirect', [AuthController::class, 'processCheckout'])->name('frontend.parent.process-checkout-redirect');
 });
-
 
 // Google OAuth Routes
 Route::get('auth/google', [AuthController::class, 'redirectToGoogle'])->name('login.google');
@@ -225,6 +232,11 @@ Route::prefix('MasterAdmin')->name('master.admin.')->group(function () {
         Route::post('/returns-exchange/{returnRequest}/receive', [\App\Http\Controllers\Admin\Master\ReturnExchangeController::class, 'receive'])->name('returns-exchange.receive');
         Route::post('/returns-exchange/{returnRequest}/generate-exchange', [\App\Http\Controllers\Admin\Master\ReturnExchangeController::class, 'generateExchange'])->name('returns-exchange.generate');
         Route::post('/returns-exchange/{returnRequest}/switch-type', [\App\Http\Controllers\Admin\Master\ReturnExchangeController::class, 'switchType'])->name('returns-exchange.switch-type');
+        Route::post('/returns-exchange/{returnRequest}/deny', [\App\Http\Controllers\Admin\Master\ReturnExchangeController::class, 'deny'])->name('returns-exchange.deny');
+
+        // Notifications
+        Route::match(['get', 'post'], '/notifications/{notification}/read', [MasterAuthController::class, 'markNotificationRead'])->name('notifications.read');
+        Route::post('/notifications/read-all', [MasterAuthController::class, 'markAllNotificationsRead'])->name('notifications.read-all');
     });
 });
 
@@ -257,6 +269,11 @@ Route::prefix('InventoryAdmin')->name('inventory.admin.')->group(function () {
         Route::get('/inventory/{product}/adjust', [App\Http\Controllers\Admin\Inventory\InventoryController::class, 'adjust'])->name('inventory.adjust');
         Route::post('/inventory/{product}/adjust', [App\Http\Controllers\Admin\Inventory\InventoryController::class, 'applyAdjustment'])->name('inventory.adjust.apply');
         Route::get('/reports', [App\Http\Controllers\Admin\Inventory\InventoryController::class, 'reports'])->name('reports.index');
+
+        // Notifications
+        Route::match(['get', 'post'], '/notifications/{notification}/read', [InventoryAuthController::class, 'markNotificationRead'])->name('notifications.read');
+        Route::post('/notifications/read-all', [InventoryAuthController::class, 'markAllNotificationsRead'])->name('notifications.read-all');
+
 
         // Returns & Exchanges (view-only)
         Route::get('/returns-exchange', [App\Http\Controllers\Admin\Inventory\ReturnExchangeController::class, 'index'])->name('returns-exchange.index');

@@ -7,7 +7,12 @@
 @section('content')
     <div class="card" style="max-width:1100px;margin:auto;">
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:24px;">
-            <h3 style="margin:0;color:#111827;">Payment Gateways</h3>
+            <div style="display:flex;align-items:center;gap:15px;">
+                <a href="{{ route('master.admin.settings.index') }}" style="color:#6b7280;text-decoration:none;display:flex;align-items:center;justify-content:center;width:32px;height:32px;border-radius:8px;border:1px solid #d1d5db;background:#fff;transition:all 0.2s;" onmouseover="this.style.borderColor='#490d59';this.style.color='#490d59'" onmouseout="this.style.borderColor='#d1d5db';this.style.color='#6b7280'">
+                    <i class="fas fa-arrow-left"></i>
+                </a>
+                <h3 style="margin:0;color:#111827;">Payment Gateways</h3>
+            </div>
             <button type="button" onclick="document.getElementById('addGatewayForm').style.display='block'" style="padding:10px 16px;border:none;border-radius:12px;background:#490d59;color:#fff;font-weight:600;cursor:pointer;">+ Add Gateway</button>
         </div>
 
@@ -35,12 +40,23 @@
                         <input type="number" name="sort_order" value="0" min="0">
                     </label>
                 </div>
-                <div style="margin-top:16px;">
-                    <label>
-                        <span>Credentials (JSON)</span>
-                        <textarea name="credentials_json" rows="4" placeholder='{"api_key":"...","secret_key":"..."}'></textarea>
-                        <small style="color:#6b7280;font-size:12px;">Enter credentials as JSON object</small>
-                    </label>
+                <div style="margin-top:20px;padding:16px;background-color:#f3f4f6;border-radius:12px;border:1px solid #e5e7eb;">
+                    <h5 style="margin:0 0 12px;font-size:16px;color:#1f2937;">Credentials</h5>
+                    <div style="display:grid;grid-template-columns:1fr;gap:16px;">
+                        <label>
+                            <span style="display:block;margin-bottom:6px;font-weight:500;color:#374151;">API Key / Key ID</span>
+                            <input type="text" name="credential_key" placeholder="Enter API Key or Key ID" style="width:100%;padding:10px;border:1px solid #d1d5db;border-radius:8px;">
+                        </label>
+                        <label>
+                            <span style="display:block;margin-bottom:6px;font-weight:500;color:#374151;">Secret Key / Key Secret</span>
+                            <div style="position:relative;">
+                                <input type="password" name="credential_secret" id="new_secret" placeholder="Enter Secret Key" style="width:100%;padding:10px;padding-right:40px;border:1px solid #d1d5db;border-radius:8px;">
+                                <button type="button" onclick="togglePassword('new_secret')" style="position:absolute;right:10px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;color:#6b7280;">
+                                    <i class="fas fa-eye"></i>
+                                </button>
+                            </div>
+                        </label>
+                    </div>
                 </div>
                 <div style="margin-top:16px;display:flex;gap:12px;">
                     <label style="flex-direction:row;align-items:center;gap:8px;">
@@ -104,12 +120,12 @@
                 @method('PUT')
                 <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:16px;">
                     <label>
-                        <span>Gateway Name *</span>
-                        <input type="text" name="name" value="{{ $gateway->name }}" required>
+                        <span style="display:block;margin-bottom:6px;font-weight:500;color:#374151;">Gateway Name *</span>
+                        <input type="text" name="name" value="{{ $gateway->name }}" required style="width:100%;padding:10px;border:1px solid #d1d5db;border-radius:8px;">
                     </label>
                     <label>
-                        <span>Provider *</span>
-                        <select name="provider" required>
+                        <span style="display:block;margin-bottom:6px;font-weight:500;color:#374151;">Provider *</span>
+                        <select name="provider" required style="width:100%;padding:10px;border:1px solid #d1d5db;border-radius:8px;">
                             <option value="stripe" @selected($gateway->provider === 'stripe')>Stripe</option>
                             <option value="razorpay" @selected($gateway->provider === 'razorpay')>Razorpay</option>
                             <option value="paypal" @selected($gateway->provider === 'paypal')>PayPal</option>
@@ -118,29 +134,43 @@
                         </select>
                     </label>
                     <label>
-                        <span>Sort Order</span>
-                        <input type="number" name="sort_order" value="{{ $gateway->sort_order }}" min="0">
+                        <span style="display:block;margin-bottom:6px;font-weight:500;color:#374151;">Sort Order</span>
+                        <input type="number" name="sort_order" value="{{ $gateway->sort_order }}" min="0" style="width:100%;padding:10px;border:1px solid #d1d5db;border-radius:8px;">
                     </label>
                 </div>
-                <div style="margin-top:16px;">
-                    <label>
-                        <span>Credentials (JSON)</span>
-                        <textarea name="credentials_json" rows="4">{{ json_encode($gateway->credentials, JSON_PRETTY_PRINT) }}</textarea>
+                
+                <div style="margin-top:20px;padding:16px;background-color:#f3f4f6;border-radius:12px;border:1px solid #e5e7eb;">
+                    <h5 style="margin:0 0 12px;font-size:16px;color:#1f2937;">Credentials</h5>
+                    <div style="display:grid;grid-template-columns:1fr;gap:16px;">
+                        <label>
+                            <span style="display:block;margin-bottom:6px;font-weight:500;color:#374151;">API Key / Key ID</span>
+                            <input type="text" name="credential_key" value="{{ $gateway->credentials['key_id'] ?? ($gateway->credentials['key'] ?? '') }}" style="width:100%;padding:10px;border:1px solid #d1d5db;border-radius:8px;">
+                        </label>
+                        <label>
+                            <span style="display:block;margin-bottom:6px;font-weight:500;color:#374151;">Secret Key / Key Secret</span>
+                            <div style="position:relative;">
+                                <input type="password" name="credential_secret" id="secret_{{ $gateway->id }}" value="{{ $gateway->credentials['key_secret'] ?? ($gateway->credentials['secret'] ?? '') }}" style="width:100%;padding:10px;padding-right:40px;border:1px solid #d1d5db;border-radius:8px;">
+                                <button type="button" onclick="togglePassword('secret_{{ $gateway->id }}')" style="position:absolute;right:10px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;color:#6b7280;">
+                                    <i class="fas fa-eye"></i>
+                                </button>
+                            </div>
+                        </label>
+                    </div>
+                </div>
+
+                <div style="margin-top:16px;display:flex;gap:20px;">
+                    <label style="display:flex;align-items:center;gap:8px;cursor:pointer;">
+                        <input type="checkbox" name="is_active" value="1" @checked($gateway->is_active) style="width:16px;height:16px;accent-color:#490d59;">
+                        <span style="font-weight:500;color:#374151;">Active</span>
+                    </label>
+                    <label style="display:flex;align-items:center;gap:8px;cursor:pointer;">
+                        <input type="checkbox" name="test_mode" value="1" @checked($gateway->test_mode) style="width:16px;height:16px;accent-color:#490d59;">
+                        <span style="font-weight:500;color:#374151;">Test Mode</span>
                     </label>
                 </div>
-                <div style="margin-top:16px;display:flex;gap:12px;">
-                    <label style="flex-direction:row;align-items:center;gap:8px;">
-                        <input type="checkbox" name="is_active" value="1" @checked($gateway->is_active)>
-                        <span>Active</span>
-                    </label>
-                    <label style="flex-direction:row;align-items:center;gap:8px;">
-                        <input type="checkbox" name="test_mode" value="1" @checked($gateway->test_mode)>
-                        <span>Test Mode</span>
-                    </label>
-                </div>
-                <div style="margin-top:20px;display:flex;gap:12px;">
-                    <button type="submit" style="padding:10px 20px;border:none;border-radius:12px;background:#490d59;color:#fff;font-weight:600;cursor:pointer;">Update</button>
-                    <button type="button" onclick="closeEditForm({{ $gateway->id }})" style="padding:10px 20px;border-radius:12px;border:1px solid #d0d5dd;color:#475467;background:#fff;cursor:pointer;">Cancel</button>
+                <div style="margin-top:24px;display:flex;gap:12px;justify-content:flex-end;">
+                    <button type="button" onclick="closeEditForm({{ $gateway->id }})" style="padding:10px 20px;border-radius:8px;border:1px solid #d1d5db;color:#374151;background:#fff;cursor:pointer;font-weight:500;">Cancel</button>
+                    <button type="submit" style="padding:10px 24px;border:none;border-radius:8px;background:#490d59;color:#fff;font-weight:600;cursor:pointer;box-shadow:0 2px 4px rgba(73, 13, 89, 0.2);">Update Gateway</button>
                 </div>
             </form>
         </div>
@@ -153,26 +183,21 @@
         function closeEditForm(id) {
             document.getElementById('editForm' + id).style.display = 'none';
         }
-        // Handle credentials JSON parsing
-        document.querySelectorAll('form').forEach(form => {
-            form.addEventListener('submit', function(e) {
-                const textarea = form.querySelector('textarea[name="credentials_json"]');
-                if (textarea && textarea.value) {
-                    try {
-                        const json = JSON.parse(textarea.value);
-                        const hiddenInput = document.createElement('input');
-                        hiddenInput.type = 'hidden';
-                        hiddenInput.name = 'credentials';
-                        hiddenInput.value = JSON.stringify(json);
-                        form.appendChild(hiddenInput);
-                    } catch (err) {
-                        e.preventDefault();
-                        alert('Invalid JSON in credentials field');
-                        return false;
-                    }
-                }
-            });
-        });
+        
+        function togglePassword(inputId) {
+            const input = document.getElementById(inputId);
+            const icon = input.nextElementSibling.querySelector('i');
+            
+            if (input.type === "password") {
+                input.type = "text";
+                icon.classList.remove('fa-eye');
+                icon.classList.add('fa-eye-slash');
+            } else {
+                input.type = "password";
+                icon.classList.remove('fa-eye-slash');
+                icon.classList.add('fa-eye');
+            }
+        }
     </script>
 @endsection
 

@@ -348,14 +348,14 @@
         <form method="GET" class="filter-form-grid">
             <!-- Row 1 -->
             <div class="filter-row">
-                <select name="school_id" class="filter-input-rounded">
+                <select name="school_id">
                     <option value="">School (All)</option>
                     @foreach($schools as $school)
                         <option value="{{ $school->id }}" @selected(($filters['school_id'] ?? '') == $school->id)>{{ $school->name }}</option>
                     @endforeach
                 </select>
 
-                <select name="category" class="filter-input-rounded">
+                <select name="category">
                     <option value="">Category (All)</option>
                     @foreach($categories as $category)
                         <option value="{{ $category }}" @selected(($filters['category'] ?? '') === $category)>{{ $category }}</option>
@@ -363,16 +363,26 @@
                 </select>
 
                 <div class="date-input-wrapper">
-                    <input type="date" name="start_date" class="filter-input-rounded" placeholder="Start Date" value="{{ $filters['start_date'] ?? '' }}">
+                    <input type="date" 
+                        onclick="this.showPicker()" 
+                        name="start_date" 
+                        class="filter-input-rounded" 
+                        placeholder="Start Date" 
+                        value="{{ $filters['start_date'] ?? '' }}">
                 </div>
 
                 <div class="date-input-wrapper">
-                    <input type="date" name="end_date" class="filter-input-rounded" placeholder="End Date" value="{{ $filters['end_date'] ?? '' }}">
+                    <input type="date" 
+                        onclick="this.showPicker()" 
+                        name="end_date" 
+                        class="filter-input-rounded" 
+                        placeholder="End Date" 
+                        value="{{ $filters['end_date'] ?? '' }}">
                 </div>
 
                 <div style="display: flex; gap: 8px;">
                     <button type="submit" class="btn-purple-solid" style="flex: 1;">Apply</button>
-                    <button type="button" onclick="window.location.href='{{ route('master.admin.dashboard') }}'" class="btn-purple-solid" style="flex: 1; opacity: 0.8;">Reset</button>
+                    <button type="button" onclick="window.location.href='{{ route('master.admin.dashboard') }}'" class="btn-reset" style="flex: 1;">Reset</button>
                 </div>
             </div>
         </form>
@@ -406,24 +416,25 @@
             width: 100%;
             padding: 10px 16px;
             border: 1px solid #e5e7eb;
-            border-radius: 99px; /* Pill shape per image */
+            border-radius: 12px; /* Standard rounded box */
             font-size: 14px;
             color: #374151;
             outline: none;
             background-color: #fff;
-            height: 42px;
+            height: 46px; /* Match Select height */
+            font-family: inherit;
         }
         .filter-input-rounded:focus {
             border-color: #490d59;
-            box-shadow: 0 0 0 2px rgba(73, 13, 89, 0.1);
+            box-shadow: 0 0 0 4px rgba(73, 13, 89, 0.1); /* Consistent focus ring */
         }
         .btn-purple-solid {
             background-color: #4c1d95; /* Deep purple */
             color: #ffffff;
             border: none;
-            border-radius: 99px;
+            border-radius: 12px; /* Standard rounded box */
             padding: 0 24px;
-            height: 42px;
+            height: 46px; /* Match Select height */
             font-weight: 600;
             font-size: 14px;
             cursor: pointer;

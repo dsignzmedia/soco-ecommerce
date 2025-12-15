@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>@yield('title', 'School Dashboard | Soco Uniforms')</title>
     <meta name="csrf-token" content="{{ csrf_token() }}">
+    <link rel="shortcut icon" href="{{ asset('assets/img/soco_logo/favicon.ico') }}" type="image/x-icon">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -108,12 +109,14 @@
                 <a href="{{ route('frontend.school.dashboard') }}" class="school-nav__item {{ Request::routeIs('frontend.school.dashboard') ? 'active' : '' }}">
                     <i class="fas fa-home"></i> Dashboard
                 </a>
+                {{-- 
                 <a href="{{ route('frontend.school.orders') }}" class="school-nav__item {{ Request::routeIs('frontend.school.orders') ? 'active' : '' }}">
                     <i class="fas fa-shopping-cart"></i> Orders Management
                 </a>
                 <a href="{{ route('frontend.school.students') }}" class="school-nav__item {{ Request::routeIs('frontend.school.students') ? 'active' : '' }}">
                     <i class="fas fa-users"></i> Student Management
-                </a>
+                </a> 
+                --}}
                 <a href="{{ route('frontend.school.products') }}" class="school-nav__item {{ Request::routeIs('frontend.school.products') ? 'active' : '' }}">
                     <i class="fas fa-box"></i> Product Catalog
                 </a>

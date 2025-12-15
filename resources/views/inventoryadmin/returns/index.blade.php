@@ -6,6 +6,24 @@
 
 @section('content')
     <div class="card" style="max-width:1100px;margin:auto;">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;gap:12px;flex-wrap:wrap;">
+            <form method="GET" action="{{ route('inventory.admin.returns-exchange.index') }}" style="display:flex;gap:8px;align-items:center;">
+                <select name="type" style="padding:8px;border:1px solid #e5e7eb;border-radius:8px;">
+                    <option value="">All Types</option>
+                    <option value="return" {{ ($filters['type'] ?? '') === 'return' ? 'selected' : '' }}>Return</option>
+                    <option value="exchange" {{ ($filters['type'] ?? '') === 'exchange' ? 'selected' : '' }}>Exchange</option>
+                </select>
+                <select name="status" style="padding:8px;border:1px solid #e5e7eb;border-radius:8px;">
+                    <option value="">All Status</option>
+                    @foreach(['pending','approved','rejected','received_restocked','received_discarded','completed'] as $st)
+                        <option value="{{ $st }}" {{ ($filters['status'] ?? '') === $st ? 'selected' : '' }} style="text-transform:capitalize;">{{ str_replace('_',' ', $st) }}</option>
+                    @endforeach
+                </select>
+                <input type="text" name="q" value="{{ $filters['q'] ?? '' }}" placeholder="Search order# or item" style="padding:8px;border:1px solid #e5e7eb;border-radius:8px;min-width:240px;">
+                <button type="submit" style="padding:8px 12px;border:none;border-radius:8px;background:#f3f4f6;color:#111827;">Filter</button>
+                <button type="button" style="padding:8px 12px;border:none;border-radius:8px;background:#f3f4f6;color:#111827;" onclick="window.location.href='{{ route('inventory.admin.returns-exchange.index') }}'">Reset</button>
+            </form>
+        </div>
         <div class="table-wrap" style="overflow:auto;border:1px solid #e5e7eb;border-radius:12px;">
             <table class="table" style="width:100%;border-collapse:collapse;">
                 <thead>

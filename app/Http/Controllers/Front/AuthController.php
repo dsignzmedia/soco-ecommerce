@@ -12,11 +12,163 @@ use App\Models\User;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 
+use Illuminate\Support\Facades\Http;
+
 class AuthController extends Controller
 {
     /**
-     * Send OTP for login/registration
+     * Initiate Razorpay Order
      */
+    public function initiateRazorpay(Request $request)
+    {
+        $user = Auth::user();
+        $total = $request->total;
+
+        // Fetch Razorpay credentials from database
+        $gateway = \App\Models\Admin\Master\PaymentGateway::where('provider', 'razorpay')
+            ->where('is_active', true)
+            ->first();
+
+        $keyId = null;
+        $keySecret = null;
+
+        if ($gateway && !empty($gateway->credentials)) {
+            $keyId = $gateway->credentials['key_id'] ?? ($gateway->credentials['key'] ?? null);
+            $keySecret = $gateway->credentials['key_secret'] ?? ($gateway->credentials['secret'] ?? null);
+        }
+
+        // Fallback to .env if not configured in DB
+        if (empty($keyId) || empty($keySecret)) {
+            $keyId = env('RAZORPAY_KEY');
+            $keySecret = env('RAZORPAY_SECRET');
+        }
+
+        if (empty($keyId) || empty($keySecret)) {
+            return response()->json(['success' => false, 'message' => 'Payment gateway not configured.']);
+        }
+
+        // Create order via Razorpay API
+        try {
+            $amountInPaise = (int)($total * 100);
+            Log::info('Razorpay Init - Requesting Order', [
+                'total_input' => $total,
+                'amount_paise' => $amountInPaise,
+                'key_source' => $gateway ? 'database' : 'env' // helpful for debugging
+            ]);
+
+            // Disable SSL verification only in local environment
+            $response = Http::withOptions(['verify' => !app()->isLocal()])
+                ->withBasicAuth($keyId, $keySecret)
+                ->post('https://api.razorpay.com/v1/orders', [
+                    'amount' => $amountInPaise, // Amount in paise
+                    'currency' => 'INR',
+                    'receipt' => 'order_rcptid_' . time(),
+                    'payment_capture' => 1
+                ]);
+
+            $order = $response->json();
+
+            Log::info('Razorpay Init - Response', ['status' => $response->status(), 'body' => $order]);
+
+            if (isset($order['id'])) {
+                return response()->json([
+                    'success' => true,
+                    'order_id' => $order['id'],
+                    'key' => $keyId,
+                    'amount' => $order['amount'],
+                    'name' => 'The Skool Store',
+                    'description' => 'Order Payment',
+                    'prefill' => [
+                        'name' => $user->name,
+                        'email' => $user->email,
+                        'contact' => preg_replace('/[^0-9]/', '', $user->phone ?? session('parent_phone')),
+                    ]
+                ]);
+            } else {
+                Log::error('Razorpay Order Creation Failed', ['response' => $order]);
+                return response()->json(['success' => false, 'message' => 'Could not initiate payment.']);
+            }
+        } catch (\Exception $e) {
+            Log::error('Razorpay Exception', ['error' => $e->getMessage()]);
+            return response()->json(['success' => false, 'message' => 'Payment initialization error.']);
+        }
+    }
+
+    /**
+     * Verify Razorpay Payment and Place Order
+     */
+    public function verifyRazorpay(Request $request)
+    {
+        $signature = $request->razorpay_signature;
+        $paymentId = $request->razorpay_payment_id;
+        $orderId = $request->razorpay_order_id;
+
+        // Fetch Razorpay credentials from database
+        $gateway = \App\Models\Admin\Master\PaymentGateway::where('provider', 'razorpay')
+            ->where('is_active', true)
+            ->first();
+
+        $keySecret = null;
+        if ($gateway && !empty($gateway->credentials)) {
+            $keySecret = $gateway->credentials['key_secret'] ?? ($gateway->credentials['secret'] ?? null);
+        }
+
+        // Fallback to .env
+        if (empty($keySecret)) {
+            $keySecret = env('RAZORPAY_SECRET');
+        }
+
+        if (empty($keySecret)) {
+            return response()->json(['success' => false, 'message' => 'Payment configuration error.']);
+        }
+
+        $generatedSignature = hash_hmac('sha256', $orderId . "|" . $paymentId, $keySecret);
+
+        if ($generatedSignature === $signature) {
+            // Payment successful
+
+            // Fetch Key ID for API call
+            $keyId = null;
+            if ($gateway && !empty($gateway->credentials)) {
+                $keyId = $gateway->credentials['key_id'] ?? ($gateway->credentials['key'] ?? null);
+            }
+            if (empty($keyId)) {
+                $keyId = env('RAZORPAY_KEY');
+            }
+
+            // Fetch Payment Details from Razorpay
+            $paymentDetails = [];
+            $amountPaid = 0;
+
+            try {
+                $response = Http::withOptions(['verify' => !app()->isLocal()])
+                    ->withBasicAuth($keyId, $keySecret)
+                    ->get('https://api.razorpay.com/v1/payments/' . $paymentId);
+
+                if ($response->successful()) {
+                    $paymentDetails = $response->json();
+                    $amountPaid = ($paymentDetails['amount'] ?? 0) / 100;
+                }
+            } catch (\Exception $e) {
+                Log::error('Razorpay Payment Fetch Error', ['error' => $e->getMessage()]);
+            }
+
+            // Add payment info to session
+            session([
+                'payment_method' => 'razorpay',
+                'payment_id' => $paymentId,
+                'amount_paid' => $amountPaid,
+                'payment_details' => $paymentDetails
+            ]);
+
+            // Call processCheckout
+            return $this->processCheckout($request);
+
+        } else {
+            return response()->json(['success' => false, 'message' => 'Payment verification failed.']);
+        }
+    }
+
     /**
      * Send OTP for login/registration
      */
@@ -698,6 +850,18 @@ class AuthController extends Controller
         if (!session('school_authenticated')) {
             return redirect()->route('frontend.school.login')
                 ->with('error', 'Please login to access reports.');
+        }
+
+        // Auto-generate a default report (current month) if no report data in session
+        if (!session('report_generated')) {
+             // Create a mock request/data to generate default report
+             $request = new Request([
+                 'month' => date('n'),
+                 'year' => date('Y'),
+                 'grade' => null,
+                 'product' => null
+             ]);
+             return $this->generateReport($request);
         }
 
         return view('frontend.dashboard.school-reports');
@@ -2031,7 +2195,14 @@ class AuthController extends Controller
         $selectedIds = $filteredCartItems->pluck('id')->toArray();
         session(['checkout_selected_cart_ids' => $selectedIds]);
 
-        return view('frontend.checkout.index', compact('cartItems', 'total', 'subtotal', 'totalTax', 'profiles', 'selectedProfile', 'savedAddresses'));
+        // Check active payment gateways
+        $razorpayGateway = \App\Models\Admin\Master\PaymentGateway::where('provider', 'razorpay')
+            ->where('is_active', true)
+            ->first();
+        // Enable if in DB OR if env has key (fallback)
+        $razorpayEnabled = $razorpayGateway ? true : (!empty(env('RAZORPAY_KEY')));
+
+        return view('frontend.checkout.index', compact('cartItems', 'total', 'subtotal', 'totalTax', 'profiles', 'selectedProfile', 'savedAddresses', 'razorpayEnabled'));
     }
 
     public function processCheckout(Request $request)
@@ -2196,8 +2367,12 @@ class AuthController extends Controller
                     'total_amount' => $itemTotal,
                     'tax_amount' => $itemTax,
                     'shipping_cost' => 0,
-                    'payment_status' => 'pending',
+                    'payment_status' => session('payment_method') === 'razorpay' ? 'paid' : 'pending',
                     'order_status' => 'processing',
+                    'payment_method' => session('payment_method'),
+                    'payment_id' => session('payment_id'),
+                    'amount_paid' => session('payment_method') === 'razorpay' ? $itemTotal : 0,
+                    'payment_details' => session('payment_details'),
                 ]);
 
                 // Decrement Inventory
@@ -2221,7 +2396,25 @@ class AuthController extends Controller
             \App\Models\Cart::whereIn('id', $processedCartIds)->delete();
 
             // Clear checkout session data
-            session()->forget(['checkout_selected_cart_ids', 'orders']);
+            session()->forget(['checkout_selected_cart_ids', 'orders', 'payment_method', 'payment_id', 'amount_paid', 'payment_details']);
+
+            // Create Notification for Master Admins
+            \App\Models\Notification::create([
+                'type' => 'new_order',
+                'title' => 'New Order Received',
+                'message' => "Order #{$orderNumber} placed by {$shippingAddress['name']}",
+                'target_role' => 'master',
+                'data' => ['order_number' => $orderNumber],
+            ]);
+
+            // Create Notification for Inventory Admins
+            \App\Models\Notification::create([
+                'type' => 'new_order',
+                'title' => 'New Order Received',
+                'message' => "Order #{$orderNumber} placed by {$shippingAddress['name']}",
+                'target_role' => 'inventory',
+                'data' => ['order_number' => $orderNumber],
+            ]);
 
             return redirect()->route('frontend.parent.orders')->with('success', 'Order placed successfully! Order # ' . $orderNumber);
 
@@ -2525,6 +2718,21 @@ class AuthController extends Controller
                 'photo_path' => $photoPath,
                 'status' => 'pending',
                 'customer_notes' => $request->reason,
+            ]);
+        }
+
+        if ($orders->isNotEmpty()) {
+             // Create Notification for Admins
+            $count = $orders->count();
+            $firstOrderNum = $orders->first()->order_number;
+            $msg = $count > 1 ? "Request for {$count} items (Order #{$firstOrderNum}...) by {$user->name}" : "Request for Order #{$firstOrderNum} by {$user->name}";
+
+            \App\Models\Notification::create([
+                'type' => 'return_request',
+                'title' => 'New ' . ucfirst($request->action) . ' Request',
+                'message' => $msg,
+                'target_role' => null, // Visible to all admins
+                'data' => ['order_number' => $firstOrderNum],
             ]);
         }
 

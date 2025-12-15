@@ -28,6 +28,7 @@
     <table class="header-table" style="margin-bottom: 30px;">
         <tr>
             <td>
+                <img src="{{ public_path('assets/img/logo.svg') }}" alt="The Skool Store" style="height:48px;margin-bottom:12px;">
                 <h2>The Skool Store</h2>
                 <p>Uniform procurement & fulfilment</p>
             </td>

@@ -118,14 +118,39 @@
                                 <span class="option-label">Regular Uniforms</span>
                             </label>
                             <label class="filter-option">
-                                <input type="checkbox" name="category" value="fabrics" class="filter-checkbox" checked>
+                                <input type="checkbox" name="category" value="house_uniforms" class="filter-checkbox" checked>
                                 <span class="checkbox-mark"></span>
-                                <span class="option-label">Fabrics</span>
+                                <span class="option-label">House Uniforms</span>
                             </label>
                             <label class="filter-option">
                                 <input type="checkbox" name="category" value="sports" class="filter-checkbox" checked>
                                 <span class="checkbox-mark"></span>
-                                <span class="option-label">Sports</span>
+                                <span class="option-label">Sports Uniforms</span>
+                            </label>
+                            <label class="filter-option">
+                                <input type="checkbox" name="category" value="shoes" class="filter-checkbox" checked>
+                                <span class="checkbox-mark"></span>
+                                <span class="option-label">Shoes</span>
+                            </label>
+                            <label class="filter-option">
+                                <input type="checkbox" name="category" value="belts" class="filter-checkbox" checked>
+                                <span class="checkbox-mark"></span>
+                                <span class="option-label">Belts</span>
+                            </label>
+                            <label class="filter-option">
+                                <input type="checkbox" name="category" value="socks" class="filter-checkbox" checked>
+                                <span class="checkbox-mark"></span>
+                                <span class="option-label">Socks</span>
+                            </label>
+                            <label class="filter-option">
+                                <input type="checkbox" name="category" value="ties" class="filter-checkbox" checked>
+                                <span class="checkbox-mark"></span>
+                                <span class="option-label">Ties</span>
+                            </label>
+                            <label class="filter-option">
+                                <input type="checkbox" name="category" value="fabrics" class="filter-checkbox" checked>
+                                <span class="checkbox-mark"></span>
+                                <span class="option-label">Fabrics</span>
                             </label>
                         </div>
                     </div>

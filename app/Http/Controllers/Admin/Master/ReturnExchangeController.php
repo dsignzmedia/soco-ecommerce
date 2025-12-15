@@ -93,6 +93,22 @@ class ReturnExchangeController extends Controller
         return back()->with('status', 'Request approved');
     }
 
+    public function deny(Request $request, ReturnExchangeRequest $returnRequest): RedirectResponse
+    {
+        $returnRequest->update([
+            'status' => 'rejected',
+            'admin_notes' => $request->input('admin_notes')
+        ]);
+
+        AuditLogger::record('return_exchange_deny', $returnRequest, [
+            'order_id' => $returnRequest->order_id,
+            'type' => $returnRequest->type,
+            'status' => 'rejected',
+        ], 'Denied return/exchange request');
+
+        return back()->with('status', 'Request denied');
+    }
+
     public function receive(Request $request, ReturnExchangeRequest $returnRequest): RedirectResponse
     {
         $data = $request->validate([

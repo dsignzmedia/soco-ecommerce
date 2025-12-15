@@ -33,6 +33,10 @@ class Order extends Model
         'tracking_number',
         'courier_name',
         'notes',
+        'payment_method',
+        'payment_id',
+        'amount_paid',
+        'payment_details',
     ];
 
     protected $casts = [

@@ -47,12 +47,7 @@
                         </label>
                     </div>
                     
-                    <div style="margin-top:16px;">
-                        <label>
-                            <span>Product weight (kg)</span>
-                            <input type="number" name="product_weight" min="0" step="0.01" value="{{ old('product_weight', $product->product_weight) }}">
-                        </label>
-                    </div>
+
                 </div>
 
                 <!-- Pricing -->

@@ -31,7 +31,7 @@
                 <div class="info-style2">
                     <div class="info-icon"><img src="{{ asset('assets/img/icon/c-b-1-2.svg') }}" alt="icon"></div>
                     <h3 class="info-title">Monday to Friday</h3>
-                    <p class="info-text">8.30am – 02.00pm</p>
+                    <p class="info-text">10:00am – 06:00pm</p>
                 </div>
             </div>
             <div class="col-md-4">

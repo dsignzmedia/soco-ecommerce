@@ -4,11 +4,14 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="csrf-token" content="{{ csrf_token() }}">
+    <link rel="shortcut icon" href="{{ asset('assets/img/soco_logo/favicon.ico') }}" type="image/x-icon">
     <title>@yield('title', 'Inventory Admin Portal | The Skool Store')</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://cdn.jsdelivr.net/npm/tom-select@2.2.2/dist/css/tom-select.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/tom-select@2.2.2/dist/js/tom-select.complete.min.js"></script>
     <style>
         :root {
             --primary: #0f172a;
@@ -46,30 +49,84 @@
 
         /* Custom Global Button Style - Outline Purple Pill */
         .btn-vs-sm {
+            padding: 6px 12px;
+            font-size: 12px;
+            border-radius: 6px;
+            text-decoration: none;
+            border: 1px solid #d0d5dd;
+            background: white;
+            color: #490d59;
+            font-weight: 500;
             display: inline-flex;
             align-items: center;
-            justify-content: center;
-            gap: 6px;
-            padding: 6px 14px;
-            font-size: 12px;
-            font-weight: 600;
-            color: #490d59 !important; /* Purple Text */
-            background-color: transparent; /* Transparent BG */
-            border: 1.5px solid #490d59; /* Purple Border */
-            border-radius: 9999px;
-            transition: all 0.3s ease;
-            text-decoration: none;
-            line-height: normal;
-            white-space: nowrap;
-            margin-bottom: 8px;
+            gap: 4px;
+            transition: all 0.2s;
         }
         .btn-vs-sm:hover {
-            background-color: #490d59;
-            color: #ffffff !important;
-            transform: translateY(-1px);
-            box-shadow: 0 4px 6px rgba(73, 13, 89, 0.2);
+            background-color: #f3e8f5;
+            border-color: #490d59;
+            text-decoration: none;
+            color: #490d59;
+            transform: none;
+            box-shadow: none;
         }
         .btn-vs-sm i { font-size: 12px; }
+
+        /* Tom Select Customization */
+        .ts-control {
+            border-radius: 12px !important;
+            border: 1px solid #e5e7eb !important;
+            padding: 10px 16px !important;
+            height: 46px !important;
+            font-size: 14px !important;
+            box-shadow: none !important;
+            background-color: #fff !important;
+            display: flex;
+            align-items: center;
+        }
+        .ts-control .item {
+            font-size: 14px !important;
+            color: #374151 !important;
+            font-weight: 500;
+        }
+        .ts-dropdown {
+            border-radius: 12px !important;
+            border: 1px solid #e5e7eb !important;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1) !important;
+            padding: 8px !important;
+            z-index: 99999 !important;
+            background: #fff;
+        }
+        .ts-dropdown .option {
+            border-radius: 8px !important;
+            padding: 8px 12px !important;
+            font-size: 14px !important;
+            margin-bottom: 2px;
+            color: #374151;
+        }
+        .ts-dropdown .option.active, .ts-dropdown .option:hover {
+            background-color: #f3e8f5 !important;
+            color: #490d59 !important;
+        }
+        .ts-dropdown .option.selected {
+            background-color: #490d59 !important;
+            color: #fff !important;
+        }
+        /* Hide clear button */
+        .ts-control .clear-button { display: none !important; }
+        
+        /* Hide input inside control */
+        .ts-control input { display: none !important; }
+
+        /* Hide Scrollbar */
+        .ts-dropdown-content::-webkit-scrollbar {
+            display: none;
+        }
+        .ts-dropdown-content {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+            max-height: 300px !important;
+        }
 
         .layout {
             display: grid;
@@ -287,6 +344,68 @@
                         @yield('page_subheading', 'Focused tools for stock teams')
                     </p>
                 </div>
+                @php
+                    $unreadNotifications = collect();
+                    $unreadCount = 0;
+                    try {
+                        $unreadNotifications = \App\Models\Notification::whereNull('read_at')
+                                                ->where(function($q) {
+                                                    $q->where('target_role', 'inventory')
+                                                      ->orWhereNull('target_role');
+                                                })
+                                                ->orderByDesc('created_at')
+                                                ->take(5)
+                                                ->get();
+                        $unreadCount = \App\Models\Notification::whereNull('read_at')
+                                        ->where(function($q) {
+                                            $q->where('target_role', 'inventory')
+                                              ->orWhereNull('target_role');
+                                        })
+                                        ->count();
+                    } catch (\Exception $e) {
+                         \Illuminate\Support\Facades\Log::error('Notification fetch failed: ' . $e->getMessage());
+                    }
+                @endphp
+                <div style="display:flex;align-items:center;margin-left:auto;gap:16px;">
+                    <div class="notification-wrapper" style="position:relative;">
+                        <button id="notificationBtn" style="background:none;border:none;position:relative;padding:8px;cursor:pointer;">
+                            <i class="fas fa-bell" style="font-size:20px;color:var(--text);"></i>
+                            @if(isset($unreadCount) && $unreadCount > 0)
+                                <span style="position:absolute;top:0;right:0;background:#ef4444;color:white;font-size:10px;padding:2px 5px;border-radius:99px;font-weight:700;border:2px solid var(--surface);">{{ $unreadCount }}</span>
+                            @endif
+                        </button>
+                        <div class="profile-dropdown" id="notificationDropdown" style="width:300px;right:-50px;">
+                            <div style="padding:12px 16px;border-bottom:1px solid var(--border);font-weight:600;color:var(--heading);">
+                                Notifications
+                            </div>
+                            <div style="max-height:300px;overflow-y:auto;">
+                                @forelse($unreadNotifications ?? [] as $notif)
+                                    <a href="{{ route('inventory.admin.notifications.read', $notif->id) }}" style="display:flex;text-decoration:none;color:inherit;padding:12px 16px;border-bottom:1px solid #f3f4f6;align-items:start;gap:12px;transition:background 0.2s;" onmouseover="this.style.background='#f9fafb'" onmouseout="this.style.background='transparent'">
+                                        <div style="flex:1;">
+                                            <p style="margin:0 0 4px;font-weight:600;font-size:13px;color:#374151;">{{ $notif->title }}</p>
+                                            <p style="margin:0;font-size:12px;color:#6b7280;line-height:1.4;">{{ Str::limit($notif->message, 60) }}</p>
+                                            <small style="margin-top:4px;display:block;font-size:11px;color:#9ca3af;">{{ $notif->created_at->diffForHumans() }}</small>
+                                        </div>
+                                        <div style="color:#10b981;font-size:12px;padding-top:2px;">
+                                            <i class="fas fa-chevron-right"></i>
+                                        </div>
+                                    </a>
+                                @empty
+                                    <div style="padding:24px;text-align:center;color:#6b7280;font-size:13px;">
+                                        No new notifications
+                                    </div>
+                                @endforelse
+                            </div>
+                            @if(isset($unreadCount) && $unreadCount > 0)
+                                <form action="{{ route('inventory.admin.notifications.read-all') }}" method="POST" style="margin:0;">
+                                    @csrf
+                                    <button type="submit" style="display:block;width:100%;text-align:center;padding:10px;font-size:12px;color:var(--accent);font-weight:600;border:none;border-top:1px solid var(--border);background:none;cursor:pointer;">
+                                        Mark all as read
+                                    </button>
+                                </form>
+                            @endif
+                        </div>
+                    </div>
                 <div class="profile-chip" id="profileChip">
                     <span>A</span>
                     Admin
@@ -310,6 +429,7 @@
                             </a>
                         </form>
                     </div>
+                </div>
                 </div>
             </div>
 
@@ -341,6 +461,64 @@
 
     <script>
         document.addEventListener('DOMContentLoaded', function() {
+            // Initialize Tom Select
+            document.querySelectorAll('select').forEach((el) => {
+                if (!el.classList.contains('no-tom')) {
+                   new TomSelect(el, {
+                        plugins: [],
+                        allowEmptyOption: true,
+                        create: false,
+                        controlInput: null, // Disable input in control
+                        sortField: {
+                            field: "text",
+                            direction: "asc"
+                        },
+                        onDropdownOpen: function() {
+                            // 1. Move dropdown to body
+                            if (this.dropdown.parentNode !== document.body) {
+                                document.body.appendChild(this.dropdown);
+                            }
+
+                            // 2. Smart Positioning
+                            const rect = this.control.getBoundingClientRect();
+                            const spaceBelow = window.innerHeight - rect.bottom;
+                            
+                            // Basic positioning
+                            this.dropdown.style.position = "absolute";
+                            this.dropdown.style.width = rect.width + "px";
+                            this.dropdown.style.left = (rect.left + window.scrollX) + "px";
+                            this.dropdown.style.zIndex = "99999";
+
+                            // If limited space below (< 220px) and more space above, flip UP
+                            if (spaceBelow < 220 && rect.top > spaceBelow) {
+                                this.dropdown.style.top = (rect.top + window.scrollY) + "px";
+                                this.dropdown.style.transform = "translateY(-100%)";
+                                this.dropdown.style.marginTop = "-8px"; 
+                                this.dropdown.classList.add('dropdown-flipped'); 
+                            } else {
+                                this.dropdown.style.top = (rect.bottom + window.scrollY) + "px";
+                                this.dropdown.style.transform = "none";
+                                this.dropdown.style.marginTop = "8px"; 
+                                this.dropdown.classList.remove('dropdown-flipped');
+                            }
+
+                            // 3. Auto-close on scroll
+                            this.scrollListener = (e) => {
+                                if (!this.dropdown.contains(e.target)) {
+                                    this.close();
+                                }
+                            };
+                            window.addEventListener('scroll', this.scrollListener, { capture: true, passive: true });
+                        },
+                        onDropdownClose: function() {
+                            if (this.scrollListener) {
+                                window.removeEventListener('scroll', this.scrollListener, { capture: true });
+                            }
+                        }
+                    });
+                }
+            });
+
             const profileChip = document.getElementById('profileChip');
             const profileDropdown = document.getElementById('profileDropdown');
 
@@ -359,6 +537,21 @@
                 document.addEventListener('keydown', function(e) {
                     if (e.key === 'Escape') {
                         profileDropdown.classList.remove('active');
+                    }
+                });
+            }
+
+            const notificationBtn = document.getElementById('notificationBtn');
+            const notificationDropdown = document.getElementById('notificationDropdown');
+            if (notificationBtn && notificationDropdown) {
+                 notificationBtn.addEventListener('click', function(e) {
+                    e.stopPropagation();
+                    notificationDropdown.classList.toggle('active');
+                    profileDropdown.classList.remove('active'); // Close profile if open
+                });
+                document.addEventListener('click', function(e) {
+                    if (!notificationBtn.contains(e.target) && !notificationDropdown.contains(e.target)) {
+                        notificationDropdown.classList.remove('active');
                     }
                 });
             }

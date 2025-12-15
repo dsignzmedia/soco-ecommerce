@@ -218,7 +218,7 @@
                                 src="{{ asset('assets/img/logo_white.svg') }}" alt="logo"></a></div>
                     <div class="col-lg-auto">
                         <h3 class="h4 mb-0 text-white"><img src="{{ asset('assets/img/icon/check-list.svg') }}"
-                                alt="icon" class="me-2"> Shop Your School's Uniforms in One Place</h3>
+                                alt="icon" class="me-2">Shop Your School’s Uniform & Essentials in one place.</h3>
                     </div>
                     <div class="col-lg-auto"><a href="{{ route('frontend.get-started') }}" class="vs-btn">Shop Now</a></div>
                 </div>
@@ -272,13 +272,13 @@
                             <div class="menu-all-pages-container footer-menu">
                                 <ul class="menu">
                                     <li><a href="{{ route('frontend.index') }}">Home</a></li>
-                                    <li><a href="#">Return/Exchange Policy</a></li>
+                                    <li><a href="{{ route('frontend.return-exchange') }}">Return/Exchange Policy</a></li>
                                     <li><a href="{{ route('frontend.about-us') }}">About Us</a></li>
-                                    <li><a href="#"> Privacy Policy </a></li>
+                                    <li><a href="{{ route('frontend.privacy-policy') }}"> Privacy Policy </a></li>
                                     <li><a href="{{ route('frontend.services') }}">Services</a></li>
-                                    <li><a href="#">Shipping Policy</a></li>
+                                    <li><a href="{{ route('frontend.shipping-policy') }}">Shipping Policy</a></li>
                                     <li><a href="{{ route('frontend.faq') }}">FAQ</a></li>
-                                    <li><a href="#">Terms & Conditions</a></li>
+                                    <li><a href="{{ route('frontend.terms-conditions') }}">Terms & Conditions</a></li>
                                     <li><a href="{{ route('frontend.contact') }}">Contact Us</a></li>
                                 </ul>
                             </div>
@@ -292,10 +292,11 @@
                 <div class="row flex-row-reverse gy-3 justify-content-between align-items-center">
                     <div class="col-lg-auto">
                         <div class="footer-social">
-                            <a href="#"><i class="fab fa-facebook-f"></i></a>
-                            <a href="#"><i class="fab fa-twitter"></i></a>
-                            <a href="#"><i class="fab fa-linkedin-in"></i></a>
-                            <a href="#"><i class="fab fa-youtube"></i></a>
+                            <a href="https://www.facebook.com/profile.php?id=6156745997746" target="_blank"><i class="fab fa-facebook-f"></i></a>
+                            <a href="https://x.com/SoCoproducts" target="_blank"><i class="fab fa-twitter"></i></a>
+                            <a href="https://www.instagram.com/socoproducts/" target="_blank"><i class="fab fa-instagram"></i></a>
+                            <a href="https://www.linkedin.com/company/soco-products-privatelimited/?viewAsMember=true" target="_blank"><i class="fab fa-linkedin-in"></i></a>
+                            <a href="https://www.youtube.com/@Socous" target="_blank"><i class="fab fa-youtube"></i></a>
                         </div>
                     </div>
                     <div class="col-lg-auto">

@@ -5,10 +5,129 @@
 @section('page_subheading', 'Live stock pulse for delegated admins')
 
 @section('content')
+    <div class="filters-card">
+        <h3 class="filters-title">Filters</h3>
+        <form method="GET" action="{{ route('inventory.admin.dashboard') }}" class="filter-form-grid">
+            <div class="filter-row">
+                <select name="school_id" class="filter-input-rounded">
+                    <option value="">School (All)</option>
+                    @foreach($schools as $school)
+                        <option value="{{ $school->id }}" @selected(($filters['school_id'] ?? '') == $school->id)>{{ $school->name }}</option>
+                    @endforeach
+                </select>
+
+                <div class="date-input-wrapper">
+                    <input type="date" 
+                        onclick="this.showPicker()" 
+                        name="date_from" 
+                        class="filter-input-rounded" 
+                        placeholder="Start Date" 
+                        value="{{ $filters['date_from'] ?? '' }}">
+                </div>
+
+                <div class="date-input-wrapper">
+                    <input type="date" 
+                        onclick="this.showPicker()" 
+                        name="date_to" 
+                        class="filter-input-rounded" 
+                        placeholder="End Date" 
+                        value="{{ $filters['date_to'] ?? '' }}">
+                </div>
+
+                <div style="display: flex; gap: 8px;">
+                    <button type="submit" class="btn-purple-solid" style="flex: 1;">Apply</button>
+                    <button type="button" onclick="window.location.href='{{ route('inventory.admin.dashboard') }}'" class="btn-reset" style="flex: 1;">Reset</button>
+                </div>
+            </div>
+        </form>
+    </div>
+
+    <style>
+        .filters-card {
+            background: #ffffff;
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05); /* Subtle shadow per image */
+            margin-bottom: 24px;
+        }
+        .filters-title {
+            font-size: 16px;
+            font-weight: 700;
+            color: #111827;
+            margin-bottom: 16px;
+        }
+        .filter-form-grid {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+        .filter-row {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 12px;
+        }
+        .filter-input-rounded {
+            width: 100%;
+            padding: 10px 16px;
+            border: 1px solid #e5e7eb;
+            border-radius: 12px; /* Standard rounded box */
+            font-size: 14px;
+            color: #374151;
+            outline: none;
+            background-color: #fff;
+            height: 46px; /* Match Select height */
+            font-family: inherit;
+        }
+        .filter-input-rounded:focus {
+            border-color: #490d59;
+            box-shadow: 0 0 0 4px rgba(73, 13, 89, 0.1); /* Consistent focus ring */
+        }
+        .btn-purple-solid {
+            background-color: #4c1d95; /* Deep purple */
+            color: #ffffff;
+            border: none;
+            border-radius: 12px; /* Standard rounded box */
+            padding: 0 24px;
+            height: 46px; /* Match Select height */
+            font-weight: 600;
+            font-size: 14px;
+            cursor: pointer;
+            transition: background 0.2s;
+            width: 100%; /* Fill grid cell */
+        }
+        .btn-purple-solid:hover {
+            background-color: #3b0a48;
+        }
+        .btn-reset {
+            background: #ffffff;
+            border: 1px solid #e2e8f0;
+            color: #475467;
+            padding: 0 24px;
+            height: 46px;
+            border-radius: 12px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            width: 100%;
+            transition: all 0.2s;
+        }
+        .btn-reset:hover {
+            border-color: #d0d5dd;
+            color: #0f172a;
+            background: #f8fafc;
+        }
+    </style>
+
     <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:16px;margin-bottom:24px;">
         <!-- Order Processing Metrics -->
         <div class="card">
-            <p style="margin:0;font-size:13px;color:#94a3b8;">Orders to process today</p>
+            <p style="margin:0;font-size:13px;color:#94a3b8;">
+                @if(!empty($filters['date_from']) || !empty($filters['date_to']))
+                    Orders in Range
+                @else
+                    Orders to process today
+                @endif
+            </p>
             <h3 style="margin:6px 0 0;font-size:32px;color:#0f172a;">{{ number_format($ordersToday) }}</h3>
         </div>
         <div class="card">

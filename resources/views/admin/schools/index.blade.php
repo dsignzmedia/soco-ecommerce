@@ -57,7 +57,7 @@
         <table>
             <thead>
                 <tr>
-                    <th>ID</th>
+                    <th>S.No</th>
                     <th>School</th>
                     <th>City</th>
                     <th>Status</th>
@@ -69,7 +69,7 @@
             <tbody>
                 @forelse($schools as $school)
                     <tr>
-                        <td style="width:70px;">{{ $school->id }}</td>
+                        <td style="width:70px;">{{ $loop->iteration }}</td>
                         <td>
                             <strong style="color:#111827;">{{ $school->name }}</strong>
                             <div style="font-size:12px;color:#98a2b3;">{{ $school->board ?? 'Board TBD' }}</div>

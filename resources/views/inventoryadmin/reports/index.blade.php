@@ -96,7 +96,7 @@
                 <tbody>
                     @foreach($stockByGrade as $row)
                         <tr style="border-bottom:1px solid #f1f5f9;">
-                            <td style="padding:10px 8px;font-size:13px;">{{ $row->grade?->name ?? 'Unknown' }}</td>
+                            <td style="padding:10px 8px;font-size:13px;">{{ $row->gradeModel?->name ?? 'Unknown' }}</td>
                             <td style="padding:10px 8px;font-size:13px;text-align:right;font-weight:600;">{{ number_format($row->total) }}</td>
                         </tr>
                     @endforeach

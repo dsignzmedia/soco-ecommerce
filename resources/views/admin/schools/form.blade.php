@@ -7,6 +7,12 @@
 @section('page_subheading', 'Capture campus metadata so products can be mapped accurately')
 
 @section('content')
+    <div style="display:flex;justify-content:flex-end;align-items:center;margin-bottom:24px;">
+        <a href="{{ route('master.admin.schools.index') }}" class="btn-back-outline">
+            <i class="fas fa-arrow-left"></i> Back to schools
+        </a>
+    </div>
+
     <div class="card">
         <form method="POST" action="{{ $mode === 'edit' ? route('master.admin.schools.update', $school) : route('master.admin.schools.store') }}" enctype="multipart/form-data">
             @csrf

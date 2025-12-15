@@ -7,8 +7,13 @@
 @section('content')
     <div class="card" style="max-width:1200px;margin:auto;">
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:24px;">
-            <h3 style="margin:0;color:#111827;">Change History</h3>
-            <a href="{{ route('master.admin.settings.index') }}" style="padding:10px 16px;border-radius:12px;border:1px solid #d0d5dd;color:#475467;text-decoration:none;font-weight:600;">← Back</a>
+            <div style="display:flex;align-items:center;gap:15px;">
+                <a href="{{ route('master.admin.settings.index') }}" style="color:#6b7280;text-decoration:none;display:flex;align-items:center;justify-content:center;width:32px;height:32px;border-radius:8px;border:1px solid #d1d5db;background:#fff;transition:all 0.2s;" onmouseover="this.style.borderColor='#490d59';this.style.color='#490d59'" onmouseout="this.style.borderColor='#d1d5db';this.style.color='#6b7280'">
+                    <i class="fas fa-arrow-left"></i>
+                </a>
+                <h3 style="margin:0;color:#111827;">Change History</h3>
+            </div>
+            <!-- <a href="{{ route('master.admin.settings.index') }}" style="padding:10px 16px;border-radius:12px;border:1px solid #d0d5dd;color:#475467;text-decoration:none;font-weight:600;">← Back</a> -->
         </div>
 
         <form method="GET" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:16px;margin-bottom:24px;">
@@ -27,7 +32,7 @@
             </label>
             <div style="display:flex;gap:12px;align-items:flex-end;">
                 <button type="submit" style="padding:10px 18px;border:none;border-radius:12px;background:#490d59;color:#fff;font-weight:600;cursor:pointer;">Filter</button>
-                <button type="button" onclick="window.location.href='{{ route('master.admin.settings.audit-logs') }}'" class="btn-reset">Reset</button>
+                <button type="button" style="padding:10px 18px;border:none;border-radius:12px;background:#490d59;color:#fff;font-weight:600;cursor:pointer;"onclick="window.location.href='{{ route('master.admin.settings.audit-logs') }}'" class="btn-reset">Reset</button>
             </div>
         </form>
 

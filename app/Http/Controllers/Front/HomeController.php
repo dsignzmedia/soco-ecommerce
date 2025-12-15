@@ -35,5 +35,25 @@ class HomeController extends Controller
     {
         return view('frontend.services');
     }
+
+    public function returnExchange()
+    {
+        return view('frontend.policies.return-exchange');
+    }
+
+    public function privacyPolicy()
+    {
+        return view('frontend.policies.privacy-policy');
+    }
+
+    public function shippingPolicy()
+    {
+        return view('frontend.policies.shipping-policy');
+    }
+
+    public function termsConditions()
+    {
+        return view('frontend.policies.terms-conditions');
+    }
 }
 

@@ -70,7 +70,15 @@ class SystemSettingsController extends Controller
         $data['test_mode'] = $request->has('test_mode');
         $data['sort_order'] = $data['sort_order'] ?? 0;
 
-        if ($request->has('credentials_json') && !empty($request->credentials_json)) {
+        if ($request->has('credential_key') || $request->has('credential_secret')) {
+            $data['credentials'] = [
+                'key_id' => $request->input('credential_key'),
+                'key_secret' => $request->input('credential_secret'),
+                // For backward compatibility keys
+                'key' => $request->input('credential_key'),
+                'secret' => $request->input('credential_secret'),
+            ];
+        } elseif ($request->has('credentials_json') && !empty($request->credentials_json)) {
             $data['credentials'] = json_decode($request->credentials_json, true);
         }
 
@@ -94,7 +102,15 @@ class SystemSettingsController extends Controller
         $data['is_active'] = $request->has('is_active');
         $data['test_mode'] = $request->has('test_mode');
 
-        if ($request->has('credentials_json') && !empty($request->credentials_json)) {
+        if ($request->has('credential_key') || $request->has('credential_secret')) {
+            $data['credentials'] = [
+                'key_id' => $request->input('credential_key'),
+                'key_secret' => $request->input('credential_secret'),
+                // For backward compatibility keys
+                'key' => $request->input('credential_key'),
+                'secret' => $request->input('credential_secret'),
+            ];
+        } elseif ($request->has('credentials_json') && !empty($request->credentials_json)) {
             $data['credentials'] = json_decode($request->credentials_json, true);
         }
 

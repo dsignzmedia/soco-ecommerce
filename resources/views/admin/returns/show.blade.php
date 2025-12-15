@@ -1,10 +1,15 @@
 @extends('admin.layouts.base')
 
 @section('title', 'Return/Exchange Request #'.$returnRequest->id.' | The Skool Store')
-@section('page_heading', 'Return/Exchange Request #'.$returnRequest->id)
-@section('page_subheading', 'Review details and take action')
+@section('page_heading', 'Return/Exchange Request #' . $returnRequest->id)
 
 @section('content')
+    <div style="display:flex;justify-content:flex-end;align-items:center;margin-bottom:24px;">
+        <a href="{{ route('master.admin.returns-exchange.index') }}" class="btn-back-outline">
+            <i class="fas fa-arrow-left"></i> Back to returns
+        </a>
+    </div>
+
     <div class="card" style="max-width:1000px;margin:auto;">
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px;">
             <div style="border:1px solid #e5e7eb;border-radius:12px;padding:16px;">

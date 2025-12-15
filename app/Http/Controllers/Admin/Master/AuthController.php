@@ -216,23 +216,30 @@ class AuthController extends Controller
         // --- Charts ---
 
         // 1. Sales over time (Last 7 days or selected range)
-        // Group by date
+        // Determine date range first
+        $startDate = !empty($filters['start_date']) ? \Carbon\Carbon::parse($filters['start_date']) : now()->subDays(6);
+        $endDate = !empty($filters['end_date']) ? \Carbon\Carbon::parse($filters['end_date']) : now();
+
+        // Fetch sales grouped by date
         $salesData = (clone $ordersQuery)
             ->selectRaw('DATE(order_date) as date, SUM(total_amount) as total')
+            ->whereDate('order_date', '>=', $startDate)
+            ->whereDate('order_date', '<=', $endDate)
             ->groupBy('date')
             ->orderBy('date')
-            ->get();
+            ->get()
+            ->pluck('total', 'date'); // Key by date for easy lookup
 
-        $chartLabels = $salesData->pluck('date')->map(fn($d) => \Carbon\Carbon::parse($d)->format('M d'))->toArray();
-        $chartSeries = $salesData->pluck('total')->toArray();
+        $chartLabels = [];
+        $chartSeries = [];
 
-        // If empty, show last 7 days empty
-        if (empty($chartLabels)) {
-            $period = \Carbon\CarbonPeriod::create(now()->subDays(6), now());
-            foreach ($period as $date) {
-                $chartLabels[] = $date->format('M d');
-                $chartSeries[] = 0;
-            }
+        // Build a continuous period ensuring every day is represented
+        $period = \Carbon\CarbonPeriod::create($startDate, $endDate);
+        foreach ($period as $date) {
+            $formattedDate = $date->format('Y-m-d');
+            $chartLabels[] = $date->format('M d');
+            // Use actual sales or 0 if no sales on that day
+            $chartSeries[] = $salesData->get($formattedDate) ?? 0;
         }
 
         // 2. Orders by School
@@ -441,6 +448,33 @@ class AuthController extends Controller
             ->with('status', 'You have been logged out successfully.')
             ->header('Cache-Control', 'no-cache, no-store, max-age=0, must-revalidate')
             ->header('Pragma', 'no-cache');
+    }
+
+    public function markNotificationRead(Request $request, $id)
+    {
+        $notification = \App\Models\Notification::find($id);
+        if ($notification) {
+            $notification->update(['read_at' => now()]);
+
+            // Redirection logic based on type and data
+            if ($notification->data && is_array($notification->data)) {
+                // New Order -> Orders List filtered by order number
+                if ($notification->type === 'new_order' && isset($notification->data['order_number'])) {
+                    return redirect()->route('master.admin.orders.index', ['order_number' => $notification->data['order_number']]);
+                }
+                // Return Request -> Returns List filtered by order number (q)
+                if ($notification->type === 'return_request' && isset($notification->data['order_number'])) {
+                    return redirect()->route('master.admin.returns-exchange.index', ['q' => $notification->data['order_number']]);
+                }
+            }
+        }
+        return back()->with('success', 'Notification marked as read.');
+    }
+
+    public function markAllNotificationsRead(Request $request)
+    {
+        \App\Models\Notification::whereNull('read_at')->update(['read_at' => now()]);
+        return back()->with('success', 'All notifications marked as read.');
     }
 }
 

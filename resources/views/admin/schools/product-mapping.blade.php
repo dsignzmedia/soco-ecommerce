@@ -15,8 +15,14 @@
 @endpush
 
 @section('content')
+    <div style="display:flex;justify-content:flex-end;align-items:center;margin-bottom:24px;">
+        <a href="{{ route('master.admin.schools.index') }}" class="btn-back-outline">
+            <i class="fas fa-arrow-left"></i> Back to schools
+        </a>
+    </div>
+
     <div class="card" style="margin-bottom:24px;">
-        <form method="POST" action="{{ route('master.admin.schools.product-mapping.store', $school) }}" class="inline-form">
+        <form method="POST" action="{{ route('master.admin.schools.product-mapping.store', $school) }}" class="inline-form" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:16px;">
             @csrf
             <label>
                 <span>Grade</span>
@@ -80,7 +86,12 @@
                     @endforeach
                 </select>
             </label>
-            <button type="submit" style="border:none;background:#490d59;color:#fff;border-radius:12px;font-weight:600;">Add mapping</button>
+            
+            <div style="grid-column: 1 / -1; margin-top: 12px;">
+                <button type="submit" class="btn-purple-solid" style="width: auto; padding-left: 32px; padding-right: 32px; display: inline-flex; align-items: center; justify-content: center; min-width: 200px;">
+                    <i class="fas fa-plus" style="margin-right: 8px;"></i> Add Mapping
+                </button>
+            </div>
         </form>
     </div>
 

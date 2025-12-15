@@ -108,10 +108,11 @@
                             <ul>
                                 <li>
                                     <ul class="social-links5">
-                                        <li><a href="#"><i class="fab fa-facebook-f"></i></a></li>
-                                        <li><a href="#"><i class="fab fa-pinterest-p"></i></a></li>
-                                        <li><a href="#"><i class="fab fa-instagram"></i></a></li>
-                                        <li><a href="#"><i class="fab fa-linkedin-in"></i></a></li>
+                                        <li><a href="https://www.facebook.com/profile.php?id=6156745997746" target="_blank"><i class="fab fa-facebook-f"></i></a></li>
+                                        <li><a href="https://www.youtube.com/@Socous" target="_blank"><i class="fab fa-youtube"></i></a></li>
+                                        <li><a href="https://www.instagram.com/socoproducts/" target="_blank"><i class="fab fa-instagram"></i></a></li>
+                                        <li><a href="https://www.linkedin.com/company/soco-products-privatelimited/?viewAsMember=true" target="_blank"><i class="fab fa-linkedin-in"></i></a></li>
+                                        <li><a href="https://x.com/SoCoproducts" target="_blank"><i class="fab fa-twitter"></i></a></li>
                                     </ul>
                                 </li>
                             </ul>
