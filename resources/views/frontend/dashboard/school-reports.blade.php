@@ -20,48 +20,22 @@
             </div>
         </div>
 
-        @if(session('success'))
-            <div class="alert alert-success alert-dismissible fade show" role="alert">
-                <i class="fas fa-check-circle me-2"></i>{{ session('success') }}
-                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-            </div>
-        @endif
-
         <!-- Horizontal Filter Section -->
         <div class="card shadow-sm rounded-4 border-0 mb-4" style="background-color: #ffffff;">
             <div class="card-body p-4">
                 <form id="reportFilterForm" action="{{ route('frontend.school.generate-report') }}" method="POST">
                     @csrf
                     <div class="row g-3 align-items-end">
-                        <!-- Month Filter -->
-                        <div class="col-md-2">
-                            <label for="month" class="form-label text-muted small fw-bold text-uppercase">Month</label>
-                            <select class="form-select border-0 bg-light rounded-pill px-3" id="month" name="month">
-                                <option value="">All Months</option>
-                                <option value="1" {{ session('report_filters.month') == '1' ? 'selected' : '' }}>January</option>
-                                <option value="2" {{ session('report_filters.month') == '2' ? 'selected' : '' }}>February</option>
-                                <option value="3" {{ session('report_filters.month') == '3' ? 'selected' : '' }}>March</option>
-                                <option value="4" {{ session('report_filters.month') == '4' ? 'selected' : '' }}>April</option>
-                                <option value="5" {{ session('report_filters.month') == '5' ? 'selected' : '' }}>May</option>
-                                <option value="6" {{ session('report_filters.month') == '6' ? 'selected' : '' }}>June</option>
-                                <option value="7" {{ session('report_filters.month') == '7' ? 'selected' : '' }}>July</option>
-                                <option value="8" {{ session('report_filters.month') == '8' ? 'selected' : '' }}>August</option>
-                                <option value="9" {{ session('report_filters.month') == '9' ? 'selected' : '' }}>September</option>
-                                <option value="10" {{ session('report_filters.month') == '10' ? 'selected' : '' }}>October</option>
-                                <option value="11" {{ session('report_filters.month') == '11' ? 'selected' : '' }}>November</option>
-                                <option value="12" {{ session('report_filters.month') == '12' ? 'selected' : '' }}>December</option>
-                            </select>
+                        <!-- Start Date Filter -->
+                        <div class="col-md-3">
+                             <label for="start_date" class="form-label text-muted small fw-bold text-uppercase">Start Date</label>
+                             <input type="date" class="form-control border-0 bg-light rounded-pill px-3" id="start_date" name="start_date" value="{{ session('report_filters.start_date') }}" onclick="this.showPicker()">
                         </div>
 
-                        <!-- Year Filter -->
-                        <div class="col-md-2">
-                            <label for="year" class="form-label text-muted small fw-bold text-uppercase">Year</label>
-                            <select class="form-select border-0 bg-light rounded-pill px-3" id="year" name="year">
-                                <option value="">All Years</option>
-                                @for($y = date('Y'); $y >= 2020; $y--)
-                                    <option value="{{ $y }}" {{ session('report_filters.year') == $y ? 'selected' : '' }}>{{ $y }}</option>
-                                @endfor
-                            </select>
+                        <!-- End Date Filter -->
+                        <div class="col-md-3">
+                             <label for="end_date" class="form-label text-muted small fw-bold text-uppercase">End Date</label>
+                             <input type="date" class="form-control border-0 bg-light rounded-pill px-3" id="end_date" name="end_date" value="{{ session('report_filters.end_date') }}" onclick="this.showPicker()">
                         </div>
 
                         <!-- Grade Filter -->
@@ -69,11 +43,11 @@
                             <label for="grade" class="form-label text-muted small fw-bold text-uppercase">Grade</label>
                             <select class="form-select border-0 bg-light rounded-pill px-3" id="grade" name="grade">
                                 <option value="">All Grades</option>
-                                <option value="LKG" {{ session('report_filters.grade') == 'LKG' ? 'selected' : '' }}>LKG</option>
-                                <option value="UKG" {{ session('report_filters.grade') == 'UKG' ? 'selected' : '' }}>UKG</option>
-                                @for($g = 1; $g <= 12; $g++)
-                                    <option value="Grade {{ $g }}" {{ session('report_filters.grade') == "Grade $g" ? 'selected' : '' }}>Grade {{ $g }}</option>
-                                @endfor
+                                @if(isset($grades))
+                                    @foreach($grades as $g)
+                                        <option value="{{ $g }}" {{ session('report_filters.grade') == $g ? 'selected' : '' }}>{{ $g }}</option>
+                                    @endforeach
+                                @endif
                             </select>
                         </div>
 
@@ -82,20 +56,38 @@
                             <label for="product" class="form-label text-muted small fw-bold text-uppercase">Product</label>
                             <select class="form-select border-0 bg-light rounded-pill px-3" id="product" name="product">
                                 <option value="">All Products</option>
-                                <option value="School Shirt" {{ session('report_filters.product') == 'School Shirt' ? 'selected' : '' }}>School Shirt</option>
-                                <option value="School Pants" {{ session('report_filters.product') == 'School Pants' ? 'selected' : '' }}>School Pants</option>
-                                <option value="School Skirt" {{ session('report_filters.product') == 'School Skirt' ? 'selected' : '' }}>School Skirt</option>
+                                @if(isset($products))
+                                    @foreach($products as $p)
+                                        <option value="{{ $p }}" {{ session('report_filters.product') == $p ? 'selected' : '' }}>{{ $p }}</option>
+                                    @endforeach
+                                @endif
+                            </select>
+                        </div>
+                        
+                         <!-- Sale/Status Filter -->
+                         <div class="col-md-2">
+                            <label for="sale_type" class="form-label text-muted small fw-bold text-uppercase">Status</label>
+                            <select class="form-select border-0 bg-light rounded-pill px-3" id="sale_type" name="sale_type">
+                                <option value="">All Statuses</option>
+                                <option value="completed" {{ session('report_filters.sale_type') == 'completed' ? 'selected' : '' }}>Completed/Paid</option>
+                                <option value="pending" {{ session('report_filters.sale_type') == 'pending' ? 'selected' : '' }}>Pending</option>
+                                <option value="cancelled" {{ session('report_filters.sale_type') == 'cancelled' ? 'selected' : '' }}>Cancelled</option>
                             </select>
                         </div>
 
                         <!-- Actions -->
-                        <div class="col-md-auto ms-auto d-flex gap-2">
+                        <div class="col-12 text-end mt-3">
                             <button type="submit" class="btn rounded-pill px-4 fw-bold" style="background-color: #490D59; color: white;">
                                 Apply Filters
                             </button>
-                            <a href="{{ route('frontend.school.reports') }}" class="btn btn-outline-secondary rounded-pill px-4 fw-bold">
+                            <a href="{{ route('frontend.school.reports') }}" class="btn btn-outline-secondary rounded-pill px-4 fw-bold me-2">
                                 Reset
                             </a>
+                            @if(session('report_generated'))
+                                <button type="button" class="btn btn-outline-danger rounded-pill px-4 fw-bold" onclick="downloadReport('pdf')">
+                                    <i class="fas fa-file-pdf me-2"></i> Download PDF
+                                </button>
+                            @endif
                         </div>
                     </div>
                 </form>
@@ -149,42 +141,17 @@
                     <!-- Visual Chart -->
                     <div class="card shadow-sm rounded-4 border-0 mb-4" style="background-color: #ffffff;">
                         <div class="card-body">
-                            <h5 class="card-title mb-4">
-                                <i class="fas fa-chart-bar me-2" style="color: #490D59;"></i>Sales Trend
+                            <h5 class="card-title mb-4 d-flex justify-content-between align-items-center">
+                                <span><i class="fas fa-chart-bar me-2" style="color: #490D59;"></i>Sales Trend</span>
+                                @if(session('report_filters.start_date') || session('report_filters.end_date'))
+                                    <small class="text-muted" style="font-size: 0.9rem;">
+                                        {{ session('report_filters.start_date') ? \Carbon\Carbon::parse(session('report_filters.start_date'))->format('d M Y') : 'Start' }} 
+                                        - 
+                                        {{ session('report_filters.end_date') ? \Carbon\Carbon::parse(session('report_filters.end_date'))->format('d M Y') : 'Now' }}
+                                    </small>
+                                @endif
                             </h5>
                             <canvas id="salesChart" height="100"></canvas>
-                        </div>
-                    </div>
-
-                    <!-- Report Actions -->
-                    <div class="card shadow-sm rounded-4 border-0" style="background-color: #ffffff;">
-                        <div class="card-body">
-                            <h5 class="card-title mb-4">
-                                <i class="fas fa-download me-2" style="color: #490D59;"></i>Download & Share Report
-                            </h5>
-                            <div class="row g-3">
-                                <div class="col-md-6">
-                                    <button type="button" class="vs-btn w-100" onclick="downloadReport('excel')">
-                                        <i class="fas fa-file-excel me-2"></i> Download Excel
-                                    </button>
-                                </div>
-                                <div class="col-md-6">
-                                    <button type="button" class="vs-btn w-100" onclick="downloadReport('pdf')">
-                                        <i class="fas fa-file-pdf me-2"></i> Download PDF
-                                    </button>
-                                </div>
-                                <div class="col-12">
-                                    <form id="emailReportForm" action="{{ route('frontend.school.email-report') }}" method="POST" class="mt-3">
-                                        @csrf
-                                        <div class="input-group">
-                                            <input type="email" class="form-control" name="email" placeholder="Enter email address" required>
-                                            <button type="submit" class="vs-btn" style="background: #490D59;">
-                                                <i class="fas fa-envelope me-2"></i> Email Report
-                                            </button>
-                                        </div>
-                                    </form>
-                                </div>
-                            </div>
                         </div>
                     </div>
                 @else
@@ -229,8 +196,7 @@
                 maintainAspectRatio: true,
                 plugins: {
                     legend: {
-                        display: true,
-                        position: 'top',
+                        display: false,
                     }
                 },
                 scales: {

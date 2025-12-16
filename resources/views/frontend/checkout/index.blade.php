@@ -211,7 +211,7 @@
     </button>
 @endif                                
                                 <button type="submit" class="vs-btn w-100 mb-2" id="placeOrderBtn" onclick="preventDoubleSubmit(this)" style="background-color: #2C3E50; color: #ffffff; border-color: #2C3E50;">
-                                    <i class="fas fa-money-bill-wave me-2"></i> Cash on Delivery
+                                    <i class="fas fa-money-bill-wave me-2"></i> Pay Now 
                                 </button>
                                 
                                 <a href="{{ route('frontend.parent.cart') }}" class="btn w-100" style="background-color: #6c757d; color: #ffffff; border: none; border-radius: 8px; padding: 12px; text-decoration: none; display: flex; align-items: center; justify-content: center; transition: all 0.3s ease;" onmouseover="this.style.backgroundColor='#5a6268';" onmouseout="this.style.backgroundColor='#6c757d';">

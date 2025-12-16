@@ -51,12 +51,22 @@
             display: none !important;
         }
         .ts-dropdown-content {
-            max-height: 300px !important; /* Increase height */
-            scrollbar-width: none !important; /* Firefox */
-            -ms-overflow-style: none !important;  /* IE 10+ */
+            max-height: 250px !important; /* Adjusted height */
+            overflow-y: auto !important;
         }
+        /* Scrollbar styles for better UI */
         .ts-dropdown-content::-webkit-scrollbar {
-            display: none !important; /* Chrome/Safari/Webkit */
+            width: 6px;
+        }
+        .ts-dropdown-content::-webkit-scrollbar-track {
+            background: #f1f5f9;
+        }
+        .ts-dropdown-content::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 3px;
+        }
+        .ts-dropdown-content::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8;
         }
         .ts-dropdown .option {
             border-radius: 8px !important;

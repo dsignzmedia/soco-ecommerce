@@ -48,13 +48,22 @@ class CheckSchool
                 ->with('error', 'You do not have permission to access the School Dashboard.');
         }
 
-        // Process the request
+        // process the request
         $response = $next($request);
 
         // Add comprehensive cache control headers
-        return $response
-            ->header('Cache-Control', 'no-cache, no-store, max-age=0, must-revalidate, private')
-            ->header('Pragma', 'no-cache')
-            ->header('Expires', 'Sat, 01 Jan 2000 00:00:00 GMT');
+        // Check if response supports the header method (Laravel Response) or use Symfony headers bag
+        if (method_exists($response, 'header')) {
+            $response->header('Cache-Control', 'no-cache, no-store, max-age=0, must-revalidate, private')
+                     ->header('Pragma', 'no-cache')
+                     ->header('Expires', 'Sat, 01 Jan 2000 00:00:00 GMT');
+        } else {
+            // Fallback for StreamedResponse / BinaryFileResponse
+            $response->headers->set('Cache-Control', 'no-cache, no-store, max-age=0, must-revalidate, private');
+            $response->headers->set('Pragma', 'no-cache');
+            $response->headers->set('Expires', 'Sat, 01 Jan 2000 00:00:00 GMT');
+        }
+
+        return $response;
     }
 }

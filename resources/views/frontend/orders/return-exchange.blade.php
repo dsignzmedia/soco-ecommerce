@@ -12,7 +12,7 @@
                         <h2 class="h3 mb-2">Return/Exchange</h2>
                         <p class="text-muted mb-0">Order #{{ $order['id'] }}</p>
                     </div>
-                    <a href="{{ route('frontend.parent.orders') }}" class="vs-btn btn-sm">
+                    <a href="{{ route('frontend.parent.orders') }}" class="vs-btn btn-sm d-none d-md-inline-flex">
                         <i class="fas fa-arrow-left me-2"></i> Back to Orders
                     </a>
                 </div>

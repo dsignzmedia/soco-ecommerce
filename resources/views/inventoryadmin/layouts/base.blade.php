@@ -118,14 +118,23 @@
         /* Hide input inside control */
         .ts-control input { display: none !important; }
 
-        /* Hide Scrollbar */
+        /* Scrollbar styles for better UI */
         .ts-dropdown-content::-webkit-scrollbar {
-            display: none;
+            width: 6px;
+        }
+        .ts-dropdown-content::-webkit-scrollbar-track {
+            background: #f1f5f9;
+        }
+        .ts-dropdown-content::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 3px;
+        }
+        .ts-dropdown-content::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8;
         }
         .ts-dropdown-content {
-            -ms-overflow-style: none;
-            scrollbar-width: none;
-            max-height: 300px !important;
+            max-height: 250px !important;
+            overflow-y: auto !important;
         }
 
         .layout {

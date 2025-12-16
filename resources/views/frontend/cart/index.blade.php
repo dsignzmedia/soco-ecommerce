@@ -61,11 +61,11 @@
                                 <tbody>
                                     @foreach($cartItems as $index => $item)
                                         <tr style="background-color: #ffffff; border-bottom: 1px solid #e9ecef;" class="cart-item-row" data-item-index="{{ $index }}">
-                                            <td style="padding: 15px; vertical-align: middle;" class="mobile-checkbox">
+                                            <td style="padding: 15px; vertical-align: middle;" class="cart-checkbox">
                                                 <input type="checkbox" 
                                                        class="item-checkbox" 
                                                        name="selected_items[]" 
-                                                       value="{{ $index }}"
+                                                       value="{{ $item['id'] }}"
                                                        onchange="updateOrderSummary()"
                                                        checked
                                                        style="cursor: pointer;">
@@ -176,6 +176,21 @@
 </section>
 
 <style>
+    /* Force visibility for checkboxes on all screens */
+    input[type="checkbox"].item-checkbox,
+    input[type="checkbox"]#selectAll {
+        appearance: checkbox !important;
+        -webkit-appearance: checkbox !important;
+        display: inline-block !important;
+        visibility: visible !important;
+        opacity: 1 !important;
+        width: 20px !important;
+        height: 20px !important;
+        position: relative !important;
+        z-index: 10 !important;
+        cursor: pointer !important;
+    }
+
 @media (min-width: 992px) {
     .order-summary-card {
         position: sticky;
@@ -198,7 +213,7 @@
 
     .table-responsive tr {
         display: grid;
-        grid-template-columns: auto 80px 1fr;
+        grid-template-columns: 50px 80px 1fr;
         column-gap: 15px;
         row-gap: 0;
         background: #fff;
@@ -217,18 +232,34 @@
     }
 
     /* Checkbox Column */
-    .table-responsive td.mobile-checkbox {
+    .table-responsive td.cart-checkbox {
         grid-column: 1;
-        grid-row: 1 / span 5;
-        display: flex;
+        grid-row: 1 / -1;
+        display: flex !important;
         align-items: center;
         justify-content: center;
+        width: 50px !important;
+        min-width: 50px !important;
+        z-index: 10;
+        position: relative;
+    }
+    
+    .table-responsive td.cart-checkbox input.item-checkbox {
+        width: 20px !important;
+        height: 20px !important;
+        display: block !important;
+        visibility: visible !important;
+        appearance: checkbox !important;
+        -webkit-appearance: checkbox !important;
+        opacity: 1 !important;
+        position: relative !important;
+        z-index: 11 !important;
     }
 
     /* Image Column */
     .table-responsive td[data-title="Image"] {
         grid-column: 2;
-        grid-row: 1 / span 5;
+        grid-row: 1 / -1;
     }
 
     /* Info Column - All details go to column 3 */
@@ -297,20 +328,20 @@ function toggleAllItems() {
 
 function updateOrderSummary() {
     const checkboxes = document.querySelectorAll('.item-checkbox:checked');
-    const selectedIndices = Array.from(checkboxes).map(cb => parseInt(cb.value));
+    const selectedIds = Array.from(checkboxes).map(cb => parseInt(cb.value));
     
     // Update selected items input
     const selectedItemsInput = document.getElementById('selectedItemsInput');
     if (selectedItemsInput) {
-        selectedItemsInput.value = selectedIndices.join(',');
+        selectedItemsInput.value = selectedIds.join(',');
     }
     
     // Calculate totals for selected items
     let subtotal = 0;
     let selectedItemsHtml = '';
     
-    selectedIndices.forEach(index => {
-        const item = cartItems[index];
+    selectedIds.forEach(id => {
+        const item = cartItems.find(i => i.id === id);
         if (item) {
             const itemTotal = item.item_total || (item.price * item.quantity);
             subtotal += itemTotal;

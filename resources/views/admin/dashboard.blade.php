@@ -174,7 +174,7 @@
         }
         
         .admin-tips-card::before {
-            content: '\f10e'; /* FontAwesome quote icon */
+            content: '\f0ae'; /* FontAwesome tasks icon */
             font-family: 'Font Awesome 6 Free';
             font-weight: 900;
             position: absolute;
@@ -533,13 +533,15 @@
             </div>
         </div>
 
-        <!-- Admin Tips -->
+        <!-- Admin Workflow Overview -->
         <div class="admin-tips-card">
-            <div class="tips-title">Administrator Tips</div>
+            <div class="tips-title">Master Admin Workflow</div>
             <div class="tips-text">
-                Keep your inventory updated before the start of the new academic year to ensure smooth ordering for parents.
+                <strong>1. Manage Schools & Products:</strong> Onboard schools and map catalog items.<br>
+                <strong>2. Inventory & Pricing:</strong> Update stock levels and set school-specific pricing.<br>
+                <strong>3. Order Fulfillment:</strong> Monitor and process incoming orders and returns.<br>
+                <strong>4. Analytics:</strong> Track sales trends and performance reports.
             </div>
-            <a href="#" class="tips-btn">View Guidelines</a>
         </div>
     </div>
 
