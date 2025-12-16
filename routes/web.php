@@ -233,7 +233,6 @@ Route::prefix('MasterAdmin')->name('master.admin.')->group(function () {
         Route::post('/returns-exchange/{returnRequest}/generate-exchange', [\App\Http\Controllers\Admin\Master\ReturnExchangeController::class, 'generateExchange'])->name('returns-exchange.generate');
         Route::post('/returns-exchange/{returnRequest}/switch-type', [\App\Http\Controllers\Admin\Master\ReturnExchangeController::class, 'switchType'])->name('returns-exchange.switch-type');
         Route::post('/returns-exchange/{returnRequest}/deny', [\App\Http\Controllers\Admin\Master\ReturnExchangeController::class, 'deny'])->name('returns-exchange.deny');
-
         // Notifications
         Route::match(['get', 'post'], '/notifications/{notification}/read', [MasterAuthController::class, 'markNotificationRead'])->name('notifications.read');
         Route::post('/notifications/read-all', [MasterAuthController::class, 'markAllNotificationsRead'])->name('notifications.read-all');

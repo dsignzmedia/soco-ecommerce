@@ -94,9 +94,13 @@
         <!-- Sidebar -->
         <aside class="sidebar">
             <div class="brand">
-                @if(Auth::user()->school && Auth::user()->school->logo)
+                @if(Auth::user()->school)
                     <div class="d-flex align-items-center gap-2">
-                        <img src="{{ asset('storage/' . Auth::user()->school->logo) }}" alt="{{ Auth::user()->school->name }}" style="max-height: 40px; max-width: 40px; object-fit: contain;">
+                        @if(Auth::user()->school->logo)
+                            <img src="{{ asset('storage/' . Auth::user()->school->logo) }}" alt="{{ Auth::user()->school->name }}" style="max-height: 40px; max-width: 40px; object-fit: contain;">
+                        @else
+                            <i class="fas fa-school fa-lg" style="color: var(--primary);"></i>
+                        @endif
                         <h2 style="font-size: 16px; font-weight: 700; color: var(--primary); margin: 0;">{{ Auth::user()->school->name }}</h2>
                     </div>
                 @else
@@ -117,9 +121,7 @@
                     <i class="fas fa-users"></i> Student Management
                 </a> 
                 --}}
-                <a href="{{ route('frontend.school.products') }}" class="school-nav__item {{ Request::routeIs('frontend.school.products') ? 'active' : '' }}">
-                    <i class="fas fa-box"></i> Product Catalog
-                </a>
+
                 <a href="{{ route('frontend.school.reports') }}" class="school-nav__item {{ Request::routeIs('frontend.school.reports') ? 'active' : '' }}">
                     <i class="fas fa-chart-line"></i> Reports & Analytics
                 </a>

@@ -37,7 +37,7 @@ class OrderController extends Controller
             ->when($filters['order_number'] ?? null, fn($query, $number) => $query->where('order_number', 'like', '%' . $number . '%'))
             ->when($filters['date_from'] ?? null, fn($query, $from) => $query->whereDate('order_date', '>=', Carbon::parse($from)))
             ->when($filters['date_to'] ?? null, fn($query, $to) => $query->whereDate('order_date', '<=', Carbon::parse($to)))
-            ->orderByDesc('order_date')
+            ->latest()
             ->paginate(15)
             ->withQueryString();
 

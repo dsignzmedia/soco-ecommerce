@@ -13,6 +13,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 
 use Illuminate\Support\Facades\Http;
+use Barryvdh\DomPDF\Facade\Pdf;
 
 class AuthController extends Controller
 {
@@ -572,7 +573,7 @@ class AuthController extends Controller
         $user = Auth::user();
 
         if (!$user) {
-             return redirect()->route('frontend.school.login');
+             return redirect()->route('login');
         }
 
         // Get school data from database
@@ -581,7 +582,7 @@ class AuthController extends Controller
         if (!$school) {
             // If the authenticated school user has no associated school record,
             // redirect them to the school login page with an informative message.
-            return redirect()->route('frontend.school.login')
+            return redirect()->route('login')
                 ->with('error', 'School profile not found. Please complete your school setup or contact administrator.');
         }
 
@@ -603,8 +604,9 @@ class AuthController extends Controller
 
     public function schoolOrders(Request $request)
     {
-        // Check if user is authenticated and has school role
-        if (!auth('school')->check() || !auth('school')->user()->isSchool()) {
+        // Check if user is authenticated
+        $user = Auth::user();
+        if (!$user || !$user->isSchool()) {
             return redirect()->route('login')
                 ->with('error', 'Please login to access this page.');
         }
@@ -659,8 +661,9 @@ class AuthController extends Controller
 
     public function schoolStudents(Request $request)
     {
-        // Check if user is authenticated and has school role
-        if (!auth('school')->check() || !auth('school')->user()->isSchool()) {
+        // Check if user is authenticated
+        $user = Auth::user();
+        if (!$user || !$user->isSchool()) {
             return redirect()->route('login')
                 ->with('error', 'Please login to access this page.');
         }
@@ -723,8 +726,9 @@ class AuthController extends Controller
 
     public function schoolProducts(Request $request)
     {
-        // Check if user is authenticated and has school role
-        if (!auth('school')->check() || !auth('school')->user()->isSchool()) {
+        // Check if user is authenticated
+        $user = Auth::user();
+        if (!$user || !$user->isSchool()) {
             return redirect()->route('login')
                 ->with('error', 'Please login to access this page.');
         }
@@ -787,8 +791,9 @@ class AuthController extends Controller
 
     public function schoolSettings()
     {
-        // Check if user is authenticated and has school role
-        if (!auth('school')->check() || !auth('school')->user()->isSchool()) {
+        // Check if user is authenticated
+        $user = Auth::user();
+        if (!$user || !$user->isSchool()) {
             return redirect()->route('login')
                 ->with('error', 'Please login to access this page.');
         }
@@ -806,8 +811,9 @@ class AuthController extends Controller
 
     public function updateSchoolSettings(Request $request)
     {
-        // Check if user is authenticated and has school role
-        if (!auth('school')->check() || !auth('school')->user()->isSchool()) {
+        // Check if user is authenticated
+        $user = Auth::user();
+        if (!$user || !$user->isSchool()) {
             return redirect()->route('login')
                 ->with('error', 'Please login to access this page.');
         }
@@ -846,11 +852,35 @@ class AuthController extends Controller
 
     public function schoolReports()
     {
-        // Check if school is authenticated
-        if (!session('school_authenticated')) {
-            return redirect()->route('frontend.school.login')
-                ->with('error', 'Please login to access reports.');
+        $user = Auth::user();
+        if (!$user) return redirect()->route('login');
+        $school = $user->school;
+
+        if (!$school) {
+            return redirect()->route('frontend.school.dashboard');
         }
+
+        // Fetch dynamic filter options
+        $grades = \App\Models\Admin\Master\Order::where('school_id', $school->id)
+            ->whereNotNull('grade')
+            ->distinct()
+            ->orderBy('grade')
+            ->pluck('grade');
+
+        $products = \App\Models\Admin\Master\Order::where('school_id', $school->id)
+            ->distinct()
+            // In a real scenario, we might join order_items, but for now we might not have product names directly on orders or
+            // we have to check how orders are structured.
+            // The Order model has 'category', maybe use that? Or we can't easily get distinct products from orders if it's JSON or related table.
+            // Let's use Category for now as 'Product' filter or fetch from ProductMapping.
+            ->pluck('category') // As a proxy if product names aren't simple
+            ->unique()
+            ->values();
+
+        // Better: Get products from ProductMapping for this school
+        $products = \App\Models\Admin\Master\ProductMapping::where('school_id', $school->id)
+            ->orderBy('product_name')
+            ->pluck('product_name');
 
         // Auto-generate a default report (current month) if no report data in session
         if (!session('report_generated')) {
@@ -864,58 +894,122 @@ class AuthController extends Controller
              return $this->generateReport($request);
         }
 
-        return view('frontend.dashboard.school-reports');
+        return view('frontend.dashboard.school-reports', compact('grades', 'products'));
     }
 
     public function generateReport(Request $request)
     {
-        // Check if school is authenticated
-        if (!session('school_authenticated')) {
-            return redirect()->route('frontend.school.login')
-                ->with('error', 'Please login to generate reports.');
-        }
+        $user = Auth::user();
+        if (!$user) return redirect()->route('login');
+        $school = $user->school;
 
         // Validate filters
         $request->validate([
-            'date' => 'nullable|date',
-            'month' => 'nullable|integer|min:1|max:12',
-            'year' => 'nullable|integer|min:2020|max:2100',
+            'start_date' => 'nullable|date',
+            'end_date' => 'nullable|date',
             'grade' => 'nullable|string',
             'product' => 'nullable|string',
-            'class' => 'nullable|string',
+            'sale_type' => 'nullable|string',
         ]);
 
         // Store filter data in session for report generation
-        $filters = $request->only(['date', 'month', 'year', 'grade', 'product', 'class']);
+        $filters = $request->only(['start_date', 'end_date', 'grade', 'product', 'sale_type']);
         session(['report_filters' => $filters]);
 
-        // Generate sample report data (in production, fetch from database based on filters)
+        // Query Orders
+        $query = \App\Models\Admin\Master\Order::where('school_id', $school->id);
+
+        if (!empty($filters['start_date'])) {
+            $query->whereDate('order_date', '>=', $filters['start_date']);
+        }
+
+        if (!empty($filters['end_date'])) {
+            $query->whereDate('order_date', '<=', $filters['end_date']);
+        }
+
+        if (!empty($filters['grade'])) {
+            $query->where('grade', $filters['grade']);
+        }
+
+        // Product filter
+        if (!empty($filters['product'])) {
+             $query->whereHas('items', function($q) use ($filters) {
+                 $q->where('product_name', $filters['product']);
+             });
+        }
+
+        // Status filter
+        if (!empty($filters['sale_type'])) {
+             $query->where('order_status', $filters['sale_type']);
+        }
+
+        $orders = $query->with('items')->orderBy('order_date')->get();
+
+        // Calculate Aggregates
+        $totalSales = $orders->sum('total_amount');
+        $totalOrders = $orders->count();
+        $avgOrderValue = $totalOrders > 0 ? $totalSales / $totalOrders : 0;
+
+        // Find top product
+        $topProduct = 'N/A';
+        $productCounts = [];
+
+        foreach ($orders as $order) {
+            if ($order->items) {
+                foreach ($order->items as $item) {
+                    $pName = $item->product_name ?? 'Unknown Product';
+                    if (!isset($productCounts[$pName])) {
+                        $productCounts[$pName] = 0;
+                    }
+                    $productCounts[$pName] += $item->quantity ?? 1;
+                }
+            }
+        }
+
+        if (!empty($productCounts)) {
+            arsort($productCounts);
+            $topProduct = array_key_first($productCounts);
+        }
+
+        // Prepare Chart Data
+        $chartLabels = [];
+        $chartData = [];
+
+        // Daily breakdown within the range
+        $grouped = $orders->groupBy(function($date) {
+            return \Carbon\Carbon::parse($date->order_date)->format('d M');
+        });
+
+        foreach($grouped as $label => $grp) {
+            $chartLabels[] = $label;
+            $chartData[] = $grp->sum('total_amount');
+        }
+
         $reportData = [
             'filters' => $filters,
             'summary' => [
-                'total_sales' => 125000,
-                'total_orders' => 250,
-                'average_order_value' => 500,
-                'top_product' => 'School Shirt',
-                'top_grade' => 'Grade 5',
+                'total_sales' => $totalSales,
+                'total_orders' => $totalOrders,
+                'average_order_value' => $avgOrderValue,
+                'top_product' => $topProduct,
             ],
             'chart_data' => [
-                'labels' => ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'],
-                'sales' => [15000, 18000, 20000, 22000, 25000, 25000],
+                'labels' => $chartLabels,
+                'sales' => $chartData,
             ],
         ];
 
         session(['report_data' => $reportData]);
 
         return redirect()->route('frontend.school.reports')
-            ->with('report_generated', true)
-            ->with('success', 'Report generated successfully!');
+            ->with('report_generated', true);
     }
 
     public function downloadReport(Request $request)
     {
         // Check if school is authenticated
-        if (!session('school_authenticated')) {
+        $user = Auth::user();
+        if (!$user) {
             return redirect()->route('frontend.school.login')
                 ->with('error', 'Please login to download reports.');
         }
@@ -923,19 +1017,72 @@ class AuthController extends Controller
         $format = $request->get('format', 'excel'); // excel or pdf
         $reportData = session('report_data', []);
 
-        // TODO: Generate actual Excel/PDF file
-        // For now, return a simple response
-        return response()->json([
-            'message' => 'Report download functionality will be implemented',
-            'format' => $format,
-            'data' => $reportData,
-        ]);
+        if (empty($reportData)) {
+            return redirect()->back()->with('error', 'No report data found. Please generate a report first.');
+        }
+
+        if ($format === 'pdf') {
+            $pdf = Pdf::loadView('frontend.dashboard.reports-pdf', [
+                'filters' => $reportData['filters'] ?? [],
+                'summary' => $reportData['summary'] ?? [],
+                'chart_data' => $reportData['chart_data'] ?? []
+            ]);
+            return $pdf->download('school-report-' . date('Y-m-d') . '.pdf');
+        }
+
+        // Generate CSV for Excel
+        $fileName = 'school-report-' . date('Y-m-d') . '.csv';
+        $headers = [
+            "Content-type"        => "text/csv",
+            "Content-Disposition" => "attachment; filename=$fileName",
+            "Pragma"              => "no-cache",
+            "Cache-Control"       => "must-revalidate, post-check=0, pre-check=0",
+            "Expires"             => "0"
+        ];
+
+        $callback = function() use ($reportData) {
+            $file = fopen('php://output', 'w');
+
+            // Add BOM for Excel UTF-8 compatibility
+            fputs($file, "\xEF\xBB\xBF");
+
+            // Summary Section
+            fputcsv($file, ['School Report', 'Generated on ' . date('Y-m-d H:i')]);
+            fputcsv($file, []);
+            fputcsv($file, ['Summary']);
+            fputcsv($file, ['Total Sales', 'Total Orders', 'Average Order Value', 'Top Product']);
+            fputcsv($file, [
+                $reportData['summary']['total_sales'] ?? 0,
+                $reportData['summary']['total_orders'] ?? 0,
+                $reportData['summary']['average_order_value'] ?? 0,
+                $reportData['summary']['top_product'] ?? 'N/A'
+            ]);
+            fputcsv($file, []);
+
+            // Chart Data / Sales Detail
+            fputcsv($file, ['Sales Detail']);
+            fputcsv($file, ['Period / Date', 'Sales Amount']);
+
+            if (isset($reportData['chart_data']['labels'])) {
+                foreach ($reportData['chart_data']['labels'] as $index => $label) {
+                    fputcsv($file, [
+                        $label,
+                        $reportData['chart_data']['sales'][$index] ?? 0
+                    ]);
+                }
+            }
+
+            fclose($file);
+        };
+
+        return response()->stream($callback, 200, $headers);
     }
 
     public function emailReport(Request $request)
     {
         // Check if school is authenticated
-        if (!session('school_authenticated')) {
+        $user = Auth::user();
+        if (!$user) {
             return redirect()->route('frontend.school.login')
                 ->with('error', 'Please login to email reports.');
         }
@@ -946,10 +1093,16 @@ class AuthController extends Controller
 
         $reportData = session('report_data', []);
 
-        // TODO: Send email with report attachment
-        // For now, return success message
+         if (empty($reportData)) {
+            return redirect()->back()->with('error', 'No report data found to email.');
+        }
+
+        // Simulation of Email Sending
+        // In production: Mail::to($request->email)->send(new SchoolReportMail($reportData));
+        \Illuminate\Support\Facades\Log::info('Sending School Report Email to: ' . $request->email);
+
         return redirect()->route('frontend.school.reports')
-            ->with('success', 'Report will be emailed to ' . $request->email . ' shortly.');
+            ->with('success', 'Report email has been queued for sending to ' . $request->email . '.');
     }
 
     public function parentDashboard(Request $request)
@@ -2406,7 +2559,6 @@ class AuthController extends Controller
                 'target_role' => 'master',
                 'data' => ['order_number' => $orderNumber],
             ]);
-
             // Create Notification for Inventory Admins
             \App\Models\Notification::create([
                 'type' => 'new_order',

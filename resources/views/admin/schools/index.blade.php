@@ -2,7 +2,7 @@
 
 @section('title', 'Schools | The Skool Store')
 @section('page_heading', 'School Management')
-@section('page_subheading', 'List + add/edit schools • Grades • Product mapping')
+@section('page_subheading', 'List + add/edit schools')
 
 @push('styles')
     <style>
@@ -83,8 +83,6 @@
                         <td class="actions">
                             <div class="d-flex flex-wrap gap-2">
                                 <a href="{{ route('master.admin.schools.edit', $school) }}" class="btn-vs-sm">Edit</a>
-                                <a href="{{ route('master.admin.schools.grades.index', $school) }}" class="btn-vs-sm">Grades</a>
-                                <a href="{{ route('master.admin.schools.product-mapping.index', $school) }}" class="btn-vs-sm">Product mapping</a>
                             </div>
                         </td>
                     </tr>

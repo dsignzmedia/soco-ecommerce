@@ -9,7 +9,7 @@
         <h3 class="filters-title">Filters</h3>
         <form method="GET" action="{{ route('inventory.admin.dashboard') }}" class="filter-form-grid">
             <div class="filter-row">
-                <select name="school_id" class="filter-input-rounded">
+                <select name="school_id">
                     <option value="">School (All)</option>
                     @foreach($schools as $school)
                         <option value="{{ $school->id }}" @selected(($filters['school_id'] ?? '') == $school->id)>{{ $school->name }}</option>
