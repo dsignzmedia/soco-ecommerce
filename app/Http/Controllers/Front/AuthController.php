@@ -887,11 +887,11 @@ class AuthController extends Controller
             ->distinct()
             ->orderBy('grade')
             ->pluck('grade');
-            
+
         $products = \App\Models\Admin\Master\Order::where('school_id', $school->id)
             ->distinct()
-            // In a real scenario, we might join order_items, but for now we might not have product names directly on orders or 
-            // we have to check how orders are structured. 
+            // In a real scenario, we might join order_items, but for now we might not have product names directly on orders or
+            // we have to check how orders are structured.
             // The Order model has 'category', maybe use that? Or we can't easily get distinct products from orders if it's JSON or related table.
             // Let's use Category for now as 'Product' filter or fetch from ProductMapping.
             ->pluck('category') // As a proxy if product names aren't simple
@@ -930,7 +930,7 @@ class AuthController extends Controller
             'end_date' => 'nullable|date',
             'grade' => 'nullable|string',
             'product' => 'nullable|string',
-            'sale_type' => 'nullable|string', 
+            'sale_type' => 'nullable|string',
         ]);
 
         // Store filter data in session for report generation
@@ -943,7 +943,6 @@ class AuthController extends Controller
         if (!empty($filters['start_date'])) {
             $query->whereDate('order_date', '>=', $filters['start_date']);
         }
-        
         if (!empty($filters['end_date'])) {
             $query->whereDate('order_date', '<=', $filters['end_date']);
         }
@@ -958,7 +957,6 @@ class AuthController extends Controller
                  $q->where('product_name', $filters['product']);
              });
         }
-        
         // Status filter
         if (!empty($filters['sale_type'])) {
              $query->where('order_status', $filters['sale_type']);
@@ -970,11 +968,11 @@ class AuthController extends Controller
         $totalSales = $orders->sum('total_amount');
         $totalOrders = $orders->count();
         $avgOrderValue = $totalOrders > 0 ? $totalSales / $totalOrders : 0;
-        
+
         // Find top product
         $topProduct = 'N/A';
         $productCounts = [];
-        
+
         foreach ($orders as $order) {
             if ($order->items) {
                 foreach ($order->items as $item) {
@@ -986,7 +984,6 @@ class AuthController extends Controller
                 }
             }
         }
-        
         if (!empty($productCounts)) {
             arsort($productCounts);
             $topProduct = array_key_first($productCounts);
@@ -1000,12 +997,10 @@ class AuthController extends Controller
         $grouped = $orders->groupBy(function($date) {
             return \Carbon\Carbon::parse($date->order_date)->format('d M');
         });
-        
         foreach($grouped as $label => $grp) {
             $chartLabels[] = $label;
             $chartData[] = $grp->sum('total_amount');
         }
-        
         $reportData = [
             'filters' => $filters,
             'summary' => [
@@ -1063,7 +1058,6 @@ class AuthController extends Controller
 
         $callback = function() use ($reportData) {
             $file = fopen('php://output', 'w');
-            
             // Add BOM for Excel UTF-8 compatibility
             fputs($file, "\xEF\xBB\xBF");
 
@@ -1114,6 +1108,14 @@ class AuthController extends Controller
 
         $reportData = session('report_data', []);
         
+         if (empty($reportData)) {
+            return redirect()->back()->with('error', 'No report data found to email.');
+        }
+
+        // Simulation of Email Sending
+        // In production: Mail::to($request->email)->send(new SchoolReportMail($reportData));
+        \Illuminate\Support\Facades\Log::info('Sending School Report Email to: ' . $request->email);
+
          if (empty($reportData)) {
             return redirect()->back()->with('error', 'No report data found to email.');
         }
