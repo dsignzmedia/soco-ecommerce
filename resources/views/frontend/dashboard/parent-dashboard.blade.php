@@ -227,6 +227,7 @@
                         <label for="modalGrade" class="form-label" style="font-weight: 500; color: #333; margin-bottom: 8px;">Grade</label>
                         <select id="modalGrade" name="grade" class="form-select" required style="border: 1px solid #ddd; border-radius: 6px; padding: 10px 12px;">
                             <option value="">Select Grade</option>
+                            <option value="PKG">Pre-KG</option>
                             <option value="LKG">LKG</option>
                             <option value="UKG">UKG</option>
                             <option value="1">Grade 1</option>

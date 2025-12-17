@@ -2,10 +2,10 @@
     $userName = session('parent_name', 'Parent User');
     $userEmail = session('parent_email', 'parent@example.com');
     $sidebarItems = [
-        ['route' => 'frontend.parent.dashboard', 'icon' => 'fas fa-th-large', 'label' => 'Dashboard'],
-        ['route' => 'frontend.parent.cart', 'icon' => 'fas fa-shopping-cart', 'label' => 'Cart'],
-        ['route' => 'frontend.parent.orders', 'icon' => 'fas fa-shopping-bag', 'label' => 'My Orders'],
-        ['route' => 'frontend.parent.profile', 'icon' => 'fas fa-user', 'label' => 'Profile'],
+        ['route' => 'frontend.parent.dashboard', 'icon' => 'fas fa-th-large', 'label' => 'Dashboard', 'active_routes' => 'frontend.parent.dashboard'],
+        ['route' => 'frontend.parent.cart', 'icon' => 'fas fa-shopping-cart', 'label' => 'Cart', 'active_routes' => 'frontend.parent.cart'],
+        ['route' => 'frontend.parent.orders', 'icon' => 'fas fa-shopping-bag', 'label' => 'My Orders', 'active_routes' => ['frontend.parent.orders', 'frontend.parent.track-order', 'frontend.parent.return-exchange']],
+        ['route' => 'frontend.parent.profile', 'icon' => 'fas fa-user', 'label' => 'Profile', 'active_routes' => ['frontend.parent.profile', 'frontend.parent.addresses', 'frontend.parent.account', 'frontend.parent.edit-profile']],
     ];
     $cartCount = Auth::check() ? \App\Models\Cart::where('user_id', Auth::id())->count() : 0;
 @endphp
@@ -19,7 +19,7 @@
                     $routeParams['profile_id'] = $selectedProfile['id'];
                 }
             @endphp
-            <a href="{{ route($item['route'], $routeParams) }}" class="sidebar-link {{ request()->routeIs($item['route']) ? 'active' : '' }}">
+            <a href="{{ route($item['route'], $routeParams) }}" class="sidebar-link {{ request()->routeIs($item['active_routes']) ? 'active' : '' }}">
                 <span><i class="{{ $item['icon'] }} me-2"></i>{{ $item['label'] }}</span>
                 @if($item['route'] === 'frontend.parent.cart' && $cartCount > 0)
                     <span class="badge bg-danger">{{ $cartCount }}</span>

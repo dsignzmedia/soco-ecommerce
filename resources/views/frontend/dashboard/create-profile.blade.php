@@ -20,6 +20,7 @@
             <div class="filter-group">
                 <label class="filter-label">Grade</label>
                 <div class="filter-buttons">
+                    <button type="button" class="filter-btn grade-btn" data-value="PKG">Pre-KG</button>
                     <button type="button" class="filter-btn grade-btn" data-value="LKG">LKG</button>
                     <button type="button" class="filter-btn grade-btn" data-value="UKG">UKG</button>
                     <button type="button" class="filter-btn grade-btn" data-value="1">Grade 1</button>

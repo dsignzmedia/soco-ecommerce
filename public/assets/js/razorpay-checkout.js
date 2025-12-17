@@ -54,11 +54,12 @@ function initiateRazorpayPayment(config) {
             if (data.success) {
                 var options = {
                     "key": data.key,
-                    "amount": data.amount,
-                    "currency": "INR",
+                    // "amount": data.amount, 
+                    // "currency": "INR",
                     "name": data.name,
                     "description": data.description,
                     "order_id": data.order_id,
+                    "retry": { "enabled": false }, // Disable retry to isolate error
                     "handler": function (response) {
                         // Submit to verify route
                         verifyRazorpayPayment(response, verifyRoute);
@@ -83,9 +84,23 @@ function initiateRazorpayPayment(config) {
                     return;
                 }
 
+                // Show Test Mode Helper if using Test Key
+                if (data.key && data.key.startsWith('rzp_test_')) {
+                    const testModal = new bootstrap.Modal(document.getElementById('testCredentialsModal'));
+                    testModal.show();
+                }
+
+                if (data.key && data.key.startsWith('rzp_test_')) {
+                    const testModal = new bootstrap.Modal(document.getElementById('testCredentialsModal'));
+                    testModal.show();
+                }
+
+                console.log('Razorpay Options:', options); // Debugging
+
                 var rzp1 = new Razorpay(options);
                 rzp1.on('payment.failed', function (response) {
-                    alert(response.error.description);
+                    console.error('Razorpay Error:', response);
+                    alert('Payment Failed:\nCode: ' + response.error.code + '\nReason: ' + response.error.description + '\nSource: ' + response.error.source + '\nStep: ' + response.error.step);
                     btn.disabled = false;
                     btn.innerHTML = originalText;
                 });

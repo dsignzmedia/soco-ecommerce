@@ -276,6 +276,8 @@ class CatalogController extends Controller
             'variants.*.option' => ['required_with:variants', 'string', 'max:255'],
             'variants.*.stock' => ['nullable', 'integer', 'min:0'],
             'variants.*.low_stock_threshold' => ['nullable', 'integer', 'min:0'],
+            'existing_media_images' => ['nullable', 'array'],
+            'media_order_ids' => ['nullable', 'string'],
         ];
 
         // Add file validation rules
@@ -308,11 +310,60 @@ class CatalogController extends Controller
         }
 
         // Handle Gallery Images
+        $paths = [];
         if ($request->hasFile('media_images')) {
-            $paths = [];
             foreach ($request->file('media_images') as $file) {
                 $paths[] = $file->store('products', 'public');
             }
+        }
+
+        // Logic: If 'existing_media_images' is present (even empty), we use it as the base.
+        // This supports reordering and deletion. 
+        // If NOT present (e.g., API usage or legacy), we append new files to existing DB images.
+        // Reconstruction Logic
+        if ($request->filled('media_order_ids')) {
+            $existing = $request->input('existing_media_images', []);
+            $orderMap = explode(',', $request->input('media_order_ids'));
+            $finalImages = [];
+            
+            $existingIndex = 0;
+            $newIndex = 0;
+
+            foreach ($orderMap as $type) {
+                if ($type === 'existing') {
+                    if (isset($existing[$existingIndex])) {
+                        $finalImages[] = $existing[$existingIndex];
+                        $existingIndex++;
+                    }
+                } elseif ($type === 'new') {
+                    if (isset($paths[$newIndex])) {
+                        $finalImages[] = $paths[$newIndex];
+                        $newIndex++;
+                    }
+                }
+            }
+            
+            // Safety: Append any remaining (shouldn't happen if map is accurate, but just in case)
+            while(isset($existing[$existingIndex])) {
+                $finalImages[] = $existing[$existingIndex++];
+            }
+            while(isset($paths[$newIndex])) {
+                $finalImages[] = $paths[$newIndex++];
+            }
+
+            $validated['media_images'] = $finalImages;
+
+            \Illuminate\Support\Facades\Log::info('Reconstructed Media Structure:', ['order' => $orderMap, 'final' => $finalImages]);
+
+        } elseif ($request->exists('existing_media_images') || $request->has('media_list_modified')) {
+            $existing = $request->input('existing_media_images', []);
+            \Illuminate\Support\Facades\Log::info('Existing Media Images Input Order:', ['existing' => $existing]);
+            
+            $validated['media_images'] = array_merge($existing, $paths);
+            
+            \Illuminate\Support\Facades\Log::info('Final Media Images to Save:', ['media_images' => $validated['media_images']]);
+        } elseif (!empty($paths)) {
+            // Fallback: Append only mode
             if ($product && $product->media_images) {
                 $validated['media_images'] = array_merge($product->media_images, $paths);
             } else {

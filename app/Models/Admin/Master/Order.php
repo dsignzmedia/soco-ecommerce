@@ -41,11 +41,17 @@ class Order extends Model
 
     protected $casts = [
         'order_date' => 'date',
+        'payment_details' => 'array',
     ];
 
     public function school(): BelongsTo
     {
         return $this->belongsTo(School::class);
+    }
+
+    public function payments()
+    {
+        return $this->hasMany(\App\Models\Payment::class);
     }
 }
 

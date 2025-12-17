@@ -59,6 +59,11 @@
                             <button type="submit" style="border:1px solid #d1d5db;border-radius:8px;padding:8px 12px;background:#f3f4f6;color:#374151;">Switch to Exchange</button>
                         </form>
                     @endif
+
+                    <form method="POST" action="{{ route('master.admin.returns-exchange.deny', $returnRequest) }}" onsubmit="return confirm('Are you sure you want to deny this request?');">
+                        @csrf
+                        <button type="submit" style="border:none;border-radius:8px;padding:8px 12px;background:#ffe4e6;color:#be123c;">Deny</button>
+                    </form>
                 </div>
             @endif
 
@@ -68,6 +73,14 @@
                     <input type="text" name="admin_notes" placeholder="Receiving notes" style="padding:8px;border:1px solid #e5e7eb;border-radius:8px;">
                     <button type="submit" name="action" value="restock" style="border:none;border-radius:8px;padding:8px 12px;background:#dcfce7;color:#065f46;">Mark Received - Restock</button>
                     <button type="submit" name="action" value="discard" style="border:none;border-radius:8px;padding:8px 12px;background:#fee2e2;color:#991b1b;">Mark Received - Discard</button>
+                </form>
+
+                <!-- Refund Button -->
+                <form method="POST" action="{{ route('master.admin.returns-exchange.refund', $returnRequest) }}" onsubmit="return confirm('Are you sure you want to process a refund for this request? This will initiate a Razorpay refund.');">
+                    @csrf
+                    <button type="submit" class="btn-action-sm" style="border:none;border-radius:8px;padding:8px 12px;background:#e0f2fe;color:#0284c7;" title="Initiate Refund">
+                        <i class="fas fa-undo-alt" style="margin-right:4px;"></i> Refund
+                    </button>
                 </form>
             @endif
 

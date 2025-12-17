@@ -43,7 +43,7 @@ class ReportController extends Controller
 
         $filters = $request->only(['school_id', 'grade', 'category', 'date_from', 'date_to', 'product_name', 'status']);
 
-        $orders = Order::query()
+        $orders = Order::with('school')
             ->when($filters['school_id'] ?? null, fn ($q, $school) => $q->where('school_id', $school))
             ->when($filters['grade'] ?? null, fn ($q, $grade) => $q->where('grade', $grade))
             ->when($filters['category'] ?? null, fn ($q, $category) => $q->where('category', $category))
@@ -53,11 +53,15 @@ class ReportController extends Controller
             ->when($filters['date_to'] ?? null, fn ($q, $to) => $q->whereDate('order_date', '<=', $to))
             ->get();
 
-        return match ($type) {
-            'csv' => $this->downloadDelimited($orders, ',', 'reports.csv', 'text/csv'),
-            'excel' => $this->downloadDelimited($orders, "\t", 'reports.xls', 'application/vnd.ms-excel'),
-            'pdf' => $this->downloadPdf($orders),
-        };
+        try {
+            return match ($type) {
+                'csv' => $this->downloadDelimited($orders, ',', 'reports.csv', 'text/csv'),
+                'excel' => $this->downloadDelimited($orders, "\t", 'reports.xls', 'application/vnd.ms-excel'),
+                'pdf' => $this->downloadPdf($orders),
+            };
+        } catch (\Throwable $e) {
+            return response("Export Error: " . $e->getMessage() . " in " . $e->getFile() . " line " . $e->getLine());
+        }
     }
 
     protected function downloadDelimited(Collection $orders, string $delimiter, string $filename, string $contentType)
@@ -95,7 +99,7 @@ class ReportController extends Controller
         foreach ($orders as $order) {
             $lines[] = $order->order_number . ' • ' . optional($order->order_date)->format('d M Y');
             $lines[] = 'School: ' . optional($order->school)->name . ' • Grade ' . ($order->grade ?? 'n/a');
-            $lines[] = 'Item: ' . $order->item_name . ' x' . $order->quantity . ' • ₹' . number_format($order->total_amount, 2);
+            $lines[] = 'Item: ' . $order->item_name . ' x' . $order->quantity . ' • Rs. ' . number_format($order->total_amount, 2);
             $lines[] = 'Status: ' . ucfirst($order->order_status);
             $lines[] = '';
         }

@@ -99,20 +99,40 @@ class InventoryController extends Controller
         return redirect()->route('master.admin.inventory.list')->with('status', 'Stock adjusted successfully.');
     }
 
-    public function reports(): View
+    public function reports(Request $request): View
     {
-        $lowStock = ProductMapping::whereColumn('inventory_stock', '<=', 'low_stock_threshold')->get();
-        $outOfStock = ProductMapping::where('inventory_stock', '<=', 0)->get();
+        $filters = $request->only(['school_id', 'category']);
 
+        // Base query callback for reusable filtering
+        $applyFilters = function ($query) use ($filters) {
+            $query->when($filters['school_id'] ?? null, fn($q, $id) => $q->where('school_id', $id))
+                  ->when($filters['category'] ?? null, fn($q, $cat) => $q->where('category', $cat));
+        };
+
+        // 1. Low Stock
+        $lowStock = ProductMapping::whereColumn('inventory_stock', '<=', 'low_stock_threshold')
+            ->tap($applyFilters)
+            ->get();
+
+        // 2. Out of Stock
+        $outOfStock = ProductMapping::where('inventory_stock', '<=', 0)
+            ->tap($applyFilters)
+            ->get();
+
+        // 3. Stock by School
         $stockBySchool = ProductMapping::selectRaw('school_id, SUM(inventory_stock) as total')
+            ->tap($applyFilters)
             ->groupBy('school_id')
             ->with('school')
             ->get();
 
+        // 4. Stock by Category
         $stockByCategory = ProductMapping::selectRaw('category, SUM(inventory_stock) as total')
+            ->tap($applyFilters)
             ->groupBy('category')
             ->get();
 
+        // 5. Aging Buckets
         $agingBuckets = [
             '0-30 days' => 0,
             '31-60 days' => 0,
@@ -120,22 +140,37 @@ class InventoryController extends Controller
             '90+ days' => 0,
         ];
 
-        ProductMapping::select('inventory_stock', 'updated_at')->each(function ($product) use (&$agingBuckets) {
-            $days = optional($product->updated_at)->diffInDays(now()) ?? 0;
-            if ($days <= 30) {
-                $agingBuckets['0-30 days'] += $product->inventory_stock;
-            } elseif ($days <= 60) {
-                $agingBuckets['31-60 days'] += $product->inventory_stock;
-            } elseif ($days <= 90) {
-                $agingBuckets['61-90 days'] += $product->inventory_stock;
-            } else {
-                $agingBuckets['90+ days'] += $product->inventory_stock;
-            }
-        });
+        ProductMapping::select('inventory_stock', 'updated_at')
+            ->tap($applyFilters)
+            ->each(function ($product) use (&$agingBuckets) {
+                $days = optional($product->updated_at)->diffInDays(now()) ?? 0;
+                if ($days <= 30) {
+                    $agingBuckets['0-30 days'] += $product->inventory_stock;
+                } elseif ($days <= 60) {
+                    $agingBuckets['31-60 days'] += $product->inventory_stock;
+                } elseif ($days <= 90) {
+                    $agingBuckets['61-90 days'] += $product->inventory_stock;
+                } else {
+                    $agingBuckets['90+ days'] += $product->inventory_stock;
+                }
+            });
 
-        $movements = InventoryAdjustment::with('product')->latest()->paginate(20);
+        // 6. Movements
+        // Movements are on InventoryAdjustment model. We need to filter based on related product.
+        $movements = InventoryAdjustment::with('product')
+            ->whereHas('product', function ($q) use ($filters) {
+                $q->when($filters['school_id'] ?? null, fn($sq, $id) => $sq->where('school_id', $id))
+                  ->when($filters['category'] ?? null, fn($sq, $cat) => $sq->where('category', $cat));
+            })
+            ->latest()
+            ->paginate(20)
+            ->withQueryString();
 
-        return view('admin.inventory.reports', compact('lowStock', 'outOfStock', 'stockBySchool', 'stockByCategory', 'agingBuckets', 'movements'));
+        // Data for Filter Dropdowns
+        $schools = School::orderBy('name')->get();
+        $categories = ProductMapping::select('category')->whereNotNull('category')->distinct()->orderBy('category')->pluck('category');
+
+        return view('admin.inventory.reports', compact('lowStock', 'outOfStock', 'stockBySchool', 'stockByCategory', 'agingBuckets', 'movements', 'schools', 'categories', 'filters'));
     }
 }
 
