@@ -5,7 +5,7 @@
     <title>Invoice {{ $order->order_number }}</title>
     <style>
         body {
-            font-family: 'DejaVu Sans', sans-serif;
+            font-family: sans-serif;
             font-size: 14px;
             color: #475467;
         }
@@ -78,7 +78,7 @@
                 <td>{{ $order->category }}</td>
                 <td>{{ $order->size }}</td>
                 <td class="text-center">{{ $order->quantity }}</td>
-                <td class="text-right">&#8377;{{ number_format($order->total_amount - $order->tax_amount - $order->shipping_cost, 2) }}</td>
+                <td class="text-right">Rs. {{ number_format($order->total_amount - $order->tax_amount - $order->shipping_cost, 2) }}</td>
             </tr>
         </tbody>
     </table>
@@ -91,15 +91,15 @@
                 <table class="totals-table">
                     <tr>
                         <td>Tax</td>
-                        <td class="text-right">&#8377;{{ number_format($order->tax_amount, 2) }}</td>
+                        <td class="text-right">Rs. {{ number_format($order->tax_amount, 2) }}</td>
                     </tr>
                     <tr>
                         <td>Shipping</td>
-                        <td class="text-right">&#8377;{{ number_format($order->shipping_cost, 2) }}</td>
+                        <td class="text-right">Rs. {{ number_format($order->shipping_cost, 2) }}</td>
                     </tr>
                     <tr>
                         <td class="grand-total">Total</td>
-                        <td class="text-right grand-total">&#8377;{{ number_format($order->total_amount, 2) }}</td>
+                        <td class="text-right grand-total">Rs. {{ number_format($order->total_amount, 2) }}</td>
                     </tr>
                 </table>
             </td>

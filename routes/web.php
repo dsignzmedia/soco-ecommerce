@@ -17,32 +17,6 @@ use App\Http\Controllers\Admin\Master\InventoryController;
 use App\Models\User;
 use Illuminate\Support\Facades\Log;
 
-// Test route to verify database user creation
-Route::get('/test-user-creation', function () {
-    try {
-        $testEmail = 'testuser' . time() . '@example.com';
-        $testUsername = 'testuser' . time();
-
-        Log::info('Test - Attempting to create user', ['email' => $testEmail, 'username' => $testUsername]);
-
-        $user = User::create([
-            'name' => $testUsername,
-            'email' => $testEmail,
-            'password' => bcrypt('password123'),
-        ]);
-
-        Log::info('Test - User created successfully', ['user_id' => $user->id, 'user_email' => $user->email]);
-
-        return response()->json([
-            'success' => true,
-            'message' => 'User created successfully',
-            'user' => ['id' => $user->id, 'name' => $user->name, 'email' => $user->email],
-        ]);
-    } catch (\Exception $e) {
-        Log::error('Test - Failed to create user', ['error' => $e->getMessage()]);
-        return response()->json(['success' => false, 'message' => 'Failed to create user', 'error' => $e->getMessage()], 500);
-    }
-});
 
 Route::get('/', [HomeController::class, 'index'])->name('frontend.index');
 Route::get('/get-started', [HomeController::class, 'getStarted'])->name('frontend.get-started');
@@ -167,6 +141,10 @@ Route::prefix('MasterAdmin')->name('master.admin.')->group(function () {
         Route::post('/orders/{order}/status', [OrderController::class, 'updateStatus'])->name('orders.status');
         Route::get('/orders/{order}', [OrderController::class, 'show'])->name('orders.show');
 
+        // Payments
+        Route::get('/payments', [App\Http\Controllers\Admin\Master\PaymentController::class, 'index'])->name('payments.index');
+        Route::get('/payments/{payment}', [App\Http\Controllers\Admin\Master\PaymentController::class, 'show'])->name('payments.show');
+
         Route::resource('schools', SchoolController::class)->except('show');
         Route::get('schools/{school}/grades', [GradeController::class, 'index'])->name('schools.grades.index');
         Route::post('schools/{school}/grades', [GradeController::class, 'store'])->name('schools.grades.store');
@@ -233,6 +211,7 @@ Route::prefix('MasterAdmin')->name('master.admin.')->group(function () {
         Route::post('/returns-exchange/{returnRequest}/generate-exchange', [\App\Http\Controllers\Admin\Master\ReturnExchangeController::class, 'generateExchange'])->name('returns-exchange.generate');
         Route::post('/returns-exchange/{returnRequest}/switch-type', [\App\Http\Controllers\Admin\Master\ReturnExchangeController::class, 'switchType'])->name('returns-exchange.switch-type');
         Route::post('/returns-exchange/{returnRequest}/deny', [\App\Http\Controllers\Admin\Master\ReturnExchangeController::class, 'deny'])->name('returns-exchange.deny');
+        Route::post('/returns-exchange/{returnRequest}/refund', [\App\Http\Controllers\Admin\Master\ReturnExchangeController::class, 'refund'])->name('returns-exchange.refund');
         // Notifications
         Route::match(['get', 'post'], '/notifications/{notification}/read', [MasterAuthController::class, 'markNotificationRead'])->name('notifications.read');
         Route::post('/notifications/read-all', [MasterAuthController::class, 'markAllNotificationsRead'])->name('notifications.read-all');

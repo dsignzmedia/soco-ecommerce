@@ -82,7 +82,14 @@ class AuthController extends Controller
                     'prefill' => [
                         'name' => $user->name,
                         'email' => $user->email,
-                        'contact' => preg_replace('/[^0-9]/', '', $user->phone ?? session('parent_phone')),
+                        'email' => $user->email,
+                        'contact' => (function($phone) {
+                            $p = preg_replace('/[^0-9]/', '', $phone);
+                            if (strlen($p) > 10 && substr($p, 0, 2) === '91') {
+                                return substr($p, 2);
+                            }
+                            return $p;
+                        })($user->phone ?? session('parent_phone')),
                     ]
                 ]);
             } else {
@@ -703,14 +710,35 @@ class AuthController extends Controller
             });
         }
 
-        $students = $query->orderBy('grade')->orderBy('student_name')->paginate(20);
+        // Custom Sort Order
+        $gradeOrderSql = "CASE 
+            WHEN grade = 'PKG' THEN 1 
+            WHEN grade = 'LKG' THEN 2 
+            WHEN grade = 'UKG' THEN 3
+            WHEN grade REGEXP '^[0-9]+$' THEN CAST(grade AS UNSIGNED) + 3
+            ELSE 999 
+        END";
 
-        // Get filter options
+        $students = $query->orderByRaw($gradeOrderSql)->orderBy('student_name')->paginate(20);
+
+        // Get filter options sorted logically
         $grades = \App\Models\StudentProfile::where('school_name', $school->name)
             ->whereNotNull('grade')
             ->distinct()
-            ->orderBy('grade')
-            ->pluck('grade');
+            ->get()
+            ->pluck('grade')
+            ->sort(function ($a, $b) {
+                $order = [
+                    'PKG' => 1, 'LKG' => 2, 'UKG' => 3,
+                    '1' => 4, '2' => 5, '3' => 6, '4' => 7, '5' => 8, '6' => 9,
+                    '7' => 10, '8' => 11, '9' => 12, '10' => 13, '11' => 14, '12' => 15
+                ];
+                
+                $valA = $order[$a] ?? 999;
+                $valB = $order[$b] ?? 999;
+                
+                return $valA <=> $valB;
+            });
 
         $sections = \App\Models\StudentProfile::where('school_name', $school->name)
             ->whereNotNull('section')
@@ -2091,6 +2119,7 @@ class AuthController extends Controller
         }
 
         // Check if the same product with same size and profile already exists in cart
+        // Note: Unique constraint exists on [user, profile, product, size], so we must update if exists
         $existingItem = \App\Models\Cart::where('user_id', $user->id)
             ->where('product_id', $request->product_id)
             ->where('profile_id', $request->profile_id)
@@ -2503,7 +2532,7 @@ class AuthController extends Controller
                 $itemTax = ($itemSubtotal * $taxPercentage) / 100;
                 $itemTotal = $itemSubtotal + $itemTax;
 
-                \App\Models\Admin\Master\Order::create([
+                $order = \App\Models\Admin\Master\Order::create([
                     'order_number' => $uniqueOrderNumber,
                     'school_id' => $schoolId,
                     'order_date' => now(),
@@ -2527,6 +2556,22 @@ class AuthController extends Controller
                     'amount_paid' => session('payment_method') === 'razorpay' ? $itemTotal : 0,
                     'payment_details' => session('payment_details'),
                 ]);
+
+                // Create Payment Record
+                if (session('payment_method') === 'razorpay' && session('payment_id')) {
+                    \App\Models\Payment::create([
+                        'order_id' => $order->id,
+                        'payment_id' => session('payment_id'),
+                        'total_amount' => $itemTotal,
+                        'tax_amount' => $itemTax,
+                        'shipping_cost' => 0,
+                        'amount_paid' => $itemTotal,
+                        'payment_status' => 'paid',
+                        'payment_method' => session('payment_method'),
+                        'payment_type' => 'online', // Or derive from razorpay method if available
+                        'payment_details' => session('payment_details'),
+                    ]);
+                }
 
                 // Decrement Inventory
                 if ($product->variants()->exists()) {

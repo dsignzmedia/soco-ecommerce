@@ -171,7 +171,7 @@
                                             onmouseout="this.style.borderColor='#f0f0f0'; this.style.boxShadow='none'">
                                             <div class="card-body p-3">
                                                 <!-- Top Row: Badge and Buttons -->
-                                                <div class="d-flex justify-content-between align-items-start mb-3">
+                                                <div class="d-flex justify-content-between align-items-start mb-3 w-100">
                                                     <!-- Left: Badge -->
                                                     <span class="badge" style="background: linear-gradient(135deg, #490D59 0%, #6B1B7F 100%); font-size: 0.8rem; padding: 6px 12px; border-radius: 8px;">
                                                         @if($address->address_type === 'home')
@@ -185,7 +185,7 @@
                                                     </span>
                                                     
                                                     <!-- Right: Action Buttons -->
-                                                    <div class="d-flex gap-2">
+                                                    <div class="d-flex gap-2 ms-auto">
                                                         <button type="button" 
                                                                 class="btn btn-sm" 
                                                                 style="background-color: #490D59; color: #ffffff; border: none; padding: 8px 12px; border-radius: 8px; transition: all 0.3s;"

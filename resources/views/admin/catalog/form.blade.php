@@ -184,28 +184,33 @@
                                 </div>
                             @endif
                         </label>
-                        <label>
+                        <div>
                             <span>Gallery images (Drag & Drop to Reorder)</span>
                             <div id="media-drop-zone" style="border: 2px dashed #d1d5db; border-radius: 8px; padding: 20px; text-align: center; cursor: pointer; transition: border-color 0.3s;" onclick="document.getElementById('gallery-upload-input').click()">
                                 <i class="fas fa-cloud-upload-alt" style="font-size: 24px; color: #9ca3af; margin-bottom: 8px;"></i>
                                 <p style="margin: 0; color: #6b7280;">Click or Drag files here to upload</p>
                                 <input type="file" id="gallery-upload-input" multiple accept="image/*,video/*" style="display: none;">
+                                <input type="hidden" name="media_list_modified" value="1">
+                                <input type="hidden" name="media_order_ids" id="media_order_ids">
                             </div>
                             
                             <!-- Unified Media Grid -->
                             <div id="unifiedMediaPreview" style="display: flex; flex-wrap: wrap; gap: 12px; margin-top: 16px;">
-                                <!-- Existing images rendered as media items (Visual only for now, logically separated) -->
+                                <!-- Existing images rendered as media items -->
                                 @if($product->media_images)
                                     @foreach($product->media_images as $index => $img)
-                                        <div class="media-item existing-media" style="background: #f9fafb;">
+                                        <div class="media-item existing-media" draggable="true">
                                             <img src="{{ Str::startsWith($img, 'http') ? $img : asset('storage/' . $img) }}" style="width: 100%; height: 100%; object-fit: cover;">
-                                            <!-- Simple visual indicator for existing -->
-                                            <div class="position-number" style="background: rgba(107, 114, 128, 0.9);">{{ $loop->iteration }}</div>
+                                            <div class="position-number">{{ $loop->iteration }}</div>
+                                            <div class="remove-btn" onclick="this.parentElement.remove(); updatePositionNumbers();">
+                                                <i class="fas fa-times"></i>
+                                            </div>
+                                            <input type="hidden" name="existing_media_images[]" value="{{ $img }}">
                                         </div>
                                     @endforeach
                                 @endif
                             </div>
-                        </label>
+                        </div>
                     </div>
 
     @push('scripts')
@@ -269,6 +274,15 @@
             const fileInput = document.getElementById('gallery-upload-input');
             const previewContainer = document.getElementById('unifiedMediaPreview');
             let draggedItem = null;
+
+            // Make available globally for HTML onclick handlers
+            window.updatePositionNumbers = function() {
+                const items = previewContainer.querySelectorAll('.media-item');
+                items.forEach((item, index) => {
+                    const badge = item.querySelector('.position-number');
+                    if(badge) badge.textContent = index + 1;
+                });
+            }
 
             // Handle File Selection
             fileInput.addEventListener('change', (e) => handleFiles(e.target.files));
@@ -351,14 +365,6 @@
                 previewContainer.appendChild(mediaContainer);
             };
 
-            function updatePositionNumbers() {
-                const items = previewContainer.querySelectorAll('.media-item');
-                items.forEach((item, index) => {
-                    const badge = item.querySelector('.position-number');
-                    if(badge) badge.textContent = index + 1;
-                });
-            }
-
             function addDragEvents(item) {
                 // Desktop Mouse Dragging
                 item.addEventListener('mousedown', (e) => {
@@ -429,6 +435,11 @@
                 container.appendChild(video);
                 video.play();
             }
+
+            // Initialize drag events for existing items
+            document.querySelectorAll('.existing-media').forEach(item => {
+                addDragEvents(item);
+            });
         });
     </script>
     @endpush

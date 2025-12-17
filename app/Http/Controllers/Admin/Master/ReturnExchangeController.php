@@ -231,4 +231,103 @@ class ReturnExchangeController extends Controller
     {
         return 'EXC-' . $order->order_number;
     }
+
+    public function refund(Request $request, ReturnExchangeRequest $returnRequest): RedirectResponse
+    {
+        if ($returnRequest->type !== 'return') {
+            return back()->with('error', 'Only return requests can be refunded.');
+        }
+        
+        // Ensure request is approved or physically received before refunding? 
+        // User asked for "near to approve", so likely after approval.
+        // Let's allow it if status is 'approved' OR 'received_restocked'/'received_discarded'.
+        if (!in_array($returnRequest->status, ['approved', 'received_restocked', 'received_discarded'])) {
+            return back()->with('error', 'Request must be approved or received to process refund.');
+        }
+
+        $order = $returnRequest->order;
+        if (!$order) {
+            return back()->with('error', 'Order not found.');
+        }
+
+        // Find original payment
+        // We assume the order has a payment record linked via order_id or we check the payments table
+        $originalPayment = \App\Models\Payment::where('order_id', $order->id)
+            ->where('payment_status', 'paid')
+            ->where('payment_for', 'order') // Ensure we get the main order payment
+            ->first();
+
+        if (!$originalPayment) {
+            return back()->with('error', 'Original successful payment not found for this order.');
+        }
+
+        // Calculate refund amount
+        // For now, full refund of the item price * quantity? Or total?
+        // Logic: Return request usually implies refunding the item's cost.
+        // However, if the order has multiple items, we might only want to refund partial.
+        // But the current system treats "Order" as one big item optionally?  
+        // Looking at Order model, it has 'item_name', 'quantity', 'total_amount'.
+        // It seems 1 Order = 1 Line Item roughly in this simple schema?
+        // Let's assume we refund the Order's `total_amount` or `amount_paid`.
+        
+        $refundAmount = $originalPayment->amount_paid; // Default to full amount paid for that order transaction
+
+        // Check if already refunded
+        $existingRefund = \App\Models\Payment::where('order_id', $order->id)
+            ->where('payment_for', 'refund')
+            ->exists();
+        
+        if ($existingRefund) {
+            return back()->with('error', 'Refund already processed for this order.');
+        }
+
+        try {
+            $razorpayService = new \App\Services\RazorpayService();
+            $refundData = $razorpayService->refund($originalPayment->payment_id, $refundAmount, [
+                'return_request_id' => $returnRequest->id,
+                'reason' => 'Return Request #' . $returnRequest->id
+            ]);
+
+            // Create Refund Record in Payments Table
+            \App\Models\Payment::create([
+                'order_id' => $order->id,
+                'payment_id' => $refundData['id'] ?? ('ref_' . time()), // Refund ID from Razorpay
+                'total_amount' => -1 * $refundAmount, // Negative to show deduction? Or just positive with type refund? User said "payment_for" column handles distiction.
+                // Let's keep amounts positive but distinction via payment_for, OR negative for financial purity.
+                // Usually refunds are outgoing, so negative flow. But keeping it positive and using type is easier for "Amount: ₹500 (Refund)".
+                // Let's stick to positive amount but 'payment_for' = 'refund'.
+                'total_amount' => $refundAmount, 
+                'tax_amount' => 0,
+                'shipping_cost' => 0,
+                'amount_paid' => $refundAmount, // The amount refunded
+                'payment_status' => 'refunded',
+                'payment_method' => $originalPayment->payment_method,
+                'payment_type' => 'online', // It's an online refund
+                'payment_details' => $refundData,
+                'payment_for' => 'refund',
+            ]);
+
+            // Update Return Request Status
+            $returnRequest->update([
+                // 'status' => 'completed', // Or keep current status and just mark refunded?
+                // Let's mark as completed if funds returned.
+                'status' => 'completed',
+                'admin_notes' => $returnRequest->admin_notes . "\nRefund Processed: ₹{$refundAmount}"
+            ]);
+
+            // Update Order Payment Status
+            $order->update(['payment_status' => 'refunded']);
+
+            AuditLogger::record('payment_refund', $returnRequest, [
+                'amount' => $refundAmount,
+                'payment_id' => $originalPayment->payment_id,
+                'refund_id' => $refundData['id'] ?? null
+            ], 'Processed refund via Razorpay');
+
+            return back()->with('status', 'Refund processed successfully.');
+
+        } catch (\Exception $e) {
+            return back()->with('error', 'Refund failed: ' . $e->getMessage());
+        }
+    }
 }

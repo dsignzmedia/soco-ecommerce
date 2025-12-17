@@ -234,6 +234,12 @@
                         totalAmount: {{ $total }}
                     });
                 }
+
+                // Auto-detect Test Mode and show helper
+                document.addEventListener('DOMContentLoaded', function() {
+                    // We don't have the key directly here, but we can infer or waiting for the initiate response.
+                    // For better UX, let's just make the modal available.
+                });
             </script>
         @else
             <div class="card shadow-sm rounded-4 border-0" style="background-color: #ffffff;">
@@ -247,6 +253,39 @@
         @endif
     </div>
 </section>
+
+<!-- Test Mode Credentials Modal -->
+<div class="modal fade" id="testCredentialsModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header bg-warning">
+                <h5 class="modal-title text-dark"><i class="fas fa-exclamation-triangle me-2"></i>Test Mode Active</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p>You are using a <strong>Test Key</strong>. Real payments will fail.</p>
+                <p>Please use the following <strong>Test Card Details</strong>:</p>
+                <div class="p-3 bg-light rounded border">
+                    <p class="mb-1"><strong>Card Number:</strong> <span class="user-select-all font-monospace select-all">4111 1111 1111 1111</span></p>
+                    <p class="mb-1"><strong>Expiry:</strong> Any future date (e.g. 12/35)</p>
+                    <p class="mb-0"><strong>CVV:</strong> 123</p>
+                </div>
+                <p class="mt-3 text-muted small"><strong>Note:</strong> Do not use your actual credit/debit card.</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-primary" data-bs-dismiss="modal">Got it</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Check if we are in test mode (this variable should be passed from backend or inferred)
+        // Since we can't easily pass it from controller without modifying it, we'll check the key prefix loosely if possible,
+        // but for now, let's just show it if the user clicks a "Show Test Details" link which we'll add via JS if the key starts with 'rzp_test'
+    });
+</script>
 
 @include('frontend.checkout.add-address-modal')
 

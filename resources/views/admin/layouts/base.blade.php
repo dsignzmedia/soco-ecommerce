@@ -458,6 +458,7 @@
                         ['label' => 'School Management', 'route' => 'master.admin.schools.index', 'active' => 'master.admin.schools.*', 'icon' => 'fas fa-school'],
                         ['label' => 'Orders', 'route' => 'master.admin.orders.index', 'active' => 'master.admin.orders.*', 'icon' => 'fas fa-shopping-bag'],
                         ['label' => 'Products & Catalog', 'route' => 'master.admin.catalog.index', 'active' => 'master.admin.catalog.*', 'icon' => 'fas fa-box-open'],
+                        ['label' => 'Payments', 'route' => 'master.admin.payments.index', 'active' => 'master.admin.payments.*', 'icon' => 'fas fa-credit-card'],
                         ['label' => 'Inventory', 'route' => 'master.admin.inventory.dashboard', 'active' => 'master.admin.inventory.*', 'icon' => 'fas fa-warehouse'],
                         ['label' => 'Returns & Exchanges', 'route' => 'master.admin.returns-exchange.index', 'active' => 'master.admin.returns-exchange.*', 'icon' => 'fas fa-exchange-alt'],
                         ['label' => 'Shipping', 'route' => 'master.admin.shipping.edit', 'active' => 'master.admin.shipping.*', 'icon' => 'fas fa-shipping-fast'],

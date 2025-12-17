@@ -17,7 +17,7 @@
 @endpush
 
 @section('content')
-    <section class="card">
+    <section class="card" style="margin-bottom:12px;">
         <div class="kpi-grid">
             <div class="kpi">
                 <span>Total stock</span>
@@ -38,7 +38,7 @@
         </div>
     </section>
 
-    <section class="card">
+    <section class="card" style="margin-bottom:12px;">
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
             <h4 style="margin:0;color:#111827;">Stock aging report</h4>
             <a href="{{ route('master.admin.inventory.reports') }}" style="color:#490d59;font-weight:600;">Open full reports →</a>
@@ -58,7 +58,7 @@
                         <td>{{ $row['product'] }}</td>
                         <td>{{ $row['category'] ?? '—' }}</td>
                         <td>{{ $row['stock'] }}</td>
-                        <td>{{ $row['days'] }} days</td>
+                        <td>{{ number_format($row['days'], 0) }} days</td>
                     </tr>
                 @empty
                     <tr><td colspan="4">No products yet.</td></tr>

@@ -215,6 +215,14 @@
                                             <button type="submit" name="action" value="restock" class="btn-action-sm btn-approve" title="Mark Received & Restock">Restock</button>
                                             <button type="submit" name="action" value="discard" class="btn-action-sm btn-deny" title="Mark Received & Discard">Discard</button>
                                         </form>
+                                        
+                                        <!-- Refund Button -->
+                                        <form method="POST" action="{{ route('master.admin.returns-exchange.refund', $req) }}" onsubmit="return confirm('Are you sure you want to process a refund for this request? This will initiate a Razorpay refund.');">
+                                            @csrf
+                                            <button type="submit" class="btn-action-sm" style="background:#e0f2fe; color:#0284c7; border:none;" title="Initiate Refund">
+                                                <i class="fas fa-undo-alt" style="margin-right:4px;"></i> Refund
+                                            </button>
+                                        </form>
                                     @endif
 
                                     @if($req->type === 'exchange')

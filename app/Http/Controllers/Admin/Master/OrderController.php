@@ -99,8 +99,35 @@ class OrderController extends Controller
 
     public function invoiceDownload(Order $order)
     {
-        $order->load('school');
-        $pdf = Pdf::loadView('admin.orders.invoice-pdf', compact('order'));
-        return $pdf->download($order->order_number . '-invoice.pdf');
+        try {
+            $order->load('school');
+            
+            // Bypass container resolution and instantiate directly
+            // We check for the core Dompdf class first (cleanest), then the wrapper
+            if (class_exists(\Dompdf\Dompdf::class)) {
+                 $dompdf = new \Dompdf\Dompdf();
+                 $options = new \Dompdf\Options();
+                 $options->set('isRemoteEnabled', true);
+                 $options->set('defaultFont', 'sans-serif');
+                 $dompdf->setOptions($options);
+                 
+                 // Render view to HTML
+                 $html = view('admin.orders.invoice-pdf', compact('order'))->render();
+                 $dompdf->loadHtml($html);
+                 $dompdf->setPaper('A4', 'portrait');
+                 $dompdf->render();
+                 
+                 return response()->streamDownload(function() use ($dompdf) {
+                     echo $dompdf->output();
+                 }, $order->order_number . '-invoice.pdf');
+            } elseif (class_exists(\Barryvdh\DomPDF\Facade\Pdf::class)) {
+                 $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('admin.orders.invoice-pdf', compact('order'));
+                 return $pdf->download($order->order_number . '-invoice.pdf');
+            } else {
+                 throw new \Exception("DomPDF classes not found. Please verify vendor libraries are uploaded.");
+            }
+        } catch (\Throwable $e) {
+            return response("<h1>PDF Generation Failed</h1><pre>" . $e->getMessage() . "\n\n" . $e->getTraceAsString() . "</pre>");
+        }
     }
 }
