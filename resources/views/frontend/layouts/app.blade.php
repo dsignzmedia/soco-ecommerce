@@ -220,7 +220,7 @@
                         <h3 class="h4 mb-0 text-white"><img src="{{ asset('assets/img/icon/check-list.svg') }}"
                                 alt="icon" class="me-2">Shop Your School’s Uniform & Essentials in one place.</h3>
                     </div>
-                    <div class="col-lg-auto"><a href="{{ route('frontend.get-started') }}" class="vs-btn">Shop Now</a></div>
+                    <div class="col-lg-auto"><a href="{{ route('login') }}" class="vs-btn">Shop Now</a></div>
                 </div>
             </div>
         </div>

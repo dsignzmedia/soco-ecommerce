@@ -111,6 +111,18 @@
                     <option value="{{ $category }}" @selected(($filters['category'] ?? '') === $category)>{{ $category }}</option>
                 @endforeach
             </select>
+            <select name="product_type">
+                <option value="">All Product Types</option>
+                @foreach($productTypes as $type)
+                     @php
+                        // Format cleaner labels if possible
+                        $label = $type;
+                        if($type === 'merchandised') $label = 'Merchandise';
+                        if($type === 'b2s') $label = 'Back To School';
+                    @endphp
+                    <option value="{{ $type }}" @selected(($filters['product_type'] ?? '') === $type)>{{ ucfirst($label) }}</option>
+                @endforeach
+            </select>
             <select name="order_status">
                 <option value="">Order Status</option>
                 @foreach(['processing','packed','shipped','delivered','returned','cancelled'] as $status)

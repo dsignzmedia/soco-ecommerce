@@ -53,6 +53,22 @@
                                     <button type="submit" style="background: none; border: none; padding: 12px 0; font-size: 16px; font-weight: 700; color: var(--title-color); width: 100%; text-align: left;">Logout</button>
                                 </form>
                             </li>
+                        @elseif(Auth::user()->isBackToSchoolAdmin())
+                             <li><a href="{{ route('admin.back_to_school.dashboard') }}">Dashboard</a></li>
+                             <li>
+                                <form action="{{ route('store.admin.logout') }}" method="POST">
+                                    @csrf
+                                    <button type="submit" style="background: none; border: none; padding: 12px 0; font-size: 16px; font-weight: 700; color: var(--title-color); width: 100%; text-align: left;">Logout</button>
+                                </form>
+                            </li>
+                        @elseif(Auth::user()->isMerchandiseAdmin())
+                             <li><a href="{{ route('admin.merchandise.dashboard') }}">Dashboard</a></li>
+                             <li>
+                                <form action="{{ route('store.admin.logout') }}" method="POST">
+                                    @csrf
+                                    <button type="submit" style="background: none; border: none; padding: 12px 0; font-size: 16px; font-weight: 700; color: var(--title-color); width: 100%; text-align: left;">Logout</button>
+                                </form>
+                            </li>
                         @elseif(Auth::user()->isSchool())
                              <li><a href="{{ route('frontend.school.dashboard') }}">Dashboard</a></li>
                              <li>
@@ -197,6 +213,24 @@
                                             <li><hr class="dropdown-divider"></li>
                                             <li>
                                                 <form action="{{ route('inventory.admin.logout') }}" method="POST">
+                                                    @csrf
+                                                    <button type="submit" class="dropdown-item text-danger"><i class="fas fa-sign-out-alt me-2"></i> Logout</button>
+                                                </form>
+                                            </li>
+                                        @elseif(Auth::user()->isBackToSchoolAdmin())
+                                            <li><a class="dropdown-item" href="{{ route('admin.back_to_school.dashboard') }}"><i class="fas fa-tachometer-alt me-2"></i> Dashboard</a></li>
+                                            <li><hr class="dropdown-divider"></li>
+                                            <li>
+                                                <form action="{{ route('store.admin.logout') }}" method="POST">
+                                                    @csrf
+                                                    <button type="submit" class="dropdown-item text-danger"><i class="fas fa-sign-out-alt me-2"></i> Logout</button>
+                                                </form>
+                                            </li>
+                                        @elseif(Auth::user()->isMerchandiseAdmin())
+                                            <li><a class="dropdown-item" href="{{ route('admin.merchandise.dashboard') }}"><i class="fas fa-tachometer-alt me-2"></i> Dashboard</a></li>
+                                            <li><hr class="dropdown-divider"></li>
+                                            <li>
+                                                <form action="{{ route('store.admin.logout') }}" method="POST">
                                                     @csrf
                                                     <button type="submit" class="dropdown-item text-danger"><i class="fas fa-sign-out-alt me-2"></i> Logout</button>
                                                 </form>

@@ -23,6 +23,7 @@ class ProductMapping extends Model
         'availability_label',
         'price_regular',
         'price_sale',
+        'delivery_price',
         'price_tax',
         'tax_profile',
         'product_weight',

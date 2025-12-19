@@ -174,17 +174,30 @@
                 @endif
             </div>
         @else
-            <!-- Empty State -->
+            <!-- Empty State / Guest Dashboard View -->
             <div class="row">
                 <div class="col-12">
                     <div class="card shadow-sm rounded-4 border-0" style="background-color: #ffffff;">
                         <div class="card-body text-center py-5">
-                            <i class="fas fa-user-circle fa-5x text-muted mb-3"></i>
-                            <h4 class="mb-3">Welcome to Your Dashboard</h4>
-                            <p class="text-muted mb-4">Get started by creating a student profile to begin shopping for uniforms.</p>
-                            <button type="button" class="vs-btn" style="background: linear-gradient(135deg, #8c4fcf, #490D59); border: none; border-radius: 30px;" data-bs-toggle="modal" data-bs-target="#addStudentModal" onclick="prepareAddStudentModal()">
-                                <i class="fas fa-plus me-2"></i> Add Student
-                            </button>
+                            <div class="mb-4">
+                                <div style="width: 80px; height: 80px; background-color: #f3e5f5; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; margin-bottom: 20px;">
+                                    <i class="fas fa-user-circle" style="font-size: 40px; color: #490D59;"></i>
+                                </div>
+                                <h3 class="mb-2" style="font-weight: 700; color: #333;">Welcome!</h3>
+                                <p class="text-muted" style="max-width: 500px; margin: 0 auto;">
+                                    You are currently exploring as a Guest. To unlock the full experience and buy school uniforms, please add a student profile.
+                                </p>
+                            </div>
+
+                            <div class="d-flex justify-content-center gap-3 flex-wrap">
+                                <button type="button" class="vs-btn" style="background: linear-gradient(135deg, #8c4fcf, #490D59); border: none; border-radius: 30px; padding: 12px 30px;" data-bs-toggle="modal" data-bs-target="#addStudentModal" onclick="prepareAddStudentModal()">
+                                    <i class="fas fa-plus me-2"></i> Add Student Profile
+                                </button>
+                                
+                                <a href="{{ route('frontend.shop.index') }}" class="vs-btn style-outline btn-guest-continue" style="border: 2px solid #490D59; color: #490D59; background: transparent; border-radius: 30px; padding: 12px 30px;">
+                                    <i class="fas fa-shopping-bag me-2"></i> Continue Shopping
+                                </a>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -194,6 +207,112 @@
         </div>
     </div>
 </section>
+
+<!-- Welcome / Decision Modal (Database Driven) -->
+<div class="modal fade" id="welcomeModal" tabindex="-1" aria-labelledby="welcomeModalLabel" aria-hidden="true" data-bs-backdrop="static" data-bs-keyboard="false">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content" style="border-radius: 16px; border: none; box-shadow: 0 10px 30px rgba(0,0,0,0.1);">
+            <div class="modal-body text-center p-5">
+                <div class="mb-4">
+                    <div style="width: 80px; height: 80px; background-color: #f3e5f5; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; margin-bottom: 20px;">
+                        <i class="fas fa-store" style="font-size: 32px; color: #490D59;"></i>
+                    </div>
+                    <h3 class="mb-2" style="font-weight: 700; color: #333;">Welcome!</h3>
+                    <p class="text-muted">How would you like to proceed today?</p>
+                </div>
+
+                <div class="d-grid gap-3">
+                    <button type="button" id="btnContinueParent" class="btn p-3" style="background: linear-gradient(135deg, #8c4fcf, #490D59); color: white; border: none; border-radius: 12px; font-weight: 600; text-align: left; display: flex; align-items: center;">
+                        <div style="width: 40px; height: 40px; background: rgba(255,255,255,0.2); border-radius: 8px; display: flex; align-items: center; justify-content: center; margin-right: 15px;">
+                            <i class="fas fa-user-graduate" style="font-size: 20px;"></i>
+                        </div>
+                        <div>
+                            <div style="font-size: 16px;">Continue as Parent</div>
+                            <div style="font-size: 12px; opacity: 0.9; font-weight: 400;">Add student details to buy uniforms</div>
+                        </div>
+                        <i class="fas fa-chevron-right ms-auto"></i>
+                    </button>
+
+                    <form action="{{ route('auth.set-guest-mode') }}" method="POST" style="margin:0; width:100%;">
+                        @csrf
+                        <button type="submit" class="btn p-3 w-100" style="background-color: #fff; border: 2px solid #e0e0e0; color: #333; border-radius: 12px; font-weight: 600; text-align: left; display: flex; align-items: center; transition: all 0.2s;">
+                            <div style="width: 40px; height: 40px; background: #f5f5f5; border-radius: 8px; display: flex; align-items: center; justify-content: center; margin-right: 15px;">
+                                <i class="fas fa-shopping-bag" style="font-size: 20px; color: #666;"></i>
+                            </div>
+                            <div>
+                                <div style="font-size: 16px;">Shop as Guest</div>
+                                <div style="font-size: 12px; color: #666; font-weight: 400;">Buy stationary, water bottles & more</div>
+                            </div>
+                            <i class="fas fa-chevron-right ms-auto" style="color: #999;"></i>
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Debugging Variables
+        const hasProfiles = @json(isset($profiles) && count($profiles) > 0);
+        const isWelcomeSeen = @json((bool) Auth::user()->is_welcome_modal_seen);
+        const sessionGuestMode = @json(session('guest_mode_active', false));
+
+        console.log('Welcome Modal Debug:', {
+            hasProfiles: hasProfiles,
+            isWelcomeSeen: isWelcomeSeen,
+            sessionGuestMode: sessionGuestMode
+        });
+
+        var welcomeModalEl = document.getElementById('welcomeModal');
+        if (welcomeModalEl) {
+            var welcomeModal = new bootstrap.Modal(welcomeModalEl, {
+                backdrop: 'static',
+                keyboard: false
+            });
+
+        // SHOW CONDITION: No profiles AND Not seen in DB
+        // We removed session check because DB flag is the new robust source of truth.
+        if (!hasProfiles && !isWelcomeSeen) {
+            console.log('Showing Welcome Modal (Condition Met)');
+            try {
+                welcomeModal.show();
+            } catch (e) {
+                console.error('Bootstrap Modal Show Action Failed:', e);
+            }
+        } else {
+            console.log('Welcome Modal condition not met. hasProfiles:', hasProfiles, 'isWelcomeSeen:', isWelcomeSeen);
+        }
+
+            // Handle 'Continue as Parent' click
+            const btnContinue = document.getElementById('btnContinueParent');
+            if (btnContinue) {
+                btnContinue.addEventListener('click', function() {
+                    // 1. Mark as seen in DB via AJAX
+                    fetch('{{ route("auth.mark-welcome-seen") }}', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                        }
+                    }).then(() => {
+                        // 2. Hide Welcome Modal
+                        welcomeModal.hide();
+                        // 3. Show Add Student Modal
+                        if (typeof prepareAddStudentModal === 'function') {
+                            prepareAddStudentModal();
+                            var addStudentModal = new bootstrap.Modal(document.getElementById('addStudentModal'));
+                            addStudentModal.show();
+                        }
+                    });
+                });
+            }
+        }
+    });
+</script>
+
+
 
 <!-- Add Student Modal -->
 <div class="modal fade" id="addStudentModal" tabindex="-1" aria-labelledby="addStudentModalLabel" aria-hidden="true" style="z-index: 9999;">
@@ -277,6 +396,8 @@
 </div>
 
 <script>
+</script>
+<script>
 document.addEventListener('DOMContentLoaded', function() {
     const gradeButtons = document.querySelectorAll('.grade-btn-modal');
     const genderButtons = document.querySelectorAll('.gender-btn-modal');
@@ -286,7 +407,17 @@ document.addEventListener('DOMContentLoaded', function() {
     const profileIdField = document.getElementById('modalProfileId');
     const modalTitle = document.getElementById('addStudentModalLabel');
     const modalSubmitBtn = document.querySelector('#addStudentForm button[type="submit"]');
-    const addStudentModal = document.getElementById('addStudentModal');
+    const addStudentModalEl = document.getElementById('addStudentModal');
+    const welcomeModalEl = document.getElementById('welcomeModal');
+    
+    // Check if profiles exist
+    const hasProfiles = @json(isset($profiles) && count($profiles) > 0);
+    const sessionGuestMode = @json(session('guest_mode_active', false));
+    const userId = "{{ Auth::id() }}";
+    const storageKey = 'dashboard_welcome_seen_' + userId;
+    
+    // Welcome modal JS removed as per user request
+
 
     const schools = @json($schools);
 
@@ -366,40 +497,18 @@ document.addEventListener('DOMContentLoaded', function() {
 
     gradeButtons.forEach(button => {
         button.addEventListener('click', function() {
-            document.getElementById('modalGradeValue').value = this.dataset.value;
+            const select = document.getElementById('modalGrade');
+            if(select) select.value = this.dataset.value;
             setSelection(gradeButtons, this.dataset.value);
         });
-    });
-
-
-
-    if (modalSchoolInput) {
-        modalSchoolInput.addEventListener('input', (e) => {
-            renderModalSuggestions(e.target.value);
-        });
-    }
-
-    if (modalSuggestionBox) {
-        modalSuggestionBox.addEventListener('click', (e) => {
-            const item = e.target.closest('.suggestion-item-modal');
-            if (item) {
-                modalSchoolInput.value = item.dataset.value;
-                modalSuggestionBox.style.display = 'none';
-                modalSuggestionBox.innerHTML = '';
-            }
-        });
-    }
-
-    document.addEventListener('click', (e) => {
-        if (!e.target.closest('.autocomplete-wrapper-modal') && modalSuggestionBox) {
-            modalSuggestionBox.style.display = 'none';
-        }
     });
 
     function resetStudentModal() {
         if (!addStudentForm) return;
         addStudentForm.reset();
-        document.getElementById('modalGrade').value = '';
+        const gradeSelect = document.getElementById('modalGrade');
+        if(gradeSelect) gradeSelect.value = '';
+        
         // Reset radio buttons
         const genderRadios = document.querySelectorAll('input[name="gender"]');
         genderRadios.forEach(radio => radio.checked = false);
@@ -415,6 +524,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
     window.prepareAddStudentModal = function() {
         resetStudentModal();
+        // Record choice when opening Add Student modal from Welcome modal logic REMOVED
     };
 
     if (addStudentForm) {
@@ -469,7 +579,7 @@ document.addEventListener('DOMContentLoaded', function() {
             })
             .then(data => {
                 if (data.success) {
-                    const modalInstance = bootstrap.Modal.getInstance(addStudentModal);
+                    const modalInstance = bootstrap.Modal.getInstance(addStudentModalEl);
                     if (modalInstance) {
                         modalInstance.hide();
                     }
@@ -515,21 +625,22 @@ document.addEventListener('DOMContentLoaded', function() {
         }
         setSelection(gradeButtons, profile.grade || null);
 
-        const modalInstance = bootstrap.Modal.getOrCreateInstance(addStudentModal);
+        const modalInstance = bootstrap.Modal.getOrCreateInstance(addStudentModalEl);
         modalInstance.show();
     };
 
-    if (addStudentModal) {
-        addStudentModal.addEventListener('show.bs.modal', function () {
+    if (addStudentModalEl) {
+        addStudentModalEl.addEventListener('show.bs.modal', function () {
             document.body.classList.add('modal-open');
             if (!profileIdField || profileIdField.value === '') {
                 resetStudentModal();
             }
         });
 
-        addStudentModal.addEventListener('hidden.bs.modal', function () {
+        addStudentModalEl.addEventListener('hidden.bs.modal', function () {
             document.body.classList.remove('modal-open');
             resetStudentModal();
+            // Re-open logic REMOVED as per user request
         });
     }
 });
@@ -1142,5 +1253,10 @@ document.addEventListener('DOMContentLoaded', function() {
             font-size: 12px;
         }
     }
+    .btn-guest-continue:hover {
+        color: #ffffff !important;
+        background-color: #490D59 !important;
+    }
 </style>
 @endsection
+ 

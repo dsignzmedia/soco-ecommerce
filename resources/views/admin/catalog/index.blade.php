@@ -150,7 +150,7 @@
                         </div>
                         <div style="display: flex; justify-content: space-between;">
                             <span>School:</span>
-                            <span style="text-align: right; max-width: 60%; color: #344054;">{{ $mapping->school->name }}</span>
+                            <span style="text-align: right; max-width: 60%; color: #344054;">{{ optional($mapping->school)->name ?? 'N/A' }}</span>
                         </div>
                         <div style="display: flex; justify-content: space-between;">
                             <span>Stock:</span>

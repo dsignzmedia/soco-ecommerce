@@ -90,7 +90,7 @@ Shop by Category Area
         <div class="category_box_row">
 
     <!-- 1. Uniform -->
-    <a href="{{ route('login') }}" class="simple-cat">
+    <a href="{{ route('frontend.shop.index', ['category' => 'Uniform']) }}" class="simple-cat">
         <div class="simple-box">
             <img src="{{ asset('assets/img/catagories/SchoolUniform.jpeg') }}" alt="Uniform">
         </div>
@@ -98,7 +98,7 @@ Shop by Category Area
     </a>
 
     <!-- 2. Shoes -->
-    <a href="{{ route('login') }}" class="simple-cat">
+    <a href="{{ route('frontend.shop.index', ['category' => 'Shoes']) }}" class="simple-cat">
         <div class="simple-box">
             <img src="{{ asset('assets/img/catagories/Shoe_school.jpg') }}" alt="Shoes">
         </div>
@@ -106,7 +106,7 @@ Shop by Category Area
     </a>
 
     <!-- 3. Bags -->
-    <a href="{{ route('login') }}" class="simple-cat">
+    <a href="{{ route('frontend.shop.index', ['category' => 'Bags']) }}" class="simple-cat">
         <div class="simple-box">
             <img src="{{ asset('assets/img/catagories/SchoolBag_2.jpg') }}" alt="Bags">
         </div>
@@ -114,7 +114,7 @@ Shop by Category Area
     </a>
 
     <!-- 4. Stationery -->
-    <a href="{{ route('login') }}" class="simple-cat">
+    <a href="{{ route('frontend.shop.index', ['category' => 'Stationery']) }}" class="simple-cat">
         <div class="simple-box">
             <img src="{{ asset('assets/img/catagories/Stationery.jpg') }}" alt="Stationery">
         </div>
@@ -122,7 +122,7 @@ Shop by Category Area
     </a>
 
     <!-- 5. Food Container -->
-    <a href="{{ route('login') }}" class="simple-cat">
+    <a href="{{ route('frontend.shop.index', ['category' => 'Food Container']) }}" class="simple-cat">
         <div class="simple-box">
             <img src="{{ asset('assets/img/catagories/Box_1.jpeg') }}" alt="Food Container">
         </div>
@@ -130,7 +130,7 @@ Shop by Category Area
     </a>
 
     <!-- 6. Drinkware -->
-    <a href="{{ route('login') }}" class="simple-cat">
+    <a href="{{ route('frontend.shop.index', ['category' => 'Drinkware']) }}" class="simple-cat">
         <div class="simple-box">
             <img src="{{ asset('assets/img/catagories/Drinkware.jpg') }}" alt="Drinkware">
         </div>
@@ -395,6 +395,30 @@ Shop by Category Area
     object-fit: cover; /* Ensure image covers the area without distortion */
 }
 </style>
+
+<!--==============================
+Featured Products Area
+==============================-->
+@if(isset($publicProducts) && $publicProducts->count() > 0)
+<section style="background-color: #ffffff;">
+    <div class="category-marquee-wrapper">
+        <div class="category_box_row">
+            @foreach($publicProducts as $product)
+            <a href="{{ route('frontend.shop.detail', $product->id) }}" class="simple-cat">
+                <div class="simple-box">
+                    @if($product->featured_image)
+                         <img src="{{ Str::startsWith($product->featured_image, 'http') ? $product->featured_image : asset('storage/' . $product->featured_image) }}" alt="{{ $product->product_name }}">
+                    @else
+                         <img src="{{ asset('assets/img/logo.svg') }}" alt="Placeholder" style="opacity: 0.5;">
+                    @endif
+                </div>
+                <p class="sec-text simple-title">{{ $product->product_name }}</p>
+            </a>
+            @endforeach
+        </div>
+    </div>
+</section>
+@endif
 
 <!--==============================
 About Area

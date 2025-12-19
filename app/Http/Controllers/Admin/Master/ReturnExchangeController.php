@@ -46,6 +46,10 @@ class ReturnExchangeController extends Controller
             $product = ProductMapping::where('product_name', $returnRequest->order->item_name)
                 ->where('school_id', $returnRequest->order->school_id)
                 ->first();
+
+            if (!$product) {
+                 $product = ProductMapping::where('product_name', $returnRequest->order->item_name)->first();
+            }
                 
             if ($product) {
                 // Assuming sizes are stored in ProductVariant model linked to ProductMapping
@@ -167,6 +171,18 @@ class ReturnExchangeController extends Controller
         $exchangeNumber = $this->generateExchangeNumber($order);
 
         // Create a new order to represent the exchange shipment
+        // Create a new order to represent the exchange shipment
+        $product = ProductMapping::where('product_name', $data['exchange_product_name'])
+            ->where('school_id', $order->school_id)
+            ->first();
+
+        // Determine price - use current product price if available, else original order price
+        // Policy: Exchanges usually honor original value, but if re-governing, maybe use current price?
+        // Let's stick to original price to avoid payment discrepancies, as it's an even exchange.
+        // Or if user wants "price governed", we might need to charge difference? 
+        // For now, assuming direct swap (even exchange).
+        $price = $order->total_amount; 
+
         $newOrder = Order::create([
             'order_number' => $exchangeNumber,
             'school_id' => $order->school_id,
@@ -181,11 +197,11 @@ class ReturnExchangeController extends Controller
             'customer_address' => $order->customer_address,
             'customer_phone' => $order->customer_phone,
             'customer_email' => $order->customer_email,
-            'total_amount' => $order->total_amount,
+            'total_amount' => $price,
             'tax_amount' => $order->tax_amount,
-            'shipping_cost' => $order->shipping_cost,
-            'payment_status' => 'unpaid',
-            'order_status' => 'pending',
+            'shipping_cost' => 0, // Free shipping for exchange usually? Or copy original? Let's say 0 for now as it's admin generated.
+            'payment_status' => 'paid', // Mark as paid since it's an exchange
+            'order_status' => 'processing', // Ready to process
             'return_exchange_status' => 'exchange_created',
             'notes' => 'Exchange for order '.$order->order_number,
         ]);
@@ -199,20 +215,30 @@ class ReturnExchangeController extends Controller
             'admin_notes' => $data['admin_notes'] ?? null,
         ]);
 
-        // Decrement inventory for the exchange shipment if possible
-        $product = ProductMapping::where('product_name', $data['exchange_product_name'])
-            ->where('school_id', $order->school_id)
-            ->first();
+        // Decrement inventory for the SPECIFIC VARIANT
         if ($product) {
-            $before = $product->inventory_stock;
-            $after = $before - (int)($order->quantity ?? 1);
-            $product->update(['inventory_stock' => $after]);
+            $variant = $product->variants()->where('option', $data['exchange_size'])->first();
+            
+            if ($variant) {
+                // Deduct from variant
+                $before = $variant->stock;
+                $after = $before - (int)($order->quantity ?? 1);
+                $variant->update(['stock' => $after]);
+
+                // Sync total stock
+                $product->updateTotalStock();
+            } else {
+                // Fallback to main stock if no variant found (shouldn't happen if selected from dropdown)
+                $before = $product->inventory_stock;
+                $after = $before - (int)($order->quantity ?? 1);
+                $product->update(['inventory_stock' => $after]);
+            }
 
             InventoryAdjustment::create([
                 'product_mapping_id' => $product->id,
                 'quantity_change' => - (int)($order->quantity ?? 1),
                 'reason' => 'exchange_replace',
-                'comment' => 'Replacement sent for exchange '.$exchangeNumber,
+                'comment' => 'Replacement sent for exchange '.$exchangeNumber . ($variant ? " (Variant: {$variant->option})" : ''),
                 'stock_before' => $before,
                 'stock_after' => $after,
             ]);
@@ -251,15 +277,18 @@ class ReturnExchangeController extends Controller
         }
 
         // Find original payment
-        // We assume the order has a payment record linked via order_id or we check the payments table
+        // Relaxed query: Try to find any successful payment for this order if 'payment_for' is not strictly 'order'
         $originalPayment = \App\Models\Payment::where('order_id', $order->id)
             ->where('payment_status', 'paid')
-            ->where('payment_for', 'order') // Ensure we get the main order payment
+            ->orderBy('id', 'desc') // Get the most recent valid payment
             ->first();
 
         if (!$originalPayment) {
+            \Illuminate\Support\Facades\Log::error("Refund Failed: No payment found for Order ID {$order->id}");
             return back()->with('error', 'Original successful payment not found for this order.');
         }
+
+        \Illuminate\Support\Facades\Log::info("Refund Initiated: Order ID {$order->id}, Payment ID {$originalPayment->payment_id}");
 
         // Calculate refund amount
         // For now, full refund of the item price * quantity? Or total?

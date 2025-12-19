@@ -67,13 +67,15 @@
                 </div>
             @endif
 
-            @if($returnRequest->status === 'approved' && $returnRequest->type === 'return')
-                <form method="POST" action="{{ route('master.admin.returns-exchange.receive', $returnRequest) }}" style="display:flex;gap:8px;align-items:center;">
-                    @csrf
-                    <input type="text" name="admin_notes" placeholder="Receiving notes" style="padding:8px;border:1px solid #e5e7eb;border-radius:8px;">
-                    <button type="submit" name="action" value="restock" style="border:none;border-radius:8px;padding:8px 12px;background:#dcfce7;color:#065f46;">Mark Received - Restock</button>
-                    <button type="submit" name="action" value="discard" style="border:none;border-radius:8px;padding:8px 12px;background:#fee2e2;color:#991b1b;">Mark Received - Discard</button>
-                </form>
+            @if(in_array($returnRequest->status, ['approved', 'received_restocked', 'received_discarded']) && $returnRequest->type === 'return')
+                @if($returnRequest->status === 'approved')
+                    <form method="POST" action="{{ route('master.admin.returns-exchange.receive', $returnRequest) }}" style="display:flex;gap:8px;align-items:center;">
+                        @csrf
+                        <input type="text" name="admin_notes" placeholder="Receiving notes" style="padding:8px;border:1px solid #e5e7eb;border-radius:8px;">
+                        <button type="submit" name="action" value="restock" style="border:none;border-radius:8px;padding:8px 12px;background:#dcfce7;color:#065f46;">Mark Received - Restock</button>
+                        <button type="submit" name="action" value="discard" style="border:none;border-radius:8px;padding:8px 12px;background:#fee2e2;color:#991b1b;">Mark Received - Discard</button>
+                    </form>
+                @endif
 
                 <!-- Refund Button -->
                 <form method="POST" action="{{ route('master.admin.returns-exchange.refund', $returnRequest) }}" onsubmit="return confirm('Are you sure you want to process a refund for this request? This will initiate a Razorpay refund.');">

@@ -127,7 +127,6 @@
                             </div>
                             <button type="submit" class="vs-btn" form="addToCartForm">Add to Cart</button>
                             
-
                         </div>
 
                     <div class="product-getway">
@@ -154,51 +153,13 @@
             </div>
         </div>
 
-
-
         <!-- Related Products Section -->
         @php
             $relatedProductsList = $relatedProducts ?? ($allProducts ?? []);
-            // If no products available, create sample products for display
-            if(count($relatedProductsList) == 0) {
-                $productImages = [
-                    asset('assets/img/product_images/Image1.png'),
-                    asset('assets/img/product_images/Image2.png'),
-                    asset('assets/img/product_images/Image3.png'),
-                    asset('assets/img/product_images/Image4.png'),
-                    asset('assets/img/product_images/Image5.png'),
-                    asset('assets/img/product_images/Image6.png'),
-                    asset('assets/img/product_images/Image7.png'),
-                    asset('assets/img/product_images/Image8.png'),
-                ];
-                $relatedProductsList = [
-                    ['id' => 1, 'name' => 'The Bubblegum Toy', 'price' => 560, 'original_price' => 700, 'image' => $productImages[0]],
-                    ['id' => 2, 'name' => 'Table Harmoni Play', 'price' => 480, 'original_price' => null, 'image' => $productImages[1]],
-                    ['id' => 3, 'name' => 'Tommy Speak Head', 'price' => 620, 'original_price' => 750, 'image' => $productImages[2]],
-                    ['id' => 4, 'name' => 'Queen Radio Home', 'price' => 450, 'original_price' => null, 'image' => $productImages[3]],
-                ];
-            } else {
-                // Update existing related products to use product_images if they have old image paths
-                foreach($relatedProductsList as &$product) {
-                    if(isset($product['image']) && strpos($product['image'], 'product1-') !== false) {
-                        // Replace old product images with random product_images
-                        $productImages = [
-                            asset('assets/img/product_images/Image1.png'),
-                            asset('assets/img/product_images/Image2.png'),
-                            asset('assets/img/product_images/Image3.png'),
-                            asset('assets/img/product_images/Image4.png'),
-                            asset('assets/img/product_images/Image5.png'),
-                            asset('assets/img/product_images/Image6.png'),
-                            asset('assets/img/product_images/Image7.png'),
-                            asset('assets/img/product_images/Image8.png'),
-                        ];
-                        $product['image'] = $productImages[array_rand($productImages)];
-                    }
-                }
-                unset($product);
-            }
-            $relatedProductsList = array_slice($relatedProductsList, 0, 4); // Show max 4 products
+            $relatedProductsList = array_slice($relatedProductsList, 0, 4);
         @endphp
+
+        @if(count($relatedProductsList) > 0)
         <div class="row mt-5">
             <div class="col-12">
                 <h2>Related Products</h2>
@@ -215,7 +176,7 @@
                                             <img src="{{ asset('assets/img/product_images/Image1.png') }}" alt="{{ $relatedProduct['name'] }}" class="w-100">
                                         @endif
                                     </a>
-                            </div>
+                                </div>
                                 <div class="product-content">
                                     <span class="product-price">
                                         ₹{{ number_format($relatedProduct['price'] ?? 0) }}
@@ -228,9 +189,6 @@
                                             {{ $relatedProduct['name'] }}
                                         </a>
                                     </h3>
-                                    {{-- <div class="star-rating" role="img" aria-label="Rated 5.00 out of 5">
-                                        <span style="width:100%">Rated <strong class="rating">5.00</strong> out of 5</span>
-                                </div> --}}
                                     <div class="actions">
                                         <a href="{{ route('frontend.parent.product-detail', ['productId' => $relatedProduct['id'], 'profile_id' => $selectedProfile['id'] ?? '']) }}" class="vs-btn">
                                             <i class="far fa-shopping-cart"></i>Add to Cart
@@ -241,9 +199,10 @@
                             </div>
                         </div>
                     @endforeach
-                    </div>
                 </div>
             </div>
+        </div>
+        @endif
     </div>
 </section>
 
@@ -1158,7 +1117,6 @@
                 }
             });
         }
-    });
     });
 </script>
 @endsection

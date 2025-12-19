@@ -206,7 +206,7 @@ class AuthController extends Controller
                 'email' => $isEmail ? $contact : null, // Allow null email if phone
                 'phone' => $isEmail ? null : $contact,
                 'password' => bcrypt(str()->random(16)),
-                'role' => User::ROLE_PARENT,
+                'role' => User::ROLE_GUEST,
             ]);
         }
 
@@ -378,7 +378,7 @@ class AuthController extends Controller
                 'name' => $googleUser->getName() ?? $username,
                 'email' => $email,
                 'password' => bcrypt(str()->random(16)), // Random password
-                'role' => User::ROLE_PARENT, // Default role for new users
+                'role' => User::ROLE_GUEST, // Default role for new users
                 'email_verified_at' => now(),
             ]);
 
@@ -426,7 +426,7 @@ class AuthController extends Controller
                 'email' => $validated['email'],
                 'phone' => $validated['phone'] ?? null,
                 'password' => bcrypt($validated['password']),
-                'role' => User::ROLE_PARENT, // Default role for new users
+                'role' => User::ROLE_GUEST, // Default role for new users
             ]);
 
             Log::info('User created', $user->toArray());
@@ -1423,6 +1423,16 @@ class AuthController extends Controller
             'gender' => $validated['gender'],
         ]);
 
+        // Upgrade Guest to Parent upon adding first student
+        if ($user->role === User::ROLE_GUEST) {
+            $user->role = User::ROLE_PARENT;
+            $user->is_welcome_modal_seen = true; // Ensure logic holds
+            $user->save();
+        } else {
+             // Even if already a parent, if they add a student, they've definitely 'seen' it.
+             $user->update(['is_welcome_modal_seen' => true]);
+        }
+
         if ($request->expectsJson()) {
             return response()->json([
                 'success' => true,
@@ -1898,8 +1908,12 @@ class AuthController extends Controller
         $allProducts = [];
 
         if ($school) {
-            $dbProductsQuery = \App\Models\Admin\Master\ProductMapping::with('variants')->where('school_id', $school->id)
-                ->where('status', 'live'); // Assuming 'live' is the active status
+            $dbProductsQuery = \App\Models\Admin\Master\ProductMapping::with('variants')
+                ->where(function($q) use ($school) {
+                    $q->where('school_id', $school->id)
+                      ->orWhereNull('school_id');
+                })
+                ->where('status', 'live');
 
             // Filter by grade if available in profile
             if ($selectedProfile->grade) {
@@ -1968,9 +1982,17 @@ class AuthController extends Controller
 
                 // Handle media images if available
                 $images = [$image];
-                if ($dbProduct->media_images) {
-                    foreach ($dbProduct->media_images as $mediaImg) {
-                        $images[] = \Illuminate\Support\Str::startsWith($mediaImg, 'http') ? $mediaImg : asset('storage/' . $mediaImg);
+                $gallerySource = $dbProduct->media_gallery ?? $dbProduct->media_images;
+
+                if ($gallerySource && is_array($gallerySource)) {
+                    foreach ($gallerySource as $mediaImg) {
+                         if (is_array($mediaImg)) {
+                             // Handle potential double-nesting or bad data structure
+                             $mediaImg = $mediaImg[0] ?? null;
+                         }
+                         if (is_string($mediaImg) && !empty($mediaImg)) {
+                             $images[] = \Illuminate\Support\Str::startsWith($mediaImg, 'http') ? $mediaImg : asset('storage/' . $mediaImg);
+                         }
                     }
                 }
 
@@ -2048,10 +2070,19 @@ class AuthController extends Controller
             : asset('assets/img/product/product1-1.png');
 
         // Handle media images if available
+        // Handle media images if available
         $images = [$image];
-        if ($dbProduct->media_images) {
-            foreach ($dbProduct->media_images as $mediaImg) {
-                $images[] = \Illuminate\Support\Str::startsWith($mediaImg, 'http') ? $mediaImg : asset('storage/' . $mediaImg);
+        $gallerySource = $dbProduct->media_gallery ?? $dbProduct->media_images;
+
+        if ($gallerySource && is_array($gallerySource)) {
+            foreach ($gallerySource as $mediaImg) {
+                if (is_array($mediaImg)) {
+                     // Handle potential double-nesting
+                     $mediaImg = $mediaImg[0] ?? null;
+                }
+                if (is_string($mediaImg) && !empty($mediaImg)) {
+                    $images[] = \Illuminate\Support\Str::startsWith($mediaImg, 'http') ? $mediaImg : asset('storage/' . $mediaImg);
+                }
             }
         }
 
@@ -2079,7 +2110,49 @@ class AuthController extends Controller
             'variants' => $dbProduct->variants, // Pass full variants for stock checking if needed later
         ];
 
-    return view('frontend.store.product-detail', compact('selectedProfile', 'product'));
+        // Fetch related products
+        // Fetch related products
+        // 1. Try fetching by category
+        $relatedProductsQuery = \App\Models\Admin\Master\ProductMapping::where('id', '!=', $productId)
+            ->where('status', 'live');
+            
+        if (!empty($dbProduct->category)) {
+            $relatedProductsQuery->where('category', $dbProduct->category);
+        }
+        
+        $relatedProductsModels = $relatedProductsQuery->inRandomOrder()->take(4)->get();
+        
+        // 2. If we found fewer than 4, fill up with other random products
+        if ($relatedProductsModels->count() < 4) {
+            $fetchedIds = $relatedProductsModels->pluck('id')->toArray();
+            $fetchedIds[] = $productId; // Exclude current product too
+            
+            $limit = 4 - $relatedProductsModels->count();
+            
+            $otherProducts = \App\Models\Admin\Master\ProductMapping::whereNotIn('id', $fetchedIds)
+                ->where('status', 'live')
+                ->inRandomOrder()
+                ->take($limit)
+                ->get();
+                
+            $relatedProductsModels = $relatedProductsModels->merge($otherProducts);
+        }
+        
+        $relatedProducts = $relatedProductsModels->map(function($rp) {
+            $img = $rp->featured_image 
+                ? (\Illuminate\Support\Str::startsWith($rp->featured_image, 'http') ? $rp->featured_image : asset('storage/' . $rp->featured_image))
+                : asset('assets/img/product/product1-1.png');
+                
+            return [
+                'id' => $rp->id,
+                'name' => $rp->product_name,
+                'price' => $rp->price_regular,
+                'original_price' => $rp->price_sale,
+                'image' => $img
+            ];
+        })->toArray();
+
+        return view('frontend.store.product-detail', compact('selectedProfile', 'product', 'relatedProducts'));
     }
 
     public function addToCart(Request $request)
@@ -2529,12 +2602,14 @@ class AuthController extends Controller
 
                 $order = \App\Models\Admin\Master\Order::create([
                     'order_number' => $uniqueOrderNumber,
+                    'user_id' => $user->id,
                     'school_id' => $schoolId,
                     'order_date' => now(),
                     'student_name' => $studentProfile ? $studentProfile->student_name : 'Unknown',
                     'grade' => $studentProfile ? $studentProfile->grade : $product->grade,
                     'category' => $product->category ?? 'General',
                     'item_name' => $product->product_name,
+                    'product_type' => $product->product_type,
                     'size' => $item->size,
                     'quantity' => $item->quantity,
                     'customer_name' => $shippingAddress['name'],
@@ -2577,6 +2652,22 @@ class AuthController extends Controller
                     }
                 } else {
                     $product->decrement('inventory_stock', $item->quantity);
+                }
+
+                // Automatic Print Job Creation for Merchandise
+                if ($product->product_type === 'merchandised') {
+                    // Try to extract details from cart item if available, otherwise default
+                    $printDetails = [
+                        'customer_text' => $item->custom_text ?? null, // Assuming cart has this or future enhancement
+                        'design_file' => $item->custom_design_path ?? null
+                    ];
+
+                    \App\Models\Merchandise\PrintJob::create([
+                        'order_id' => $order->id,
+                        'product_mapping_id' => $product->id,
+                        'status' => 'pending',
+                        'details' => $printDetails, // JSON castable
+                    ]);
                 }
 
                 // Track processed cart item IDs
@@ -2635,10 +2726,25 @@ class AuthController extends Controller
         $profiles = $user->studentProfiles;
         $studentNames = $profiles->pluck('student_name')->toArray();
 
-        // Fetch orders from DB where student_name matches any of the profiles
-        $orders = \App\Models\Admin\Master\Order::whereIn('student_name', $studentNames)
-            ->orderByDesc('created_at')
-            ->get();
+        // Fetch orders strictly belonging to this user
+    $orders = \App\Models\Admin\Master\Order::where(function($q) use ($user) {
+        $q->where('user_id', $user->id);
+        
+        // Strict isolation for now. 
+        // If we need to "claim" old guest orders, we should do that via a separate "Claim Orders" process
+        // rather than auto-showing based on loose email/phone matching which causes the reported issue.
+        /*
+        $q->orWhere(function($sub) use ($user) {
+             $sub->whereNull('user_id')
+                 ->where(function($nested) use ($user) {
+                     $nested->where('customer_email', $user->email)
+                            ->orWhere('customer_phone', $user->phone);
+                 });
+        });
+        */
+    })
+    ->orderByDesc('created_at')
+    ->get();
 
         // Group orders by the base order number (SOCO-ID-Index -> ID)
         $groupedOrders = $orders->groupBy(function ($order) {
@@ -2651,86 +2757,99 @@ class AuthController extends Controller
         foreach ($groupedOrders as $baseOrderNumber => $items) {
             $firstItem = $items->first();
 
-            // Check if there's a return/exchange request for any item in this order
-            $orderIds = $items->pluck('id')->toArray();
-            $returnRequests = \App\Models\Admin\Master\ReturnExchangeRequest::whereIn('order_id', $orderIds)
-                ->get()
-                ->keyBy('order_id');
+                // Check if there's a return/exchange request for any item in this order
+                $orderIds = $items->pluck('id')->toArray();
+                $returnRequests = \App\Models\Admin\Master\ReturnExchangeRequest::whereIn('order_id', $orderIds)
+                    ->get()
+                    ->keyBy('order_id');
 
 
 
-            $formattedOrders[] = [
-                'id' => $baseOrderNumber,
-                'status' => $firstItem->order_status,
-                'created_at' => $firstItem->created_at,
-                'total' => $items->sum('total_amount'),
-                'items' => $items->map(function ($item) use ($returnRequests) {
-                    // Get product image - try strict match first, then loose match
-                    $product = \App\Models\Admin\Master\ProductMapping::where('product_name', $item->item_name)
-                        ->where('school_id', $item->school_id)
-                        ->first();
+                $formattedOrders[] = [
+                    'id' => $baseOrderNumber,
+                    'status' => $firstItem->order_status,
+                    'created_at' => $firstItem->created_at,
+                    'total' => $items->sum('total_amount'),
+                    'items' => $items->map(function ($item) use ($returnRequests) {
+                        // Get product image - try strict match first, then loose match
+                        $product = \App\Models\Admin\Master\ProductMapping::where('product_name', $item->item_name)
+                            ->where('school_id', $item->school_id)
+                            ->first();
 
-                    if (!$product) {
-                        // Fallback: try matching just by name
-                        $product = \App\Models\Admin\Master\ProductMapping::where('product_name', $item->item_name)->first();
-                    }
-
-                    $productImage = null;
-                    if ($product) {
-                        if ($product->featured_image) {
-                            $productImage = $product->featured_image;
-                        } elseif ($product->media_images && is_array($product->media_images) && !empty($product->media_images)) {
-                            $productImage = $product->media_images[0];
-                        } elseif ($product->media_gallery && is_array($product->media_gallery) && !empty($product->media_gallery)) {
-                            $productImage = $product->media_gallery[0];
+                        if (!$product) {
+                            // Fallback: try matching just by name
+                            $product = \App\Models\Admin\Master\ProductMapping::where('product_name', $item->item_name)->first();
                         }
-                    }
 
-                    return [
-                        'id' => $item->id,
-                        'product_id' => $product ? $product->id : null,
-                        'name' => $item->item_name,
-                        'price' => $item->total_amount / ($item->quantity > 0 ? $item->quantity : 1),
-                        'quantity' => $item->quantity,
-                        'size' => $item->size,
-                        'image' => $productImage ? asset('storage/' . $productImage) : null,
-                        'return_request' => $returnRequests[$item->id] ?? null,
-                    ];
-                })->toArray(),
-            ];
+                        $productImage = null;
+                        if ($product) {
+                            if ($product->featured_image) {
+                                $productImage = $product->featured_image;
+                            } elseif ($product->media_images && is_array($product->media_images) && !empty($product->media_images)) {
+                                $productImage = $product->media_images[0];
+                            } elseif ($product->media_gallery && is_array($product->media_gallery) && !empty($product->media_gallery)) {
+                                $productImage = $product->media_gallery[0];
+                            }
+                        }
+
+                        return [
+                            'id' => $item->id,
+                            'product_id' => $product ? $product->id : null,
+                            'name' => $item->item_name,
+                            'price' => $item->total_amount / ($item->quantity > 0 ? $item->quantity : 1),
+                            'quantity' => $item->quantity,
+                            'size' => $item->size,
+                            'image' => $productImage ? asset('storage/' . $productImage) : null,
+                            'return_request' => $returnRequests[$item->id] ?? null,
+                        ];
+                    })->toArray(),
+                ];
+            }
+
+            return view('frontend.orders.index', ['orders' => $formattedOrders, 'profiles' => $profiles]);
         }
 
-        return view('frontend.orders.index', ['orders' => $formattedOrders, 'profiles' => $profiles]);
-    }
+        public function trackOrder($orderId)
+        {
+            // Get orders from database based on the base order number
+            $user = Auth::user();
 
-    public function trackOrder($orderId)
-    {
-        // Get orders from database based on the base order number
-        $user = Auth::user();
-        $profiles = $user->studentProfiles;
-        $studentNames = $profiles->pluck('student_name')->toArray();
+            // Fix: Query by user_id
+            $orders = \App\Models\Admin\Master\Order::where('user_id', $user->id)
+                ->where(function($q) use ($orderId) {
+                    $q->where('order_number', 'like', 'SOCO-' . $orderId . '-%')
+                      ->orWhere('order_number', 'like', 'SOCO-' . $orderId);
+                })
+                ->get();
+                
+            if ($orders->isEmpty()) {
+                $profiles = $user->studentProfiles;
+                $studentNames = $profiles->pluck('student_name')->toArray();
+                
+                if (!empty($studentNames)) {
+                    $orders = \App\Models\Admin\Master\Order::whereIn('student_name', $studentNames)
+                        ->where(function($q) use ($orderId) {
+                            $q->where('order_number', 'like', 'SOCO-' . $orderId . '-%')
+                            ->orWhere('order_number', 'like', 'SOCO-' . $orderId);
+                        })
+                        ->get();
+                }
+            }
 
-        $orders = \App\Models\Admin\Master\Order::whereIn('student_name', $studentNames)
-            ->where(function($q) use ($orderId) {
-                $q->where('order_number', 'like', 'SOCO-' . $orderId . '-%')
-                  ->orWhere('order_number', 'like', 'SOCO-' . $orderId);
-            })
-            ->get();
+            if ($orders->isEmpty()) {
+                return redirect()->route('frontend.parent.orders')
+                    ->with('error', 'Order not found.');
+            }
 
-        if ($orders->isEmpty()) {
-            return redirect()->route('frontend.parent.orders')
-                ->with('error', 'Order not found.');
-        }
+            $firstOrder = $orders->first();
 
-        $firstOrder = $orders->first();
-
-        // Order tracking statuses
-        $statuses = [
-            ['key' => 'pending', 'label' => 'Order Placed', 'icon' => 'shopping-cart'],
-            ['key' => 'processing', 'label' => 'Processing', 'icon' => 'tasks'],
-            ['key' => 'packed', 'label' => 'Packed', 'icon' => 'box'],
-            ['key' => 'shipped', 'label' => 'Shipped', 'icon' => 'truck'],
-            ['key' => 'delivered', 'label' => 'Delivered', 'icon' => 'check-circle'],
+            // Order tracking statuses
+            $statuses = [
+                ['key' => 'pending', 'label' => 'Order Placed', 'icon' => 'shopping-cart'],
+                ['key' => 'processing', 'label' => 'Processing', 'icon' => 'tasks'],
+                ['key' => 'packed', 'label' => 'Packed', 'icon' => 'box'],
+                ['key' => 'shipped', 'label' => 'Shipped', 'icon' => 'truck'],
+                ['key' => 'delivered', 'label' => 'Delivered', 'icon' => 'check-circle'],
         ];
 
         // Find current status index
@@ -2798,15 +2917,28 @@ class AuthController extends Controller
     {
         // Fetch orders from database based on the base order number
         $user = Auth::user();
-        $profiles = $user->studentProfiles;
-        $studentNames = $profiles->pluck('student_name')->toArray();
 
-        $orders = \App\Models\Admin\Master\Order::whereIn('student_name', $studentNames)
+        // Fix: Query by user_id
+        $orders = \App\Models\Admin\Master\Order::where('user_id', $user->id)
             ->where(function($q) use ($orderId) {
                 $q->where('order_number', 'like', 'SOCO-' . $orderId . '-%')
                   ->orWhere('order_number', 'like', $orderId . '%');
             })
             ->get();
+
+        if ($orders->isEmpty()) {
+            $profiles = $user->studentProfiles;
+            $studentNames = $profiles->pluck('student_name')->toArray();
+            
+            if (!empty($studentNames)) {
+                $orders = \App\Models\Admin\Master\Order::whereIn('student_name', $studentNames)
+                    ->where(function($q) use ($orderId) {
+                        $q->where('order_number', 'like', 'SOCO-' . $orderId . '-%')
+                          ->orWhere('order_number', 'like', $orderId . '%');
+                    })
+                    ->get();
+            }
+        }
 
         if ($orders->isEmpty()) {
             return redirect()->route('frontend.parent.orders')
@@ -2836,6 +2968,10 @@ class AuthController extends Controller
                     ->where('school_id', $item->school_id)
                     ->first();
 
+                if (!$product) {
+                    $product = \App\Models\Admin\Master\ProductMapping::where('product_name', $item->item_name)->first();
+                }
+
                 $image = null;
                 if ($product) {
                     if ($product->featured_image) {
@@ -2855,6 +2991,7 @@ class AuthController extends Controller
                     'quantity' => $item->quantity,
                     'size' => $item->size,
                     'image' => $image ? asset('storage/'.$image) : null,
+                    'product_type' => $product ? $product->product_type : null,
                 ];
             })->toArray(),
         ];
@@ -2885,11 +3022,28 @@ class AuthController extends Controller
 
         // Fetch selected orders
         $orders = \App\Models\Admin\Master\Order::whereIn('id', $request->selected_items)
-            ->whereIn('student_name', $studentNames)
+            ->where('user_id', $user->id)
             ->get();
 
         if ($orders->isEmpty()) {
             return redirect()->back()->with('error', 'Invalid items selected.');
+        }
+
+        // Validate Return Policy (No returns for BTS/Merchandise)
+        if ($request->action === 'return') {
+            foreach ($orders as $orderItem) {
+                $product = \App\Models\Admin\Master\ProductMapping::where('product_name', $orderItem->item_name)
+                    ->where('school_id', $orderItem->school_id)
+                    ->first();
+                
+                if (!$product) {
+                     $product = \App\Models\Admin\Master\ProductMapping::where('product_name', $orderItem->item_name)->first();
+                }
+
+                if ($product && in_array($product->product_type, ['back_to_school', 'merchandised'])) {
+                    return redirect()->back()->with('error', 'Returns are not allowed for Back to School or Merchandise items. Please select Exchange.');
+                }
+            }
         }
 
         // Create return/exchange request for each selected item
@@ -2948,6 +3102,9 @@ class AuthController extends Controller
             User::ROLE_SCHOOL => route('frontend.school.dashboard'),
             User::ROLE_MASTER_ADMIN => route('master.admin.dashboard'),
             User::ROLE_INVENTORY_ADMIN => route('master.admin.inventory.dashboard'),
+            User::ROLE_BACK_TO_SCHOOL_ADMIN => route('admin.back_to_school.dashboard'),
+            User::ROLE_MERCHANDISE_ADMIN => route('admin.merchandise.dashboard'),
+            User::ROLE_GUEST => route('frontend.parent.dashboard'),
             default => route('frontend.parent.dashboard'),
         };
 
@@ -2958,4 +3115,35 @@ class AuthController extends Controller
         return $route;
     }
 
+    /**
+     * Set guest mode preference in session and database, then redirect
+     */
+    public function setGuestMode(Request $request)
+    {
+        $user = Auth::user();
+        if ($user) {
+            $user->update(['is_welcome_modal_seen' => true]);
+        }
+        
+        session(['guest_mode_active' => true]);
+        
+        if ($request->wantsJson()) {
+            return response()->json(['success' => true]);
+        }
+        
+        return redirect()->route('frontend.shop.index');
+    }
+
+    /**
+     * Mark welcome modal as seen via AJAX
+     */
+    public function markWelcomeModalSeen(Request $request)
+    {
+        $user = Auth::user();
+        if ($user) {
+            $user->update(['is_welcome_modal_seen' => true]);
+            return response()->json(['success' => true]);
+        }
+        return response()->json(['success' => false, 'message' => 'User not authenticated'], 401);
+    }
 }
