@@ -152,6 +152,70 @@
                                 <span class="checkbox-mark"></span>
                                 <span class="option-label">Fabrics</span>
                             </label>
+
+                            <!-- Back to School Categories -->
+                            <label class="filter-option">
+                                <input type="checkbox" name="category" value="Uniform" class="filter-checkbox" checked>
+                                <span class="checkbox-mark"></span>
+                                <span class="option-label">Uniform (BTS)</span>
+                            </label>
+                            <label class="filter-option">
+                                <input type="checkbox" name="category" value="Shoes" class="filter-checkbox" checked>
+                                <span class="checkbox-mark"></span>
+                                <span class="option-label">Shoes (BTS)</span>
+                            </label>
+                            <label class="filter-option">
+                                <input type="checkbox" name="category" value="Bags" class="filter-checkbox" checked>
+                                <span class="checkbox-mark"></span>
+                                <span class="option-label">Bags</span>
+                            </label>
+                            <label class="filter-option">
+                                <input type="checkbox" name="category" value="Stationery" class="filter-checkbox" checked>
+                                <span class="checkbox-mark"></span>
+                                <span class="option-label">Stationery</span>
+                            </label>
+                            <label class="filter-option">
+                                <input type="checkbox" name="category" value="Food Container" class="filter-checkbox" checked>
+                                <span class="checkbox-mark"></span>
+                                <span class="option-label">Food Container</span>
+                            </label>
+                            <label class="filter-option">
+                                <input type="checkbox" name="category" value="Drinkware" class="filter-checkbox" checked>
+                                <span class="checkbox-mark"></span>
+                                <span class="option-label">Drinkware</span>
+                            </label>
+                             <label class="filter-option">
+                                <input type="checkbox" name="category" value="School-Day Essentials" class="filter-checkbox" checked>
+                                <span class="checkbox-mark"></span>
+                                <span class="option-label">School-Day Essentials</span>
+                            </label>
+                            
+                            <!-- Merchandise Categories -->
+                            <label class="filter-option">
+                                <input type="checkbox" name="category" value="T-Shirts" class="filter-checkbox" checked>
+                                <span class="checkbox-mark"></span>
+                                <span class="option-label">T-Shirts</span>
+                            </label>
+                            <label class="filter-option">
+                                <input type="checkbox" name="category" value="Hoodies" class="filter-checkbox" checked>
+                                <span class="checkbox-mark"></span>
+                                <span class="option-label">Hoodies</span>
+                            </label>
+                            <label class="filter-option">
+                                <input type="checkbox" name="category" value="Caps" class="filter-checkbox" checked>
+                                <span class="checkbox-mark"></span>
+                                <span class="option-label">Caps</span>
+                            </label>
+                            <label class="filter-option">
+                                <input type="checkbox" name="category" value="Mugs" class="filter-checkbox" checked>
+                                <span class="checkbox-mark"></span>
+                                <span class="option-label">Mugs</span>
+                            </label>
+                            <label class="filter-option">
+                                <input type="checkbox" name="category" value="Accessories" class="filter-checkbox" checked>
+                                <span class="checkbox-mark"></span>
+                                <span class="option-label">Accessories</span>
+                            </label>
                         </div>
                     </div>
 

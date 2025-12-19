@@ -9,7 +9,15 @@ class HomeController extends Controller
 {
     public function index()
     {
-        return view('frontend.index');
+        // Fetch public products (Merchandised) for homepage display
+        // Fetch public products (Merchandised AND BTS) for homepage display per user request
+        $publicProducts = \App\Models\Admin\Master\ProductMapping::whereIn('product_type', ['merchandised', 'back_to_school'])
+            ->where('status', 'live')
+            ->latest()
+            ->take(8)
+            ->get();
+
+        return view('frontend.index', compact('publicProducts'));
     }
 
     public function getStarted()

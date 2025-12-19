@@ -63,6 +63,7 @@
                     <img src="{{ Str::startsWith($product->featured_image, 'http') ? $product->featured_image : asset('storage/' . $product->featured_image) }}" alt="{{ $product->product_name }}" style="width:160px;height:160px;object-fit:cover;border-radius:16px;">
                 @endif
                 @foreach($product->media_images ?? [] as $image)
+                    @if(empty($image) || !is_string($image)) @continue @endif
                     <img src="{{ Str::startsWith($image, 'http') ? $image : asset('storage/' . $image) }}" alt="" style="width:120px;height:120px;object-fit:cover;border-radius:12px;">
                 @endforeach
             </div>

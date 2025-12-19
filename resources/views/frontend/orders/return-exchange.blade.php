@@ -96,7 +96,7 @@
                             @foreach($order['items'] as $item)
                                 <label class="d-flex align-items-center gap-3 mb-3 pb-3 border-bottom position-relative w-100" style="cursor: pointer;">
                                     <div class="flex-shrink-0">
-                                        <input class="form-check-input border-secondary" type="checkbox" name="selected_items[]" value="{{ $item['id'] }}" @checked(empty($selectedItems) || in_array($item['id'], $selectedItems ?? [])) style="width: 1.3em; height: 1.3em; cursor: pointer;">
+                                        <input class="form-check-input border-secondary item-checkbox" type="checkbox" name="selected_items[]" value="{{ $item['id'] }}" data-product-type="{{ $item['product_type'] }}" @checked(empty($selectedItems) || in_array($item['id'], $selectedItems ?? [])) style="width: 1.3em; height: 1.3em; cursor: pointer;">
                                     </div>
                                     <div class="flex-shrink-0">
                                         <div class="bg-light rounded d-flex align-items-center justify-content-center border" style="width: 60px; height: 60px;">
@@ -113,6 +113,11 @@
                                             <span class="text-muted small">Size: {{ $item['size'] }}</span>
                                             <span class="text-primary small fw-bold">₹{{ number_format($item['price'], 2) }}</span>
                                         </div>
+                                        @if(in_array($item['product_type'], ['back_to_school', 'merchandised']))
+                                            <div class="mt-1">
+                                                <span class="badge bg-light text-dark border">Exchange Only</span>
+                                            </div>
+                                        @endif
                                     </div>
                                 </label>
                             @endforeach
@@ -150,10 +155,60 @@
         background-color: #490D59;
         color: #ffffff;
     }
+    
+    .action-option input[type="radio"]:disabled + span {
+        background-color: #f8f9fa;
+        border-color: #dee2e6;
+        color: #adb5bd;
+        cursor: not-allowed;
+    }
 
     .action-option:hover span {
         border-color: #490D59;
     }
 </style>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const itemCheckboxes = document.querySelectorAll('.item-checkbox');
+        const returnRadio = document.querySelector('input[name="action"][value="return"]');
+        const exchangeRadio = document.querySelector('input[name="action"][value="exchange"]');
+        
+        function updateActionOptions() {
+            let hasRestrictedItem = false;
+            
+            itemCheckboxes.forEach(checkbox => {
+                if (checkbox.checked) {
+                    const type = (checkbox.dataset.productType || '').toLowerCase();
+                    if (type === 'back_to_school' || type === 'merchandised') {
+                        hasRestrictedItem = true;
+                    }
+                }
+            });
+            
+            if (hasRestrictedItem) {
+                returnRadio.disabled = true;
+                returnRadio.parentElement.style.opacity = '0.5';
+                returnRadio.parentElement.style.cursor = 'not-allowed';
+                returnRadio.parentElement.title = "Returns are not allowed for Back to School or Merchandise items.";
+                if (returnRadio.checked) {
+                    exchangeRadio.checked = true;
+                }
+            } else {
+                returnRadio.disabled = false;
+                returnRadio.parentElement.style.opacity = '1';
+                returnRadio.parentElement.style.cursor = 'pointer';
+                returnRadio.parentElement.title = "";
+            }
+        }
+        
+        itemCheckboxes.forEach(checkbox => {
+            checkbox.addEventListener('change', updateActionOptions);
+        });
+        
+        // Initial check
+        updateActionOptions();
+    });
+</script>
 @endsection
 

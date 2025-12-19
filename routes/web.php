@@ -29,13 +29,18 @@ Route::get('/privacy-policy', [HomeController::class, 'privacyPolicy'])->name('f
 Route::get('/shipping-policy', [HomeController::class, 'shippingPolicy'])->name('frontend.shipping-policy');
 Route::get('/terms-conditions', [HomeController::class, 'termsConditions'])->name('frontend.terms-conditions');
 
+// Public Shop Routes
+Route::get('/shop', [App\Http\Controllers\Front\ShopController::class, 'index'])->name('frontend.shop.index');
+Route::get('/shop/{id}', [App\Http\Controllers\Front\ShopController::class, 'show'])->name('frontend.shop.detail');
+Route::post('/shop/add-to-cart', [App\Http\Controllers\Front\ShopController::class, 'addToCart'])->name('frontend.shop.add-to-cart');
+
 // Unified Login Route (for both parents and schools)
 Route::get('/login', [AuthController::class, 'showLogin'])->name('login')->middleware('guest');
 
 // Backward compatibility routes - also point to unified login
 Route::get('/parent/login', [AuthController::class, 'showLogin'])->middleware('guest');
 Route::get('/school/login', [AuthController::class, 'showLogin'])->middleware('guest');
-Route::middleware(['auth', 'prevent-back-history'])->group(function () {
+Route::middleware(['auth', 'prevent-back-history', 'parent'])->group(function () {
     Route::get('/parent/dashboard', [AuthController::class, 'parentDashboard'])->name('frontend.parent.dashboard');
     Route::get('/parent/create-profile', [AuthController::class, 'createProfile'])->name('frontend.parent.create-profile');
     Route::post('/parent/create-profile', [AuthController::class, 'storeProfile'])->name('frontend.parent.store-profile');
@@ -83,6 +88,8 @@ Route::post('/register', [AuthController::class, 'register'])->name('register.su
 Route::post('/login', [AuthController::class, 'login'])->name('login.submit');
 Route::post('/auth/send-otp', [AuthController::class, 'sendOtp'])->name('auth.send-otp');
 Route::post('/auth/verify-otp', [AuthController::class, 'verifyOtp'])->name('auth.verify-otp');
+Route::post('/auth/set-guest-mode', [AuthController::class, 'setGuestMode'])->name('auth.set-guest-mode');
+Route::post('/auth/mark-welcome-seen', [AuthController::class, 'markWelcomeModalSeen'])->name('auth.mark-welcome-seen');
 
 // Logout Route
 Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
@@ -257,3 +264,55 @@ Route::prefix('InventoryAdmin')->name('inventory.admin.')->group(function () {
         Route::get('/returns-exchange', [App\Http\Controllers\Admin\Inventory\ReturnExchangeController::class, 'index'])->name('returns-exchange.index');
     });
 });
+
+// Store Admin Portal Login (Unified for BTS/Merch)
+Route::prefix('StoreAdmin')->name('store.admin.')->group(function () {
+    // Middleware removed to allow simultaneous login (BTS + Merch) from the same portal page
+    Route::get('/login', [App\Http\Controllers\Admin\PortalAuthController::class, 'showLoginForm'])->name('login');
+    Route::post('/login', [App\Http\Controllers\Admin\PortalAuthController::class, 'login'])->name('login.submit');
+    
+    Route::post('/logout', [App\Http\Controllers\Admin\PortalAuthController::class, 'logout'])->name('logout');
+});
+
+// Back-To-School Admin Routes
+Route::prefix('BackToSchoolAdmin')->name('admin.back_to_school.')->group(function () {
+    Route::middleware(['auth:bts_admin', 'admin.back_to_school'])->group(function () {
+        Route::get('/dashboard', [App\Http\Controllers\Admin\BackToSchool\DashboardController::class, 'index'])->name('dashboard');
+        
+        // Reports
+        Route::get('/reports', [App\Http\Controllers\Admin\BackToSchool\ReportController::class, 'index'])->name('reports.index');
+        
+        // Inventory
+        Route::get('/inventory', [App\Http\Controllers\Admin\BackToSchool\InventoryController::class, 'index'])->name('inventory.index');
+        Route::put('/inventory/{product}', [App\Http\Controllers\Admin\BackToSchool\InventoryController::class, 'update'])->name('inventory.update');
+
+        Route::get('/products/export', [App\Http\Controllers\Admin\BackToSchool\ProductController::class, 'export'])->name('products.export');
+        Route::resource('products', App\Http\Controllers\Admin\BackToSchool\ProductController::class);
+        Route::get('/orders/{order}/invoice/download', [App\Http\Controllers\Admin\BackToSchool\OrderController::class, 'invoiceDownload'])->name('orders.invoice.download');
+        Route::get('/orders/{order}/invoice', [App\Http\Controllers\Admin\BackToSchool\OrderController::class, 'invoiceView'])->name('orders.invoice');
+        Route::post('/orders/{order}/status', [App\Http\Controllers\Admin\BackToSchool\OrderController::class, 'updateStatus'])->name('orders.status');
+        Route::resource('orders', App\Http\Controllers\Admin\BackToSchool\OrderController::class);
+    });
+});
+
+// Merchandise Admin Routes
+Route::prefix('MerchandiseAdmin')->name('admin.merchandise.')->group(function () {
+    Route::middleware(['auth:merch_admin', 'admin.merchandise'])->group(function () {
+        Route::get('/dashboard', [App\Http\Controllers\Admin\Merchandise\DashboardController::class, 'index'])->name('dashboard');
+
+        // Reports
+        Route::get('/reports', [App\Http\Controllers\Admin\Merchandise\ReportController::class, 'index'])->name('reports.index');
+        
+        // Inventory
+        Route::get('/inventory', [App\Http\Controllers\Admin\Merchandise\InventoryController::class, 'index'])->name('inventory.index');
+        Route::put('/inventory/{product}', [App\Http\Controllers\Admin\Merchandise\InventoryController::class, 'update'])->name('inventory.update');
+        Route::get('/products/export', [App\Http\Controllers\Admin\Merchandise\ProductController::class, 'export'])->name('products.export');
+        Route::resource('products', App\Http\Controllers\Admin\Merchandise\ProductController::class);
+        Route::get('/orders/{order}/invoice/download', [App\Http\Controllers\Admin\Merchandise\OrderController::class, 'invoiceDownload'])->name('orders.invoice.download');
+        Route::get('/orders/{order}/invoice', [App\Http\Controllers\Admin\Merchandise\OrderController::class, 'invoiceView'])->name('orders.invoice');
+        Route::post('/orders/{order}/status', [App\Http\Controllers\Admin\Merchandise\OrderController::class, 'updateStatus'])->name('orders.status');
+        Route::resource('orders', App\Http\Controllers\Admin\Merchandise\OrderController::class);
+        Route::resource('print-queue', App\Http\Controllers\Admin\Merchandise\PrintQueueController::class);
+    });
+});
+

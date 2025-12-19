@@ -72,9 +72,9 @@
         </form>
 
         <!-- Sign Up Link -->
-        <div class="text-center mt-4">
+        <!-- <div class="text-center mt-4">
             <p class="text-muted mb-0">Don't have an account? <a href="#" class="text-primary fw-bold" id="signUpLink">Sign up for free</a></p>
-        </div>
+        </div> -->
     </div>
 </section>
 

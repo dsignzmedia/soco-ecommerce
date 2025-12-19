@@ -199,6 +199,7 @@
                                 <!-- Existing images rendered as media items -->
                                 @if($product->media_images)
                                     @foreach($product->media_images as $index => $img)
+                                        @if(empty($img) || !is_string($img)) @continue @endif
                                         <div class="media-item existing-media" draggable="true">
                                             <img src="{{ Str::startsWith($img, 'http') ? $img : asset('storage/' . $img) }}" style="width: 100%; height: 100%; object-fit: cover;">
                                             <div class="position-number">{{ $loop->iteration }}</div>

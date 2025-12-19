@@ -12,11 +12,13 @@ class Order extends Model
 
     protected $fillable = [
         'order_number',
+        'user_id',
         'school_id',
         'order_date',
         'student_name',
         'grade',
         'category',
+        'product_type',
         'item_name',
         'size',
         'quantity',

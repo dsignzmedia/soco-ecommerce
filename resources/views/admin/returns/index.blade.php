@@ -207,14 +207,16 @@
                                     </form>
                                 @endif
 
-                                @if(in_array($req->status, ['approved']))
+                                @if(in_array($req->status, ['approved', 'received_restocked', 'received_discarded']))
                                     @if($req->type === 'return')
-                                        <form method="POST" action="{{ route('master.admin.returns-exchange.receive', $req) }}" style="display:flex;gap:6px;">
-                                            @csrf
-                                            <input type="hidden" name="admin_notes" value="Auto-marked from list">
-                                            <button type="submit" name="action" value="restock" class="btn-action-sm btn-approve" title="Mark Received & Restock">Restock</button>
-                                            <button type="submit" name="action" value="discard" class="btn-action-sm btn-deny" title="Mark Received & Discard">Discard</button>
-                                        </form>
+                                        @if($req->status === 'approved')
+                                            <form method="POST" action="{{ route('master.admin.returns-exchange.receive', $req) }}" style="display:flex;gap:6px;">
+                                                @csrf
+                                                <input type="hidden" name="admin_notes" value="Auto-marked from list">
+                                                <button type="submit" name="action" value="restock" class="btn-action-sm btn-approve" title="Mark Received & Restock">Restock</button>
+                                                <button type="submit" name="action" value="discard" class="btn-action-sm btn-deny" title="Mark Received & Discard">Discard</button>
+                                            </form>
+                                        @endif
                                         
                                         <!-- Refund Button -->
                                         <form method="POST" action="{{ route('master.admin.returns-exchange.refund', $req) }}" onsubmit="return confirm('Are you sure you want to process a refund for this request? This will initiate a Razorpay refund.');">

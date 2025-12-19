@@ -16,6 +16,8 @@ class Cart extends Model
         'product_id',
         'size',
         'quantity',
+        'custom_text',
+        'custom_design_path',
     ];
 
     protected $casts = [

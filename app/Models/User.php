@@ -17,6 +17,9 @@ class User extends Authenticatable
     const ROLE_SCHOOL = 1;
     const ROLE_MASTER_ADMIN = 2;
     const ROLE_INVENTORY_ADMIN = 3;
+    const ROLE_GUEST = 4;
+    const ROLE_BACK_TO_SCHOOL_ADMIN = 5;
+    const ROLE_MERCHANDISE_ADMIN = 6;
 
     /**
      * The attributes that are mass assignable.
@@ -33,6 +36,7 @@ class User extends Authenticatable
         'otp',
         'otp_expires_at',
         'otp_verified',
+        'is_welcome_modal_seen',
     ];
 
     /**
@@ -58,6 +62,7 @@ class User extends Authenticatable
             'role' => 'integer',
             'otp_expires_at' => 'datetime',
             'otp_verified' => 'boolean',
+            'is_welcome_modal_seen' => 'boolean',
         ];
     }
 
@@ -112,6 +117,30 @@ class User extends Authenticatable
     }
 
     /**
+     * Check if user is a Back-To-School admin
+     */
+    public function isBackToSchoolAdmin(): bool
+    {
+        return $this->role === self::ROLE_BACK_TO_SCHOOL_ADMIN;
+    }
+
+    /**
+     * Check if user is a Merchandise admin
+     */
+    public function isMerchandiseAdmin(): bool
+    {
+        return $this->role === self::ROLE_MERCHANDISE_ADMIN;
+    }
+
+    /**
+     * Check if user is a Store Admin (BTS or Merch)
+     */
+    public function isStoreAdmin(): bool
+    {
+        return $this->role === self::ROLE_BACK_TO_SCHOOL_ADMIN || $this->role === self::ROLE_MERCHANDISE_ADMIN;
+    }
+
+    /**
      * Get the role name for display
      */
     public function getRoleName(): string
@@ -121,6 +150,9 @@ class User extends Authenticatable
             self::ROLE_SCHOOL => 'School',
             self::ROLE_MASTER_ADMIN => 'Master Admin',
             self::ROLE_INVENTORY_ADMIN => 'Inventory Admin',
+            self::ROLE_GUEST => 'Guest User',
+            self::ROLE_BACK_TO_SCHOOL_ADMIN => 'Back to School Admin',
+            self::ROLE_MERCHANDISE_ADMIN => 'Merchandise Admin',
             default => 'Unknown',
         };
     }

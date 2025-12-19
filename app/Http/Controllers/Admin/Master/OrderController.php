@@ -21,6 +21,7 @@ class OrderController extends Controller
             'school_id',
             'grade',
             'category',
+            'product_type',
             'order_status',
             'payment_status',
             'date_from',
@@ -32,6 +33,7 @@ class OrderController extends Controller
             ->when($filters['school_id'] ?? null, fn($query, $school) => $query->where('school_id', $school))
             ->when($filters['grade'] ?? null, fn($query, $grade) => $query->where('grade', $grade))
             ->when($filters['category'] ?? null, fn($query, $category) => $query->where('category', $category))
+            ->when($filters['product_type'] ?? null, fn($query, $type) => $query->where('product_type', 'like', $type . '%'))
             ->when($filters['order_status'] ?? null, fn($query, $status) => $query->where('order_status', $status))
             ->when($filters['payment_status'] ?? null, fn($query, $status) => $query->where('payment_status', $status))
             ->when($filters['order_number'] ?? null, fn($query, $number) => $query->where('order_number', 'like', '%' . $number . '%'))
@@ -44,8 +46,9 @@ class OrderController extends Controller
         $schools = School::orderBy('name')->get();
         $grades = Order::select('grade')->whereNotNull('grade')->distinct()->orderBy('grade')->pluck('grade');
         $categories = Order::select('category')->whereNotNull('category')->distinct()->orderBy('category')->pluck('category');
+        $productTypes = Order::select('product_type')->whereNotNull('product_type')->distinct()->orderBy('product_type')->pluck('product_type');
 
-        return view('admin.orders.index', compact('orders', 'schools', 'grades', 'categories', 'filters'));
+        return view('admin.orders.index', compact('orders', 'schools', 'grades', 'categories', 'productTypes', 'filters'));
     }
 
     public function show(Order $order): View
