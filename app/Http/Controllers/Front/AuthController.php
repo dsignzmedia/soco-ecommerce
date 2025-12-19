@@ -704,12 +704,12 @@ class AuthController extends Controller
         }
 
         // Custom Sort Order
-        $gradeOrderSql = "CASE 
-            WHEN grade = 'PKG' THEN 1 
-            WHEN grade = 'LKG' THEN 2 
+        $gradeOrderSql = "CASE
+            WHEN grade = 'PKG' THEN 1
+            WHEN grade = 'LKG' THEN 2
             WHEN grade = 'UKG' THEN 3
             WHEN grade REGEXP '^[0-9]+$' THEN CAST(grade AS UNSIGNED) + 3
-            ELSE 999 
+            ELSE 999
         END";
 
         $students = $query->orderByRaw($gradeOrderSql)->orderBy('student_name')->paginate(20);
@@ -726,10 +726,10 @@ class AuthController extends Controller
                     '1' => 4, '2' => 5, '3' => 6, '4' => 7, '5' => 8, '6' => 9,
                     '7' => 10, '8' => 11, '9' => 12, '10' => 13, '11' => 14, '12' => 15
                 ];
-                
+
                 $valA = $order[$a] ?? 999;
                 $valB = $order[$b] ?? 999;
-                
+
                 return $valA <=> $valB;
             });
 
@@ -2115,34 +2115,34 @@ class AuthController extends Controller
         // 1. Try fetching by category
         $relatedProductsQuery = \App\Models\Admin\Master\ProductMapping::where('id', '!=', $productId)
             ->where('status', 'live');
-            
+
         if (!empty($dbProduct->category)) {
             $relatedProductsQuery->where('category', $dbProduct->category);
         }
-        
+
         $relatedProductsModels = $relatedProductsQuery->inRandomOrder()->take(4)->get();
-        
+
         // 2. If we found fewer than 4, fill up with other random products
         if ($relatedProductsModels->count() < 4) {
             $fetchedIds = $relatedProductsModels->pluck('id')->toArray();
             $fetchedIds[] = $productId; // Exclude current product too
-            
+
             $limit = 4 - $relatedProductsModels->count();
-            
+
             $otherProducts = \App\Models\Admin\Master\ProductMapping::whereNotIn('id', $fetchedIds)
                 ->where('status', 'live')
                 ->inRandomOrder()
                 ->take($limit)
                 ->get();
-                
+
             $relatedProductsModels = $relatedProductsModels->merge($otherProducts);
         }
-        
+
         $relatedProducts = $relatedProductsModels->map(function($rp) {
-            $img = $rp->featured_image 
+            $img = $rp->featured_image
                 ? (\Illuminate\Support\Str::startsWith($rp->featured_image, 'http') ? $rp->featured_image : asset('storage/' . $rp->featured_image))
                 : asset('assets/img/product/product1-1.png');
-                
+
             return [
                 'id' => $rp->id,
                 'name' => $rp->product_name,
@@ -2729,8 +2729,8 @@ class AuthController extends Controller
         // Fetch orders strictly belonging to this user
     $orders = \App\Models\Admin\Master\Order::where(function($q) use ($user) {
         $q->where('user_id', $user->id);
-        
-        // Strict isolation for now. 
+
+        // Strict isolation for now.
         // If we need to "claim" old guest orders, we should do that via a separate "Claim Orders" process
         // rather than auto-showing based on loose email/phone matching which causes the reported issue.
         /*
@@ -2821,11 +2821,11 @@ class AuthController extends Controller
                       ->orWhere('order_number', 'like', 'SOCO-' . $orderId);
                 })
                 ->get();
-                
+
             if ($orders->isEmpty()) {
                 $profiles = $user->studentProfiles;
                 $studentNames = $profiles->pluck('student_name')->toArray();
-                
+
                 if (!empty($studentNames)) {
                     $orders = \App\Models\Admin\Master\Order::whereIn('student_name', $studentNames)
                         ->where(function($q) use ($orderId) {
@@ -2929,7 +2929,6 @@ class AuthController extends Controller
         if ($orders->isEmpty()) {
             $profiles = $user->studentProfiles;
             $studentNames = $profiles->pluck('student_name')->toArray();
-            
             if (!empty($studentNames)) {
                 $orders = \App\Models\Admin\Master\Order::whereIn('student_name', $studentNames)
                     ->where(function($q) use ($orderId) {
@@ -3035,7 +3034,6 @@ class AuthController extends Controller
                 $product = \App\Models\Admin\Master\ProductMapping::where('product_name', $orderItem->item_name)
                     ->where('school_id', $orderItem->school_id)
                     ->first();
-                
                 if (!$product) {
                      $product = \App\Models\Admin\Master\ProductMapping::where('product_name', $orderItem->item_name)->first();
                 }
@@ -3124,13 +3122,13 @@ class AuthController extends Controller
         if ($user) {
             $user->update(['is_welcome_modal_seen' => true]);
         }
-        
+
         session(['guest_mode_active' => true]);
-        
+
         if ($request->wantsJson()) {
             return response()->json(['success' => true]);
         }
-        
+
         return redirect()->route('frontend.shop.index');
     }
 
