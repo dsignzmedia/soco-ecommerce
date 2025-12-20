@@ -953,16 +953,14 @@ class AuthController extends Controller
 
         // Product filter
         if (!empty($filters['product'])) {
-             $query->whereHas('items', function($q) use ($filters) {
-                 $q->where('product_name', $filters['product']);
-             });
+             $query->where('item_name', $filters['product']);
         }
         // Status filter
         if (!empty($filters['sale_type'])) {
              $query->where('order_status', $filters['sale_type']);
         }
 
-        $orders = $query->with('items')->orderBy('order_date')->get();
+        $orders = $query->orderBy('order_date')->get();
 
         // Calculate Aggregates
         $totalSales = $orders->sum('total_amount');
@@ -974,15 +972,11 @@ class AuthController extends Controller
         $productCounts = [];
 
         foreach ($orders as $order) {
-            if ($order->items) {
-                foreach ($order->items as $item) {
-                    $pName = $item->product_name ?? 'Unknown Product';
-                    if (!isset($productCounts[$pName])) {
-                        $productCounts[$pName] = 0;
-                    }
-                    $productCounts[$pName] += $item->quantity ?? 1;
-                }
+            $pName = $order->item_name ?? 'Unknown Product';
+            if (!isset($productCounts[$pName])) {
+                $productCounts[$pName] = 0;
             }
+            $productCounts[$pName] += $order->quantity ?? 1;
         }
         if (!empty($productCounts)) {
             arsort($productCounts);
