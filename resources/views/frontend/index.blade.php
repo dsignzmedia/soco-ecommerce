@@ -86,60 +86,7 @@
 Shop by Category Area
 ==============================-->
 <section>
-    <div class="category-marquee-wrapper">
-        <div class="category_box_row">
 
-    <!-- 1. Uniform -->
-    <a href="{{ route('frontend.shop.index', ['category' => 'Uniform']) }}" class="simple-cat">
-        <div class="simple-box">
-            <img src="{{ asset('assets/img/catagories/SchoolUniform.jpeg') }}" alt="Uniform">
-        </div>
-        <p class="sec-text simple-title">Uniform</p>
-    </a>
-
-    <!-- 2. Shoes -->
-    <a href="{{ route('frontend.shop.index', ['category' => 'Shoes']) }}" class="simple-cat">
-        <div class="simple-box">
-            <img src="{{ asset('assets/img/catagories/Shoe_school.jpg') }}" alt="Shoes">
-        </div>
-        <p class="sec-text simple-title">Shoes</p>
-    </a>
-
-    <!-- 3. Bags -->
-    <a href="{{ route('frontend.shop.index', ['category' => 'Bags']) }}" class="simple-cat">
-        <div class="simple-box">
-            <img src="{{ asset('assets/img/catagories/SchoolBag_2.jpg') }}" alt="Bags">
-        </div>
-        <p class="sec-text simple-title">Bags</p>
-    </a>
-
-    <!-- 4. Stationery -->
-    <a href="{{ route('frontend.shop.index', ['category' => 'Stationery']) }}" class="simple-cat">
-        <div class="simple-box">
-            <img src="{{ asset('assets/img/catagories/Stationery.jpg') }}" alt="Stationery">
-        </div>
-        <p class="sec-text simple-title">Stationery</p>
-    </a>
-
-    <!-- 5. Food Container -->
-    <a href="{{ route('frontend.shop.index', ['category' => 'Food Container']) }}" class="simple-cat">
-        <div class="simple-box">
-            <img src="{{ asset('assets/img/catagories/Box_1.jpeg') }}" alt="Food Container">
-        </div>
-        <p class="sec-text simple-title">Food Container</p>
-    </a>
-
-    <!-- 6. Drinkware -->
-    <a href="{{ route('frontend.shop.index', ['category' => 'Drinkware']) }}" class="simple-cat">
-        <div class="simple-box">
-            <img src="{{ asset('assets/img/catagories/Drinkware.jpg') }}" alt="Drinkware">
-        </div>
-        <p class="sec-text simple-title">Drinkware</p>
-    </a>
-
-</div>
-
-    </div>
        
        
     <style>
@@ -399,26 +346,46 @@ Shop by Category Area
 <!--==============================
 Featured Products Area
 ==============================-->
+<!--==============================
+Featured Products Area
+==============================-->
 @if(isset($publicProducts) && $publicProducts->count() > 0)
-<section style="background-color: #ffffff;">
+<section style="background-color:#ffffff;">
     <div class="category-marquee-wrapper">
         <div class="category_box_row">
+
             @foreach($publicProducts as $product)
-            <a href="{{ route('frontend.shop.detail', $product->id) }}" class="simple-cat">
-                <div class="simple-box">
-                    @if($product->featured_image)
-                         <img src="{{ Str::startsWith($product->featured_image, 'http') ? $product->featured_image : asset('storage/' . $product->featured_image) }}" alt="{{ $product->product_name }}">
-                    @else
-                         <img src="{{ asset('assets/img/logo.svg') }}" alt="Placeholder" style="opacity: 0.5;">
-                    @endif
-                </div>
-                <p class="sec-text simple-title">{{ $product->product_name }}</p>
-            </a>
+                <a href="{{ route('frontend.shop.detail', $product->id) }}" class="simple-cat">
+
+                    <div class="simple-box">
+                        @if($product->featured_image)
+                            <img 
+                                src="{{ Str::startsWith($product->featured_image, 'http') 
+                                    ? $product->featured_image 
+                                    : asset('storage/' . $product->featured_image) }}" 
+                                alt="{{ $product->product_name }}"
+                            >
+                        @else
+                            <img 
+                                src="{{ asset('assets/img/logo.svg') }}" 
+                                alt="Placeholder" 
+                                style="opacity:0.5;"
+                            >
+                        @endif
+                    </div>
+
+                    <p class="sec-text simple-title">
+                        {{ $product->product_name }}
+                    </p>
+
+                </a>
             @endforeach
+
         </div>
     </div>
 </section>
 @endif
+
 
 <!--==============================
 About Area
@@ -953,9 +920,14 @@ Process Area
 <script>
 document.addEventListener('DOMContentLoaded', function () {
 
-  function setupTransformMarquee(wrapperSelector, rowSelector, options = {}) {
-    const wrapper = document.querySelector(wrapperSelector);
-    const row = document.querySelector(rowSelector);
+  function setupTransformMarquee(wrapperSelectorOrElement, rowSelectorOrElement, options = {}) {
+    // Handle both selector strings and DOM elements
+    const wrapper = typeof wrapperSelectorOrElement === 'string' 
+      ? document.querySelector(wrapperSelectorOrElement) 
+      : wrapperSelectorOrElement;
+    const row = typeof rowSelectorOrElement === 'string'
+      ? document.querySelector(rowSelectorOrElement)
+      : rowSelectorOrElement;
     if (!wrapper || !row) return;
 
     const maxWidth = options.maxWidth || 768;
@@ -1030,12 +1002,19 @@ document.addEventListener('DOMContentLoaded', function () {
     function checkMode() {
       const width = window.innerWidth;
       
-      if (width <= 1116) {
+      if (width <= maxWidth) {
         // Mobile and Tablet mode: duplicate content and auto-scroll
         if (row.dataset.duplicated !== 'true') {
-          row.innerHTML = originalContent + originalContent;
-          row.dataset.duplicated = 'true';
-          setTimeout(start, 80);
+          // Ensure we have content to duplicate
+          if (originalContent && originalContent.trim() !== '') {
+            row.innerHTML = originalContent + originalContent;
+            row.dataset.duplicated = 'true';
+            // Small delay to ensure DOM is updated
+            setTimeout(() => {
+              measure();
+              start();
+            }, 100);
+          }
         }
       } else {
         // Desktop mode: restore original content
@@ -1151,20 +1130,46 @@ document.addEventListener('DOMContentLoaded', function () {
             imgsLoaded++;
             if (imgsLoaded === imgs.length && window.innerWidth <= maxWidth) {
               measure();
+              // Re-check mode in case animation needs to start
+              if (row.dataset.duplicated !== 'true') {
+                checkMode();
+              }
             }
           }, {passive: true});
           img.addEventListener('error', () => {
             imgsLoaded++;
-            if (imgsLoaded === imgs.length && window.innerWidth <= maxWidth) measure();
+            if (imgsLoaded === imgs.length && window.innerWidth <= maxWidth) {
+              measure();
+              // Re-check mode in case animation needs to start
+              if (row.dataset.duplicated !== 'true') {
+                checkMode();
+              }
+            }
           }, {passive: true});
         }
       });
+      // If all images are already loaded, check mode
+      if (imgsLoaded === imgs.length && window.innerWidth <= maxWidth) {
+        setTimeout(() => {
+          measure();
+          if (row.dataset.duplicated !== 'true') {
+            checkMode();
+          }
+        }, 50);
+      }
     }
   }
 
-  // Setup marquees
-  setupTransformMarquee('.category-marquee-wrapper', '.category_box_row', { maxWidth: 768, speed: 18, resumeDelay: 700 });
-  setupTransformMarquee('.service-marquee-wrapper', '.service-marquee-row', { maxWidth: 768, speed: 18, resumeDelay: 700 });
+  // Setup marquees - handle all instances with a slight delay to ensure DOM is ready
+  setTimeout(() => {
+    document.querySelectorAll('.category-marquee-wrapper').forEach((wrapper, index) => {
+      const row = wrapper.querySelector('.category_box_row');
+      if (row && row.children.length > 0) {
+        setupTransformMarquee(wrapper, row, { maxWidth: 1116, speed: 18, resumeDelay: 700 });
+      }
+    });
+    setupTransformMarquee('.service-marquee-wrapper', '.service-marquee-row', { maxWidth: 1116, speed: 18, resumeDelay: 700 });
+  }, 100);
 
 });
 </script>
