@@ -199,12 +199,16 @@
                                 <!-- Existing images rendered as media items -->
                                 @if($product->media_images)
                                     @foreach($product->media_images as $index => $img)
-                                        @php
-                                            if (is_array($img)) {
-                                                $img = $img[0] ?? null;
-                                            }
-                                        @endphp
-                                        @if(is_string($img) && !empty($img))
+                                        @if(is_array($img) && isset($img[0]) && is_string($img[0]))
+                                            <div class="media-item existing-media" draggable="true">
+                                                <img src="{{ Str::startsWith($img[0], 'http') ? $img[0] : asset('storage/' . $img[0]) }}" style="width: 100%; height: 100%; object-fit: cover;">
+                                                <div class="position-number">{{ $loop->iteration }}</div>
+                                                <div class="remove-btn" onclick="this.parentElement.remove(); updatePositionNumbers();">
+                                                    <i class="fas fa-times"></i>
+                                                </div>
+                                                <input type="hidden" name="existing_media_images[]" value="{{ $img[0] }}">
+                                            </div>
+                                        @elseif(is_string($img) && !empty($img))
                                             <div class="media-item existing-media" draggable="true">
                                                 <img src="{{ Str::startsWith($img, 'http') ? $img : asset('storage/' . $img) }}" style="width: 100%; height: 100%; object-fit: cover;">
                                                 <div class="position-number">{{ $loop->iteration }}</div>
@@ -219,6 +223,190 @@
                             </div>
                         </div>
                     </div>
+                    
+                    <div style="margin-top:16px;display:grid;grid-template-columns:1fr 1fr;gap:16px;">
+                        <label>
+                            <span>Size Chart (Image)</span>
+                            <div class="file-input-wrapper">
+                                <input type="file" name="size_chart_path" accept="image/*">
+                            </div>
+                            @if($product->size_chart_path)
+                                <div style="margin-top:8px;">
+                                    <a href="{{ asset('storage/' . $product->size_chart_path) }}" target="_blank" style="font-size:12px;color:#490d59;">View current chart</a>
+                                </div>
+                            @endif
+                        </label>
+                        <label>
+                            <span>Measurement Video (YouTube URL)</span>
+                            <input type="url" name="video_url" value="{{ old('video_url', $product->video_url) }}" placeholder="https://youtube.com/watch?v=...">
+                        </label>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right Column (Sidebar Style) -->
+            <div style="display:flex;flex-direction:column;gap:24px;">
+                <div class="card">
+                    <h3 style="margin:0 0 20px;color:#111827;display:flex;align-items:center;gap:10px;">
+                        <i class="fas fa-sliders-h" style="color:#490d59;background:#f7f2fb;padding:8px;border-radius:8px;"></i>
+                        Organization
+                    </h3>
+                    
+                    <div style="display:flex;flex-direction:column;gap:16px;">
+                        <label>
+                            <span>School</span>
+                            <select name="school_id">
+                                <option value="">All Schools (Global) - Default</option>
+                                @foreach($schools as $school)
+                                    <option value="{{ $school->id }}" @selected(old('school_id', $product->school_id) == $school->id)>{{ $school->name }}</option>
+                                @endforeach
+                            </select>
+                        </label>
+                        <label>
+                            <span>Grade</span>
+                            <select name="grade">
+                                <option value="">All grades</option>
+                                @foreach($grades as $key => $label)
+                                    <option value="{{ $key }}" @selected(old('grade', $product->grade) == $key)>
+                                        {{ $label }}
+                                    </option>
+                                @endforeach
+                            </select>
+                        </label>
+                        <label>
+                            <span>Category</span>
+                            <select name="category">
+                                <option value="">Select Category</option>
+                                @foreach($categories as $key => $label)
+                                    <option value="{{ $key }}" @selected(old('category', $product->category) === $key)>{{ $label }}</option>
+                                @endforeach
+                            </select>
+                        </label>
+                        <label>
+                            <span>Product Type</span>
+                            <select name="product_type">
+                                @foreach($productTypes as $key => $label)
+                                    <option value="{{ $key }}" @selected(old('product_type', $product->product_type ?? 'merchandised') === $key)>{{ $label }}</option>
+                                @endforeach
+                            </select>
+                        </label>
+                        <label>
+                            <span>Gender</span>
+                            <select name="gender">
+                                <option value="">Select Gender</option>
+                                @foreach(['male' => 'Male', 'female' => 'Female', 'unisex' => 'Unisex'] as $value => $label)
+                                    <option value="{{ $value }}" @selected(old('gender', $product->gender) === $value)>{{ $label }}</option>
+                                @endforeach
+                            </select>
+                        </label>
+                        <label>
+                            <span>Tag name</span>
+                            <input type="text" name="tag_name" value="{{ old('tag_name', $product->tag_name) }}" placeholder="Eg: Bestseller">
+                        </label>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <h3 style="margin:0 0 20px;color:#111827;display:flex;align-items:center;gap:10px;">
+                        <i class="fas fa-check-circle" style="color:#490d59;background:#f7f2fb;padding:8px;border-radius:8px;"></i>
+                        Publish
+                    </h3>
+                    <label style="margin-bottom:16px;">
+                        <span>Stock status *</span>
+                        <select name="stock_status">
+                            @foreach(['in_stock' => 'In stock','out_of_stock' => 'Out of stock'] as $value => $label)
+                                <option value="{{ $value }}" @selected(old('stock_status', $product->stock_status ?? 'in_stock') === $value)>{{ $label }}</option>
+                            @endforeach
+                        </select>
+                    </label>
+                    <label style="margin-bottom:20px;">
+                        <span>Availability label</span>
+                        <input type="text" name="availability_label" value="{{ old('availability_label', $product->availability_label) }}" placeholder="Eg: Ships in 2-3 days">
+                    </label>
+
+                    <div style="display:flex;flex-direction:column;gap:10px;">
+                        <button type="submit" name="status" value="live" style="width:100%;padding:12px;border:none;border-radius:8px;background:#490d59;color:#fff;font-weight:600;cursor:pointer;">
+                            Publish Product
+                        </button>
+                        <button type="submit" name="status" value="draft" style="width:100%;padding:12px;border-radius:8px;border:1px solid #d0d5dd;background:#fff;color:#475467;cursor:pointer;">
+                            Save Draft
+                        </button>
+                        @if($isEdit)
+                            <button type="submit" name="status" value="archived" style="width:100%;padding:12px;border-radius:8px;border:1px solid #d0d5dd;background:#fff;color:#b42318;cursor:pointer;">
+                                Archive Product
+                            </button>
+                        @endif
+                        <a href="{{ route('admin.merchandise.products.index') }}" style="text-align:center;padding:12px;color:#475467;text-decoration:none;">Cancel</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </form>
+    
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const container = document.getElementById('variants-container');
+            const addBtn = document.getElementById('add-variant-btn');
+            const mainStockInput = document.querySelector('input[name="inventory_stock"]');
+
+            function updateMainStock() {
+                const stockInputs = container.querySelectorAll('input[name*="[stock]"]');
+                let totalStock = 0;
+                if (stockInputs.length > 0) {
+                    stockInputs.forEach(input => {
+                        totalStock += parseInt(input.value) || 0;
+                    });
+                }
+                if (mainStockInput) {
+                    mainStockInput.value = totalStock;
+                }
+            }
+
+            // Initial check
+            updateMainStock();
+
+            addBtn.addEventListener('click', function() {
+                const index = new Date().getTime(); // Unique ID
+                const row = document.createElement('div');
+                row.className = 'variant-row';
+                row.style.cssText = 'display:grid;grid-template-columns:1fr 1fr 1fr auto;gap:12px;margin-bottom:12px;';
+                row.innerHTML = `
+                    <label>
+                        <span style="font-size:12px;">Size / Option</span>
+                        <input type="text" name="variants[${index}][option]" placeholder="e.g. S, M, 10" required>
+                    </label>
+                    <label>
+                        <span style="font-size:12px;">Stock</span>
+                        <input type="number" name="variants[${index}][stock]" placeholder="Qty" min="0" class="variant-stock">
+                    </label>
+                    <label>
+                        <span style="font-size:12px;">Low Stock Alert</span>
+                        <input type="number" name="variants[${index}][low_stock_threshold]" placeholder="Alert Qty" min="0" value="5">
+                    </label>
+                    <div style="display:flex;align-items:end;padding-bottom:10px;">
+                        <button type="button" class="btn-remove-variant" style="color:#b42318;background:none;border:none;cursor:pointer;">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </div>
+                `;
+                container.appendChild(row);
+                updateMainStock();
+            });
+
+            container.addEventListener('click', function(e) {
+                if (e.target.closest('.btn-remove-variant')) {
+                    e.target.closest('.variant-row').remove();
+                    updateMainStock();
+                }
+            });
+
+            container.addEventListener('input', function(e) {
+                if (e.target.classList.contains('variant-stock')) {
+                    updateMainStock();
+                }
+            });
+        });
+    </script>
 
     @push('scripts')
     <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
@@ -450,188 +638,4 @@
         });
     </script>
     @endpush
-                    
-                    <div style="margin-top:16px;display:grid;grid-template-columns:1fr 1fr;gap:16px;">
-                        <label>
-                            <span>Size Chart (Image)</span>
-                            <div class="file-input-wrapper">
-                                <input type="file" name="size_chart_path" accept="image/*">
-                            </div>
-                            @if($product->size_chart_path)
-                                <div style="margin-top:8px;">
-                                    <a href="{{ asset('storage/' . $product->size_chart_path) }}" target="_blank" style="font-size:12px;color:#490d59;">View current chart</a>
-                                </div>
-                            @endif
-                        </label>
-                        <label>
-                            <span>Measurement Video (YouTube URL)</span>
-                            <input type="url" name="video_url" value="{{ old('video_url', $product->video_url) }}" placeholder="https://youtube.com/watch?v=...">
-                        </label>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Right Column (Sidebar Style) -->
-            <div style="display:flex;flex-direction:column;gap:24px;">
-                <div class="card">
-                    <h3 style="margin:0 0 20px;color:#111827;display:flex;align-items:center;gap:10px;">
-                        <i class="fas fa-sliders-h" style="color:#490d59;background:#f7f2fb;padding:8px;border-radius:8px;"></i>
-                        Organization
-                    </h3>
-                    
-                    <div style="display:flex;flex-direction:column;gap:16px;">
-                        <label>
-                            <span>School</span>
-                            <select name="school_id">
-                                <option value="">All Schools (Global) - Default</option>
-                                @foreach($schools as $school)
-                                    <option value="{{ $school->id }}" @selected(old('school_id', $product->school_id) == $school->id)>{{ $school->name }}</option>
-                                @endforeach
-                            </select>
-                        </label>
-                        <label>
-                            <span>Grade</span>
-                            <select name="grade">
-                                <option value="">All grades</option>
-                                @foreach($grades as $key => $label)
-                                    <option value="{{ $key }}" @selected(old('grade', $product->grade) == $key)>
-                                        {{ $label }}
-                                    </option>
-                                @endforeach
-                            </select>
-                        </label>
-                        <label>
-                            <span>Category</span>
-                            <select name="category">
-                                <option value="">Select Category</option>
-                                @foreach($categories as $key => $label)
-                                    <option value="{{ $key }}" @selected(old('category', $product->category) === $key)>{{ $label }}</option>
-                                @endforeach
-                            </select>
-                        </label>
-                        <label>
-                            <span>Product Type</span>
-                            <select name="product_type">
-                                @foreach($productTypes as $key => $label)
-                                    <option value="{{ $key }}" @selected(old('product_type', $product->product_type ?? 'merchandised') === $key)>{{ $label }}</option>
-                                @endforeach
-                            </select>
-                        </label>
-                        <label>
-                            <span>Gender</span>
-                            <select name="gender">
-                                <option value="">Select Gender</option>
-                                @foreach(['male' => 'Male', 'female' => 'Female', 'unisex' => 'Unisex'] as $value => $label)
-                                    <option value="{{ $value }}" @selected(old('gender', $product->gender) === $value)>{{ $label }}</option>
-                                @endforeach
-                            </select>
-                        </label>
-                        <label>
-                            <span>Tag name</span>
-                            <input type="text" name="tag_name" value="{{ old('tag_name', $product->tag_name) }}" placeholder="Eg: Bestseller">
-                        </label>
-                    </div>
-                </div>
-
-                <div class="card">
-                    <h3 style="margin:0 0 20px;color:#111827;display:flex;align-items:center;gap:10px;">
-                        <i class="fas fa-check-circle" style="color:#490d59;background:#f7f2fb;padding:8px;border-radius:8px;"></i>
-                        Publish
-                    </h3>
-                    <label style="margin-bottom:16px;">
-                        <span>Stock status *</span>
-                        <select name="stock_status">
-                            @foreach(['in_stock' => 'In stock','out_of_stock' => 'Out of stock'] as $value => $label)
-                                <option value="{{ $value }}" @selected(old('stock_status', $product->stock_status ?? 'in_stock') === $value)>{{ $label }}</option>
-                            @endforeach
-                        </select>
-                    </label>
-                    <label style="margin-bottom:20px;">
-                        <span>Availability label</span>
-                        <input type="text" name="availability_label" value="{{ old('availability_label', $product->availability_label) }}" placeholder="Eg: Ships in 2-3 days">
-                    </label>
-
-                    <div style="display:flex;flex-direction:column;gap:10px;">
-                        <button type="submit" name="status" value="live" style="width:100%;padding:12px;border:none;border-radius:8px;background:#490d59;color:#fff;font-weight:600;cursor:pointer;">
-                            Publish Product
-                        </button>
-                        <button type="submit" name="status" value="draft" style="width:100%;padding:12px;border-radius:8px;border:1px solid #d0d5dd;background:#fff;color:#475467;cursor:pointer;">
-                            Save Draft
-                        </button>
-                        @if($isEdit)
-                            <button type="submit" name="status" value="archived" style="width:100%;padding:12px;border-radius:8px;border:1px solid #d0d5dd;background:#fff;color:#b42318;cursor:pointer;">
-                                Archive Product
-                            </button>
-                        @endif
-                        <a href="{{ route('admin.merchandise.products.index') }}" style="text-align:center;padding:12px;color:#475467;text-decoration:none;">Cancel</a>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </form>
-    
-    <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            const container = document.getElementById('variants-container');
-            const addBtn = document.getElementById('add-variant-btn');
-            const mainStockInput = document.querySelector('input[name="inventory_stock"]');
-
-            function updateMainStock() {
-                const stockInputs = container.querySelectorAll('input[name*="[stock]"]');
-                let totalStock = 0;
-                if (stockInputs.length > 0) {
-                    stockInputs.forEach(input => {
-                        totalStock += parseInt(input.value) || 0;
-                    });
-                }
-                if (mainStockInput) {
-                    mainStockInput.value = totalStock;
-                }
-            }
-
-            // Initial check
-            updateMainStock();
-
-            addBtn.addEventListener('click', function() {
-                const index = new Date().getTime(); // Unique ID
-                const row = document.createElement('div');
-                row.className = 'variant-row';
-                row.style.cssText = 'display:grid;grid-template-columns:1fr 1fr 1fr auto;gap:12px;margin-bottom:12px;';
-                row.innerHTML = `
-                    <label>
-                        <span style="font-size:12px;">Size / Option</span>
-                        <input type="text" name="variants[${index}][option]" placeholder="e.g. S, M, 10" required>
-                    </label>
-                    <label>
-                        <span style="font-size:12px;">Stock</span>
-                        <input type="number" name="variants[${index}][stock]" placeholder="Qty" min="0" class="variant-stock">
-                    </label>
-                    <label>
-                        <span style="font-size:12px;">Low Stock Alert</span>
-                        <input type="number" name="variants[${index}][low_stock_threshold]" placeholder="Alert Qty" min="0" value="5">
-                    </label>
-                    <div style="display:flex;align-items:end;padding-bottom:10px;">
-                        <button type="button" class="btn-remove-variant" style="color:#b42318;background:none;border:none;cursor:pointer;">
-                            <i class="fas fa-trash"></i>
-                        </button>
-                    </div>
-                `;
-                container.appendChild(row);
-                updateMainStock();
-            });
-
-            container.addEventListener('click', function(e) {
-                if (e.target.closest('.btn-remove-variant')) {
-                    e.target.closest('.variant-row').remove();
-                    updateMainStock();
-                }
-            });
-
-            container.addEventListener('input', function(e) {
-                if (e.target.classList.contains('variant-stock')) {
-                    updateMainStock();
-                }
-            });
-        });
-    </script>
 @endsection

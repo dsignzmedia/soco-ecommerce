@@ -285,27 +285,32 @@
             console.log('Welcome Modal condition not met. hasProfiles:', hasProfiles, 'isWelcomeSeen:', isWelcomeSeen);
         }
 
+            // Handle Add Student Modal close - show welcome modal again if no profile was created
+            // Set this up first so it's available when needed
+            const addStudentModalEl = document.getElementById('addStudentModal');
+            if (addStudentModalEl) {
+                addStudentModalEl.addEventListener('hidden.bs.modal', function() {
+                    // Only show welcome modal again if user has no profiles and hasn't seen it
+                    const hasProfiles = @json(isset($profiles) && count($profiles) > 0);
+                    const isWelcomeSeen = @json((bool) Auth::user()->is_welcome_modal_seen);
+                    if (!hasProfiles && !isWelcomeSeen) {
+                        welcomeModal.show();
+                    }
+                });
+            }
+            
             // Handle 'Continue as Parent' click
             const btnContinue = document.getElementById('btnContinueParent');
             if (btnContinue) {
                 btnContinue.addEventListener('click', function() {
-                    // 1. Mark as seen in DB via AJAX
-                    fetch('{{ route("auth.mark-welcome-seen") }}', {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                            'X-CSRF-TOKEN': '{{ csrf_token() }}'
-                        }
-                    }).then(() => {
-                        // 2. Hide Welcome Modal
-                        welcomeModal.hide();
-                        // 3. Show Add Student Modal
-                        if (typeof prepareAddStudentModal === 'function') {
-                            prepareAddStudentModal();
-                            var addStudentModal = new bootstrap.Modal(document.getElementById('addStudentModal'));
-                            addStudentModal.show();
-                        }
-                    });
+                    // DON'T mark as seen - user can still switch to guest mode
+                    // Just hide Welcome Modal and show Add Student Modal
+                    welcomeModal.hide();
+                    if (typeof prepareAddStudentModal === 'function') {
+                        prepareAddStudentModal();
+                        var addStudentModal = new bootstrap.Modal(document.getElementById('addStudentModal'));
+                        addStudentModal.show();
+                    }
                 });
             }
         }
@@ -383,9 +388,17 @@
                         </div>
                     </div>
 
-                    <div class="modal-footer" style="border-top: 1px solid #e0e0e0; padding: 12px 20px; margin-top: 15px; display: flex; justify-content: flex-end; gap: 10px;">
-                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" style="border: 1px solid #ddd; background: white; color: #333; padding: 8px 16px; border-radius: 6px; font-size: 0.9rem;">Cancel</button>
-                        <button type="submit" class="btn btn-primary" style="background-color: #490D59; color: white; border: none; padding: 8px 16px; border-radius: 6px; font-size: 0.9rem;">Submit</button>
+                    <div class="modal-footer" style="border-top: 1px solid #e0e0e0; padding: 12px 20px; margin-top: 15px; display: flex; justify-content: space-between; gap: 10px;">
+                        <form action="{{ route('auth.set-guest-mode') }}" method="POST" style="margin:0;">
+                            @csrf
+                            <button type="submit" class="btn btn-outline-secondary" style="border: 1px solid #ddd; background: white; color: #666; padding: 8px 16px; border-radius: 6px; font-size: 0.9rem;">
+                                <i class="fas fa-shopping-bag me-2"></i>Shop as Guest
+                            </button>
+                        </form>
+                        <div style="display: flex; gap: 10px;">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" style="border: 1px solid #ddd; background: white; color: #333; padding: 8px 16px; border-radius: 6px; font-size: 0.9rem;">Cancel</button>
+                            <button type="submit" class="btn btn-primary" style="background-color: #490D59; color: white; border: none; padding: 8px 16px; border-radius: 6px; font-size: 0.9rem;">Submit</button>
+                        </div>
                     </div>
                 </div>
             </div>
