@@ -1,8 +1,12 @@
 <<<<<<< HEAD
+<<<<<<< HEAD
 @extends($layout ?? 'admin.layouts.base')
 =======
 @extends('admin.layouts.base')
 >>>>>>> 299705238ea0ca997c2d2210725d7c82bc6ed1a2
+=======
+@extends($layout ?? 'admin.layouts.base')
+>>>>>>> 5797570e74ac3bac92db108bc67bc9e89a56197a
 
 @section('title', 'Product Settings | The Skool Store')
 @section('page_heading', 'Product Settings')

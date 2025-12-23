@@ -2,8 +2,6 @@
 
 @php $routePrefix = $routePrefix ?? 'master.admin'; @endphp
 
-@php $routePrefix = $routePrefix ?? 'master.admin'; @endphp
-
 @section('title', 'Payment Details #' . $payment->id)
 
 @section('content')
