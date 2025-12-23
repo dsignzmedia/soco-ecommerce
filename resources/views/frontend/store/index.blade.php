@@ -229,7 +229,7 @@
                     <p class="text-muted mb-0">Now Shopping By :</p>
                 </div>
                 
-                <div class="row justify-content-start" id="productsContainer">
+                <div class="row justify-content-start align-items-stretch" id="productsContainer">
                     @foreach($allProducts as $product)
                         <div class="col-6 col-md-6 col-lg-4 col-xl-4 product-item" 
                              data-product-type="{{ $product['type'] }}"
@@ -513,17 +513,20 @@
         margin-bottom: 5px;
         text-transform: capitalize;
         line-height: 1.4;
-        min-height: 42px; /* Minimum height for 2 lines */
-        display: -webkit-box;
-        -webkit-line-clamp: 3;
-        -webkit-box-orient: vertical;
         overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        max-width: 100%;
     }
 
     .product-title a {
         color: #333;
         text-decoration: none;
-        
+        font-size: 16px;
+        display: block;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
     }
 
     .product-title a:hover {
@@ -653,8 +656,16 @@
     }
 
     .product-item {
-        display: block;
+        display: flex;
+        flex-direction: column;
         margin-bottom: 30px;
+        height: 100%;
+    }
+    
+    .product-item .vs-product.product-style1 {
+        height: 100%;
+        display: flex;
+        flex-direction: column;
     }
 
     @media (max-width: 767px) {

@@ -376,11 +376,19 @@
         text-transform: capitalize;
         line-height: 1.4;
         min-height: 44px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        max-width: 100%;
     }
 
     .product-title a {
         color: #333;
         text-decoration: none;
+        display: block;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
     }
 
     .product-title a:hover {
@@ -778,8 +786,12 @@
 
         .product-title {
             font-size: 14px;
-            min-height: 40px; /* Allow 2 lines */
+            min-height: auto;
+            height: auto;
             margin-bottom: 5px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
         }
 
         .product-price {

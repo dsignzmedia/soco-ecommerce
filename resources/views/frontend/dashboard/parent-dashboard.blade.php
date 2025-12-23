@@ -194,7 +194,7 @@
                                     <i class="fas fa-plus me-2"></i> Add Student Profile
                                 </button>
                                 
-                                <a href="{{ route('frontend.shop.index') }}" class="vs-btn style-outline btn-guest-continue" style="border: 2px solid #490D59; color: #490D59; background: transparent; border-radius: 30px; padding: 12px 30px;">
+                                <a href="{{ route('frontend.shop.index') }}" class="vs-btn style-outline btn-guest-continue" style="background: linear-gradient(135deg, #8c4fcf, #490D59); border: none; border-radius: 30px; padding: 12px 30px;">
                                     <i class="fas fa-shopping-bag me-2"></i> Continue Shopping
                                 </a>
                             </div>

@@ -40,10 +40,16 @@ class PaymentController extends Controller
 
         $payments = $query->latest()->paginate(10);
         $routePrefix = 'admin.merchandise';
+<<<<<<< HEAD
         $layout = 'admin.layouts.merchandise';
 
         // Reuse master payments view for now
         return view('admin.master.payments.index', compact('payments', 'routePrefix', 'layout'));
+=======
+
+        // Reuse master payments view for now
+        return view('admin.master.payments.index', compact('payments', 'routePrefix'));
+>>>>>>> 299705238ea0ca997c2d2210725d7c82bc6ed1a2
     }
 
     public function show(Payment $payment)
@@ -53,8 +59,12 @@ class PaymentController extends Controller
         abort_if($payment->product_type !== 'merchandised', 404);
 
         $routePrefix = 'admin.merchandise';
+<<<<<<< HEAD
         $layout = 'admin.layouts.merchandise';
         return view('admin.master.payments.show', compact('payment', 'routePrefix', 'layout'));
+=======
+        return view('admin.master.payments.show', compact('payment', 'routePrefix'));
+>>>>>>> 299705238ea0ca997c2d2210725d7c82bc6ed1a2
     }
 }
 

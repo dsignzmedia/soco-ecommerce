@@ -2,6 +2,8 @@
 
 @php $routePrefix = $routePrefix ?? 'master.admin'; @endphp
 
+@php $routePrefix = $routePrefix ?? 'master.admin'; @endphp
+
 @section('title', 'Payments | The Skool Store')
 @section('page_heading', 'Payments')
 @section('page_subheading', 'Monitor and manage all payment transactions')
