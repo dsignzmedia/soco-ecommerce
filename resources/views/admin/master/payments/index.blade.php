@@ -1,4 +1,4 @@
-@extends('admin.layouts.base')
+@extends($layout ?? 'admin.layouts.base')
 
 @php $routePrefix = $routePrefix ?? 'master.admin'; @endphp
 
@@ -154,7 +154,7 @@
              <input type="date" name="date_to" placeholder="To Date" onclick="this.showPicker()" value="{{ request('date_to') }}">
 
              <button type="submit">Apply Filter</button>
-             <a href="{{ route('master.admin.payments.index') }}" class="reset">Reset</a>
+             <a href="{{ route($routePrefix . '.payments.index') }}" class="reset">Reset</a>
         </form>
     </section>
 
