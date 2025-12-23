@@ -40,8 +40,9 @@ class PaymentController extends Controller
 
         $payments = $query->latest()->paginate(10);
         $routePrefix = 'admin.back_to_school';
+        $layout = 'admin.layouts.back_to_school';
 
-        return view('admin.master.payments.index', compact('payments', 'routePrefix'));
+        return view('admin.master.payments.index', compact('payments', 'routePrefix', 'layout'));
     }
 
     public function show(Payment $payment)
@@ -50,7 +51,8 @@ class PaymentController extends Controller
         abort_if($payment->product_type !== 'back_to_school', 404);
 
         $routePrefix = 'admin.back_to_school';
-        return view('admin.master.payments.show', compact('payment', 'routePrefix'));
+        $layout = 'admin.layouts.back_to_school';
+        return view('admin.master.payments.show', compact('payment', 'routePrefix', 'layout'));
     }
 }
 

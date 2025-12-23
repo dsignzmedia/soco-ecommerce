@@ -1,4 +1,4 @@
-@extends('admin.layouts.base')
+@extends($layout ?? 'admin.layouts.base')
 
 @section('title', 'Product Settings | The Skool Store')
 @section('page_heading', 'Product Settings')

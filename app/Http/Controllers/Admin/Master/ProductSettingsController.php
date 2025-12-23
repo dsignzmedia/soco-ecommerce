@@ -22,6 +22,13 @@ class ProductSettingsController extends Controller
             ->paginate(10, ['*'], 'categories')
             ->appends($request->query());
 
-        return view('admin.product-settings.index', compact('productTypes', 'categories'));
+        $routeName = $request->route()?->getName() ?? '';
+        $layout = match (true) {
+            str_starts_with($routeName, 'admin.back_to_school.') => 'admin.layouts.back_to_school',
+            str_starts_with($routeName, 'admin.merchandise.') => 'admin.layouts.merchandise',
+            default => 'admin.layouts.base',
+        };
+
+        return view('admin.product-settings.index', compact('productTypes', 'categories', 'layout'));
     }
 }

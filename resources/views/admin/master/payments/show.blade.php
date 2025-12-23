@@ -1,4 +1,4 @@
-@extends('admin.layouts.base')
+@extends($layout ?? 'admin.layouts.base')
 
 @php $routePrefix = $routePrefix ?? 'master.admin'; @endphp
 
@@ -117,7 +117,7 @@
     <!-- Top Header Card -->
     <div class="payment-header">
         <div class="d-flex align-items-center">
-            <a href="{{ route('master.admin.payments.index') }}" class="btn-back mr-4">
+            <a href="{{ route($routePrefix . '.payments.index') }}" class="btn-back mr-4">
                 <i class="fas fa-arrow-left"></i> Back
             </a>
             <div class="payment-title">
