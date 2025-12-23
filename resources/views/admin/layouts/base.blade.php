@@ -163,6 +163,37 @@
             gap: 6px;
         }
 
+        .nav__item-wrapper {
+            position: relative;
+        }
+        .nav__submenu {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.3s ease, padding 0.3s ease;
+            padding-left: 24px;
+            padding-top: 0;
+            padding-bottom: 0;
+            background: #f9fafb;
+            border-left: 2px solid #e5e7eb;
+            margin-left: 12px;
+        }
+        .nav__submenu.open {
+            max-height: 500px;
+            padding-top: 8px;
+            padding-bottom: 8px;
+        }
+        .nav__subitem {
+            /* padding-left: 32px !important; */
+            font-size: 13px;
+        }
+        .nav__chevron {
+            margin-left: auto;
+            font-size: 11px;
+            transition: transform 0.2s;
+        }
+        .nav__item-wrapper.open .nav__chevron {
+            transform: rotate(180deg);
+        }
         .nav__item {
             padding: 12px 14px;
             border-radius: 12px;
@@ -448,7 +479,7 @@
     <div class="layout">
         <aside class="sidebar">
             <div class="brand">
-                <img src="{{ asset('assets/img/logo.svg') }}" alt="The Skool Store logo">
+                <img src="{{ asset('assets/img/new logo/new_logo.png') }}" alt="The Skool Store logo">
                 <small>Master Admin Portal</small>
             </div>
             <nav class="nav">
@@ -457,7 +488,16 @@
                         ['label' => 'Dashboard', 'route' => 'master.admin.dashboard', 'icon' => 'fas fa-th-large'],
                         ['label' => 'School Management', 'route' => 'master.admin.schools.index', 'active' => 'master.admin.schools.*', 'icon' => 'fas fa-school'],
                         ['label' => 'Orders', 'route' => 'master.admin.orders.index', 'active' => 'master.admin.orders.*', 'icon' => 'fas fa-shopping-bag'],
-                        ['label' => 'Products & Catalog', 'route' => 'master.admin.catalog.index', 'active' => 'master.admin.catalog.*', 'icon' => 'fas fa-box-open'],
+                        [
+                            'label' => 'Product', 
+                            'route' => 'master.admin.catalog.index', 
+                            'active' => 'master.admin.catalog.*', 
+                            'icon' => 'fas fa-box-open',
+                            'submenu' => [
+                                ['label' => 'Catalog', 'route' => 'master.admin.catalog.index', 'active' => 'master.admin.catalog.*', 'icon' => 'fas fa-book'],
+                                ['label' => 'Settings', 'route' => 'master.admin.product-settings.index', 'active' => ['master.admin.product-settings.*', 'master.admin.product-types.*', 'master.admin.categories.*'], 'icon' => 'fas fa-cog']
+                            ]
+                        ],
                         ['label' => 'Payments', 'route' => 'master.admin.payments.index', 'active' => 'master.admin.payments.*', 'icon' => 'fas fa-credit-card'],
                         ['label' => 'Inventory', 'route' => 'master.admin.inventory.dashboard', 'active' => 'master.admin.inventory.*', 'icon' => 'fas fa-warehouse'],
                         ['label' => 'Returns & Exchanges', 'route' => 'master.admin.returns-exchange.index', 'active' => 'master.admin.returns-exchange.*', 'icon' => 'fas fa-exchange-alt'],
@@ -476,10 +516,30 @@
                     ];
                 @endphp
                 @foreach($navItems as $item)
-                    <a class="nav__item {{ (isset($item['active']) ? request()->routeIs($item['active']) : request()->routeIs($item['route'])) ? 'active' : '' }}" href="{{ route($item['route']) }}">
-                        <i class="{{ $item['icon'] }}" style="width: 18px; text-align: center;"></i>
-                        {{ $item['label'] }}
-                    </a>
+                    @if(isset($item['submenu']) && !empty($item['submenu']))
+                        <div class="nav__item-wrapper" style="position:relative;">
+                            <div class="nav__item {{ (isset($item['active']) ? request()->routeIs($item['active']) : request()->routeIs($item['route'])) ? 'active' : '' }}" style="display:flex;align-items:center;gap:10px;">
+                                <a href="{{ route($item['route']) }}" style="flex:1;display:flex;align-items:center;gap:10px;text-decoration:none;color:inherit;">
+                                    <i class="{{ $item['icon'] }}" style="width: 18px; text-align: center;"></i>
+                                    {{ $item['label'] }}
+                                </a>
+                                <i class="fas fa-chevron-down nav__chevron" onclick="toggleSubmenu(event, this.closest('.nav__item-wrapper'));" style="font-size:11px;transition:transform 0.2s;cursor:pointer;padding:4px;flex-shrink:0;"></i>
+                            </div>
+                            <div class="nav__submenu">
+                                @foreach($item['submenu'] as $subItem)
+                                    <a class="nav__item nav__subitem {{ (isset($subItem['active']) ? request()->routeIs($subItem['active']) : request()->routeIs($subItem['route'])) ? 'active' : '' }}" href="{{ route($subItem['route']) }}">
+                                        <i class="{{ $subItem['icon'] ?? 'fas fa-circle' }}" style="width: 18px; text-align: center;font-size:13px;"></i>
+                                        {{ $subItem['label'] }}
+                                    </a>
+                                @endforeach
+                            </div>
+                        </div>
+                    @else
+                        <a class="nav__item {{ (isset($item['active']) ? request()->routeIs($item['active']) : request()->routeIs($item['route'])) ? 'active' : '' }}" href="{{ route($item['route']) }}">
+                            <i class="{{ $item['icon'] }}" style="width: 18px; text-align: center;"></i>
+                            {{ $item['label'] }}
+                        </a>
+                    @endif
                 @endforeach
             </nav>
         </aside>
@@ -624,7 +684,55 @@
     </div>
 
     <script>
+        // Submenu toggle functionality (available globally)
+        function toggleSubmenu(event, wrapper) {
+            if (event) {
+                event.preventDefault();
+                event.stopPropagation();
+            }
+            if (!wrapper) return;
+            
+            const submenu = wrapper.querySelector('.nav__submenu');
+            if (!submenu) return;
+            
+            const isOpen = wrapper.classList.contains('open');
+            
+            // Close all other submenus
+            document.querySelectorAll('.nav__item-wrapper').forEach(w => {
+                if (w !== wrapper) {
+                    w.classList.remove('open');
+                    const sm = w.querySelector('.nav__submenu');
+                    if (sm) sm.classList.remove('open');
+                }
+            });
+            
+            // Toggle current submenu
+            if (isOpen) {
+                wrapper.classList.remove('open');
+                submenu.classList.remove('open');
+            } else {
+                wrapper.classList.add('open');
+                submenu.classList.add('open');
+            }
+        }
+        
         document.addEventListener('DOMContentLoaded', function() {
+            // Auto-open submenu if current route matches any submenu item or parent route
+            document.querySelectorAll('.nav__item-wrapper').forEach(wrapper => {
+                const submenu = wrapper.querySelector('.nav__submenu');
+                if (!submenu) return;
+                
+                const activeSubItem = submenu.querySelector('.nav__subitem.active');
+                const parentItem = wrapper.querySelector('.nav__item');
+                const isParentActive = parentItem && parentItem.classList.contains('active');
+                
+                // Open if any submenu item is active OR if parent is active
+                if (activeSubItem || isParentActive) {
+                    wrapper.classList.add('open');
+                    submenu.classList.add('open');
+                }
+            });
+
             const profileChip = document.getElementById('profileChip');
             const profileDropdown = document.getElementById('profileDropdown');
 

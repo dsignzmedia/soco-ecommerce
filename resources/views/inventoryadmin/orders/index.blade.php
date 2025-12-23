@@ -230,27 +230,19 @@
                                         width: 100%;
                                         text-transform: uppercase;
                                         background-color: 
-                                            @if($order->order_status == 'delivered') #0ea5e9
-                                            @elseif($order->order_status == 'payment_pending') #eab308
+                                            @if($order->order_status == 'order_placed') #6b7280
                                             @elseif($order->order_status == 'processing') #22c55e
-                                            @elseif($order->order_status == 'shipped') #3b82f6
-                                            @elseif($order->order_status == 'failed') #ef4444
-                                            @elseif($order->order_status == 'refunded') #64748b
-                                            @elseif($order->order_status == 'label_generated') #1e293b
-                                            @elseif($order->order_status == 'rtd') #475569
-                                            @elseif($order->order_status == 'dispatched') #2563eb
+                                            @elseif($order->order_status == 'packed') #3b82f6
+                                            @elseif($order->order_status == 'shipped') #0ea5e9
+                                            @elseif($order->order_status == 'delivered') #10b981
                                             @else #6b7280 @endif;
                                     ">
                                         @foreach([
-                                            'delivered' => 'DELIVERED',
-                                            'payment_pending' => 'PAYMENT PENDING',
+                                            'order_placed' => 'ORDER PLACED',
                                             'processing' => 'PROCESSING',
+                                            'packed' => 'PACKED',
                                             'shipped' => 'SHIPPED',
-                                            'failed' => 'FAILED',
-                                            'refunded' => 'REFUNDED',
-                                            'label_generated' => 'LABEL GENERATED',
-                                            'rtd' => 'RTD',
-                                            'dispatched' => 'DISPATCHED'
+                                            'delivered' => 'DELIVERED'
                                         ] as $value => $label)
                                             <option value="{{ $value }}" @selected($order->order_status == $value) style="background-color: white; color: black;">{{ $label }}</option>
                                         @endforeach

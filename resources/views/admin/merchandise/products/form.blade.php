@@ -36,76 +36,91 @@
                         <input type="text" name="product_name" value="{{ old('product_name', $product->product_name) }}" required>
                     </label>
                     
-                    <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
-                        <label>
-                            <span>Description</span>
-                            <textarea name="description" rows="5" placeholder="Rich text / marketing copy...">{{ old('description', $product->description) }}</textarea>
-                        </label>
-                        <label>
-                            <span>Size Guidance</span>
-                            <textarea name="size_guidance" rows="5" placeholder="Add measurement tips or conversion charts...">{{ old('size_guidance', $product->size_guidance) }}</textarea>
-                        </label>
-                    </div>
+                    <label>
+                        <span>Description</span>
+                        <textarea name="description" rows="5" placeholder="Rich text / marketing copy...">{{ old('description', $product->description) }}</textarea>
+                    </label>
                     
 
                 </div>
 
-                <!-- Pricing -->
+                <!-- Pricing & Product Variants -->
                 <div class="card">
-                    <h3 style="margin:0 0 20px;color:#111827;display:flex;align-items:center;gap:10px;">
-                        <i class="fas fa-tag" style="color:#490d59;background:#f7f2fb;padding:8px;border-radius:8px;"></i>
-                        Pricing
-                    </h3>
-                    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:16px;">
-                        <label>
-                            <span>Price (Inc Tax) *</span>
-                            <input type="number" name="price_regular" min="0" step="0.01" value="{{ old('price_regular', $product->price_regular) }}" required>
-                        </label>
-                        <label>
-                            <span>Sale price</span>
-                            <input type="number" name="price_sale" min="0" step="0.01" value="{{ old('price_sale', $product->price_sale) }}">
-                        </label>
-                        <label>
-                            <span>Tax (%)</span>
-                            <input type="number" name="price_tax" min="0" step="0.01" value="{{ old('price_tax', $product->price_tax) }}">
-                        </label>
-                        <label>
-                            <span>Tax profile</span>
-                            <select name="tax_profile">
-                                <option value="">Select profile</option>
-                                @foreach(['gst-5','gst-12','gst-18'] as $profile)
-                                    <option value="{{ $profile }}" @selected(old('tax_profile', $product->tax_profile) === $profile)>{{ strtoupper($profile) }}</option>
-                                @endforeach
-                            </select>
-                        </label>
+                    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;">
+                        <h3 style="margin:0;color:#111827;display:flex;align-items:center;gap:10px;">
+                            <i class="fas fa-tag" style="color:#490d59;background:#f7f2fb;padding:8px;border-radius:8px;"></i>
+                            Pricing & Product Variants
+                        </h3>
+                        {{--<label style="display:flex;align-items:center;gap:8px;margin:0;cursor:pointer;">
+                            <input type="checkbox" id="variant-pricing-toggle" name="variant_based_pricing" value="1" @checked(old('variant_based_pricing', $product->category === 'fabrics' || $product->category === 'Fabrics')) style="width:auto;">
+                            <span style="font-size:13px;color:#475467;">Variant-based pricing (Fabric)</span>
+                        </label>--}}
                     </div>
-                </div>
+                    
+                    <!-- Pricing Section -->
+                    <div id="main-pricing-section" style="margin-bottom:24px;padding-bottom:24px;border-bottom:1px solid #e5e7eb;">
+                        <h4 style="margin:0 0 16px;color:#374151;font-size:14px;font-weight:600;">Pricing</h4>
+                        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:16px;">
+                            <label class="main-price-field">
+                                <span>Price *</span>
+                                <input type="number" id="main-price-input" name="price_regular" min="0" step="0.01" value="{{ old('price_regular', $product->price_regular) }}" required>
+                            </label>
+                            <label class="tax-fields">
+                                <span>Tax (%)</span>
+                                <input type="number" name="price_tax" min="0" step="0.01" value="{{ old('price_tax', $product->price_tax) }}">
+                            </label>
+                            <label class="tax-fields">
+                                <span>Tax profile</span>
+                                <select name="tax_profile">
+                                    <option value="">Select profile</option>
+                                    @foreach(['gst-5','gst-12','gst-18'] as $profile)
+                                        <option value="{{ $profile }}" @selected(old('tax_profile', $product->tax_profile) === $profile)>{{ strtoupper($profile) }}</option>
+                                    @endforeach
+                                </select>
+                            </label>
+                            <label class="inclusive-tax-field" style="display:flex;align-items:center;gap:8px;padding-top:24px;">
+                                <input type="checkbox" name="price_inclusive_tax" value="1" @checked(old('price_inclusive_tax', $product->price_inclusive_tax ?? true)) style="width:auto;">
+                                <span>Inclusive of all tax</span>
+                            </label>
+                            {{-- Weight field removed - now using variant-wise weight --}}
+                        </div>
+                    </div>
 
-                <!-- Metadata Hidden Inputs -->
-                <input type="hidden" name="inventory_stock" value="{{ old('inventory_stock', $product->inventory_stock ?? 0) }}">
-                <input type="hidden" name="low_stock_threshold" value="{{ old('low_stock_threshold', $product->low_stock_threshold ?? 5) }}">
+                    <!-- Metadata Hidden Inputs -->
+                    <input type="hidden" name="inventory_stock" value="{{ old('inventory_stock', $product->inventory_stock ?? 0) }}">
+                    <input type="hidden" name="low_stock_threshold" value="{{ old('low_stock_threshold', $product->low_stock_threshold ?? 5) }}">
 
-                <!-- Variants (Size & Stock) -->
-                <div class="card">
-                    <h3 style="margin:0 0 20px;color:#111827;display:flex;align-items:center;gap:10px;">
-                        <i class="fas fa-layer-group" style="color:#490d59;background:#f7f2fb;padding:8px;border-radius:8px;"></i>
-                        Product Variants
-                    </h3>
+                    <!-- Product Variants Section -->
+                    <div>
+                        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
+                            <h4 style="margin:0;color:#374151;font-size:14px;font-weight:600;">Product Variants</h4>
+                            <button type="button" id="apply-weight-all-btn" style="display:none;padding:6px 12px;background:#490d59;color:white;border:none;border-radius:6px;font-size:12px;cursor:pointer;">
+                                <i class="fas fa-copy"></i> Apply Weight to All Sizes
+                            </button>
+                        </div>
                     <div id="variants-container">
                         @if(old('variants'))
                             @foreach(old('variants') as $index => $variant)
-                                <div class="variant-row" style="display:grid;grid-template-columns:1fr 1fr 1fr auto;gap:12px;margin-bottom:12px;">
+                                <div class="variant-row" style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr auto;gap:12px;margin-bottom:12px;align-items:end;">
                                     <label>
                                         <span style="font-size:12px;">Size / Option</span>
                                         <input type="text" name="variants[{{$index}}][option]" value="{{ $variant['option'] }}" placeholder="e.g. S, M, 10" required>
                                         <input type="hidden" name="variants[{{$index}}][id]" value="{{ $variant['id'] ?? '' }}">
                                     </label>
+                                    <label class="variant-price-label" style="display:none;position:absolute;visibility:hidden;">
+                                        <span class="variant-price-label-text" style="font-size:12px;">Price *</span>
+                                        <input type="number" name="variants[{{$index}}][price]" min="0" step="0.01" value="{{ $variant['price'] ?? '' }}" placeholder="0.00" class="variant-price-input">
+                                    </label>
+                                    <label class="variant-weight-label" style="display:block;">
+                                        <span class="variant-weight-label-text" style="font-size:12px;">Weight (kg)</span>
+                                        <input type="number" name="variants[{{$index}}][weight]" min="0" step="0.01" value="{{ $variant['weight'] ?? '' }}" placeholder="0.00" class="variant-weight-input">
+                                    </label>
                                     <label>
-                                        <span style="font-size:12px;">Stock</span>
+                                        <span class="variant-stock-label-text" style="font-size:12px;">Stock</span>
                                         <input type="number" name="variants[{{$index}}][stock]" value="{{ $variant['stock'] }}" placeholder="Qty" min="0" class="variant-stock">
                                     </label>
                                     <label>
-                                        <span style="font-size:12px;">Low Stock Alert</span>
+                                        <span class="variant-low-stock-label-text" style="font-size:12px;">Low Stock Alert</span>
                                         <input type="number" name="variants[{{$index}}][low_stock_threshold]" value="{{ $variant['low_stock_threshold'] ?? 5 }}" placeholder="Alert Qty" min="0">
                                     </label>
                                     <div style="display:flex;align-items:end;padding-bottom:10px;">
@@ -117,11 +132,19 @@
                             @endforeach
                         @elseif($product->variants && $product->variants->count() > 0)
                             @foreach($product->variants as $index => $variant)
-                                <div class="variant-row" style="display:grid;grid-template-columns:1fr 1fr 1fr auto;gap:12px;margin-bottom:12px;">
+                                <div class="variant-row" style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr auto;gap:12px;margin-bottom:12px;align-items:end;">
                                     <label>
                                         <span style="font-size:12px;">Size / Option</span>
                                         <input type="text" name="variants[{{$index}}][option]" value="{{ $variant->option }}" placeholder="e.g. S, M, 10" required>
                                         <input type="hidden" name="variants[{{$index}}][id]" value="{{ $variant->id }}">
+                                    </label>
+                                    <label class="variant-price-label" style="display:none;position:absolute;visibility:hidden;">
+                                        <span style="font-size:12px;">Price *</span>
+                                        <input type="number" name="variants[{{$index}}][price]" min="0" step="0.01" value="{{ $variant->price ?? '' }}" placeholder="0.00" class="variant-price-input">
+                                    </label>
+                                    <label class="variant-weight-label" style="display:block;">
+                                        <span style="font-size:12px;">Weight (kg)</span>
+                                        <input type="number" name="variants[{{$index}}][weight]" min="0" step="0.01" value="{{ $variant->weight ?? '' }}" placeholder="0.00" class="variant-weight-input">
                                     </label>
                                     <label>
                                         <span style="font-size:12px;">Stock</span>
@@ -140,10 +163,18 @@
                             @endforeach
                         @else
                             <!-- Empty State / One Default Row -->
-                             <div class="variant-row" style="display:grid;grid-template-columns:1fr 1fr 1fr auto;gap:12px;margin-bottom:12px;">
+                             <div class="variant-row" style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr auto;gap:12px;margin-bottom:12px;align-items:end;">
                                 <label>
                                     <span style="font-size:12px;">Size / Option</span>
                                     <input type="text" name="variants[0][option]" placeholder="e.g. S, M, 10">
+                                </label>
+                                <label class="variant-price-label" style="display:none;position:absolute;visibility:hidden;">
+                                    <span style="font-size:12px;">Price *</span>
+                                    <input type="number" name="variants[0][price]" min="0" step="0.01" placeholder="0.00" class="variant-price-input">
+                                </label>
+                                <label class="variant-weight-label" style="display:block;">
+                                    <span style="font-size:12px;">Weight (kg)</span>
+                                    <input type="number" name="variants[0][weight]" min="0" step="0.01" placeholder="0.00" class="variant-weight-input">
                                 </label>
                                 <label>
                                     <span style="font-size:12px;">Stock</span>
@@ -164,6 +195,7 @@
                     <button type="button" id="add-variant-btn" style="margin-top:10px;background:#f9fafb;border:1px dashed #d0d5dd;border-radius:8px;width:100%;padding:10px;color:#475467;font-size:13px;cursor:pointer;">
                         + Add another size/variant
                     </button>
+                    </div>
                 </div>
 
                 <!-- Media -->
@@ -172,7 +204,7 @@
                         <i class="fas fa-images" style="color:#490d59;background:#f7f2fb;padding:8px;border-radius:8px;"></i>
                         Media
                     </h3>
-                    <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
+                    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px;">
                         <label>
                             <span>Featured product image</span>
                             <div class="file-input-wrapper">
@@ -222,6 +254,18 @@
                                 @endif
                             </div>
                         </div>
+                        <label>
+                            <span>Size Measurement Image</span>
+                            <div class="file-input-wrapper">
+                                <input type="file" name="size_measurement_image" accept="image/*">
+                            </div>
+                            @if($product->size_measurement_image)
+                                <div style="margin-top:8px;">
+                                    <img src="{{ asset('storage/' . $product->size_measurement_image) }}" alt="Size Measurement" style="width:80px;height:80px;object-fit:cover;border-radius:8px;">
+                                    <a href="{{ asset('storage/' . $product->size_measurement_image) }}" target="_blank" style="font-size:12px;color:#490d59;display:block;margin-top:4px;">View image</a>
+                                </div>
+                            @endif
+                        </label>
                     </div>
                     
                     <div style="margin-top:16px;display:grid;grid-template-columns:1fr 1fr;gap:16px;">
@@ -253,7 +297,8 @@
                     </h3>
                     
                     <div style="display:flex;flex-direction:column;gap:16px;">
-                        <label>
+                        {{-- Commented out - can be enabled later if needed --}}
+                        {{-- <label>
                             <span>School</span>
                             <select name="school_id">
                                 <option value="">All Schools (Global) - Default</option>
@@ -272,17 +317,17 @@
                                     </option>
                                 @endforeach
                             </select>
-                        </label>
-                        <label>
+                        </label> --}}
+                        <label id="category-label">
                             <span>Category</span>
-                            <select name="category">
+                            <select name="category" id="category-select">
                                 <option value="">Select Category</option>
                                 @foreach($categories as $key => $label)
                                     <option value="{{ $key }}" @selected(old('category', $product->category) === $key)>{{ $label }}</option>
                                 @endforeach
                             </select>
                         </label>
-                        <label>
+                        {{-- <label>
                             <span>Product Type</span>
                             <select name="product_type">
                                 @foreach($productTypes as $key => $label)
@@ -302,7 +347,7 @@
                         <label>
                             <span>Tag name</span>
                             <input type="text" name="tag_name" value="{{ old('tag_name', $product->tag_name) }}" placeholder="Eg: Bestseller">
-                        </label>
+                        </label> --}}
                     </div>
                 </div>
 
@@ -319,11 +364,11 @@
                             @endforeach
                         </select>
                     </label>
-                    <label style="margin-bottom:20px;">
+                    <!-- <label style="margin-bottom:20px;">
                         <span>Availability label</span>
                         <input type="text" name="availability_label" value="{{ old('availability_label', $product->availability_label) }}" placeholder="Eg: Ships in 2-3 days">
-                    </label>
-
+                    </label> -->
+                            
                     <div style="display:flex;flex-direction:column;gap:10px;">
                         <button type="submit" name="status" value="live" style="width:100%;padding:12px;border:none;border-radius:8px;background:#490d59;color:#fff;font-weight:600;cursor:pointer;">
                             Publish Product
@@ -365,30 +410,156 @@
             // Initial check
             updateMainStock();
 
+            {{-- Variant-based pricing toggle functionality - Commented out for now
+            const variantPricingToggle = document.getElementById('variant-pricing-toggle');
+            const mainPricingSection = document.getElementById('main-pricing-section');
+            const mainPriceInput = document.getElementById('main-price-input');
+            
+            function toggleVariantPricing() {
+                const isEnabled = variantPricingToggle.checked;
+                const variantRows = container.querySelectorAll('.variant-row');
+                const variantPriceLabels = container.querySelectorAll('.variant-price-label');
+                const variantWeightLabels = container.querySelectorAll('.variant-weight-label');
+                const weightField = document.querySelector('.weight-field');
+                const mainPriceField = document.querySelector('.main-price-field');
+                const inclusiveTaxField = document.querySelector('.inclusive-tax-field');
+                
+                // Hide/show main price field (but keep pricing section visible for tax fields and inclusive tax)
+                if (mainPriceField) {
+                    mainPriceField.style.display = isEnabled ? 'none' : 'block';
+                }
+                
+                // Tax fields remain visible and functional always
+                // (No need to hide/show tax fields)
+                
+                // Hide/show main weight field
+                if (weightField) {
+                    weightField.style.display = isEnabled ? 'none' : 'block';
+                }
+                
+                // Keep inclusive tax field always visible
+                if (inclusiveTaxField) {
+                    inclusiveTaxField.style.display = 'flex';
+                }
+                
+                // Auto-select "Fabrics" category and hide category field when variant pricing is enabled
+                const categoryLabel = document.getElementById('category-label');
+                const categorySelect = document.getElementById('category-select');
+                if (categorySelect && categoryLabel) {
+                    if (isEnabled) {
+                        // Set category to 'fabrics' if it exists
+                        const fabricsOption = categorySelect.querySelector('option[value="fabrics"]');
+                        if (fabricsOption) {
+                            categorySelect.value = 'fabrics';
+                        }
+                        // Hide the category field
+                        categoryLabel.style.display = 'none';
+                    } else {
+                        // Show the category field
+                        categoryLabel.style.display = 'block';
+                    }
+                }
+                
+                // Make main price optional when variant pricing is enabled
+                if (mainPriceInput) {
+                    mainPriceInput.required = !isEnabled;
+                    if (isEnabled) {
+                        mainPriceInput.removeAttribute('required');
+                    } else {
+                        mainPriceInput.setAttribute('required', 'required');
+                    }
+                }
+                
+                // Show/hide price inputs in variants and update labels
+                variantPriceLabels.forEach(label => {
+                    label.style.display = isEnabled ? 'block' : 'none';
+                    const priceInput = label.querySelector('.variant-price-input');
+                    const priceLabelText = label.querySelector('.variant-price-label-text');
+                    if (priceInput) {
+                        priceInput.required = isEnabled;
+                    }
+                    if (priceLabelText) {
+                        priceLabelText.textContent = isEnabled ? 'Price of Fabric' : 'Price *';
+                    }
+                });
+                
+                // Show/hide weight inputs in variants and update labels
+                variantWeightLabels.forEach(label => {
+                    label.style.display = isEnabled ? 'block' : 'none';
+                    const weightInput = label.querySelector('.variant-weight-input');
+                    const weightLabelText = label.querySelector('.variant-weight-label-text');
+                    if (weightInput) {
+                        weightInput.required = isEnabled;
+                    }
+                    if (weightLabelText) {
+                        weightLabelText.textContent = isEnabled ? 'Weight of Fabric (kg)' : 'Weight (kg)';
+                    }
+                });
+                
+                // Update stock and low stock alert labels
+                const stockLabels = container.querySelectorAll('.variant-stock-label-text');
+                const lowStockLabels = container.querySelectorAll('.variant-low-stock-label-text');
+                stockLabels.forEach(label => {
+                    label.textContent = isEnabled ? 'Stock of Fabric' : 'Stock';
+                });
+                lowStockLabels.forEach(label => {
+                    label.textContent = isEnabled ? 'Qty of Fabric' : 'Low Stock Alert';
+                });
+                
+                // Update grid columns for variant rows
+                variantRows.forEach(row => {
+                    if (isEnabled) {
+                        row.style.gridTemplateColumns = '1fr 1fr 1fr 1fr 1fr auto';
+                    } else {
+                        row.style.gridTemplateColumns = '1fr 1fr 1fr auto';
+                    }
+                });
+            }
+            
+            // Initialize on page load
+            if (variantPricingToggle) {
+                variantPricingToggle.addEventListener('change', toggleVariantPricing);
+                toggleVariantPricing(); // Initial state
+            }
+            --}}
+
             addBtn.addEventListener('click', function() {
                 const index = new Date().getTime(); // Unique ID
+                // const isVariantPricing = variantPricingToggle ? variantPricingToggle.checked : false; // Commented out - variant pricing toggle disabled
+                const isVariantPricing = false; // Always false since toggle is commented out
                 const row = document.createElement('div');
                 row.className = 'variant-row';
-                row.style.cssText = 'display:grid;grid-template-columns:1fr 1fr 1fr auto;gap:12px;margin-bottom:12px;';
-                row.innerHTML = `
-                    <label>
-                        <span style="font-size:12px;">Size / Option</span>
-                        <input type="text" name="variants[${index}][option]" placeholder="e.g. S, M, 10" required>
-                    </label>
-                    <label>
-                        <span style="font-size:12px;">Stock</span>
-                        <input type="number" name="variants[${index}][stock]" placeholder="Qty" min="0" class="variant-stock">
-                    </label>
-                    <label>
-                        <span style="font-size:12px;">Low Stock Alert</span>
-                        <input type="number" name="variants[${index}][low_stock_threshold]" placeholder="Alert Qty" min="0" value="5">
-                    </label>
-                    <div style="display:flex;align-items:end;padding-bottom:10px;">
-                        <button type="button" class="btn-remove-variant" style="color:#b42318;background:none;border:none;cursor:pointer;">
-                            <i class="fas fa-trash"></i>
-                        </button>
-                    </div>
-                `;
+                // Always show weight field for variants
+                row.style.cssText = 'display:grid;grid-template-columns:1fr 1fr 1fr 1fr auto;gap:12px;margin-bottom:12px;align-items:end;';
+                    row.innerHTML = `
+                        <label>
+                            <span style="font-size:12px;">Size / Option</span>
+                            <input type="text" name="variants[${index}][option]" placeholder="e.g. S, M, 10" required>
+                        </label>
+                        ${isVariantPricing ? `
+                        <label class="variant-price-label" style="display:block;">
+                            <span class="variant-price-label-text" style="font-size:12px;">Price of Fabric</span>
+                            <input type="number" name="variants[${index}][price]" min="0" step="0.01" placeholder="0.00" class="variant-price-input" required>
+                        </label>
+                        ` : ''}
+                        <label class="variant-weight-label" style="display:block;">
+                            <span class="variant-weight-label-text" style="font-size:12px;">Weight (kg)</span>
+                            <input type="number" name="variants[${index}][weight]" min="0" step="0.01" placeholder="0.00" class="variant-weight-input">
+                        </label>
+                        <label>
+                            <span class="variant-stock-label-text" style="font-size:12px;">${isVariantPricing ? 'Stock of Fabric' : 'Stock'}</span>
+                            <input type="number" name="variants[${index}][stock]" placeholder="Qty" min="0" class="variant-stock">
+                        </label>
+                        <label>
+                            <span class="variant-low-stock-label-text" style="font-size:12px;">${isVariantPricing ? 'Qty of Fabric' : 'Low Stock Alert'}</span>
+                            <input type="number" name="variants[${index}][low_stock_threshold]" placeholder="Alert Qty" min="0" value="5">
+                        </label>
+                        <div style="display:flex;align-items:end;padding-bottom:10px;">
+                            <button type="button" class="btn-remove-variant" style="color:#b42318;background:none;border:none;cursor:pointer;">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </div>
+                    `;
                 container.appendChild(row);
                 updateMainStock();
             });
@@ -405,6 +576,48 @@
                     updateMainStock();
                 }
             });
+            
+            // Apply Weight to All Sizes functionality
+            const applyWeightAllBtn = document.getElementById('apply-weight-all-btn');
+            if (applyWeightAllBtn) {
+                // Show button when there are variants
+                function toggleApplyWeightButton() {
+                    const variantRows = container.querySelectorAll('.variant-row');
+                    applyWeightAllBtn.style.display = variantRows.length > 0 ? 'block' : 'none';
+                }
+                
+                    applyWeightAllBtn.addEventListener('click', function() {
+                        const variantRows = container.querySelectorAll('.variant-row');
+                        if (variantRows.length === 0) {
+                            alert('No variants to apply weight to.');
+                            return;
+                        }
+                        
+                        // Get weight from first variant row
+                        const firstWeightInput = container.querySelector('.variant-weight-input');
+                        if (!firstWeightInput) {
+                            alert('Please add at least one variant first.');
+                            return;
+                        }
+                        
+                        // Get the weight value from the first variant
+                        const weightValue = firstWeightInput.value;
+                        
+                        // Apply first variant's weight to all other variants
+                        const allWeightInputs = container.querySelectorAll('.variant-weight-input');
+                        allWeightInputs.forEach(input => {
+                            // Skip the first input (it already has the value)
+                            if (input !== firstWeightInput) {
+                                input.value = weightValue;
+                            }
+                        });
+                    });
+                
+                // Toggle button visibility on page load and when variants change
+                toggleApplyWeightButton();
+                const observer = new MutationObserver(toggleApplyWeightButton);
+                observer.observe(container, { childList: true, subtree: true });
+            }
         });
     </script>
 

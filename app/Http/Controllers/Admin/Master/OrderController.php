@@ -60,7 +60,7 @@ class OrderController extends Controller
     public function updateStatus(Request $request, Order $order): RedirectResponse
     {
         $data = $request->validate([
-            'order_status' => ['required', 'string', 'max:255'],
+            'order_status' => ['required', 'string', 'in:order_placed,processing,packed,shipped,delivered'],
             'payment_status' => ['nullable', 'string', 'max:255'],
             'tracking_number' => ['nullable', 'string', 'max:255'],
         ]);

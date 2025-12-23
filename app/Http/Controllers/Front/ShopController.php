@@ -42,16 +42,18 @@ class ShopController extends Controller
 
         // Handle media images if available
         $images = [$image];
-        if ($dbProduct->media_gallery) {
-            $gallery = $dbProduct->media_gallery;
-            if (is_array($gallery)) {
-                foreach ($gallery as $mediaImg) {
+        $gallerySource = $dbProduct->media_gallery ?? $dbProduct->media_images;
+        
+        if ($gallerySource && is_array($gallerySource)) {
+            foreach ($gallerySource as $mediaImg) {
+                // Handle potential double-nesting or bad data structure
+                if (is_array($mediaImg)) {
+                    $mediaImg = $mediaImg[0] ?? null;
+                }
+                if (is_string($mediaImg) && !empty($mediaImg)) {
                     $images[] = Str::startsWith($mediaImg, 'http') ? $mediaImg : asset('storage/' . $mediaImg);
                 }
             }
-        } elseif ($dbProduct->media_images) {
-            // Fallback for old structure if any (though migration says json likely)
-            // If it's casted, use it. If not, ignore.
         }
 
         // Determine sizes from variants or fallback
@@ -72,6 +74,7 @@ class ShopController extends Controller
             'category' => $dbProduct->category ?? 'General',
             'sizes' => $sizes,
             'size_chart_path' => $dbProduct->size_chart_path,
+            'size_measurement_image' => $dbProduct->size_measurement_image,
             'video_url' => $dbProduct->video_url,
             'tags' => $dbProduct->tag_name ? explode(',', $dbProduct->tag_name) : [],
             'sku' => $dbProduct->id,
@@ -83,7 +86,7 @@ class ShopController extends Controller
         // Fetch related products (same category, fallback to random)
         $relatedProductsQuery = ProductMapping::where('id', '!=', $id)
             ->where('status', 'live')
-            ->whereIn('product_type', ['merchandised', 'back_to_school']);
+            ->where('product_type', $dbProduct->product_type);
             
         if (!empty($dbProduct->category)) {
             $relatedProductsQuery->where('category', $dbProduct->category);
@@ -100,7 +103,7 @@ class ShopController extends Controller
             
             $otherProducts = ProductMapping::whereNotIn('id', $fetchedIds)
                 ->where('status', 'live')
-                ->whereIn('product_type', ['merchandised', 'back_to_school'])
+                ->where('product_type', $dbProduct->product_type)
                 ->inRandomOrder()
                 ->take($limit)
                 ->get();

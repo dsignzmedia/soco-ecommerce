@@ -86,8 +86,8 @@
             <form method="POST" action="{{ route('admin.back_to_school.orders.status', $order) }}" style="display:flex;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:10px;">
                 @csrf
                 <select name="order_status">
-                    @foreach(['processing','packed','shipped','delivered','returned','cancelled'] as $status)
-                        <option value="{{ $status }}" @selected($order->order_status === $status)>{{ ucfirst($status) }}</option>
+                    @foreach(['order_placed' => 'Order Placed', 'processing' => 'Processing', 'packed' => 'Packed', 'shipped' => 'Shipped', 'delivered' => 'Delivered'] as $value => $label)
+                        <option value="{{ $value }}" @selected($order->order_status === $value)>{{ $label }}</option>
                     @endforeach
                 </select>
                 <select name="payment_status">

@@ -973,9 +973,9 @@ class AuthController extends Controller
 
         foreach ($orders as $order) {
             $pName = $order->item_name ?? 'Unknown Product';
-            if (!isset($productCounts[$pName])) {
-                $productCounts[$pName] = 0;
-            }
+                    if (!isset($productCounts[$pName])) {
+                        $productCounts[$pName] = 0;
+                    }
             $productCounts[$pName] += $order->quantity ?? 1;
         }
         if (!empty($productCounts)) {
@@ -1531,6 +1531,80 @@ class AuthController extends Controller
      * Get product images from the 8 available images in product_images folder
      * Returns at least 5 images for each product
      */
+    /**
+     * Normalize grade format for comparison
+     * Handles formats like "Class 1", "1", "Pre-KG", "LKG", etc.
+     */
+    private function normalizeGrade($grade)
+    {
+        if (empty($grade)) {
+            return '';
+        }
+        
+        $grade = trim($grade);
+        
+        // Handle "Class X" format - extract just the number
+        if (preg_match('/^Class\s+(\d+)$/i', $grade, $matches)) {
+            return $matches[1];
+        }
+        
+        // Handle "Pre-KG", "LKG", "UKG" - keep as is but normalize case
+        $lowerGrade = strtolower($grade);
+        if (in_array($lowerGrade, ['pre-kg', 'lkg', 'ukg'])) {
+            return ucfirst($lowerGrade);
+        }
+        
+        // For numeric grades, return as string
+        if (is_numeric($grade)) {
+            return (string)$grade;
+        }
+        
+        return $grade;
+    }
+
+    /**
+     * Get product price based on grade pricing if available
+     * Returns grade-specific price if found, otherwise returns regular price
+     */
+    private function getProductPriceForGrade($product, $studentGrade = null)
+    {
+        $price = $product->price_regular ?? 0;
+        
+        // If no student grade provided, return regular price
+        if (!$studentGrade) {
+            return $price;
+        }
+        
+        // Check if product has grade pricing
+        if (!$product->relationLoaded('gradePricing')) {
+            $product->load('gradePricing');
+        }
+        
+        if ($product->gradePricing && $product->gradePricing->count() > 0) {
+            // Try exact match first
+            $gradePricing = $product->gradePricing->firstWhere('grade', $studentGrade);
+            
+            // If exact match not found, try normalized match
+            if (!$gradePricing) {
+                $normalizedStudentGrade = $this->normalizeGrade($studentGrade);
+                foreach ($product->gradePricing as $gp) {
+                    $normalizedGpGrade = $this->normalizeGrade($gp->grade);
+                    if ($normalizedStudentGrade === $normalizedGpGrade) {
+                        $gradePricing = $gp;
+                        break;
+                    }
+                }
+            }
+            
+            // Use grade pricing if found and valid
+            if ($gradePricing && $gradePricing->price > 0) {
+                return $gradePricing->price;
+            }
+        }
+        
+        return $price;
+    }
+
     private function getProductImages($productId)
     {
         // Available images from product_images folder
@@ -1947,7 +2021,7 @@ class AuthController extends Controller
                 });
             }
 
-            // Filter by gender if available in profile
+            // Filter by gender if available in profile (but allow products with no gender set)
             if ($selectedProfile->gender) {
                 $gender = strtolower($selectedProfile->gender);
                 // Map legacy terms if necessary, though profile should ideally be 'male'/'female'
@@ -1962,13 +2036,49 @@ class AuthController extends Controller
                 $dbProductsQuery->where(function($q) use ($mappedGender) {
                     $q->where('gender', $mappedGender)
                       ->orWhere('gender', 'unisex')
-                      ->orWhere('gender', 'Unisex');
+                      ->orWhere('gender', 'Unisex')
+                      ->orWhereNull('gender')
+                      ->orWhere('gender', '');
                 });
             }
 
-            $dbProducts = $dbProductsQuery->get();
+            $dbProducts = $dbProductsQuery->with('gradePricing')->get();
+            $studentGrade = $selectedProfile->grade ?? null;
 
             foreach ($dbProducts as $dbProduct) {
+                // Filter: If product has grade-wise pricing, check if student's grade has pricing
+                if ($dbProduct->gradePricing && $dbProduct->gradePricing->count() > 0) {
+                    // Product has grade-wise pricing enabled
+                    if ($studentGrade) {
+                        // Check if there's pricing for this student's grade
+                        $hasPricingForGrade = false;
+                        
+                        // Try exact match first
+                        $gradePricing = $dbProduct->gradePricing->firstWhere('grade', $studentGrade);
+                        if ($gradePricing && $gradePricing->price > 0) {
+                            $hasPricingForGrade = true;
+                        } else {
+                            // Try normalized match
+                            $normalizedStudentGrade = $this->normalizeGrade($studentGrade);
+                            foreach ($dbProduct->gradePricing as $gp) {
+                                $normalizedGpGrade = $this->normalizeGrade($gp->grade);
+                                if ($normalizedStudentGrade === $normalizedGpGrade && $gp->price > 0) {
+                                    $hasPricingForGrade = true;
+                                    break;
+                                }
+                            }
+                        }
+                        
+                        // Skip this product if no pricing exists for the student's grade
+                        if (!$hasPricingForGrade) {
+                            continue;
+                        }
+                    } else {
+                        // Student has no grade, skip products with grade-wise pricing
+                        continue;
+                    }
+                }
+                
                 // Determine image URL
                 $image = $dbProduct->featured_image
                     ? (\Illuminate\Support\Str::startsWith($dbProduct->featured_image, 'http') ? $dbProduct->featured_image : asset('storage/' . $dbProduct->featured_image))
@@ -1976,9 +2086,12 @@ class AuthController extends Controller
 
                 // Handle media images if available
                 $images = [$image];
-                $gallerySource = $dbProduct->media_gallery ?? $dbProduct->media_images;
+                // Check media_gallery first, but fallback to media_images if gallery is empty
+                $gallerySource = (!empty($dbProduct->media_gallery) && is_array($dbProduct->media_gallery) && count($dbProduct->media_gallery) > 0) 
+                    ? $dbProduct->media_gallery 
+                    : ($dbProduct->media_images ?? []);
 
-                if ($gallerySource && is_array($gallerySource)) {
+                if ($gallerySource && is_array($gallerySource) && count($gallerySource) > 0) {
                     foreach ($gallerySource as $mediaImg) {
                          if (is_array($mediaImg)) {
                              // Handle potential double-nesting or bad data structure
@@ -1996,10 +2109,13 @@ class AuthController extends Controller
                     $sizes = $dbProduct->variants->pluck('option')->toArray();
                 }
 
+                // Get price based on grade pricing if available
+                $productPrice = $this->getProductPriceForGrade($dbProduct, $studentGrade);
+                
                 $allProducts[] = [
                     'id' => $dbProduct->id,
                     'name' => $dbProduct->product_name,
-                    'price' => $dbProduct->price_regular,
+                    'price' => $productPrice,
                     'original_price' => $dbProduct->price_sale, // Assuming price_sale is the original/higher price if on sale, or vice versa. Adjust logic as needed.
                     'image' => $image,
                     'images' => $images,
@@ -2050,12 +2166,39 @@ class AuthController extends Controller
                 ->with('error', 'Please select a student profile first.');
         }
 
-        // Fetch real product from database
-        $dbProduct = \App\Models\Admin\Master\ProductMapping::with('variants')->find($productId);
+        // Fetch real product from database with grade pricing
+        $dbProduct = \App\Models\Admin\Master\ProductMapping::with(['variants', 'gradePricing'])->find($productId);
 
         if (!$dbProduct) {
             return redirect()->route('frontend.parent.store', ['profile_id' => $profileId])
                 ->with('error', 'Product not found.');
+        }
+        
+        // Determine price based on grade-wise pricing if available
+        $productPrice = $dbProduct->price_regular ?? 0;
+        $studentGrade = $selectedProfile->grade ?? null;
+        
+        if ($studentGrade && $dbProduct->gradePricing && $dbProduct->gradePricing->count() > 0) {
+            // Try to find grade pricing for the student's grade
+            // Handle different grade formats: "Class 1", "1", "Pre-KG", etc.
+            $gradePricing = $dbProduct->gradePricing->firstWhere('grade', $studentGrade);
+            
+            // If exact match not found, try to normalize and match
+            if (!$gradePricing) {
+                // Normalize grade formats
+                $normalizedStudentGrade = $this->normalizeGrade($studentGrade);
+                foreach ($dbProduct->gradePricing as $gp) {
+                    $normalizedGpGrade = $this->normalizeGrade($gp->grade);
+                    if ($normalizedStudentGrade === $normalizedGpGrade) {
+                        $gradePricing = $gp;
+                        break;
+                    }
+                }
+            }
+            
+            if ($gradePricing && $gradePricing->price > 0) {
+                $productPrice = $gradePricing->price;
+            }
         }
 
         // Determine image URL
@@ -2064,11 +2207,13 @@ class AuthController extends Controller
             : asset('assets/img/product/product1-1.png');
 
         // Handle media images if available
-        // Handle media images if available
+        // Check media_gallery first, but fallback to media_images if gallery is empty
         $images = [$image];
-        $gallerySource = $dbProduct->media_gallery ?? $dbProduct->media_images;
+        $gallerySource = (!empty($dbProduct->media_gallery) && is_array($dbProduct->media_gallery) && count($dbProduct->media_gallery) > 0) 
+            ? $dbProduct->media_gallery 
+            : ($dbProduct->media_images ?? []);
 
-        if ($gallerySource && is_array($gallerySource)) {
+        if ($gallerySource && is_array($gallerySource) && count($gallerySource) > 0) {
             foreach ($gallerySource as $mediaImg) {
                 if (is_array($mediaImg)) {
                      // Handle potential double-nesting
@@ -2086,10 +2231,37 @@ class AuthController extends Controller
             $sizes = $dbProduct->variants->pluck('option')->toArray();
         }
 
+        // Determine price based on grade-wise pricing if available
+        $productPrice = $dbProduct->price_regular ?? 0;
+        $studentGrade = $selectedProfile->grade ?? null;
+        
+        if ($studentGrade && $dbProduct->gradePricing && $dbProduct->gradePricing->count() > 0) {
+            // Try to find grade pricing for the student's grade
+            // Handle different grade formats: "Class 1", "1", "Pre-KG", etc.
+            $gradePricing = $dbProduct->gradePricing->firstWhere('grade', $studentGrade);
+            
+            // If exact match not found, try to normalize and match
+            if (!$gradePricing) {
+                // Normalize grade formats
+                $normalizedStudentGrade = $this->normalizeGrade($studentGrade);
+                foreach ($dbProduct->gradePricing as $gp) {
+                    $normalizedGpGrade = $this->normalizeGrade($gp->grade);
+                    if ($normalizedStudentGrade === $normalizedGpGrade) {
+                        $gradePricing = $gp;
+                        break;
+                    }
+                }
+            }
+            
+            if ($gradePricing && $gradePricing->price > 0) {
+                $productPrice = $gradePricing->price;
+            }
+        }
+        
         $product = [
             'id' => $dbProduct->id,
             'name' => $dbProduct->product_name,
-            'price' => $dbProduct->price_regular,
+            'price' => $productPrice,
             'original_price' => $dbProduct->price_sale,
             'image' => $image,
             'images' => $images,
@@ -2098,6 +2270,7 @@ class AuthController extends Controller
             'category' => $dbProduct->category ?? 'regular_uniforms',
             'sizes' => $sizes,
             'size_chart_path' => $dbProduct->size_chart_path,
+            'size_measurement_image' => $dbProduct->size_measurement_image,
             'video_url' => $dbProduct->video_url,
             'tags' => $dbProduct->tag_name ? explode(',', $dbProduct->tag_name) : [],
             'sku' => $dbProduct->id,
@@ -2108,23 +2281,26 @@ class AuthController extends Controller
         // Fetch related products
         // 1. Try fetching by category
         $relatedProductsQuery = \App\Models\Admin\Master\ProductMapping::where('id', '!=', $productId)
-            ->where('status', 'live');
+            ->where('status', 'live')
+            ->where('product_type', $dbProduct->product_type); // keep same product type (merch, bts, school, etc.)
 
         if (!empty($dbProduct->category)) {
             $relatedProductsQuery->where('category', $dbProduct->category);
         }
 
-        $relatedProductsModels = $relatedProductsQuery->inRandomOrder()->take(4)->get();
+        $relatedProductsModels = $relatedProductsQuery->with('gradePricing')->inRandomOrder()->take(10)->get(); // Get more to filter
 
         // 2. If we found fewer than 4, fill up with other random products
-        if ($relatedProductsModels->count() < 4) {
+        if ($relatedProductsModels->count() < 10) {
             $fetchedIds = $relatedProductsModels->pluck('id')->toArray();
             $fetchedIds[] = $productId; // Exclude current product too
 
-            $limit = 4 - $relatedProductsModels->count();
+            $limit = 10 - $relatedProductsModels->count(); // Get more to filter
 
             $otherProducts = \App\Models\Admin\Master\ProductMapping::whereNotIn('id', $fetchedIds)
                 ->where('status', 'live')
+                ->where('product_type', $dbProduct->product_type)
+                ->with('gradePricing')
                 ->inRandomOrder()
                 ->take($limit)
                 ->get();
@@ -2132,15 +2308,56 @@ class AuthController extends Controller
             $relatedProductsModels = $relatedProductsModels->merge($otherProducts);
         }
 
-        $relatedProducts = $relatedProductsModels->map(function($rp) {
+        // Get student grade for grade-based pricing
+        $studentGrade = $selectedProfile->grade ?? null;
+
+        // Filter related products by grade-wise pricing
+        $relatedProductsModels = $relatedProductsModels->filter(function($rp) use ($studentGrade) {
+            // If product has grade-wise pricing, check if student's grade has pricing
+            if ($rp->gradePricing && $rp->gradePricing->count() > 0) {
+                if ($studentGrade) {
+                    // Check if there's pricing for this student's grade
+                    $hasPricingForGrade = false;
+                    
+                    // Try exact match first
+                    $gradePricing = $rp->gradePricing->firstWhere('grade', $studentGrade);
+                    if ($gradePricing && $gradePricing->price > 0) {
+                        $hasPricingForGrade = true;
+                    } else {
+                        // Try normalized match
+                        $normalizedStudentGrade = $this->normalizeGrade($studentGrade);
+                        foreach ($rp->gradePricing as $gp) {
+                            $normalizedGpGrade = $this->normalizeGrade($gp->grade);
+                            if ($normalizedStudentGrade === $normalizedGpGrade && $gp->price > 0) {
+                                $hasPricingForGrade = true;
+                                break;
+                            }
+                        }
+                    }
+                    
+                    // Return false to filter out if no pricing exists for that grade
+                    return $hasPricingForGrade;
+                } else {
+                    // Student has no grade, filter out products with grade-wise pricing
+                    return false;
+                }
+            }
+            // Product doesn't have grade-wise pricing, include it
+            return true;
+        })->take(4); // Take only 4 after filtering
+
+        $relatedProducts = $relatedProductsModels->map(function($rp) use ($studentGrade) {
             $img = $rp->featured_image
                 ? (\Illuminate\Support\Str::startsWith($rp->featured_image, 'http') ? $rp->featured_image : asset('storage/' . $rp->featured_image))
                 : asset('assets/img/product/product1-1.png');
 
+            // Get price based on grade pricing if available
+            $relatedProductPrice = $this->getProductPriceForGrade($rp, $studentGrade);
+
             return [
                 'id' => $rp->id,
                 'name' => $rp->product_name,
-                'price' => $rp->price_regular,
+                'price' => $relatedProductPrice,
                 'original_price' => $rp->price_sale,
                 'image' => $img
             ];
@@ -2266,24 +2483,68 @@ class AuthController extends Controller
         // Get all unique product IDs from cart
         $productIds = $cartDbItems->pluck('product_id')->unique()->toArray();
 
-        // Fetch products from DB
-        $products = \App\Models\Admin\Master\ProductMapping::whereIn('id', $productIds)->get()->keyBy('id');
+        // Fetch products from DB with variants and grade pricing
+        $products = \App\Models\Admin\Master\ProductMapping::with(['variants', 'gradePricing'])
+            ->whereIn('id', $productIds)
+            ->get()
+            ->keyBy('id');
 
         $cartItems = [];
         $total = 0;
+        $hasInclusiveTax = false; // Track if any product has inclusive tax
 
         foreach ($cartDbItems as $item) {
             if (isset($products[$item->product_id])) {
                 $product = $products[$item->product_id];
-                $itemTotal = $product->price_sale * $item->quantity;
-                $total += $itemTotal;
-
-                // Find student name from database profiles
-                $studentName = 'Unknown Student';
+                
+                // Check if this product has inclusive tax
+                if ($product->price_inclusive_tax) {
+                    $hasInclusiveTax = true;
+                }
+                
+                // Get student grade for grade-based pricing
+                $studentGrade = null;
                 $profile = $profiles->firstWhere('id', (int)$item->profile_id);
                 if ($profile) {
+                    $studentGrade = $profile->grade;
                     $studentName = $profile->student_name;
+                } else {
+                    $studentName = 'Unknown Student';
                 }
+                
+                // Determine price based on variant-based pricing or grade-based pricing
+                // For fabric products: If grade pricing exists, use it (all sizes same price by grade)
+                // Otherwise, use variant pricing if available
+                $itemPrice = 0;
+                
+                // Check if product has grade pricing (for fabric products with grade-wise pricing)
+                $hasGradePricing = false;
+                if ($product->relationLoaded('gradePricing')) {
+                    $hasGradePricing = $product->gradePricing && $product->gradePricing->count() > 0;
+                } else {
+                    $product->load('gradePricing');
+                    $hasGradePricing = $product->gradePricing && $product->gradePricing->count() > 0;
+                }
+                
+                if ($product->variant_based_pricing && $hasGradePricing) {
+                    // Fabric product with grade-wise pricing: Use grade price (same for all sizes)
+                    $itemPrice = $this->getProductPriceForGrade($product, $studentGrade);
+                } elseif ($product->variant_based_pricing && $product->variants->count() > 0) {
+                    // Fabric product with variant pricing only: Get variant price for the selected size
+                    $variant = $product->variants->where('option', $item->size)->first();
+                    if ($variant && $variant->price) {
+                        $itemPrice = $variant->price;
+                    } else {
+                        // Fallback to grade-based price or regular price
+                        $itemPrice = $this->getProductPriceForGrade($product, $studentGrade);
+                    }
+                } else {
+                    // Regular product: Use grade-based price if available, otherwise regular price
+                    $itemPrice = $this->getProductPriceForGrade($product, $studentGrade);
+                }
+                
+                $itemTotal = $itemPrice * $item->quantity;
+                $total += $itemTotal;
 
                 // Get product image - try multiple fields
                 $productImage = null;
@@ -2302,7 +2563,7 @@ class AuthController extends Controller
                     'size' => $item->size,
                     'quantity' => $item->quantity,
                     'name' => $product->product_name,
-                    'price' => $product->price_sale,
+                    'price' => $itemPrice,
                     'image' => $productImage ? asset('storage/' . $productImage) : null,
                     'item_total' => $itemTotal,
                     'student_name' => $studentName,
@@ -2317,7 +2578,7 @@ class AuthController extends Controller
             $selectedProfile = $profiles->firstWhere('id', (int)$profileId);
         }
 
-        return view('frontend.cart.index', compact('cartItems', 'total', 'profiles', 'selectedProfile'));
+        return view('frontend.cart.index', compact('cartItems', 'total', 'profiles', 'selectedProfile', 'hasInclusiveTax'));
     }
 
     public function removeFromCart(Request $request)
@@ -2375,17 +2636,65 @@ class AuthController extends Controller
         // Get unique product IDs from filtered cart
         $productIds = $filteredCartItems->pluck('product_id')->unique()->toArray();
 
-        // Fetch products from DB
-        $products = \App\Models\Admin\Master\ProductMapping::whereIn('id', $productIds)->get()->keyBy('id');
+        // Fetch products from DB with variants and grade pricing
+        $products = \App\Models\Admin\Master\ProductMapping::with(['variants', 'gradePricing'])
+            ->whereIn('id', $productIds)
+            ->get()
+            ->keyBy('id');
 
         $cartItems = [];
         $subtotal = 0;
         $totalTax = 0;
+        $hasInclusiveTax = false; // Track if any product has inclusive tax
 
         foreach ($filteredCartItems as $item) {
             if (isset($products[$item->product_id])) {
                 $product = $products[$item->product_id];
-                $itemSubtotal = $product->price_sale * $item->quantity;
+                
+                // Check if this product has inclusive tax
+                if ($product->price_inclusive_tax) {
+                    $hasInclusiveTax = true;
+                }
+                
+                // Get student grade for grade-based pricing
+                $studentGrade = null;
+                $profile = $profiles->firstWhere('id', (int)$item->profile_id);
+                if ($profile) {
+                    $studentGrade = $profile->grade;
+                }
+                
+                // Determine price based on variant-based pricing or grade-based pricing
+                // For fabric products: If grade pricing exists, use it (all sizes same price by grade)
+                // Otherwise, use variant pricing if available
+                $itemPrice = 0;
+                
+                // Check if product has grade pricing (for fabric products with grade-wise pricing)
+                $hasGradePricing = false;
+                if ($product->relationLoaded('gradePricing')) {
+                    $hasGradePricing = $product->gradePricing && $product->gradePricing->count() > 0;
+                } else {
+                    $product->load('gradePricing');
+                    $hasGradePricing = $product->gradePricing && $product->gradePricing->count() > 0;
+                }
+                
+                if ($product->variant_based_pricing && $hasGradePricing) {
+                    // Fabric product with grade-wise pricing: Use grade price (same for all sizes)
+                    $itemPrice = $this->getProductPriceForGrade($product, $studentGrade);
+                } elseif ($product->variant_based_pricing && $product->variants->count() > 0) {
+                    // Fabric product with variant pricing only: Get variant price for the selected size
+                    $variant = $product->variants->where('option', $item->size)->first();
+                    if ($variant && $variant->price) {
+                        $itemPrice = $variant->price;
+                    } else {
+                        // Fallback to grade-based price or regular price
+                        $itemPrice = $this->getProductPriceForGrade($product, $studentGrade);
+                    }
+                } else {
+                    // Regular product: Use grade-based price if available, otherwise regular price
+                    $itemPrice = $this->getProductPriceForGrade($product, $studentGrade);
+                }
+                
+                $itemSubtotal = $itemPrice * $item->quantity;
 
                 // Calculate tax for this item using price_tax field (which stores the percentage)
                 $taxPercentage = $product->price_tax ?? 0;
@@ -2419,7 +2728,7 @@ class AuthController extends Controller
                     'size' => $item->size,
                     'quantity' => $item->quantity,
                     'name' => $product->product_name,
-                    'price' => $product->price_sale,
+                    'price' => $itemPrice,
                     'image' => $productImage ? asset('storage/' . $productImage) : null,
                     'item_total' => $itemTotal,
                     'item_subtotal' => $itemSubtotal,
@@ -2446,7 +2755,7 @@ class AuthController extends Controller
         // Enable if in DB OR if env has key (fallback)
         $razorpayEnabled = $razorpayGateway ? true : (!empty(env('RAZORPAY_KEY')));
 
-        return view('frontend.checkout.index', compact('cartItems', 'total', 'subtotal', 'totalTax', 'profiles', 'selectedProfile', 'savedAddresses', 'razorpayEnabled'));
+        return view('frontend.checkout.index', compact('cartItems', 'total', 'subtotal', 'totalTax', 'profiles', 'selectedProfile', 'savedAddresses', 'razorpayEnabled', 'hasInclusiveTax'));
     }
 
     public function processCheckout(Request $request)
@@ -2588,9 +2897,47 @@ class AuthController extends Controller
                 // Format: SOCO-[ID]-[Index]
                 $uniqueOrderNumber = $orderNumber . '-' . ($index + 1);
 
-                // Calculate tax
+                // Calculate price (single price field; variant-aware and grade-aware)
                 $taxPercentage = $product->price_tax ?? 0;
-                $itemSubtotal = $product->price_sale * $item->quantity;
+                
+                // Get student grade for grade-based pricing
+                $studentGrade = $studentProfile ? $studentProfile->grade : null;
+                
+                // Load grade pricing if not already loaded
+                if (!$product->relationLoaded('gradePricing')) {
+                    $product->load('gradePricing');
+                }
+                
+                // Determine price: For fabric with grade pricing > grade-based > variant-based > regular
+                $itemPrice = $product->price_regular ?? 0;
+                
+                // Check if product has grade pricing (for fabric products with grade-wise pricing)
+                $hasGradePricing = false;
+                if ($product->relationLoaded('gradePricing')) {
+                    $hasGradePricing = $product->gradePricing && $product->gradePricing->count() > 0;
+                } else {
+                    $product->load('gradePricing');
+                    $hasGradePricing = $product->gradePricing && $product->gradePricing->count() > 0;
+                }
+                
+                if ($product->variant_based_pricing && $hasGradePricing) {
+                    // Fabric product with grade-wise pricing: Use grade price (same for all sizes)
+                    $itemPrice = $this->getProductPriceForGrade($product, $studentGrade);
+                } elseif ($product->variant_based_pricing) {
+                    // Fabric product with variant pricing only: Get variant price for the selected size
+                    $variant = $product->variants()->where('option', $item->size)->first();
+                    if ($variant && $variant->price !== null) {
+                        $itemPrice = $variant->price;
+                    } else {
+                        // Fallback to grade-based price if variant price not found
+                        $itemPrice = $this->getProductPriceForGrade($product, $studentGrade);
+                    }
+                } else {
+                    // Regular product: Use grade-based price if available
+                    $itemPrice = $this->getProductPriceForGrade($product, $studentGrade);
+                }
+                
+                $itemSubtotal = $itemPrice * $item->quantity;
                 $itemTax = ($itemSubtotal * $taxPercentage) / 100;
                 $itemTotal = $itemSubtotal + $itemTax;
 
@@ -2625,6 +2972,7 @@ class AuthController extends Controller
                 if (session('payment_method') === 'razorpay' && session('payment_id')) {
                     \App\Models\Payment::create([
                         'order_id' => $order->id,
+                        'product_type' => $product->product_type,
                         'payment_id' => session('payment_id'),
                         'total_amount' => $itemTotal,
                         'tax_amount' => $itemTax,

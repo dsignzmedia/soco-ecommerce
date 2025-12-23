@@ -125,8 +125,8 @@
             </select>
             <select name="order_status">
                 <option value="">Order Status</option>
-                @foreach(['processing','packed','shipped','delivered','returned','cancelled'] as $status)
-                    <option value="{{ $status }}" @selected(($filters['order_status'] ?? '') === $status)>{{ ucfirst($status) }}</option>
+                @foreach(['order_placed' => 'Order Placed', 'processing' => 'Processing', 'packed' => 'Packed', 'shipped' => 'Shipped', 'delivered' => 'Delivered'] as $value => $label)
+                    <option value="{{ $value }}" @selected(($filters['order_status'] ?? '') === $value)>{{ $label }}</option>
                 @endforeach
             </select>
             <select name="payment_status">
@@ -228,15 +228,11 @@
                                         box-shadow: 0 1px 2px rgba(0,0,0,0.05);
                                     ">
                                         @foreach([
-                                            'payment_pending' => 'Pending Payment',
+                                            'order_placed' => 'Order Placed',
                                             'processing' => 'Processing',
+                                            'packed' => 'Packed',
                                             'shipped' => 'Shipped',
-                                            'delivered' => 'Delivered',
-                                            'failed' => 'Failed',
-                                            'refunded' => 'Refunded',
-                                            'label_generated' => 'Label Generated',
-                                            'rtd' => 'Ready to Dispatch',
-                                            'dispatched' => 'Dispatched'
+                                            'delivered' => 'Delivered'
                                         ] as $value => $label)
                                             <option value="{{ $value }}" @selected($order->order_status == $value)>{{ $label }}</option>
                                         @endforeach

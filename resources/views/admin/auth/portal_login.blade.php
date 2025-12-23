@@ -154,7 +154,7 @@
 <body>
     <div class="login-card">
         <div class="login-card__brand">
-            <img class="brand-logo" src="{{ asset('assets/img/logo.svg') }}" alt="The Skool Store logo">
+            <img class="brand-logo" src="{{ asset('assets/img/new logo/new_logo.png') }}" alt="The Skool Store logo">
             <h1 class="brand-name">The Skool Store</h1>
         </div>
         <div class="login-card__form">

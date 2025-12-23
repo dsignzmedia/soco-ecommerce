@@ -17,7 +17,7 @@
     <section class="card" style="max-width:960px;margin:auto;">
         <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:24px;">
             <div>
-                <img src="{{ asset('assets/img/logo.svg') }}" alt="The Skool Store" style="height:48px;margin-bottom:12px;">
+                <img src="{{ asset('assets/img/new logo/new_logo.png') }}" alt="The Skool Store" style="height:48px;margin-bottom:12px;">
                 <h2 style="margin:0;color:#111827;">The Skool Store</h2>
                 <p style="margin:4px 0 0;color:#475467;">Uniform procurement & fulfilment</p>
             </div>

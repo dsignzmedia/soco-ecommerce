@@ -184,14 +184,28 @@
                                 
                                 <!-- Summary -->
                                 <div class="mb-3">
-                                    <div class="d-flex justify-content-between mb-2">
-                                        <span style="color: #666;">Subtotal:</span>
-                                        <span style="color: #333; font-weight: 500;">₹{{ number_format($subtotal) }}</span>
-                                    </div>
-                                    <div class="d-flex justify-content-between mb-2">
-                                        <span style="color: #666;">Tax:</span>
-                                        <span style="color: #333; font-weight: 500;">₹{{ number_format($totalTax) }}</span>
-                                    </div>
+                                    @if(isset($hasInclusiveTax) && $hasInclusiveTax)
+                                        <!-- Show inclusive tax message instead of tax breakdown -->
+                                        <div class="d-flex justify-content-between mb-2">
+                                            <span style="color: #666;">Subtotal:</span>
+                                            <span style="color: #333; font-weight: 500;">₹{{ number_format($total) }}</span>
+                                        </div>
+                                        <div class="mb-2">
+                                            <small style="color: #28a745; font-style: italic;">
+                                                <i class="fas fa-check-circle me-1"></i>Inclusive of all tax
+                                            </small>
+                                        </div>
+                                    @else
+                                        <!-- Show tax breakdown -->
+                                        <div class="d-flex justify-content-between mb-2">
+                                            <span style="color: #666;">Subtotal:</span>
+                                            <span style="color: #333; font-weight: 500;">₹{{ number_format($subtotal) }}</span>
+                                        </div>
+                                        <div class="d-flex justify-content-between mb-2">
+                                            <span style="color: #666;">Tax:</span>
+                                            <span style="color: #333; font-weight: 500;">₹{{ number_format($totalTax) }}</span>
+                                        </div>
+                                    @endif
                                     <div class="d-flex justify-content-between mb-2">
                                         <span style="color: #666;">Shipping:</span>
                                         <span style="color: #28a745; font-weight: 500;">Free</span>

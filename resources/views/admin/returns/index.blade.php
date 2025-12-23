@@ -179,10 +179,10 @@
                         <td>
                             @if($req->photo_path)
                                 <a href="{{ asset('storage/'.$req->photo_path) }}" target="_blank" style="display:block;width:40px;height:40px;">
-                                    <img src="{{ asset('storage/'.$req->photo_path) }}" alt="Img" style="width:100%;height:100%;object-fit:cover;border-radius:6px;border:1px solid #e5e7eb;">
+                                    <img src="{{ asset('storage/'.$req->photo_path) }}" alt="Evidence" style="width:100%;height:100%;object-fit:cover;border-radius:6px;border:1px solid #e5e7eb;" onerror="this.onerror=null; this.src='{{ asset('assets/img/no image/no_image.png') }}';">
                                 </a>
                             @else
-                                <span style="color:#9ca3af;">—</span>
+                                <img src="{{ asset('assets/img/no image/no_image.png') }}" alt="No Evidence" style="width:40px;height:40px;object-fit:cover;border-radius:6px;border:1px solid #e5e7eb;">
                             @endif
                         </td>
                         <td>

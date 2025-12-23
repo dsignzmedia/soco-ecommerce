@@ -17,7 +17,7 @@ class InventoryController extends Controller
     {
         $filters = $request->only(['school_id', 'category', 'status', 'q']);
 
-        $products = ProductMapping::with('school')
+        $products = ProductMapping::with(['school', 'variants'])
             ->when($filters['school_id'] ?? null, fn($q, $school) => $q->where('school_id', $school))
             ->when($filters['category'] ?? null, fn($q, $category) => $q->where('category', $category))
             ->when($filters['status'] ?? null, fn($q, $status) => $q->where('status', $status))
@@ -80,6 +80,82 @@ class InventoryController extends Controller
         }
 
         return redirect()->route('inventory.admin.inventory.index')->with('status', 'Stock adjusted successfully.');
+    }
+
+    public function updateVariantStock(Request $request, ProductMapping $product)
+    {
+        try {
+            $validated = $request->validate([
+                'variant_id' => ['required', 'exists:product_variants,id'],
+                'stock' => ['required', 'integer', 'min:0'],
+            ]);
+
+            // Verify the variant belongs to this product (security check)
+            $variant = \App\Models\ProductVariant::where('id', $validated['variant_id'])
+                ->where('product_mapping_id', $product->id)
+                ->firstOrFail();
+
+            // Store old stock
+            $oldStock = $variant->stock;
+            $productTotalBefore = $product->inventory_stock;
+            
+            // Update ONLY this variant's stock
+            $variant->update(['stock' => $validated['stock']]);
+            
+            // Recalculate and update product total stock from ALL variants
+            $product->updateTotalStock();
+            $productTotalAfter = $product->fresh()->inventory_stock;
+
+            // Audit Log
+            try {
+                AuditLogger::record(
+                    'variant_stock_update',
+                    $product,
+                    [
+                        'product' => $product->product_name,
+                        'variant_id' => $variant->id,
+                        'variant_option' => $variant->option,
+                        'stock_before' => $oldStock,
+                        'stock_after' => $validated['stock'],
+                        'product_total_before' => $productTotalBefore,
+                        'product_total_after' => $productTotalAfter,
+                    ],
+                    'Variant stock updated via Inventory Admin'
+                );
+            } catch (\Exception $e) {
+                // Silently fail logging
+            }
+
+            // Handle AJAX requests
+            if ($request->ajax() || $request->wantsJson()) {
+                return response()->json([
+                    'success' => true,
+                    'message' => "Variant '{$variant->option}' stock updated successfully.",
+                    'variant_stock' => $validated['stock'],
+                    'product_total_stock' => $productTotalAfter,
+                ]);
+            }
+
+            return redirect()->route('inventory.admin.inventory.index')
+                ->with('status', "Variant '{$variant->option}' stock updated successfully. Total stock: {$productTotalAfter}");
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            if ($request->ajax() || $request->wantsJson()) {
+                return response()->json([
+                    'success' => false,
+                    'errors' => $e->errors(),
+                ], 422);
+            }
+            throw $e;
+        } catch (\Exception $e) {
+            if ($request->ajax() || $request->wantsJson()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Error updating stock: ' . $e->getMessage(),
+                ], 500);
+            }
+            return redirect()->route('inventory.admin.inventory.index')
+                ->with('error', 'Error updating stock: ' . $e->getMessage());
+        }
     }
 
     public function reports(): View

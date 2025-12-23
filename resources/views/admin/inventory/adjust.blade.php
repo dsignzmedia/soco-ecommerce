@@ -5,6 +5,13 @@
 @section('page_subheading', $product->product_name . ' • current stock: ' . $product->inventory_stock)
 
 @section('content')
+    <div style="margin-bottom: 16px;">
+        <a href="{{ route('master.admin.inventory.list') }}" style="display: inline-flex; align-items: center; gap: 8px; padding: 8px 16px; border-radius: 8px; border: 1px solid #d0d5dd; color: #475467; text-decoration: none; font-weight: 500; background: white; transition: all 0.2s;">
+            <i class="fas fa-arrow-left"></i>
+            Back to Inventory List
+        </a>
+    </div>
+    
     <div class="card" style="max-width:720px;margin:auto;">
         <form method="POST" action="{{ route('master.admin.inventory.adjust.apply', $product) }}">
             @csrf

@@ -388,16 +388,10 @@
                         </div>
                     </div>
 
-                    <div class="modal-footer" style="border-top: 1px solid #e0e0e0; padding: 12px 20px; margin-top: 15px; display: flex; justify-content: space-between; gap: 10px;">
-                        <form action="{{ route('auth.set-guest-mode') }}" method="POST" style="margin:0;">
-                            @csrf
-                            <button type="submit" class="btn btn-outline-secondary" style="border: 1px solid #ddd; background: white; color: #666; padding: 8px 16px; border-radius: 6px; font-size: 0.9rem;">
-                                <i class="fas fa-shopping-bag me-2"></i>Shop as Guest
-                            </button>
-                        </form>
+                    <div class="modal-footer" style="border-top: 1px solid #e0e0e0; padding: 12px 20px; margin-top: 15px; display: flex; justify-content: flex-end; gap: 10px;">
                         <div style="display: flex; gap: 10px;">
                             <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" style="border: 1px solid #ddd; background: white; color: #333; padding: 8px 16px; border-radius: 6px; font-size: 0.9rem;">Cancel</button>
-                            <button type="submit" class="btn btn-primary" style="background-color: #490D59; color: white; border: none; padding: 8px 16px; border-radius: 6px; font-size: 0.9rem;">Submit</button>
+                            <button type="submit" class="btn btn-primary" id="modalSubmitBtn" style="background-color: #490D59; color: white; border: none; padding: 8px 16px; border-radius: 6px; font-size: 0.9rem;">Submit</button>
                         </div>
                     </div>
                 </div>
@@ -419,7 +413,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const addStudentForm = document.getElementById('addStudentForm');
     const profileIdField = document.getElementById('modalProfileId');
     const modalTitle = document.getElementById('addStudentModalLabel');
-    const modalSubmitBtn = document.querySelector('#addStudentForm button[type="submit"]');
+    const modalSubmitBtn = document.getElementById('modalSubmitBtn');
     const addStudentModalEl = document.getElementById('addStudentModal');
     const welcomeModalEl = document.getElementById('welcomeModal');
     

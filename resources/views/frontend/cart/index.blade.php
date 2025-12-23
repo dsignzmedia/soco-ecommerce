@@ -139,10 +139,18 @@
                             
                             <div id="selectedItemsSummary" class="mb-3" style="max-height: 200px; overflow-y: auto;"></div>
                             
-                            <div class="d-flex justify-content-between mb-3">
+                            <div class="d-flex justify-content-between mb-2">
                                 <span style="color: #666;">Subtotal:</span>
                                 <span style="color: #dc3545; font-weight: 600;" id="summarySubtotal">₹{{ number_format($total) }}</span>
                             </div>
+                            
+                            @if(isset($hasInclusiveTax) && $hasInclusiveTax)
+                                <div class="mb-3">
+                                    <small style="color: #28a745; font-style: italic;">
+                                        <i class="fas fa-check-circle me-1"></i>Inclusive of all tax
+                                    </small>
+                                </div>
+                            @endif
                             
                             <hr style="margin: 20px 0;">
                             

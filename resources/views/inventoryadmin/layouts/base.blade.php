@@ -319,7 +319,7 @@
     <div class="layout">
         <aside class="sidebar">
             <div class="brand">
-                <img src="{{ asset('assets/img/logo.svg') }}" alt="The Skool Store">
+                <img src="{{ asset('assets/img/new logo/new_logo.png') }}" alt="The Skool Store">
                 <small>Inventory Admin</small>
             </div>
             <nav class="nav">

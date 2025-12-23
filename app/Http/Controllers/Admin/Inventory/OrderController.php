@@ -37,12 +37,11 @@ class OrderController extends Controller
         
         // Statuses relevant to inventory
         $statuses = [
-            'pending' => 'Pending',
-            'processing' => 'Processing (Packing)',
-            'ready_to_ship' => 'Ready to Ship',
+            'order_placed' => 'Order Placed',
+            'processing' => 'Processing',
+            'packed' => 'Packed',
             'shipped' => 'Shipped',
             'delivered' => 'Delivered',
-            'cancelled' => 'Cancelled',
         ];
 
         return view('inventoryadmin.orders.index', compact('orders', 'schools', 'statuses', 'filters'));
@@ -77,7 +76,7 @@ class OrderController extends Controller
     public function updateStatus(Request $request, Order $order): RedirectResponse
     {
         $data = $request->validate([
-            'order_status' => ['required', 'string', 'max:255'],
+            'order_status' => ['required', 'string', 'in:order_placed,processing,packed,shipped,delivered'],
             'tracking_number' => ['nullable', 'string', 'max:255'],
             'courier_name' => ['nullable', 'string', 'max:255'],
             'notes' => ['nullable', 'string'],
@@ -144,6 +143,39 @@ class OrderController extends Controller
     public function printLabel(Order $order)
     {
         $order->load('school');
+        
+        // Calculate actual product weight
+        $weight = 0.5; // Default fallback weight
+        $weightLabel = 'Weight: ' . number_format($weight, 2) . 'kg (Est)';
+        
+        // Try to find the product and get actual weight
+        $product = \App\Models\Admin\Master\ProductMapping::where('product_name', $order->item_name)
+            ->with('variants')
+            ->first();
+        
+        if ($product) {
+            $unitWeight = null;
+            
+            // Check if product has variant-based pricing and size matches a variant
+            if ($product->variant_based_pricing && $order->size && $product->variants) {
+                $variant = $product->variants->where('option', $order->size)->first();
+                if ($variant && $variant->weight) {
+                    $unitWeight = $variant->weight;
+                }
+            }
+            
+            // If no variant weight found, use product weight
+            if ($unitWeight === null && $product->product_weight) {
+                $unitWeight = $product->product_weight;
+            }
+            
+            // Calculate total weight (unit weight * quantity)
+            if ($unitWeight !== null) {
+                $weight = $unitWeight * $order->quantity;
+                $weightLabel = 'Weight: ' . number_format($weight, 2) . 'kg';
+            }
+        }
+        
         $lines = [
             'SHIPPING LABEL',
             '----------------------------------------',
@@ -161,7 +193,7 @@ class OrderController extends Controller
             'Courier: ' . ($order->courier_name ?? 'Not Assigned'),
             'Tracking: ' . ($order->tracking_number ?? 'Pending'),
             '----------------------------------------',
-            'Weight: 0.5kg (Est)',
+            $weightLabel,
         ];
 
         $pdf = $this->buildSimplePdf($lines);

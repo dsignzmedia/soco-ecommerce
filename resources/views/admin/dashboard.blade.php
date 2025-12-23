@@ -207,6 +207,8 @@
             border-radius: 16px;
             padding: 24px;
             height: 100%;
+            overflow: hidden; /* Prevent content from overflowing container */
+            box-sizing: border-box;
         }
 
         /* Filter Section Styling */
@@ -562,8 +564,11 @@
             <div class="chart-header">
                 <div class="section-title">Orders by Status</div>
             </div>
-             <div style="height: 300px; position: relative; display: flex; justify-content: center;">
-                <canvas id="ordersChart"></canvas>
+             <div style="height: 350px; position: relative; display: flex; align-items: center; gap: 32px; padding: 20px 0;">
+                <div style="flex: 0 0 auto; width: 300px; height: 300px; display: flex; justify-content: center; align-items: center;">
+                    <canvas id="ordersChart"></canvas>
+                </div>
+                <div id="ordersChartLegend" style="flex: 1; display: flex; flex-direction: column; gap: 10px; padding-left: 20px; overflow-y: auto; overflow-x: hidden; max-height: 350px; min-width: 0;"></div>
             </div>
         </div>
     </div>
@@ -651,24 +656,32 @@
             }
         });
 
-        // --- Orders Chart (Donut) ---
+        // --- Orders Chart (Doughnut) ---
         // Using "Orders by Category" data for variety if available, else generic mock or School data
         const ordersCtx = document.getElementById('ordersChart').getContext('2d');
         const categoryData = @json($charts['ordersByCategory']['data'] ?? []);
         
         const labels = categoryData.map(item => item.label);
         const dataPoints = categoryData.map(item => item.value);
-        const backgroundColors = ['#490d59', '#d946ef', '#f97316', '#22c55e', '#3b82f6'];
+        // Extended color palette for doughnut chart
+        const backgroundColors = [
+            '#490d59', '#d946ef', '#f97316', '#22c55e', '#3b82f6',
+            '#8b5cf6', '#ec4899', '#14b8a6', '#f59e0b', '#ef4444',
+            '#6366f1', '#10b981', '#f43f5e', '#06b6d4', '#84cc16',
+            '#a855f7', '#06b6d4', '#fbbf24', '#34d399'
+        ];
 
-        new Chart(ordersCtx, {
+        const ordersChart = new Chart(ordersCtx, {
             type: 'doughnut',
             data: {
                 labels: labels,
                 datasets: [{
+                    label: 'Orders by Category',
                     data: dataPoints,
-                    backgroundColor: backgroundColors,
-                    borderWidth: 0,
-                    hoverOffset: 4
+                    backgroundColor: backgroundColors.slice(0, labels.length),
+                    borderWidth: 2,
+                    borderColor: '#ffffff',
+                    hoverOffset: 8
                 }]
             },
             options: {
@@ -676,17 +689,48 @@
                 maintainAspectRatio: false,
                 plugins: {
                     legend: {
-                        position: 'bottom',
-                        labels: { 
-                            usePointStyle: true,
-                            padding: 20,
-                            font: { size: 12 }
+                        display: false // Hide default legend, we'll use custom one
+                    },
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                const label = context.label || '';
+                                const value = context.parsed || 0;
+                                const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                                const percentage = total > 0 ? ((value / total) * 100).toFixed(1) : '0.0';
+                                return `${label}: ${value} (${percentage}%)`;
+                            }
                         }
                     }
                 },
-                cutout: '70%',
+                cutout: '65%',
             }
         });
+        
+        // Create custom legend on the right side
+        const legendContainer = document.getElementById('ordersChartLegend');
+        if (legendContainer && ordersChart) {
+            const total = ordersChart.data.datasets[0].data.reduce((a, b) => a + b, 0);
+            const legendItems = ordersChart.data.labels.map((label, index) => {
+                const value = ordersChart.data.datasets[0].data[index];
+                const color = ordersChart.data.datasets[0].backgroundColor[index];
+                const percentage = total > 0 ? ((value / total) * 100).toFixed(1) : '0.0';
+                
+                return `
+                    <div style="display: flex; align-items: center; gap: 12px; padding: 6px 0; min-width: 0; width: 100%; box-sizing: border-box;">
+                        <div style="width: 14px; height: 14px; border-radius: 3px; background-color: ${color}; flex-shrink: 0; border: 1px solid rgba(0,0,0,0.1);"></div>
+                        <div style="flex: 1; display: flex; justify-content: space-between; align-items: center; min-width: 0; gap: 12px; overflow: hidden;">
+                            <span style="font-size: 13px; color: #475467; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%;">${label}</span>
+                            <div style="display: flex; align-items: center; gap: 8px; flex-shrink: 0;">
+                                <span style="font-size: 13px; color: #111827; font-weight: 600; white-space: nowrap;">${value}</span>
+                                <span style="font-size: 12px; color: #64748b; white-space: nowrap;">(${percentage}%)</span>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+            legendContainer.innerHTML = legendItems;
+        }
     });
 </script>
 @endpush

@@ -1,5 +1,7 @@
 @extends('admin.layouts.base')
 
+@php $routePrefix = $routePrefix ?? 'master.admin'; @endphp
+
 @section('title', 'Payments | The Skool Store')
 @section('page_heading', 'Payments')
 @section('page_subheading', 'Monitor and manage all payment transactions')
@@ -125,7 +127,7 @@
         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 16px;">
             <h3 style="margin:0; font-size: 18px; font-weight: 600; color:#111827;">Payment Filters</h3>
         </div>
-        <form class="filters" method="GET" action="{{ route('master.admin.payments.index') }}">
+        <form class="filters" method="GET" action="{{ route($routePrefix . '.payments.index') }}">
              <!-- Search -->
              <input type="text" name="search" placeholder="Order No / Payment ID" value="{{ request('search') }}">
 
@@ -163,6 +165,7 @@
                     <tr>
                         <th style="width: 40px;">#</th>
                         <th>Type</th>
+                        <th>Product Type</th>
                         <th>Order</th>
                         <th>Gateway ID</th>
                         <th>Method</th>
@@ -190,8 +193,28 @@
                             @endif
                         </td>
                         <td>
+                            @if($payment->product_type)
+                                @if($payment->product_type == 'merchandised')
+                                    <span style="background:#e0f2fe; color:#0369a1; padding: 2px 8px; border-radius: 12px; font-size: 11px; font-weight: 600;">Merchandise</span>
+                                @elseif($payment->product_type == 'back_to_school')
+                                    <span style="background:#dcfce7; color:#166534; padding: 2px 8px; border-radius: 12px; font-size: 11px; font-weight: 600;">Back to School</span>
+                                @else
+                                    <span style="background:#f3f4f6; color:#374151; padding: 2px 8px; border-radius: 12px; font-size: 11px; font-weight: 600;">{{ ucfirst(str_replace('_', ' ', $payment->product_type)) }}</span>
+                                @endif
+                            @else
+                                <span style="color:#9ca3af; font-size: 11px;">—</span>
+                            @endif
+                        </td>
+                        <td>
+                            @php
+                                $orderShowRoute = match($payment->product_type) {
+                                    'merchandised' => 'admin.merchandise.orders.show',
+                                    'back_to_school' => 'admin.back_to_school.orders.show',
+                                    default => 'master.admin.orders.show'
+                                };
+                            @endphp
                             @if($payment->order)
-                                <a href="{{ route('master.admin.orders.show', $payment->order->id) }}" style="color:#490d59; font-weight:600; text-decoration:none;">
+                                <a href="{{ route($orderShowRoute, $payment->order->id) }}" style="color:#490d59; font-weight:600; text-decoration:none;">
                                     {{ $payment->order->order_number }}
                                 </a>
                             @else
@@ -225,7 +248,7 @@
                             <small>{{ $payment->created_at->format('h:i A') }}</small>
                         </td>
                         <td style="text-align:right;">
-                            <a href="{{ route('master.admin.payments.show', $payment->id) }}" class="btn-vs-sm" title="View Details">
+                            <a href="{{ route($routePrefix . '.payments.show', $payment->id) }}" class="btn-vs-sm" title="View Details">
                                 <i class="fas fa-eye"></i> View
                             </a>
                         </td>

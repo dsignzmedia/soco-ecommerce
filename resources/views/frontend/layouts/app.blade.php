@@ -215,7 +215,7 @@
             <div class="container">
                 <div class="row gx-60 gy-4 text-center text-lg-start justify-content-between align-items-center">
                     <div class="col-lg"><a href="{{ route('frontend.index') }}"><img
-                                src="{{ asset('assets/img/logo_white.svg') }}" alt="logo"></a></div>
+                                src="{{ asset('assets/img/new logo/new_logo.png') }}" alt="logo"></a></div>
                     <div class="col-lg-auto">
                         <h3 class="h4 mb-0 text-white"><img src="{{ asset('assets/img/icon/check-list.svg') }}"
                                 alt="icon" class="me-2">Shop Your School’s Uniform & Essentials in one place.</h3>

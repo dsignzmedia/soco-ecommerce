@@ -124,7 +124,7 @@
 <body>
     <section class="login-shell">
         <div class="login-shell__hero">
-            <img src="{{ asset('assets/img/logo.svg') }}" alt="The Skool Store" style="width:140px;">
+            <img src="{{ asset('assets/img/new logo/new_logo.png') }}" alt="The Skool Store" style="width:140px;">
             <h1>Inventory Admin</h1>
             <p>Focused tooling for stock managers. Track low stock, log adjustments and stay in sync with Master Admin directives.</p>
         </div>

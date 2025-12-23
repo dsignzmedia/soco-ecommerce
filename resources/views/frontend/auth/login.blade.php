@@ -6,7 +6,7 @@
     <div class="login-container" style="max-width: 450px; width: 100%; background: #ffffff; border-radius: 20px; padding: 50px 40px; box-shadow: 0 10px 40px rgba(0,0,0,0.1);">
         <!-- Logo -->
         <div class="text-center mb-4">
-            <img src="{{ asset('assets/img/logo.svg') }}" alt="The Skool Store" style="max-width: 200px; height: auto; margin-bottom: 20px;">
+            <img src="{{ asset('assets/img/new logo/new_logo.png') }}" alt="The Skool Store" style="max-width: 200px; height: auto; margin-bottom: 20px;">
         </div>
 
         <!-- Welcome Message -->

@@ -242,9 +242,9 @@
 
                                     <a href="{{ route('frontend.parent.product-detail', ['productId' => $product['id'], 'profile_id' => $selectedProfile['id']]) }}" target="_blank">
                                         @if(isset($product['image']) && $product['image'])
-                                            <img src="{{ $product['image'] }}" alt="{{ $product['name'] }}" class="w-100">
+                                            <img src="{{ $product['image'] }}" alt="{{ $product['name'] }}" class="w-100" onerror="this.onerror=null; this.src='{{ asset('assets/img/no image/no_image.png') }}';">
                                         @else
-                                            <img src="{{ asset('assets/img/product/product1-1.png') }}" alt="{{ $product['name'] }}" class="w-100">
+                                            <img src="{{ asset('assets/img/no image/no_image.png') }}" alt="{{ $product['name'] }}" class="w-100">
                                         @endif
                                     </a>
                                     @if(isset($product['type']) && in_array(strtolower($product['type']), ['authorized', 'optional']))
@@ -914,7 +914,10 @@ document.addEventListener('DOMContentLoaded', function() {
             // If any category checkbox is checked, show only products matching selected categories
             // If no category checkbox is checked, show all products (don't filter by category)
             if (hasAnyCategoryChecked) {
-                if (!selectedCategories.includes(productCategory)) {
+                // Case-insensitive comparison
+                const productCategoryLower = productCategory.toLowerCase();
+                const matchesCategory = selectedCategories.some(cat => cat.toLowerCase() === productCategoryLower);
+                if (!matchesCategory) {
                     show = false;
                 }
             }

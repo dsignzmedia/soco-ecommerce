@@ -13,6 +13,8 @@ class ProductVariant extends Model
         'product_mapping_id',
         'name',
         'option',
+        'price',
+        'weight',
         'stock',
         'low_stock_threshold'
     ];
