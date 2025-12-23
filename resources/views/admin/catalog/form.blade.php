@@ -1,7 +1,9 @@
 
 @extends('admin.layouts.base')
 
-@php($isEdit = $mode === 'edit')
+@php
+    $isEdit = isset($mode) && $mode === 'edit';
+@endphp
 
 @section('title', ($isEdit ? 'Edit' : 'Add') . ' Product | The Skool Store')
 @section('page_heading', ($isEdit ? 'Edit' : 'Add') . ' Product')
@@ -36,40 +38,40 @@
                         <input type="text" name="product_name" value="{{ old('product_name', $product->product_name) }}" required>
                     </label>
                     
-                    <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
-                        <label>
-                            <span>Description</span>
-                            <textarea name="description" rows="5" placeholder="Rich text / marketing copy...">{{ old('description', $product->description) }}</textarea>
-                        </label>
-                        <label>
-                            <span>Size Guidance</span>
-                            <textarea name="size_guidance" rows="5" placeholder="Add measurement tips or conversion charts...">{{ old('size_guidance', $product->size_guidance) }}</textarea>
-                        </label>
-                    </div>
+                    <label>
+                        <span>Description</span>
+                        <textarea name="description" rows="5" placeholder="Rich text / marketing copy...">{{ old('description', $product->description) }}</textarea>
+                    </label>
                     
 
                 </div>
 
-                <!-- Pricing -->
+                <!-- Pricing & Product Variants -->
                 <div class="card">
-                    <h3 style="margin:0 0 20px;color:#111827;display:flex;align-items:center;gap:10px;">
+                    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;">
+                        <h3 style="margin:0;color:#111827;display:flex;align-items:center;gap:10px;">
                         <i class="fas fa-tag" style="color:#490d59;background:#f7f2fb;padding:8px;border-radius:8px;"></i>
-                        Pricing
+                            Pricing & Product Variants
                     </h3>
-                    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:16px;">
-                        <label>
-                            <span>Regular price *</span>
-                            <input type="number" name="price_regular" min="0" step="0.01" value="{{ old('price_regular', $product->price_regular) }}" required>
+                        {{--<label style="display:flex;align-items:center;gap:8px;margin:0;cursor:pointer;">
+                            <input type="checkbox" id="variant-pricing-toggle" name="variant_based_pricing" value="1" @checked(old('variant_based_pricing', $product->category === 'fabrics' || $product->category === 'Fabrics')) style="width:auto;">
+                            <span style="font-size:13px;color:#475467;">Variant-based pricing (Fabric)</span>
+                        </label>--}}
+                    </div>
+                    
+                    <!-- Pricing Section -->
+                    <div id="main-pricing-section" style="margin-bottom:24px;padding-bottom:24px;border-bottom:1px solid #e5e7eb;">
+                        <h4 style="margin:0 0 16px;color:#374151;font-size:14px;font-weight:600;">Pricing</h4>
+                        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:16px;">
+                            <label class="main-price-field">
+                                <span>Price <span id="price-required-indicator">*</span></span>
+                                <input type="number" id="main-price-input" name="price_regular" min="0" step="0.01" value="{{ old('price_regular', $product->price_regular) }}">
                         </label>
-                        <label>
-                            <span>Sale price</span>
-                            <input type="number" name="price_sale" min="0" step="0.01" value="{{ old('price_sale', $product->price_sale) }}">
-                        </label>
-                        <label>
+                            <label class="tax-fields">
                             <span>Tax (%)</span>
                             <input type="number" name="price_tax" min="0" step="0.01" value="{{ old('price_tax', $product->price_tax) }}">
                         </label>
-                        <label>
+                            <label class="tax-fields">
                             <span>Tax profile</span>
                             <select name="tax_profile">
                                 <option value="">Select profile</option>
@@ -78,6 +80,142 @@
                                 @endforeach
                             </select>
                         </label>
+                            <label class="inclusive-tax-field" style="display:flex;align-items:center;gap:8px;padding-top:24px;">
+                                <input type="checkbox" name="price_inclusive_tax" value="1" @checked(old('price_inclusive_tax', $product->price_inclusive_tax ?? true)) style="width:auto;">
+                                <span>Inclusive of all tax</span>
+                            </label>
+                            {{-- Weight field removed - now using variant-wise weight --}}
+                        </div>
+                </div>
+
+                <!-- Grade-wise Pricing Section -->
+                <div class="card" style="margin-bottom:24px;">
+                    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
+                        <h4 style="margin:0;color:#374151;font-size:14px;font-weight:600;">Grade-wise Pricing (Optional)</h4>
+                        <label style="display:flex;align-items:center;gap:8px;margin:0;cursor:pointer;">
+                            <input type="checkbox" id="grade-pricing-toggle" name="enable_grade_pricing" value="1" @checked(old('enable_grade_pricing', $product->gradePricing && $product->gradePricing->count() > 0 ? true : (old('enable_grade_pricing') === '0' || old('enable_grade_pricing') === false ? false : true))) style="width:auto;">
+                            <span style="font-size:13px;color:#475467;">Enable grade-wise pricing</span>
+                        </label>
+                    </div>
+                    
+                    <div id="grade-pricing-section" style="display:{{ old('enable_grade_pricing', $product->gradePricing && $product->gradePricing->count() > 0 ? 'block' : (old('enable_grade_pricing') === '0' || old('enable_grade_pricing') === false ? 'none' : 'block')) }};">
+                        <p style="margin:0 0 16px;color:#6b7280;font-size:13px;">
+                            Set price ranges for different grade groups. Add multiple ranges as needed.<br>
+                            <strong style="color:#374151;">Tip:</strong> To set pricing for a single grade, fill only "From Grade" and leave "To Grade" empty.
+                        </p>
+                        
+                        <div id="grade-pricing-ranges-container" style="display:flex;flex-direction:column;gap:12px;">
+                            @php
+                                // Convert existing grade pricing to ranges for display
+                                $existingRanges = [];
+                                $gradeOrder = ['Pre-KG', 'LKG', 'UKG', '1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11', '12'];
+                                
+                                if ($product->gradePricing && $product->gradePricing->count() > 0) {
+                                    $pricingByPrice = [];
+                                    foreach ($product->gradePricing as $gp) {
+                                        if (!isset($pricingByPrice[$gp->price])) {
+                                            $pricingByPrice[$gp->price] = [];
+                                        }
+                                        $pricingByPrice[$gp->price][] = $gp->grade;
+                                    }
+                                    
+                                    foreach ($pricingByPrice as $price => $gradeList) {
+                                        // Sort by grade order, not alphabetically
+                                        usort($gradeList, function($a, $b) use ($gradeOrder) {
+                                            $aIndex = array_search($a, $gradeOrder);
+                                            $bIndex = array_search($b, $gradeOrder);
+                                            return ($aIndex !== false && $bIndex !== false) ? $aIndex - $bIndex : 0;
+                                        });
+                                        
+                                        // Group consecutive grades into ranges
+                                        if (!empty($gradeList)) {
+                                            $currentRange = ['from' => $gradeList[0], 'to' => $gradeList[0]];
+                                            foreach ($gradeList as $i => $grade) {
+                                                if ($i === 0) continue;
+                                                $prevIndex = array_search($gradeList[$i-1], $gradeOrder);
+                                                $currIndex = array_search($grade, $gradeOrder);
+                                                if ($currIndex === $prevIndex + 1) {
+                                                    // Consecutive, extend range
+                                                    $currentRange['to'] = $grade;
+                                                } else {
+                                                    // Not consecutive, save current range and start new
+                                                    $existingRanges[] = array_merge($currentRange, ['price' => $price]);
+                                                    $currentRange = ['from' => $grade, 'to' => $grade];
+                                                }
+                                            }
+                                            $existingRanges[] = array_merge($currentRange, ['price' => $price]);
+                                        }
+                                    }
+                                }
+                                
+                                // If no existing ranges, show one empty range
+                                if (empty($existingRanges) && old('grade_pricing_ranges')) {
+                                    $existingRanges = old('grade_pricing_ranges');
+                                } elseif (empty($existingRanges)) {
+                                    $existingRanges = [['from' => '', 'to' => '', 'price' => '']];
+                                }
+                            @endphp
+                            
+                            @foreach($existingRanges as $index => $range)
+                                <div class="grade-pricing-range-row" style="display:grid;grid-template-columns:1fr 1fr 150px auto;gap:12px;align-items:end;padding:12px;border:1px solid #e5e7eb;border-radius:8px;background:#f9fafb;">
+                                    <label>
+                                        <span style="font-size:12px;color:#374151;font-weight:500;display:block;margin-bottom:4px;">From Grade *</span>
+                                        <select name="grade_pricing_ranges[{{ $index }}][from]" class="grade-from-select" required>
+                                            <option value="">Select</option>
+                                            <option value="Pre-KG" @selected(old('grade_pricing_ranges.'.$index.'.from', $range['from'] ?? '') == 'Pre-KG')>Pre-KG</option>
+                                            <option value="LKG" @selected(old('grade_pricing_ranges.'.$index.'.from', $range['from'] ?? '') == 'LKG')>LKG</option>
+                                            <option value="UKG" @selected(old('grade_pricing_ranges.'.$index.'.from', $range['from'] ?? '') == 'UKG')>UKG</option>
+                                            <option value="1" @selected(old('grade_pricing_ranges.'.$index.'.from', $range['from'] ?? '') == '1')>Class 1</option>
+                                            <option value="2" @selected(old('grade_pricing_ranges.'.$index.'.from', $range['from'] ?? '') == '2')>Class 2</option>
+                                            <option value="3" @selected(old('grade_pricing_ranges.'.$index.'.from', $range['from'] ?? '') == '3')>Class 3</option>
+                                            <option value="4" @selected(old('grade_pricing_ranges.'.$index.'.from', $range['from'] ?? '') == '4')>Class 4</option>
+                                            <option value="5" @selected(old('grade_pricing_ranges.'.$index.'.from', $range['from'] ?? '') == '5')>Class 5</option>
+                                            <option value="6" @selected(old('grade_pricing_ranges.'.$index.'.from', $range['from'] ?? '') == '6')>Class 6</option>
+                                            <option value="7" @selected(old('grade_pricing_ranges.'.$index.'.from', $range['from'] ?? '') == '7')>Class 7</option>
+                                            <option value="8" @selected(old('grade_pricing_ranges.'.$index.'.from', $range['from'] ?? '') == '8')>Class 8</option>
+                                            <option value="9" @selected(old('grade_pricing_ranges.'.$index.'.from', $range['from'] ?? '') == '9')>Class 9</option>
+                                            <option value="10" @selected(old('grade_pricing_ranges.'.$index.'.from', $range['from'] ?? '') == '10')>Class 10</option>
+                                            <option value="11" @selected(old('grade_pricing_ranges.'.$index.'.from', $range['from'] ?? '') == '11')>Class 11</option>
+                                            <option value="12" @selected(old('grade_pricing_ranges.'.$index.'.from', $range['from'] ?? '') == '12')>Class 12</option>
+                                        </select>
+                                    </label>
+                                    <label>
+                                        <span style="font-size:12px;color:#374151;font-weight:500;display:block;margin-bottom:4px;">To Grade <span style="color:#6b7280;font-weight:400;">(Optional)</span></span>
+                                        <select name="grade_pricing_ranges[{{ $index }}][to]" class="grade-to-select">
+                                            <option value="">Leave empty for single grade</option>
+                                            <option value="Pre-KG" @selected(old('grade_pricing_ranges.'.$index.'.to', $range['to'] ?? '') == 'Pre-KG')>Pre-KG</option>
+                                            <option value="LKG" @selected(old('grade_pricing_ranges.'.$index.'.to', $range['to'] ?? '') == 'LKG')>LKG</option>
+                                            <option value="UKG" @selected(old('grade_pricing_ranges.'.$index.'.to', $range['to'] ?? '') == 'UKG')>UKG</option>
+                                            <option value="1" @selected(old('grade_pricing_ranges.'.$index.'.to', $range['to'] ?? '') == '1')>Class 1</option>
+                                            <option value="2" @selected(old('grade_pricing_ranges.'.$index.'.to', $range['to'] ?? '') == '2')>Class 2</option>
+                                            <option value="3" @selected(old('grade_pricing_ranges.'.$index.'.to', $range['to'] ?? '') == '3')>Class 3</option>
+                                            <option value="4" @selected(old('grade_pricing_ranges.'.$index.'.to', $range['to'] ?? '') == '4')>Class 4</option>
+                                            <option value="5" @selected(old('grade_pricing_ranges.'.$index.'.to', $range['to'] ?? '') == '5')>Class 5</option>
+                                            <option value="6" @selected(old('grade_pricing_ranges.'.$index.'.to', $range['to'] ?? '') == '6')>Class 6</option>
+                                            <option value="7" @selected(old('grade_pricing_ranges.'.$index.'.to', $range['to'] ?? '') == '7')>Class 7</option>
+                                            <option value="8" @selected(old('grade_pricing_ranges.'.$index.'.to', $range['to'] ?? '') == '8')>Class 8</option>
+                                            <option value="9" @selected(old('grade_pricing_ranges.'.$index.'.to', $range['to'] ?? '') == '9')>Class 9</option>
+                                            <option value="10" @selected(old('grade_pricing_ranges.'.$index.'.to', $range['to'] ?? '') == '10')>Class 10</option>
+                                            <option value="11" @selected(old('grade_pricing_ranges.'.$index.'.to', $range['to'] ?? '') == '11')>Class 11</option>
+                                            <option value="12" @selected(old('grade_pricing_ranges.'.$index.'.to', $range['to'] ?? '') == '12')>Class 12</option>
+                                        </select>
+                                    </label>
+                                    <label>
+                                        <span style="font-size:12px;color:#374151;font-weight:500;display:block;margin-bottom:4px;">Price (₹)</span>
+                                        <input type="number" name="grade_pricing_ranges[{{ $index }}][price]" value="{{ old('grade_pricing_ranges.'.$index.'.price', $range['price'] ?? '') }}" min="0" step="0.01" required placeholder="0.00" style="width:100%;padding:8px;border:1px solid #d1d5db;border-radius:6px;font-size:13px;">
+                                    </label>
+                                    <div style="display:flex;align-items:end;padding-bottom:4px;">
+                                        <button type="button" class="remove-grade-range-btn" style="padding:8px 12px;background:#fee2e2;color:#b42318;border:none;border-radius:6px;cursor:pointer;font-size:12px;font-weight:600;">
+                                            <i class="fas fa-trash"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                            @endforeach
+                        </div>
+                        
+                        <button type="button" id="add-grade-range-btn" style="margin-top:12px;padding:8px 16px;background:#490d59;color:#fff;border:none;border-radius:6px;font-size:13px;font-weight:600;cursor:pointer;">
+                            <i class="fas fa-plus" style="margin-right:6px;"></i> Add Grade Range
+                        </button>
                     </div>
                 </div>
 
@@ -85,27 +223,37 @@
                 <input type="hidden" name="inventory_stock" value="{{ old('inventory_stock', $product->inventory_stock ?? 0) }}">
                 <input type="hidden" name="low_stock_threshold" value="{{ old('low_stock_threshold', $product->low_stock_threshold ?? 5) }}">
 
-                <!-- Variants (Size & Stock) -->
-                <div class="card">
-                    <h3 style="margin:0 0 20px;color:#111827;display:flex;align-items:center;gap:10px;">
-                        <i class="fas fa-layer-group" style="color:#490d59;background:#f7f2fb;padding:8px;border-radius:8px;"></i>
-                        Product Variants
-                    </h3>
+                    <!-- Product Variants Section -->
+                    <div>
+                        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
+                            <h4 style="margin:0;color:#374151;font-size:14px;font-weight:600;">Product Variants</h4>
+                            <button type="button" id="apply-weight-all-btn" style="display:none;padding:6px 12px;background:#490d59;color:white;border:none;border-radius:6px;font-size:12px;cursor:pointer;">
+                                <i class="fas fa-copy"></i> Apply Weight to All Sizes
+                            </button>
+                        </div>
                     <div id="variants-container">
                         @if(old('variants'))
                             @foreach(old('variants') as $index => $variant)
-                                <div class="variant-row" style="display:grid;grid-template-columns:1fr 1fr 1fr auto;gap:12px;margin-bottom:12px;">
+                                <div class="variant-row" style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr auto;gap:12px;margin-bottom:12px;align-items:end;">
                                     <label>
                                         <span style="font-size:12px;">Size / Option</span>
                                         <input type="text" name="variants[{{$index}}][option]" value="{{ $variant['option'] }}" placeholder="e.g. S, M, 10" required>
                                         <input type="hidden" name="variants[{{$index}}][id]" value="{{ $variant['id'] ?? '' }}">
                                     </label>
+                                    <label class="variant-price-label" style="display:none;position:absolute;visibility:hidden;">
+                                        <span class="variant-price-label-text" style="font-size:12px;">Price *</span>
+                                        <input type="number" name="variants[{{$index}}][price]" min="0" step="0.01" value="{{ $variant['price'] ?? '' }}" placeholder="0.00" class="variant-price-input">
+                                    </label>
+                                    <label class="variant-weight-label" style="display:block;">
+                                        <span class="variant-weight-label-text" style="font-size:12px;">Weight (kg)</span>
+                                        <input type="number" name="variants[{{$index}}][weight]" min="0" step="0.01" value="{{ $variant['weight'] ?? '' }}" placeholder="0.00" class="variant-weight-input">
+                                    </label>
                                     <label>
-                                        <span style="font-size:12px;">Stock</span>
+                                        <span class="variant-stock-label-text" style="font-size:12px;">Stock</span>
                                         <input type="number" name="variants[{{$index}}][stock]" value="{{ $variant['stock'] }}" placeholder="Qty" min="0" class="variant-stock">
                                     </label>
                                     <label>
-                                        <span style="font-size:12px;">Low Stock Alert</span>
+                                        <span class="variant-low-stock-label-text" style="font-size:12px;">Low Stock Alert</span>
                                         <input type="number" name="variants[{{$index}}][low_stock_threshold]" value="{{ $variant['low_stock_threshold'] ?? 5 }}" placeholder="Alert Qty" min="0">
                                     </label>
                                     <div style="display:flex;align-items:end;padding-bottom:10px;">
@@ -117,11 +265,19 @@
                             @endforeach
                         @elseif($product->variants && $product->variants->count() > 0)
                             @foreach($product->variants as $index => $variant)
-                                <div class="variant-row" style="display:grid;grid-template-columns:1fr 1fr 1fr auto;gap:12px;margin-bottom:12px;">
+                                <div class="variant-row" style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr auto;gap:12px;margin-bottom:12px;align-items:end;">
                                     <label>
                                         <span style="font-size:12px;">Size / Option</span>
                                         <input type="text" name="variants[{{$index}}][option]" value="{{ $variant->option }}" placeholder="e.g. S, M, 10" required>
                                         <input type="hidden" name="variants[{{$index}}][id]" value="{{ $variant->id }}">
+                                    </label>
+                                    <label class="variant-price-label" style="display:none;position:absolute;visibility:hidden;">
+                                        <span style="font-size:12px;">Price *</span>
+                                        <input type="number" name="variants[{{$index}}][price]" min="0" step="0.01" value="{{ $variant->price ?? '' }}" placeholder="0.00" class="variant-price-input">
+                                    </label>
+                                    <label class="variant-weight-label" style="display:none;">
+                                        <span style="font-size:12px;">Weight (kg)</span>
+                                        <input type="number" name="variants[{{$index}}][weight]" min="0" step="0.01" value="{{ $variant->weight ?? '' }}" placeholder="0.00" class="variant-weight-input">
                                     </label>
                                     <label>
                                         <span style="font-size:12px;">Stock</span>
@@ -140,10 +296,18 @@
                             @endforeach
                         @else
                             <!-- Empty State / One Default Row -->
-                             <div class="variant-row" style="display:grid;grid-template-columns:1fr 1fr 1fr auto;gap:12px;margin-bottom:12px;">
+                             <div class="variant-row" style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr 1fr auto;gap:12px;margin-bottom:12px;">
                                 <label>
                                     <span style="font-size:12px;">Size / Option</span>
                                     <input type="text" name="variants[0][option]" placeholder="e.g. S, M, 10">
+                                </label>
+                                <label class="variant-price-label" style="display:none;position:absolute;visibility:hidden;">
+                                    <span style="font-size:12px;">Price *</span>
+                                    <input type="number" name="variants[0][price]" min="0" step="0.01" placeholder="0.00" class="variant-price-input">
+                                </label>
+                                <label class="variant-weight-label" style="display:block;">
+                                    <span style="font-size:12px;">Weight (kg)</span>
+                                    <input type="number" name="variants[0][weight]" min="0" step="0.01" placeholder="0.00" class="variant-weight-input">
                                 </label>
                                 <label>
                                     <span style="font-size:12px;">Stock</span>
@@ -164,6 +328,7 @@
                     <button type="button" id="add-variant-btn" style="margin-top:10px;background:#f9fafb;border:1px dashed #d0d5dd;border-radius:8px;width:100%;padding:10px;color:#475467;font-size:13px;cursor:pointer;">
                         + Add another size/variant
                     </button>
+                    </div>
                 </div>
 
                 <!-- Media -->
@@ -172,7 +337,7 @@
                         <i class="fas fa-images" style="color:#490d59;background:#f7f2fb;padding:8px;border-radius:8px;"></i>
                         Media
                     </h3>
-                    <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
+                    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px;">
                         <label>
                             <span>Featured product image</span>
                             <div class="file-input-wrapper">
@@ -212,11 +377,29 @@
                                 @endif
                             </div>
                         </div>
+                        <label>
+                            <span>Size Measurement Image</span>
+                            <div class="file-input-wrapper">
+                                <input type="file" name="size_measurement_image" accept="image/*">
+                            </div>
+                            @if($product->size_measurement_image)
+                                <div style="margin-top:8px;">
+                                    <img src="{{ asset('storage/' . $product->size_measurement_image) }}" alt="Size Measurement" style="width:80px;height:80px;object-fit:cover;border-radius:8px;">
+                                    <a href="{{ asset('storage/' . $product->size_measurement_image) }}" target="_blank" style="font-size:12px;color:#490d59;display:block;margin-top:4px;">View image</a>
+                                </div>
+                            @endif
+                        </label>
                     </div>
 
     @push('scripts')
     <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
     <style>
+        /* Grade dropdown styling - basic, unstyled appearance */
+        .grade-from-select option:disabled,
+        .grade-to-select option:disabled {
+            color: #9ca3af;
+        }
+        
         /* Media Item Container */
         .media-item {
             position: relative;
@@ -483,7 +666,7 @@
                                 @endforeach
                             </select>
                         </label>
-                        <label>
+                        <label id="grade-select-label">
                             <span>Grade</span>
                             <select name="grade">
                                 <option value="">All grades</option>
@@ -494,9 +677,9 @@
                                 @endforeach
                             </select>
                         </label>
-                        <label>
+                        <label id="category-label">
                             <span>Category</span>
-                            <select name="category">
+                            <select name="category" id="category-select">
                                 <option value="">Select Category</option>
                                 @foreach($categories as $key => $label)
                                     <option value="{{ $key }}" @selected(old('category', $product->category) === $key)>{{ $label }}</option>
@@ -540,10 +723,10 @@
                             @endforeach
                         </select>
                     </label>
-                    <label style="margin-bottom:20px;">
+                    <!-- <label style="margin-bottom:20px;">
                         <span>Availability label</span>
                         <input type="text" name="availability_label" value="{{ old('availability_label', $product->availability_label) }}" placeholder="Eg: Ships in 2-3 days">
-                    </label>
+                    </label> -->
 
                     <div style="display:flex;flex-direction:column;gap:10px;">
                         <button type="submit" name="status" value="live" style="width:100%;padding:12px;border:none;border-radius:8px;background:#490d59;color:#fff;font-weight:600;cursor:pointer;">
@@ -586,22 +769,739 @@
             // Initial check
             updateMainStock();
 
-            addBtn.addEventListener('click', function() {
-                const index = container.querySelectorAll('.variant-row').length;
+            // Grade Pricing Toggle - declare early so it's available to all functions
+            const gradePricingToggle = document.getElementById('grade-pricing-toggle');
+
+            // Variant-based pricing toggle functionality
+            const variantPricingToggle = document.getElementById('variant-pricing-toggle');
+            const mainPricingSection = document.getElementById('main-pricing-section');
+            const mainPriceInput = document.getElementById('main-price-input');
+            
+            function toggleVariantPricing() {
+                const isEnabled = variantPricingToggle.checked;
+                const variantRows = container.querySelectorAll('.variant-row');
+                const variantPriceLabels = container.querySelectorAll('.variant-price-label');
+                const variantWeightLabels = container.querySelectorAll('.variant-weight-label');
+                const weightField = document.querySelector('.weight-field');
+                const mainPriceField = document.querySelector('.main-price-field');
+                const inclusiveTaxField = document.querySelector('.inclusive-tax-field');
+                const categoryLabel = document.getElementById('category-label');
+                const categorySelect = document.getElementById('category-select');
+                
+                // Hide/show main price field (but keep pricing section visible for tax fields and inclusive tax)
+                // Check if grade pricing is also enabled (use the top-level gradePricingToggle declared below)
+                const gradePricingEnabled = gradePricingToggle && gradePricingToggle.checked;
+                
+                if (mainPriceField) {
+                    // If variant pricing is enabled, hide the main price field
+                    // If variant pricing is disabled, show it only if grade pricing is also disabled
+                    if (isEnabled) {
+                        mainPriceField.style.display = 'none';
+                    } else {
+                        // Variant pricing is disabled, show main price field only if grade pricing is also disabled
+                        mainPriceField.style.display = gradePricingEnabled ? 'none' : 'block';
+                    }
+                }
+                
+                // Tax fields remain visible and functional always
+                // (No need to hide/show tax fields)
+                
+                // Hide/show main weight field
+                if (weightField) {
+                    weightField.style.display = isEnabled ? 'none' : 'block';
+                }
+                
+                // Keep inclusive tax field always visible
+                if (inclusiveTaxField) {
+                    inclusiveTaxField.style.display = 'flex';
+                }
+                
+                // Auto-select "Fabrics" category and hide category field when variant pricing is enabled
+                if (categorySelect && categoryLabel) {
+                    if (isEnabled) {
+                        // Set category to 'fabrics' if it exists
+                        const fabricsOption = categorySelect.querySelector('option[value="fabrics"]');
+                        if (fabricsOption) {
+                            categorySelect.value = 'fabrics';
+                        }
+                        // Hide the category field
+                        categoryLabel.style.display = 'none';
+                    } else {
+                        // Show the category field
+                        categoryLabel.style.display = 'block';
+                    }
+                }
+                
+                // Make main price optional when variant pricing is enabled
+                if (mainPriceInput) {
+                    mainPriceInput.required = !isEnabled;
+                    if (isEnabled) {
+                        mainPriceInput.removeAttribute('required');
+                    } else {
+                        mainPriceInput.setAttribute('required', 'required');
+                    }
+                }
+                
+                // Show/hide price inputs in variants and update labels
+                // Check if grade pricing is enabled - if so, hide variant price inputs
+                // Use the top-level gradePricingToggle declared below
+                const isGradePricingEnabled = gradePricingToggle && gradePricingToggle.checked;
+                
+                variantPriceLabels.forEach(label => {
+                    // If variant pricing is enabled but grade pricing is also enabled, hide variant price inputs
+                    if (isEnabled && isGradePricingEnabled) {
+                        label.style.display = 'none';
+                        const priceInput = label.querySelector('.variant-price-input');
+                        if (priceInput) {
+                            priceInput.required = false;
+                            priceInput.removeAttribute('required');
+                        }
+                    } else {
+                        label.style.display = isEnabled ? 'block' : 'none';
+                        const priceInput = label.querySelector('.variant-price-input');
+                        const priceLabelText = label.querySelector('.variant-price-label-text');
+                        if (priceInput) {
+                            priceInput.required = isEnabled && !isGradePricingEnabled;
+                        }
+                        if (priceLabelText) {
+                            priceLabelText.textContent = isEnabled ? 'Price of Fabric' : 'Price *';
+                        }
+                    }
+                });
+                
+                // Show/hide weight inputs in variants and update labels
+                // Weight is now always visible for all variants
+                variantWeightLabels.forEach(label => {
+                    label.style.display = 'block'; // Always show weight
+                    const weightInput = label.querySelector('.variant-weight-input');
+                    const weightLabelText = label.querySelector('.variant-weight-label-text');
+                    if (weightInput) {
+                        weightInput.required = false; // Weight is optional
+                    }
+                    if (weightLabelText) {
+                        weightLabelText.textContent = 'Weight (kg)'; // Always use standard label
+                    }
+                });
+                
+                // Update stock and low stock alert labels
+                const stockLabels = container.querySelectorAll('.variant-stock-label-text');
+                const lowStockLabels = container.querySelectorAll('.variant-low-stock-label-text');
+                stockLabels.forEach(label => {
+                    label.textContent = isEnabled ? 'Stock of Fabric' : 'Stock';
+                });
+                lowStockLabels.forEach(label => {
+                    label.textContent = isEnabled ? 'Qty of Fabric' : 'Low Stock Alert';
+                });
+                
+                // Update grid columns for variant rows
+                // Check if grade pricing is enabled - if so, hide price field
+                // Reuse isGradePricingEnabled from above (line 833)
+                const showPriceInVariants = isEnabled && !isGradePricingEnabled;
+                
+                variantRows.forEach(row => {
+                    if (isEnabled && showPriceInVariants) {
+                        // Variant pricing enabled, grade pricing disabled: Size, Price, Weight, Stock, Low Stock, Remove
+                        row.style.gridTemplateColumns = '1fr 1fr 1fr 1fr 1fr auto';
+                    } else if (isEnabled && !showPriceInVariants) {
+                        // Variant pricing enabled, grade pricing enabled: Size, Weight, Stock, Low Stock, Remove
+                        row.style.gridTemplateColumns = '1fr 1fr 1fr 1fr auto';
+                    } else {
+                        // Variant pricing disabled: Size, Stock, Low Stock, Remove
+                        row.style.gridTemplateColumns = '1fr 1fr 1fr auto';
+                    }
+                });
+            }
+            
+            // Initialize on page load
+            if (variantPricingToggle) {
+                variantPricingToggle.addEventListener('change', toggleVariantPricing);
+                toggleVariantPricing(); // Initial state
+            }
+
+            // Grade Pricing Toggle (gradePricingToggle already declared above)
+            const gradePricingSection = document.getElementById('grade-pricing-section');
+            const gradeSelectLabel = document.getElementById('grade-select-label');
+            const priceRequiredIndicator = document.getElementById('price-required-indicator');
+            
+            function toggleGradePricing() {
+                if (gradePricingToggle && gradePricingSection) {
+                    const isEnabled = gradePricingToggle.checked;
+                    gradePricingSection.style.display = isEnabled ? 'block' : 'none';
+                    
+                    // Update required attributes on grade pricing fields based on visibility
+                    const gradeFromSelects = gradePricingSection.querySelectorAll('.grade-from-select');
+                    const gradePriceInputs = gradePricingSection.querySelectorAll('input[name*="[price]"]');
+                    
+                    if (isEnabled) {
+                        // Section is visible, make fields required
+                        gradeFromSelects.forEach(select => {
+                            select.setAttribute('required', 'required');
+                            select.removeAttribute('tabindex');
+                        });
+                        gradePriceInputs.forEach(input => {
+                            input.setAttribute('required', 'required');
+                            input.removeAttribute('tabindex');
+                        });
+                    } else {
+                        // Section is hidden, remove required to prevent validation errors
+                        gradeFromSelects.forEach(select => {
+                            select.removeAttribute('required');
+                            select.setAttribute('tabindex', '-1');
+                        });
+                        gradePriceInputs.forEach(input => {
+                            input.removeAttribute('required');
+                            input.setAttribute('tabindex', '-1');
+                        });
+                    }
+                    
+                    // Show/hide fabric note when both variant and grade pricing are enabled
+                    const gradePricingFabricNote = document.getElementById('grade-pricing-fabric-note');
+                    const variantPricingEnabled = variantPricingToggle && variantPricingToggle.checked;
+                    if (gradePricingFabricNote) {
+                        gradePricingFabricNote.style.display = (isEnabled && variantPricingEnabled) ? 'block' : 'none';
+                    }
+                    
+                    // Hide/show grade dropdown in Organization section
+                    if (gradeSelectLabel) {
+                        gradeSelectLabel.style.display = isEnabled ? 'none' : 'block';
+                    }
+                    
+                    // Hide/show main price field
+                    const mainPriceField = document.querySelector('.main-price-field');
+                    const mainPriceInput = document.getElementById('main-price-input');
+                    
+                    if (mainPriceField) {
+                        // If grade pricing is enabled, hide the main price field
+                        // If variant pricing is also enabled, it's already hidden by toggleVariantPricing
+                        // If grade pricing is disabled, show it (unless variant pricing is enabled)
+                        if (isEnabled) {
+                            mainPriceField.style.display = 'none';
+                        } else {
+                            // Grade pricing is disabled, show main price field only if variant pricing is also disabled
+                            if (!variantPricingEnabled) {
+                                mainPriceField.style.display = 'block';
+                            }
+                        }
+                    }
+                    
+                    if (mainPriceInput) {
+                        // If variant pricing is enabled, main price is already optional
+                        // If grade pricing is enabled, main price becomes optional
+                        mainPriceInput.required = !isEnabled && !variantPricingEnabled;
+                    }
+                    
+                    // Update price required indicator
+                    if (priceRequiredIndicator) {
+                        priceRequiredIndicator.style.display = (isEnabled || variantPricingEnabled) ? 'none' : 'inline';
+                    }
+                    
+                    // If variant pricing is also enabled, update variant price inputs visibility
+                    if (variantPricingEnabled) {
+                        const variantPriceLabels = container.querySelectorAll('.variant-price-label');
+                        variantPriceLabels.forEach(label => {
+                            if (isEnabled) {
+                                // Hide variant price inputs when grade pricing is enabled
+                                label.style.display = 'none';
+                                const priceInput = label.querySelector('.variant-price-input');
+                                if (priceInput) {
+                                    priceInput.required = false;
+                                    priceInput.removeAttribute('required');
+                                }
+                            } else {
+                                // Show variant price inputs when grade pricing is disabled
+                                label.style.display = 'block';
+                                const priceInput = label.querySelector('.variant-price-input');
+                                if (priceInput) {
+                                    priceInput.required = true;
+                                }
+                            }
+                        });
+                        
+                        // Update grid columns for variant rows
+                        const variantRows = container.querySelectorAll('.variant-row');
+                        variantRows.forEach(row => {
+                            if (isEnabled) {
+                                // Grade pricing enabled: Size, Weight, Stock, Low Stock, Remove (no price)
+                                row.style.gridTemplateColumns = '1fr 1fr 1fr 1fr auto';
+                            } else {
+                                // Grade pricing disabled: Size, Price, Weight, Stock, Low Stock, Remove
+                                row.style.gridTemplateColumns = '1fr 1fr 1fr 1fr 1fr auto';
+                            }
+                        });
+                    }
+                    
+                    // Also trigger variant pricing toggle to update variant price inputs
+                    if (variantPricingEnabled) {
+                        toggleVariantPricing();
+                    }
+                }
+            }
+            
+            if (gradePricingToggle) {
+                gradePricingToggle.addEventListener('change', toggleGradePricing);
+                toggleGradePricing(); // Initial state - this will set required attributes correctly
+            }
+            
+            // Also handle form submission to prevent validation errors on hidden fields
+            const productForm = document.querySelector('form');
+            if (productForm) {
+                productForm.addEventListener('submit', function(e) {
+                    // Before form submission, ensure hidden grade pricing fields are not required
+                    if (gradePricingSection && gradePricingSection.style.display === 'none') {
+                        const hiddenRequiredFields = gradePricingSection.querySelectorAll('[required]');
+                        hiddenRequiredFields.forEach(field => {
+                            field.removeAttribute('required');
+                            field.setAttribute('tabindex', '-1');
+                        });
+                    }
+                });
+            }
+
+            // Add Grade Range Button
+            const addGradeRangeBtn = document.getElementById('add-grade-range-btn');
+            const gradePricingRangesContainer = document.getElementById('grade-pricing-ranges-container');
+            
+            if (addGradeRangeBtn && gradePricingRangesContainer) {
+                addGradeRangeBtn.addEventListener('click', function() {
+                    const existingRows = gradePricingRangesContainer.querySelectorAll('.grade-pricing-range-row');
+                    const index = existingRows.length;
+                    
+                    // Maintain correct grade order: Pre-KG, LKG, UKG, Class 1-12
+                    // Use data-order attribute to ensure correct sorting
+                    const gradeOptionsOrdered = [
+                        {key: 'Pre-KG', label: 'Pre-KG', order: 0},
+                        {key: 'LKG', label: 'LKG', order: 1},
+                        {key: 'UKG', label: 'UKG', order: 2},
+                        {key: '1', label: 'Class 1', order: 3},
+                        {key: '2', label: 'Class 2', order: 4},
+                        {key: '3', label: 'Class 3', order: 5},
+                        {key: '4', label: 'Class 4', order: 6},
+                        {key: '5', label: 'Class 5', order: 7},
+                        {key: '6', label: 'Class 6', order: 8},
+                        {key: '7', label: 'Class 7', order: 9},
+                        {key: '8', label: 'Class 8', order: 10},
+                        {key: '9', label: 'Class 9', order: 11},
+                        {key: '10', label: 'Class 10', order: 12},
+                        {key: '11', label: 'Class 11', order: 13},
+                        {key: '12', label: 'Class 12', order: 14}
+                    ];
+                    // Build options HTML in correct order using createElement to ensure proper DOM order
+                    function buildGradeOptionsHtml(includeEmpty = true, emptyText = 'Select') {
+                        const fragment = document.createDocumentFragment();
+                        if (includeEmpty) {
+                            const emptyOpt = document.createElement('option');
+                            emptyOpt.value = '';
+                            emptyOpt.textContent = emptyText;
+                            fragment.appendChild(emptyOpt);
+                        }
+                        gradeOptionsOrdered.forEach(grade => {
+                            const opt = document.createElement('option');
+                            opt.value = grade.key;
+                            opt.textContent = grade.label;
+                            opt.setAttribute('data-order', grade.order);
+                            fragment.appendChild(opt);
+                        });
+                        return fragment;
+                    }
+                    
+                    const newRow = document.createElement('div');
+                    newRow.className = 'grade-pricing-range-row';
+                    newRow.style.cssText = 'display:grid;grid-template-columns:1fr 1fr 150px auto;gap:12px;align-items:end;padding:12px;border:1px solid #e5e7eb;border-radius:8px;background:#f9fafb;';
+                    
+                    // Create From Grade select using DOM methods
+                    const fromLabel = document.createElement('label');
+                    const fromLabelSpan = document.createElement('span');
+                    fromLabelSpan.style.cssText = 'font-size:12px;color:#374151;font-weight:500;display:block;margin-bottom:4px;';
+                    fromLabelSpan.textContent = 'From Grade *';
+                    const fromSelect = document.createElement('select');
+                    fromSelect.name = `grade_pricing_ranges[${index}][from]`;
+                    fromSelect.className = 'grade-from-select';
+                    // Set required only if grade pricing is enabled
+                    const isGradePricingEnabled = gradePricingToggle && gradePricingToggle.checked;
+                    if (isGradePricingEnabled) {
+                        fromSelect.required = true;
+                    }
+                    const fromOptionsFragment = buildGradeOptionsHtml(true, 'Select');
+                    fromSelect.appendChild(fromOptionsFragment);
+                    fromLabel.appendChild(fromLabelSpan);
+                    fromLabel.appendChild(fromSelect);
+                    
+                    // Create To Grade select using DOM methods
+                    const toLabel = document.createElement('label');
+                    const toLabelSpan = document.createElement('span');
+                    toLabelSpan.style.cssText = 'font-size:12px;color:#374151;font-weight:500;display:block;margin-bottom:4px;';
+                    const toLabelText = document.createTextNode('To Grade ');
+                    const toLabelOptional = document.createElement('span');
+                    toLabelOptional.style.cssText = 'color:#6b7280;font-weight:400;';
+                    toLabelOptional.textContent = '(Optional)';
+                    toLabelSpan.appendChild(toLabelText);
+                    toLabelSpan.appendChild(toLabelOptional);
+                    const toSelect = document.createElement('select');
+                    toSelect.name = `grade_pricing_ranges[${index}][to]`;
+                    toSelect.className = 'grade-to-select';
+                    const toOptionsFragment = buildGradeOptionsHtml(true, 'Leave empty for single grade');
+                    toSelect.appendChild(toOptionsFragment);
+                    toSelect.value = ''; // Ensure empty option is selected by default
+                    toLabel.appendChild(toLabelSpan);
+                    toLabel.appendChild(toSelect);
+                    
+                    // Create Price input
+                    const priceLabel = document.createElement('label');
+                    const priceLabelSpan = document.createElement('span');
+                    priceLabelSpan.style.cssText = 'font-size:12px;color:#374151;font-weight:500;display:block;margin-bottom:4px;';
+                    priceLabelSpan.textContent = 'Price (₹)';
+                    const priceInput = document.createElement('input');
+                    priceInput.type = 'number';
+                    priceInput.name = `grade_pricing_ranges[${index}][price]`;
+                    priceInput.value = '';
+                    priceInput.min = '0';
+                    priceInput.step = '0.01';
+                    // Set required only if grade pricing is enabled
+                    const isGradePricingEnabledForPrice = gradePricingToggle && gradePricingToggle.checked;
+                    if (isGradePricingEnabledForPrice) {
+                        priceInput.required = true;
+                    }
+                    priceInput.placeholder = '0.00';
+                    priceInput.style.cssText = 'width:100%;padding:8px;border:1px solid #d1d5db;border-radius:6px;font-size:13px;';
+                    priceLabel.appendChild(priceLabelSpan);
+                    priceLabel.appendChild(priceInput);
+                    
+                    // Create Remove button
+                    const removeDiv = document.createElement('div');
+                    removeDiv.style.cssText = 'display:flex;align-items:end;padding-bottom:4px;';
+                    const removeBtn = document.createElement('button');
+                    removeBtn.type = 'button';
+                    removeBtn.className = 'remove-grade-range-btn';
+                    removeBtn.style.cssText = 'padding:8px 12px;background:#fee2e2;color:#b42318;border:none;border-radius:6px;cursor:pointer;font-size:12px;font-weight:600;';
+                    removeBtn.innerHTML = '<i class="fas fa-trash"></i>';
+                    removeDiv.appendChild(removeBtn);
+                    
+                    // Append all elements to row
+                    newRow.appendChild(fromLabel);
+                    newRow.appendChild(toLabel);
+                    newRow.appendChild(priceLabel);
+                    newRow.appendChild(removeDiv);
+                    
+                    gradePricingRangesContainer.appendChild(newRow);
+                    
+                    // Enforce order immediately after adding (though DOM order should be correct now)
+                    setTimeout(() => {
+                        enforceGradeOrder(fromSelect);
+                        enforceGradeOrder(toSelect);
+                        updateGradeRangeOptions(); // Update options to prevent overlaps
+                    }, 0);
+                });
+            }
+
+            // Remove Grade Range Button (delegate event)
+            if (gradePricingRangesContainer) {
+                gradePricingRangesContainer.addEventListener('click', function(e) {
+                    if (e.target.closest('.remove-grade-range-btn')) {
+                        const row = e.target.closest('.grade-pricing-range-row');
+                        if (row) {
+                            row.remove();
+                            updateGradeRangeOptions(); // Update options after removal
+                        }
+                    }
+                });
+            }
+
+            // Grade order for range checking
+            const gradeOrder = ['Pre-KG', 'LKG', 'UKG', '1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11', '12'];
+            
+            // Get all existing grade ranges from the form
+            function getAllGradeRanges(excludeRow = null) {
+                const ranges = [];
+                const rows = gradePricingRangesContainer.querySelectorAll('.grade-pricing-range-row');
+                
+                rows.forEach(row => {
+                    if (row === excludeRow) return;
+                    
+                    const fromSelect = row.querySelector('.grade-from-select');
+                    const toSelect = row.querySelector('.grade-to-select');
+                    
+                    if (fromSelect && fromSelect.value) {
+                        const from = fromSelect.value;
+                        const to = toSelect && toSelect.value ? toSelect.value : from; // If no "to", it's a single grade
+                        ranges.push({ from, to });
+                    }
+                });
+                
+                return ranges;
+            }
+            
+            // Check if a grade is within any existing range
+            function isGradeInRange(grade, ranges) {
+                if (!grade || !ranges.length) return false;
+                
+                const gradeIndex = gradeOrder.indexOf(grade);
+                if (gradeIndex === -1) return false;
+                
+                return ranges.some(range => {
+                    const fromIndex = gradeOrder.indexOf(range.from);
+                    const toIndex = gradeOrder.indexOf(range.to);
+                    
+                    if (fromIndex === -1 || toIndex === -1) return false;
+                    
+                    return gradeIndex >= Math.min(fromIndex, toIndex) && 
+                           gradeIndex <= Math.max(fromIndex, toIndex);
+                });
+            }
+            
+            // Check if a range overlaps with existing ranges
+            function doesRangeOverlap(from, to, existingRanges, excludeRow = null) {
+                if (!from) return false;
+                
+                const ranges = existingRanges || getAllGradeRanges(excludeRow);
+                if (!ranges.length) return false;
+                
+                const fromIndex = gradeOrder.indexOf(from);
+                const toIndex = to ? gradeOrder.indexOf(to) : fromIndex;
+                
+                if (fromIndex === -1 || (to && toIndex === -1)) return false;
+                
+                const minIndex = Math.min(fromIndex, toIndex);
+                const maxIndex = Math.max(fromIndex, toIndex);
+                
+                return ranges.some(range => {
+                    const rangeFromIndex = gradeOrder.indexOf(range.from);
+                    const rangeToIndex = gradeOrder.indexOf(range.to);
+                    
+                    if (rangeFromIndex === -1 || rangeToIndex === -1) return false;
+                    
+                    const rangeMin = Math.min(rangeFromIndex, rangeToIndex);
+                    const rangeMax = Math.max(rangeFromIndex, rangeToIndex);
+                    
+                    // Check for overlap: ranges overlap if they share any grade
+                    return !(maxIndex < rangeMin || minIndex > rangeMax);
+                });
+            }
+            
+            // Update dropdown options to disable overlapping grades
+            function updateGradeRangeOptions() {
+                const rows = gradePricingRangesContainer.querySelectorAll('.grade-pricing-range-row');
+                
+                rows.forEach(row => {
+                    const fromSelect = row.querySelector('.grade-from-select');
+                    const toSelect = row.querySelector('.grade-to-select');
+                    
+                    if (!fromSelect || !toSelect) return;
+                    
+                    const currentFrom = fromSelect.value;
+                    const currentTo = toSelect.value;
+                    const existingRanges = getAllGradeRanges(row);
+                    
+                    // Update "From Grade" options
+                    Array.from(fromSelect.options).forEach(option => {
+                        if (!option.value) return; // Skip empty option
+                        
+                        // Check if selecting this grade would overlap with existing ranges
+                        const wouldOverlap = doesRangeOverlap(option.value, currentTo || option.value, existingRanges, row);
+                        
+                        if (wouldOverlap && option.value !== currentFrom) {
+                            option.disabled = true;
+                            option.style.color = '#9ca3af';
+                        } else {
+                            option.disabled = false;
+                            option.style.color = '';
+                        }
+                    });
+                    
+                    // Update "To Grade" options
+                    Array.from(toSelect.options).forEach(option => {
+                        if (!option.value) return; // Skip empty option
+                        
+                        // Check if selecting this grade would overlap with existing ranges
+                        const wouldOverlap = doesRangeOverlap(currentFrom || option.value, option.value, existingRanges, row);
+                        
+                        if (wouldOverlap && option.value !== currentTo) {
+                            option.disabled = true;
+                            option.style.color = '#9ca3af';
+                        } else {
+                            option.disabled = false;
+                            option.style.color = '';
+                        }
+                    });
+                });
+            }
+            
+            // Add change event listeners to grade dropdowns
+            if (gradePricingRangesContainer) {
+                gradePricingRangesContainer.addEventListener('change', function(e) {
+                    if (e.target.classList.contains('grade-from-select') || e.target.classList.contains('grade-to-select')) {
+                        updateGradeRangeOptions();
+                    }
+                });
+            }
+            
+            // Initialize options on page load
+            setTimeout(() => {
+                updateGradeRangeOptions();
+            }, 500);
+
+            // Ensure grade dropdowns maintain correct order (prevent browser sorting)
+            function enforceGradeOrder(selectElement) {
+                if (!selectElement || selectElement.tagName !== 'SELECT') return;
+                
+                const gradeOrder = ['Pre-KG', 'LKG', 'UKG', '1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11', '12'];
+                const options = Array.from(selectElement.options);
+                const emptyOption = options.find(opt => opt.value === '' || opt.textContent.includes('empty') || opt.textContent.includes('Select'));
+                const otherOptions = options.filter(opt => opt.value !== '' && !opt.textContent.includes('empty') && !opt.textContent.includes('Select'));
+                
+                // Sort options by grade order
+                otherOptions.sort((a, b) => {
+                    const aIndex = gradeOrder.indexOf(a.value);
+                    const bIndex = gradeOrder.indexOf(b.value);
+                    if (aIndex === -1 && bIndex === -1) return 0;
+                    if (aIndex === -1) return 1;
+                    if (bIndex === -1) return -1;
+                    return aIndex - bIndex;
+                });
+                
+                // Store selected value
+                const selectedValue = selectElement.value;
+                
+                // Clear and rebuild in correct order
+                selectElement.innerHTML = '';
+                if (emptyOption) {
+                    selectElement.appendChild(emptyOption.cloneNode(true));
+                }
+                otherOptions.forEach(opt => {
+                    const newOpt = opt.cloneNode(true);
+                    selectElement.appendChild(newOpt);
+                });
+                
+                // Restore selected value
+                if (selectedValue) {
+                    selectElement.value = selectedValue;
+                }
+            }
+
+            // Apply to all existing grade selects immediately and on page load
+            function initGradeOrder() {
+                // Run immediately
+                document.querySelectorAll('.grade-from-select, .grade-to-select').forEach(enforceGradeOrder);
+                
+                // Run again after a short delay to catch any late-rendered elements
+                setTimeout(() => {
+                    document.querySelectorAll('.grade-from-select, .grade-to-select').forEach(enforceGradeOrder);
+                }, 100);
+                
+                // Run again after DOM is fully ready
+                setTimeout(() => {
+                    document.querySelectorAll('.grade-from-select, .grade-to-select').forEach(enforceGradeOrder);
+                }, 500);
+            }
+            
+            // Run immediately if DOM is ready
+            if (document.readyState === 'loading') {
+                document.addEventListener('DOMContentLoaded', initGradeOrder);
+            } else {
+                initGradeOrder();
+            }
+            
+            // Also run when page is fully loaded
+            window.addEventListener('load', function() {
+                setTimeout(() => {
+                    document.querySelectorAll('.grade-from-select, .grade-to-select').forEach(enforceGradeOrder);
+                }, 100);
+            });
+
+            // Re-enforce order after adding new rows
+            if (addGradeRangeBtn && gradePricingRangesContainer) {
+                addGradeRangeBtn.addEventListener('click', function() {
+                    setTimeout(() => {
+                        gradePricingRangesContainer.querySelectorAll('.grade-from-select, .grade-to-select').forEach(enforceGradeOrder);
+                    }, 10);
+                    setTimeout(() => {
+                        gradePricingRangesContainer.querySelectorAll('.grade-from-select, .grade-to-select').forEach(enforceGradeOrder);
+                    }, 100);
+                }, true);
+            }
+            
+            // Also enforce order when dropdowns are opened (focus event)
+            document.addEventListener('focus', function(e) {
+                if (e.target && (e.target.classList.contains('grade-from-select') || e.target.classList.contains('grade-to-select'))) {
+                    enforceGradeOrder(e.target);
+                }
+            }, true);
+            
+            // Use MutationObserver to catch any dynamically added selects
+            if (typeof MutationObserver !== 'undefined') {
+                const observer = new MutationObserver(function(mutations) {
+                    mutations.forEach(function(mutation) {
+                        mutation.addedNodes.forEach(function(node) {
+                            if (node.nodeType === 1) { // Element node
+                                if (node.classList && (node.classList.contains('grade-from-select') || node.classList.contains('grade-to-select'))) {
+                                    enforceGradeOrder(node);
+                                }
+                                // Check for selects within added nodes
+                                const selects = node.querySelectorAll ? node.querySelectorAll('.grade-from-select, .grade-to-select') : [];
+                                selects.forEach(enforceGradeOrder);
+                            }
+                        });
+                    });
+                });
+                
+                // Observe the grade pricing container
+                if (gradePricingRangesContainer) {
+                    observer.observe(gradePricingRangesContainer, {
+                        childList: true,
+                        subtree: true
+                    });
+                }
+                
+                // Also observe the entire document for any grade selects
+                observer.observe(document.body, {
+                    childList: true,
+                    subtree: true
+                });
+            }
+
+            if (addBtn) {
+                addBtn.addEventListener('click', function() {
+                    const index = container.querySelectorAll('.variant-row').length;
+                    const isVariantPricing = variantPricingToggle ? variantPricingToggle.checked : false;
+                    // Use the top-level gradePricingToggle declared below
+                    const isGradePricing = gradePricingToggle ? gradePricingToggle.checked : false;
+                const showPriceField = isVariantPricing && !isGradePricing; // Hide price if grade pricing is enabled
+                const showWeightField = true; // Always show weight for all variants
+                
                 const row = document.createElement('div');
                 row.className = 'variant-row';
-                row.style.cssText = 'display:grid;grid-template-columns:1fr 1fr 1fr auto;gap:12px;margin-bottom:12px;';
+                
+                // Determine grid columns based on what fields are shown
+                // Weight is always visible, so adjust columns accordingly
+                let gridColumns;
+                if (isVariantPricing && showPriceField) {
+                    gridColumns = '1fr 1fr 1fr 1fr 1fr auto'; // Size, Price, Weight, Stock, Low Stock, Remove
+                } else {
+                    gridColumns = '1fr 1fr 1fr 1fr auto'; // Size, Weight, Stock, Low Stock, Remove
+                }
+                
+                row.style.cssText = `display:grid;grid-template-columns:${gridColumns};gap:12px;margin-bottom:12px;align-items:end;`;
+                
                 row.innerHTML = `
                     <label>
                         <span style="font-size:12px;">Size / Option</span>
                         <input type="text" name="variants[${index}][option]" placeholder="e.g. S, M, 10" required>
                     </label>
+                        ${showPriceField ? `
+                        <label class="variant-price-label" style="display:block;">
+                            <span class="variant-price-label-text" style="font-size:12px;">Price of Fabric</span>
+                            <input type="number" name="variants[${index}][price]" min="0" step="0.01" placeholder="0.00" class="variant-price-input" required>
+                        </label>
+                        ` : ''}
+                        <label class="variant-weight-label" style="display:block;">
+                            <span class="variant-weight-label-text" style="font-size:12px;">Weight (kg)</span>
+                            <input type="number" name="variants[${index}][weight]" min="0" step="0.01" placeholder="0.00" class="variant-weight-input">
+                        </label>
                     <label>
-                        <span style="font-size:12px;">Stock</span>
+                            <span class="variant-stock-label-text" style="font-size:12px;">${isVariantPricing ? 'Stock of Fabric' : 'Stock'}</span>
                         <input type="number" name="variants[${index}][stock]" placeholder="Qty" min="0" class="variant-stock">
                     </label>
                     <label>
-                        <span style="font-size:12px;">Low Stock Alert</span>
+                            <span class="variant-low-stock-label-text" style="font-size:12px;">${isVariantPricing ? 'Qty of Fabric' : 'Low Stock Alert'}</span>
                         <input type="number" name="variants[${index}][low_stock_threshold]" placeholder="Alert Qty" min="0" value="5">
                     </label>
                     <div style="display:flex;align-items:end;padding-bottom:10px;">
@@ -611,8 +1511,23 @@
                     </div>
                 `;
                 container.appendChild(row);
+                
+                // After appending, apply the same logic as toggleVariantPricing to hide price if grade pricing is enabled
+                if (isGradePricing && isVariantPricing) {
+                    const priceLabel = row.querySelector('.variant-price-label');
+                    if (priceLabel) {
+                        priceLabel.style.display = 'none';
+                        const priceInput = priceLabel.querySelector('.variant-price-input');
+                        if (priceInput) {
+                            priceInput.required = false;
+                            priceInput.removeAttribute('required');
+                        }
+                    }
+                }
+                
                 updateMainStock();
-            });
+                });
+            }
 
             container.addEventListener('click', function(e) {
                 if (e.target.closest('.btn-remove-variant')) {
@@ -626,6 +1541,48 @@
                     updateMainStock();
                 }
             });
+            
+            // Apply Weight to All Sizes functionality
+            const applyWeightAllBtn = document.getElementById('apply-weight-all-btn');
+            if (applyWeightAllBtn) {
+                // Show button when there are variants
+                function toggleApplyWeightButton() {
+                    const variantRows = container.querySelectorAll('.variant-row');
+                    applyWeightAllBtn.style.display = variantRows.length > 0 ? 'block' : 'none';
+                }
+                
+                applyWeightAllBtn.addEventListener('click', function() {
+                    const variantRows = container.querySelectorAll('.variant-row');
+                    if (variantRows.length === 0) {
+                        alert('No variants to apply weight to.');
+                        return;
+                    }
+                    
+                    // Get weight from first variant row
+                    const firstWeightInput = container.querySelector('.variant-weight-input');
+                    if (!firstWeightInput) {
+                        alert('Please add at least one variant first.');
+                        return;
+                    }
+                    
+                    // Get the weight value from the first variant
+                    const weightValue = firstWeightInput.value;
+                    
+                    // Apply first variant's weight to all other variants
+                    const allWeightInputs = container.querySelectorAll('.variant-weight-input');
+                    allWeightInputs.forEach(input => {
+                        // Skip the first input (it already has the value)
+                        if (input !== firstWeightInput) {
+                            input.value = weightValue;
+                        }
+                    });
+                });
+                
+                // Toggle button visibility on page load and when variants change
+                toggleApplyWeightButton();
+                const observer = new MutationObserver(toggleApplyWeightButton);
+                observer.observe(container, { childList: true, subtree: true });
+            }
         });
     </script>
 @endsection

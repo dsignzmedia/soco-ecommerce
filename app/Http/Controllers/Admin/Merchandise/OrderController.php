@@ -61,7 +61,7 @@ class OrderController extends Controller
         $order = Order::findOrFail($id);
         
         $request->validate([
-            'order_status' => 'required|string|in:pending,payment_pending,processing,shipped,delivered,completed,cancelled,failed,refunded,label_generated,rtd,dispatched',
+            'order_status' => 'required|string|in:order_placed,processing,packed,shipped,delivered',
             'tracking_number' => 'nullable|string',
         ]);
 

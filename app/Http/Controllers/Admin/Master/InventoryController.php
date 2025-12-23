@@ -39,7 +39,7 @@ class InventoryController extends Controller
     {
         $filters = $request->only(['school_id', 'category', 'status', 'q']);
 
-        $products = ProductMapping::with('school')
+        $products = ProductMapping::with(['school', 'variants'])
             ->when($filters['school_id'] ?? null, fn($q, $school) => $q->where('school_id', $school))
             ->when($filters['category'] ?? null, fn($q, $category) => $q->where('category', $category))
             ->when($filters['status'] ?? null, fn($q, $status) => $q->where('status', $status))
@@ -56,9 +56,11 @@ class InventoryController extends Controller
 
     public function adjust(ProductMapping $product): View
     {
+        $product->load('variants');
         $recentAdjustments = $product->inventoryAdjustments()->latest()->take(5)->get();
+        $variantId = request()->get('variant_id');
 
-        return view('admin.inventory.adjust', compact('product', 'recentAdjustments'));
+        return view('admin.inventory.adjust', compact('product', 'recentAdjustments', 'variantId'));
     }
 
     public function applyAdjustment(Request $request, ProductMapping $product): RedirectResponse
@@ -97,6 +99,79 @@ class InventoryController extends Controller
         );
 
         return redirect()->route('master.admin.inventory.list')->with('status', 'Stock adjusted successfully.');
+    }
+
+    public function updateVariantStock(Request $request, ProductMapping $product)
+    {
+        try {
+            $validated = $request->validate([
+                'variant_id' => ['required', 'exists:product_variants,id'],
+                'stock' => ['required', 'integer', 'min:0'],
+            ]);
+
+            // Verify the variant belongs to this product (security check)
+            $variant = \App\Models\ProductVariant::where('id', $validated['variant_id'])
+                ->where('product_mapping_id', $product->id)
+                ->firstOrFail();
+
+            // Store old stock for audit
+            $oldStock = $variant->stock;
+            $productTotalBefore = $product->inventory_stock;
+            
+            // Update ONLY this variant's stock (doesn't affect other variants)
+            $variant->update(['stock' => $validated['stock']]);
+            
+            // Recalculate and update product total stock from ALL variants
+            // This ensures the total is always accurate
+            $product->updateTotalStock();
+            $productTotalAfter = $product->fresh()->inventory_stock;
+
+            AuditLogger::record(
+                'variant_stock_update',
+                $product,
+                [
+                    'product' => $product->product_name,
+                    'variant_id' => $variant->id,
+                    'variant_option' => $variant->option,
+                    'stock_before' => $oldStock,
+                    'stock_after' => $validated['stock'],
+                    'product_total_before' => $productTotalBefore,
+                    'product_total_after' => $productTotalAfter,
+                ],
+                'Variant stock updated via inventory list'
+            );
+
+            // Handle AJAX requests
+            if ($request->ajax() || $request->wantsJson()) {
+                return response()->json([
+                    'success' => true,
+                    'message' => "Variant '{$variant->option}' stock updated successfully.",
+                    'variant_stock' => $validated['stock'],
+                    'product_total_stock' => $productTotalAfter,
+                ]);
+            }
+
+            // Regular redirect for non-AJAX requests
+            return redirect()->route('master.admin.inventory.list')
+                ->with('status', "Variant '{$variant->option}' stock updated successfully. Total stock: {$productTotalAfter}");
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            if ($request->ajax() || $request->wantsJson()) {
+                return response()->json([
+                    'success' => false,
+                    'errors' => $e->errors(),
+                ], 422);
+            }
+            throw $e;
+        } catch (\Exception $e) {
+            if ($request->ajax() || $request->wantsJson()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Error updating stock: ' . $e->getMessage(),
+                ], 500);
+            }
+            return redirect()->route('master.admin.inventory.list')
+                ->with('error', 'Error updating stock: ' . $e->getMessage());
+        }
     }
 
     public function reports(Request $request): View

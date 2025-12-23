@@ -44,13 +44,15 @@ class PaymentController extends Controller
         }
 
         $payments = $query->latest()->paginate(10);
+        $routePrefix = 'master.admin';
         
-        return view('admin.master.payments.index', compact('payments'));
+        return view('admin.master.payments.index', compact('payments', 'routePrefix'));
     }
 
     public function show(Payment $payment)
     {
         $payment->load('order'); // Ensure order is loaded
-        return view('admin.master.payments.show', compact('payment'));
+        $routePrefix = 'master.admin';
+        return view('admin.master.payments.show', compact('payment', 'routePrefix'));
     }
 }

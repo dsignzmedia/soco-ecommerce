@@ -14,6 +14,9 @@ use App\Http\Controllers\Admin\Master\ShippingController;
 use App\Http\Controllers\Admin\Master\SystemSettingsController;
 use App\Http\Controllers\Admin\Inventory\AuthController as InventoryAuthController;
 use App\Http\Controllers\Admin\Master\InventoryController;
+use App\Http\Controllers\Admin\Master\ProductTypeController;
+use App\Http\Controllers\Admin\Master\CategoryController;
+use App\Http\Controllers\Admin\Master\ProductSettingsController;
 use App\Models\User;
 use Illuminate\Support\Facades\Log;
 
@@ -209,6 +212,30 @@ Route::prefix('MasterAdmin')->name('master.admin.')->group(function () {
         Route::get('/inventory/reports', [InventoryController::class, 'reports'])->name('inventory.reports');
         Route::get('/inventory/{product}/adjust', [InventoryController::class, 'adjust'])->name('inventory.adjust');
         Route::post('/inventory/{product}/adjust', [InventoryController::class, 'applyAdjustment'])->name('inventory.adjust.apply');
+        Route::post('/inventory/{product}/variant-stock', [InventoryController::class, 'updateVariantStock'])->name('inventory.variant-stock.update');
+
+        // Product Settings (Combined Product Types & Categories)
+        Route::get('/product-settings', [ProductSettingsController::class, 'index'])->name('product-settings.index');
+
+        // Product Types Management (keep routes for CRUD operations)
+        Route::resource('product-types', ProductTypeController::class)->names([
+            'index' => 'product-types.index',
+            'create' => 'product-types.create',
+            'store' => 'product-types.store',
+            'edit' => 'product-types.edit',
+            'update' => 'product-types.update',
+            'destroy' => 'product-types.destroy',
+        ])->except(['index']);
+
+        // Categories Management (keep routes for CRUD operations)
+        Route::resource('categories', CategoryController::class)->names([
+            'index' => 'categories.index',
+            'create' => 'categories.create',
+            'store' => 'categories.store',
+            'edit' => 'categories.edit',
+            'update' => 'categories.update',
+            'destroy' => 'categories.destroy',
+        ])->except(['index']);
 
         // Returns & Exchanges
         Route::get('/returns-exchange', [\App\Http\Controllers\Admin\Master\ReturnExchangeController::class, 'index'])->name('returns-exchange.index');
@@ -253,6 +280,7 @@ Route::prefix('InventoryAdmin')->name('inventory.admin.')->group(function () {
         Route::get('/inventory', [App\Http\Controllers\Admin\Inventory\InventoryController::class, 'index'])->name('inventory.index');
         Route::get('/inventory/{product}/adjust', [App\Http\Controllers\Admin\Inventory\InventoryController::class, 'adjust'])->name('inventory.adjust');
         Route::post('/inventory/{product}/adjust', [App\Http\Controllers\Admin\Inventory\InventoryController::class, 'applyAdjustment'])->name('inventory.adjust.apply');
+        Route::post('/inventory/{product}/variant-stock', [App\Http\Controllers\Admin\Inventory\InventoryController::class, 'updateVariantStock'])->name('inventory.variant-stock.update');
         Route::get('/reports', [App\Http\Controllers\Admin\Inventory\InventoryController::class, 'reports'])->name('reports.index');
 
         // Notifications
@@ -260,8 +288,15 @@ Route::prefix('InventoryAdmin')->name('inventory.admin.')->group(function () {
         Route::post('/notifications/read-all', [InventoryAuthController::class, 'markAllNotificationsRead'])->name('notifications.read-all');
 
 
-        // Returns & Exchanges (view-only)
+        // Returns & Exchanges
         Route::get('/returns-exchange', [App\Http\Controllers\Admin\Inventory\ReturnExchangeController::class, 'index'])->name('returns-exchange.index');
+        Route::get('/returns-exchange/{returnRequest}', [App\Http\Controllers\Admin\Inventory\ReturnExchangeController::class, 'show'])->name('returns-exchange.show');
+        Route::post('/returns-exchange/{returnRequest}/approve', [App\Http\Controllers\Admin\Inventory\ReturnExchangeController::class, 'approve'])->name('returns-exchange.approve');
+        Route::post('/returns-exchange/{returnRequest}/receive', [App\Http\Controllers\Admin\Inventory\ReturnExchangeController::class, 'receive'])->name('returns-exchange.receive');
+        Route::post('/returns-exchange/{returnRequest}/generate-exchange', [App\Http\Controllers\Admin\Inventory\ReturnExchangeController::class, 'generateExchange'])->name('returns-exchange.generate');
+        Route::post('/returns-exchange/{returnRequest}/switch-type', [App\Http\Controllers\Admin\Inventory\ReturnExchangeController::class, 'switchType'])->name('returns-exchange.switch-type');
+        Route::post('/returns-exchange/{returnRequest}/deny', [App\Http\Controllers\Admin\Inventory\ReturnExchangeController::class, 'deny'])->name('returns-exchange.deny');
+        Route::post('/returns-exchange/{returnRequest}/refund', [App\Http\Controllers\Admin\Inventory\ReturnExchangeController::class, 'refund'])->name('returns-exchange.refund');
     });
 });
 
@@ -285,6 +320,7 @@ Route::prefix('BackToSchoolAdmin')->name('admin.back_to_school.')->group(functio
         // Inventory
         Route::get('/inventory', [App\Http\Controllers\Admin\BackToSchool\InventoryController::class, 'index'])->name('inventory.index');
         Route::put('/inventory/{product}', [App\Http\Controllers\Admin\BackToSchool\InventoryController::class, 'update'])->name('inventory.update');
+        Route::post('/inventory/{product}/variant-stock', [App\Http\Controllers\Admin\BackToSchool\InventoryController::class, 'updateVariantStock'])->name('inventory.variant-stock.update');
 
         Route::get('/products/export', [App\Http\Controllers\Admin\BackToSchool\ProductController::class, 'export'])->name('products.export');
         Route::resource('products', App\Http\Controllers\Admin\BackToSchool\ProductController::class);
@@ -292,6 +328,23 @@ Route::prefix('BackToSchoolAdmin')->name('admin.back_to_school.')->group(functio
         Route::get('/orders/{order}/invoice', [App\Http\Controllers\Admin\BackToSchool\OrderController::class, 'invoiceView'])->name('orders.invoice');
         Route::post('/orders/{order}/status', [App\Http\Controllers\Admin\BackToSchool\OrderController::class, 'updateStatus'])->name('orders.status');
         Route::resource('orders', App\Http\Controllers\Admin\BackToSchool\OrderController::class);
+        
+        // Product Settings (alias for BTS admins)
+        Route::get('/product-settings', [App\Http\Controllers\Admin\Master\ProductSettingsController::class, 'index'])->name('product-settings.index');
+
+        // Returns & Exchanges
+        Route::get('/returns-exchange', [App\Http\Controllers\Admin\BackToSchool\ReturnExchangeController::class, 'index'])->name('returns-exchange.index');
+        Route::get('/returns-exchange/{returnRequest}', [App\Http\Controllers\Admin\BackToSchool\ReturnExchangeController::class, 'show'])->name('returns-exchange.show');
+        Route::post('/returns-exchange/{returnRequest}/approve', [App\Http\Controllers\Admin\BackToSchool\ReturnExchangeController::class, 'approve'])->name('returns-exchange.approve');
+        Route::post('/returns-exchange/{returnRequest}/receive', [App\Http\Controllers\Admin\BackToSchool\ReturnExchangeController::class, 'receive'])->name('returns-exchange.receive');
+        Route::post('/returns-exchange/{returnRequest}/generate-exchange', [App\Http\Controllers\Admin\BackToSchool\ReturnExchangeController::class, 'generateExchange'])->name('returns-exchange.generate');
+        Route::post('/returns-exchange/{returnRequest}/switch-type', [App\Http\Controllers\Admin\BackToSchool\ReturnExchangeController::class, 'switchType'])->name('returns-exchange.switch-type');
+        Route::post('/returns-exchange/{returnRequest}/deny', [App\Http\Controllers\Admin\BackToSchool\ReturnExchangeController::class, 'deny'])->name('returns-exchange.deny');
+        Route::post('/returns-exchange/{returnRequest}/refund', [App\Http\Controllers\Admin\BackToSchool\ReturnExchangeController::class, 'refund'])->name('returns-exchange.refund');
+
+        // Payments
+        Route::get('/payments', [App\Http\Controllers\Admin\BackToSchool\PaymentController::class, 'index'])->name('payments.index');
+        Route::get('/payments/{payment}', [App\Http\Controllers\Admin\BackToSchool\PaymentController::class, 'show'])->name('payments.show');
     });
 });
 
@@ -306,6 +359,7 @@ Route::prefix('MerchandiseAdmin')->name('admin.merchandise.')->group(function ()
         // Inventory
         Route::get('/inventory', [App\Http\Controllers\Admin\Merchandise\InventoryController::class, 'index'])->name('inventory.index');
         Route::put('/inventory/{product}', [App\Http\Controllers\Admin\Merchandise\InventoryController::class, 'update'])->name('inventory.update');
+        Route::post('/inventory/{product}/variant-stock', [App\Http\Controllers\Admin\Merchandise\InventoryController::class, 'updateVariantStock'])->name('inventory.variant-stock.update');
         Route::get('/products/export', [App\Http\Controllers\Admin\Merchandise\ProductController::class, 'export'])->name('products.export');
         Route::resource('products', App\Http\Controllers\Admin\Merchandise\ProductController::class);
         Route::get('/orders/{order}/invoice/download', [App\Http\Controllers\Admin\Merchandise\OrderController::class, 'invoiceDownload'])->name('orders.invoice.download');
@@ -313,6 +367,23 @@ Route::prefix('MerchandiseAdmin')->name('admin.merchandise.')->group(function ()
         Route::post('/orders/{order}/status', [App\Http\Controllers\Admin\Merchandise\OrderController::class, 'updateStatus'])->name('orders.status');
         Route::resource('orders', App\Http\Controllers\Admin\Merchandise\OrderController::class);
         Route::resource('print-queue', App\Http\Controllers\Admin\Merchandise\PrintQueueController::class);
+        
+        // Product Settings (alias for merch admins)
+        Route::get('/product-settings', [App\Http\Controllers\Admin\Master\ProductSettingsController::class, 'index'])->name('product-settings.index');
+
+        // Returns & Exchanges
+        Route::get('/returns-exchange', [App\Http\Controllers\Admin\Merchandise\ReturnExchangeController::class, 'index'])->name('returns-exchange.index');
+        Route::get('/returns-exchange/{returnRequest}', [App\Http\Controllers\Admin\Merchandise\ReturnExchangeController::class, 'show'])->name('returns-exchange.show');
+        Route::post('/returns-exchange/{returnRequest}/approve', [App\Http\Controllers\Admin\Merchandise\ReturnExchangeController::class, 'approve'])->name('returns-exchange.approve');
+        Route::post('/returns-exchange/{returnRequest}/receive', [App\Http\Controllers\Admin\Merchandise\ReturnExchangeController::class, 'receive'])->name('returns-exchange.receive');
+        Route::post('/returns-exchange/{returnRequest}/generate-exchange', [App\Http\Controllers\Admin\Merchandise\ReturnExchangeController::class, 'generateExchange'])->name('returns-exchange.generate');
+        Route::post('/returns-exchange/{returnRequest}/switch-type', [App\Http\Controllers\Admin\Merchandise\ReturnExchangeController::class, 'switchType'])->name('returns-exchange.switch-type');
+        Route::post('/returns-exchange/{returnRequest}/deny', [App\Http\Controllers\Admin\Merchandise\ReturnExchangeController::class, 'deny'])->name('returns-exchange.deny');
+        Route::post('/returns-exchange/{returnRequest}/refund', [App\Http\Controllers\Admin\Merchandise\ReturnExchangeController::class, 'refund'])->name('returns-exchange.refund');
+
+        // Payments
+        Route::get('/payments', [App\Http\Controllers\Admin\Merchandise\PaymentController::class, 'index'])->name('payments.index');
+        Route::get('/payments/{payment}', [App\Http\Controllers\Admin\Merchandise\PaymentController::class, 'show'])->name('payments.show');
     });
 });
 

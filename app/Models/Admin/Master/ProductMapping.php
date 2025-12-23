@@ -26,6 +26,7 @@ class ProductMapping extends Model
         'delivery_price',
         'price_tax',
         'tax_profile',
+        'price_inclusive_tax',
         'product_weight',
         'tag_name',
         'featured_image',
@@ -68,15 +69,25 @@ class ProductMapping extends Model
         return $this->hasMany(\App\Models\ProductVariant::class, 'product_mapping_id');
     }
 
+    public function gradePricing(): HasMany
+    {
+        return $this->hasMany(\App\Models\ProductGradePricing::class, 'product_mapping_id');
+    }
+
     /**
      * Helper to update total inventory stock based on sum of variants.
+     * Only updates if variants exist, preserving manual stock for products without variants.
      */
     public function updateTotalStock()
     {
-        if ($this->variants()->exists()) {
-            $total = $this->variants()->sum('stock');
+        // Refresh variants relationship to get latest data
+        $this->load('variants');
+        
+        if ($this->variants && $this->variants->count() > 0) {
+            $total = $this->variants->sum('stock');
             $this->update(['inventory_stock' => $total]);
         }
+        // If no variants exist, don't modify inventory_stock (preserves manual entry)
     }
 }
 

@@ -61,9 +61,9 @@
                             <div class="product-img">
                                 <a href="{{ route('frontend.shop.detail', $product->id) }}">
                                     @if($product->featured_image)
-                                        <img src="{{ asset('storage/' . $product->featured_image) }}" alt="{{ $product->product_name }}" class="w-100">
+                                        <img src="{{ asset('storage/' . $product->featured_image) }}" alt="{{ $product->product_name }}" class="w-100" onerror="this.onerror=null; this.src='{{ asset('assets/img/no image/no_image.png') }}';">
                                     @else
-                                        <img src="{{ asset('assets/img/logo.svg') }}" alt="Placeholder" class="w-100 p-4" style="opacity:0.5;">
+                                        <img src="{{ asset('assets/img/no image/no_image.png') }}" alt="{{ $product->product_name }}" class="w-100">
                                     @endif
                                 </a>
                                 {{-- Actions --}}

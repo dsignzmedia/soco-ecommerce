@@ -68,9 +68,9 @@
                     <div style="margin-bottom:16px;">
                         <label style="display:block;font-size:13px;font-weight:500;margin-bottom:6px;">Current Status</label>
                         <select name="order_status" style="width:100%;padding:8px;border:1px solid #cbd5e1;border-radius:6px;">
-                            <option value="pending" @selected($order->order_status == 'pending')>Pending (To Pick)</option>
-                            <option value="processing" @selected($order->order_status == 'processing')>Processing (To Pack)</option>
-                            <option value="ready_to_ship" @selected($order->order_status == 'ready_to_ship')>Ready to Ship</option>
+                            <option value="order_placed" @selected($order->order_status == 'order_placed')>Order Placed</option>
+                            <option value="processing" @selected($order->order_status == 'processing')>Processing</option>
+                            <option value="packed" @selected($order->order_status == 'packed')>Packed</option>
                             <option value="shipped" @selected($order->order_status == 'shipped')>Shipped</option>
                             <option value="delivered" @selected($order->order_status == 'delivered')>Delivered</option>
                         </select>

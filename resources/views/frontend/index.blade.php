@@ -95,26 +95,38 @@ Shop by Category Area
             margin-bottom: 20px;
         }
 
+        /* Desktop and Tablet: enable horizontal scroll when content exceeds */
+        .category-marquee-wrapper {
+            overflow-x: hidden; /* Hide scrollbar but allow JavaScript transform */
+            overflow-y: hidden;
+            -webkit-overflow-scrolling: touch;
+        }
+        
+        /* Hide scrollbar completely */
+        .category-marquee-wrapper::-webkit-scrollbar {
+            display: none;
+        }
+        
+        .category-marquee-wrapper {
+            scrollbar-width: none; /* Firefox */
+            -ms-overflow-style: none; /* IE and Edge */
+        }
+
         .category_box_row {
             display: flex;
             gap: 30px;
-            justify-content: center;
+            justify-content: flex-start;
             padding-top: 60px;
-            flex-wrap: nowrap; /* Keep in single row on large screens */
+            padding-left: 20px;
+            padding-right: 20px;
+            flex-wrap: nowrap; /* Keep in single row */
+            width: max-content; /* Allow content to exceed container */
         }
 
-        /* Tablet/Medium screens: enable horizontal scroll */
+        /* Tablet/Medium screens: adjust layout */
         @media (min-width: 769px) and (max-width: 1116px) {
-            .category-marquee-wrapper {
-                overflow-x: auto;
-                overflow-y: hidden;
-                -webkit-overflow-scrolling: touch;
-            }
-            
             .category_box_row {
-                flex-wrap: nowrap;
-                justify-content: flex-start;
-                width: max-content;
+                gap: 20px;
             }
         }
 
@@ -146,14 +158,14 @@ Shop by Category Area
         /* Mobile Responsiveness */
         @media (max-width: 768px) {
             .category-marquee-wrapper {
-                overflow-x: hidden;
+                overflow-x: hidden; /* Hide scrollbar but allow JavaScript transform */
                 width: 100%;
-                -webkit-overflow-scrolling: auto; /* Smooth scrolling on iOS */
-                /*scrollbar-width: none; */
-                position: relative;
+                -webkit-overflow-scrolling: touch;
             }
+            
+            /* Hide scrollbar completely on mobile too */
             .category-marquee-wrapper::-webkit-scrollbar {
-                display: none; /* Chrome/Safari */
+                display: none;
             }
 
             .category_box_row {
@@ -364,12 +376,12 @@ Featured Products Area
                                     ? $product->featured_image 
                                     : asset('storage/' . $product->featured_image) }}" 
                                 alt="{{ $product->product_name }}"
+                                onerror="this.onerror=null; this.src='{{ asset('assets/img/no image/no_image.png') }}';"
                             >
                         @else
                             <img 
-                                src="{{ asset('assets/img/logo.svg') }}" 
-                                alt="Placeholder" 
-                                style="opacity:0.5;"
+                                src="{{ asset('assets/img/no image/no_image.png') }}" 
+                                alt="{{ $product->product_name }}"
                             >
                         @endif
                     </div>
@@ -1002,28 +1014,17 @@ document.addEventListener('DOMContentLoaded', function () {
     function checkMode() {
       const width = window.innerWidth;
       
-      if (width <= maxWidth) {
-        // Mobile and Tablet mode: duplicate content and auto-scroll
-        if (row.dataset.duplicated !== 'true') {
-          // Ensure we have content to duplicate
-          if (originalContent && originalContent.trim() !== '') {
-            row.innerHTML = originalContent + originalContent;
-            row.dataset.duplicated = 'true';
-            // Small delay to ensure DOM is updated
-            setTimeout(() => {
-              measure();
-              start();
-            }, 100);
-          }
-        }
-      } else {
-        // Desktop mode: restore original content
-        if (row.dataset.duplicated === 'true') {
-          cancelAnimationFrame(rafId);
-          row.innerHTML = originalContent;
-          row.dataset.duplicated = 'false';
-          row.style.transform = 'translateX(0)';
-          isPaused = true;
+      // Always enable auto-scroll (for both mobile and desktop)
+      if (row.dataset.duplicated !== 'true') {
+        // Ensure we have content to duplicate
+        if (originalContent && originalContent.trim() !== '') {
+          row.innerHTML = originalContent + originalContent;
+          row.dataset.duplicated = 'true';
+          // Small delay to ensure DOM is updated
+          setTimeout(() => {
+            measure();
+            start();
+          }, 100);
         }
       }
     }
@@ -1033,7 +1034,6 @@ document.addEventListener('DOMContentLoaded', function () {
     let isHorizontalScroll = null;
     
     function onTouchStart(e) {
-      if (window.innerWidth > maxWidth) return;
       pause();
       touchDragging = true;
       if (e.type === 'touchstart') {
@@ -1084,11 +1084,11 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     function onMouseEnter() { 
-      if (window.innerWidth <= maxWidth) pause(); 
+      pause(); // Pause on hover for all screen sizes
     }
     
     function onMouseLeave() { 
-      if (window.innerWidth <= maxWidth) resume(200); 
+      resume(200); // Resume after hover for all screen sizes
     }
 
     let resizeTimer = null;
@@ -1128,7 +1128,7 @@ document.addEventListener('DOMContentLoaded', function () {
         } else {
           img.addEventListener('load', () => {
             imgsLoaded++;
-            if (imgsLoaded === imgs.length && window.innerWidth <= maxWidth) {
+            if (imgsLoaded === imgs.length) {
               measure();
               // Re-check mode in case animation needs to start
               if (row.dataset.duplicated !== 'true') {
@@ -1138,7 +1138,7 @@ document.addEventListener('DOMContentLoaded', function () {
           }, {passive: true});
           img.addEventListener('error', () => {
             imgsLoaded++;
-            if (imgsLoaded === imgs.length && window.innerWidth <= maxWidth) {
+            if (imgsLoaded === imgs.length) {
               measure();
               // Re-check mode in case animation needs to start
               if (row.dataset.duplicated !== 'true') {
@@ -1149,7 +1149,7 @@ document.addEventListener('DOMContentLoaded', function () {
         }
       });
       // If all images are already loaded, check mode
-      if (imgsLoaded === imgs.length && window.innerWidth <= maxWidth) {
+      if (imgsLoaded === imgs.length) {
         setTimeout(() => {
           measure();
           if (row.dataset.duplicated !== 'true') {
@@ -1165,7 +1165,8 @@ document.addEventListener('DOMContentLoaded', function () {
     document.querySelectorAll('.category-marquee-wrapper').forEach((wrapper, index) => {
       const row = wrapper.querySelector('.category_box_row');
       if (row && row.children.length > 0) {
-        setupTransformMarquee(wrapper, row, { maxWidth: 1116, speed: 18, resumeDelay: 700 });
+        // Enable auto-scroll on all screen sizes (remove maxWidth restriction)
+        setupTransformMarquee(wrapper, row, { maxWidth: 99999, speed: 20, resumeDelay: 700 });
       }
     });
     setupTransformMarquee('.service-marquee-wrapper', '.service-marquee-row', { maxWidth: 1116, speed: 18, resumeDelay: 700 });

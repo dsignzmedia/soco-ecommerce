@@ -1,5 +1,7 @@
 @extends('admin.layouts.base')
 
+@php $routePrefix = $routePrefix ?? 'master.admin'; @endphp
+
 @section('title', 'Payment Details #' . $payment->id)
 
 @section('content')
@@ -153,8 +155,15 @@
                     <div class="info-row">
                         <span class="info-label">Order Number</span>
                         <span class="info-value">
+                            @php
+                                $orderShowRoute = match($payment->product_type) {
+                                    'merchandised' => 'admin.merchandise.orders.show',
+                                    'back_to_school' => 'admin.back_to_school.orders.show',
+                                    default => 'master.admin.orders.show'
+                                };
+                            @endphp
                             @if($payment->order)
-                                <a href="{{ route('master.admin.orders.show', $payment->order->id) }}" style="color: #4e73df; text-decoration: underline;">
+                                <a href="{{ route($orderShowRoute, $payment->order->id) }}" style="color: #4e73df; text-decoration: underline;">
                                     {{ $payment->order->order_number }}
                                 </a>
                             @else
@@ -188,6 +197,22 @@
                     <div class="info-row">
                         <span class="info-label">Payment Type</span>
                         <span class="info-value">{{ ucfirst($payment->payment_type) }}</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">Product Type</span>
+                        <span class="info-value">
+                            @if($payment->product_type)
+                                @if($payment->product_type == 'merchandised')
+                                    <span style="background:#e0f2fe; color:#0369a1; padding: 4px 12px; border-radius: 12px; font-size: 12px; font-weight: 600;">Merchandise</span>
+                                @elseif($payment->product_type == 'back_to_school')
+                                    <span style="background:#dcfce7; color:#166534; padding: 4px 12px; border-radius: 12px; font-size: 12px; font-weight: 600;">Back to School</span>
+                                @else
+                                    {{ ucfirst(str_replace('_', ' ', $payment->product_type)) }}
+                                @endif
+                            @else
+                                <span style="color:#9ca3af;">N/A</span>
+                            @endif
+                        </span>
                     </div>
                      <div class="info-row">
                         <span class="info-label">Customer Name</span>

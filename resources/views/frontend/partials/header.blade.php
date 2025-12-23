@@ -18,7 +18,7 @@
         <div class="vs-menu-area text-center">
             <button class="vs-menu-toggle"><i class="fal fa-times"></i></button>
             <div class="mobile-logo">
-                <a href="{{ route('frontend.index') }}"><img src="{{ asset('assets/img/logo.svg') }}" alt="Kiddino"></a>
+                <a href="{{ route('frontend.index') }}"><img src="{{ asset('assets/img/new logo/new_logo.png') }}" alt="Kiddino"></a>
             </div>
             <div class="vs-mobile-menu">
                 <ul>
@@ -144,7 +144,7 @@
                         <div class="col col-lg-auto">
                             <div class="header-logo">
                                 <a href="{{ route('frontend.index') }}">
-                                    <img src="{{ asset('assets/img/logo.svg') }}" alt="logo">
+                                    <img src="{{ asset('assets/img/new logo/new_logo.png') }}" alt="logo">
                                 </a>
                             </div>
                         </div>

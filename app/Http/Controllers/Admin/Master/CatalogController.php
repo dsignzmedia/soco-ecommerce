@@ -37,40 +37,48 @@ class CatalogController extends Controller
         
         // Hardcoded grades to match frontend profile creation
         $grades = [
+            'Pre-KG' => 'Pre-KG',
             'LKG' => 'LKG',
             'UKG' => 'UKG',
-            '1' => 'Grade 1',
-            '2' => 'Grade 2',
-            '3' => 'Grade 3',
-            '4' => 'Grade 4',
-            '5' => 'Grade 5',
-            '6' => 'Grade 6',
-            '7' => 'Grade 7',
-            '8' => 'Grade 8',
-            '9' => 'Grade 9',
-            '10' => 'Grade 10',
-            '11' => 'Grade 11',
-            '12' => 'Grade 12',
+            '1' => 'Class 1',
+            '2' => 'Class 2',
+            '3' => 'Class 3',
+            '4' => 'Class 4',
+            '5' => 'Class 5',
+            '6' => 'Class 6',
+            '7' => 'Class 7',
+            '8' => 'Class 8',
+            '9' => 'Class 9',
+            '10' => 'Class 10',
+            '11' => 'Class 11',
+            '12' => 'Class 12',
         ];
         
-        // Hardcoded options to ensure dropdowns are populated even without products
-        $categories = [
-            'regular_uniforms' => 'Regular Uniforms',
-            'house_uniforms' => 'House Uniforms',
-            'sports' => 'Sports Uniforms',
-            'shoes' => 'Shoes',
-            'belts' => 'Belts',
-            'socks' => 'Socks',
-            'ties' => 'Ties',
-            'fabrics' => 'Fabrics',
-        ];
+        // Fetch categories from database, fallback to defaults if empty
+        $categories = \App\Models\Admin\Master\Category::getForSelect();
+        if (empty($categories)) {
+            $categories = [
+                'regular_uniforms' => 'Regular Uniforms',
+                'house_uniforms' => 'House Uniforms',
+                'sports' => 'Sports Uniforms',
+                'shoes' => 'Shoes',
+                'belts' => 'Belts',
+                'socks' => 'Socks',
+                'ties' => 'Ties',
+                'fabrics' => 'Fabrics',
+            ];
+        }
 
-        $productTypes = [
-            'authorized' => 'Authorized Product',
-            'optional' => 'Optional Product',
-            'merchandised' => 'Merchandised Product',
-            'back_to_school' => 'Back to School Product',
-        ];
+        // Fetch product types from database, fallback to defaults if empty
+        $productTypes = \App\Models\Admin\Master\ProductType::getForSelect();
+        if (empty($productTypes)) {
+            $productTypes = [
+                'authorized' => 'Authorized Product',
+                'optional' => 'Optional Product',
+                'merchandised' => 'Merchandised Product',
+                'back_to_school' => 'Back to School Product',
+            ];
+        }
 
         return view('admin.catalog.index', [
             'mappings' => $mappings,
@@ -99,30 +107,53 @@ class CatalogController extends Controller
         $schools = School::orderBy('name')->get();
 
         $grades = [
-            'PKG' => 'Pre-KG', 'LKG' => 'LKG', 'UKG' => 'UKG',
-            'I' => 'Class 1', 'II' => 'Class 2', 'III' => 'Class 3',
-            'IV' => 'Class 4', 'V' => 'Class 5', 'VI' => 'Class 6',
-            'VII' => 'Class 7', 'VIII' => 'Class 8', 'IX' => 'Class 9',
-            'X' => 'Class 10', 'XI' => 'Class 11', 'XII' => 'Class 12',
+            'Pre-KG' => 'Pre-KG',
+            'LKG' => 'LKG',
+            'UKG' => 'UKG',
+            '1' => 'Class 1',
+            '2' => 'Class 2',
+            '3' => 'Class 3',
+            '4' => 'Class 4',
+            '5' => 'Class 5',
+            '6' => 'Class 6',
+            '7' => 'Class 7',
+            '8' => 'Class 8',
+            '9' => 'Class 9',
+            '10' => 'Class 10',
+            '11' => 'Class 11',
+            '12' => 'Class 12',
         ];
 
-        $categories = [
-            'regular_uniforms' => 'Regular Uniforms',
-            'house_uniforms' => 'House Uniforms',
-            'sports' => 'Sports Uniforms',
-            'shoes' => 'Shoes',
-            'belts' => 'Belts',
-            'socks' => 'Socks',
-            'ties' => 'Ties',
-            'fabrics' => 'Fabrics',
-        ];
+        // Fetch categories from database, fallback to defaults if empty
+        $categories = \App\Models\Admin\Master\Category::getForSelect();
+        if (empty($categories)) {
+            $categories = [
+                'regular_uniforms' => 'Regular Uniforms',
+                'house_uniforms' => 'House Uniforms',
+                'sports' => 'Sports Uniforms',
+                'shoes' => 'Shoes',
+                'belts' => 'Belts',
+                'socks' => 'Socks',
+                'ties' => 'Ties',
+                'fabrics' => 'Fabrics',
+            ];
+        }
 
-        $productTypes = [
-            'authorized' => 'Authorized Product',
-            'optional' => 'Optional Product',
-            'merchandised' => 'Merchandised Product',
-            'back_to_school' => 'Back to School Product',
-        ];
+        // Fetch product types from database, fallback to defaults if empty
+        $productTypes = \App\Models\Admin\Master\ProductType::getForSelect();
+        if (empty($productTypes)) {
+            $productTypes = [
+                'authorized' => 'Authorized Product',
+                'optional' => 'Optional Product',
+                'merchandised' => 'Merchandised Product',
+                'back_to_school' => 'Back to School Product',
+            ];
+        }
+
+        // Load grade pricing if editing
+        if ($mode === 'edit') {
+            $product->load('gradePricing');
+        }
 
         return view('admin.catalog.form', [
             'product' => $product,
@@ -146,12 +177,54 @@ class CatalogController extends Controller
                     $product->variants()->create([
                         'name' => $variantData['name'] ?? 'Size',
                         'option' => $variantData['option'],
+                        'price' => $variantData['price'] ?? null,
+                        'weight' => $variantData['weight'] ?? null,
                         'stock' => $variantData['stock'] ?? 0,
                         'low_stock_threshold' => $variantData['low_stock_threshold'] ?? 5,
                     ]);
                 }
             }
             $product->updateTotalStock();
+        }
+
+        // Handle Grade Pricing (Range-based)
+        if ($request->has('enable_grade_pricing') && $request->enable_grade_pricing && $request->has('grade_pricing_ranges')) {
+            // Delete all existing grade pricing first
+            $product->gradePricing()->delete();
+            
+            // Get all grades in order
+            $gradeOrder = ['Pre-KG', 'LKG', 'UKG', '1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11', '12'];
+            
+            // Process each range
+            foreach ($request->grade_pricing_ranges as $range) {
+                if (!empty($range['from']) && !empty($range['price']) && is_numeric($range['price'])) {
+                    // Validate: If "to" is provided, "from" must also be provided (already checked above)
+                    if (!empty($range['to'])) {
+                        // Range pricing: from-to
+                        $fromIndex = array_search($range['from'], $gradeOrder);
+                        $toIndex = array_search($range['to'], $gradeOrder);
+                        
+                        if ($fromIndex !== false && $toIndex !== false && $fromIndex <= $toIndex) {
+                            // Create pricing for all grades in the range
+                            for ($i = $fromIndex; $i <= $toIndex; $i++) {
+                                $product->gradePricing()->updateOrCreate(
+                                    ['grade' => $gradeOrder[$i]],
+                                    ['price' => (float)$range['price']]
+                                );
+                            }
+                        }
+                    } else {
+                        // Single grade pricing: only "from" provided
+                        $product->gradePricing()->updateOrCreate(
+                            ['grade' => $range['from']],
+                            ['price' => (float)$range['price']]
+                        );
+                    }
+                }
+            }
+        } else {
+            // If grade pricing is disabled, delete all existing grade pricing
+            $product->gradePricing()->delete();
         }
 
         return redirect()->route('master.admin.catalog.index')->with('status', 'Product created.');
@@ -183,6 +256,8 @@ class CatalogController extends Controller
                         $productMapping->variants()->where('id', $variantData['id'])->update([
                             'name' => $variantData['name'] ?? 'Size',
                             'option' => $variantData['option'],
+                            'price' => $variantData['price'] ?? null,
+                            'weight' => $variantData['weight'] ?? null,
                             'stock' => $variantData['stock'] ?? 0,
                             'low_stock_threshold' => $variantData['low_stock_threshold'] ?? 5,
                         ]);
@@ -191,6 +266,8 @@ class CatalogController extends Controller
                         $productMapping->variants()->create([
                             'name' => $variantData['name'] ?? 'Size',
                             'option' => $variantData['option'],
+                            'price' => $variantData['price'] ?? null,
+                            'weight' => $variantData['weight'] ?? null,
                             'stock' => $variantData['stock'] ?? 0,
                             'low_stock_threshold' => $variantData['low_stock_threshold'] ?? 5,
                         ]);
@@ -203,6 +280,45 @@ class CatalogController extends Controller
              // Or maybe the form didn't send it? 
              // Let's assume if it's not present, we don't touch it, UNLESS we know the form always sends it.
              // We'll rely on the form sending 'variants' array even if empty or ensuring we check logic.
+        }
+
+        // Handle Grade Pricing (Range-based)
+        if ($request->has('enable_grade_pricing') && $request->enable_grade_pricing && $request->has('grade_pricing_ranges')) {
+            // Delete all existing grade pricing first
+            $productMapping->gradePricing()->delete();
+            
+            // Get all grades in order
+            $gradeOrder = ['Pre-KG', 'LKG', 'UKG', '1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11', '12'];
+            
+            // Process each range
+            foreach ($request->grade_pricing_ranges as $range) {
+                if (!empty($range['from']) && !empty($range['price']) && is_numeric($range['price'])) {
+                    if (!empty($range['to'])) {
+                        // Range pricing: from-to
+                        $fromIndex = array_search($range['from'], $gradeOrder);
+                        $toIndex = array_search($range['to'], $gradeOrder);
+                        
+                        if ($fromIndex !== false && $toIndex !== false && $fromIndex <= $toIndex) {
+                            // Create pricing for all grades in the range
+                            for ($i = $fromIndex; $i <= $toIndex; $i++) {
+                                $productMapping->gradePricing()->updateOrCreate(
+                                    ['grade' => $gradeOrder[$i]],
+                                    ['price' => (float)$range['price']]
+                                );
+                            }
+                        }
+                    } else {
+                        // Single grade pricing: only "from" provided
+                        $productMapping->gradePricing()->updateOrCreate(
+                            ['grade' => $range['from']],
+                            ['price' => (float)$range['price']]
+                        );
+                    }
+                }
+            }
+        } else {
+            // If grade pricing is disabled, delete all existing grade pricing
+            $productMapping->gradePricing()->delete();
         }
 
         $priceFields = ['price_regular', 'price_sale', 'price_tax'];
@@ -250,6 +366,9 @@ class CatalogController extends Controller
 
     protected function validatedData(Request $request, ?ProductMapping $product = null): array
     {
+        // Check if variant-based pricing is enabled
+        $variantBasedPricing = $request->has('variant_based_pricing') && $request->input('variant_based_pricing') == '1';
+        
         $rules = [
             'school_id' => ['required', 'exists:schools,id'],
             'grade' => ['nullable', 'string'],
@@ -262,10 +381,10 @@ class CatalogController extends Controller
             'status' => ['required', 'in:live,draft,archived'],
             'description' => ['nullable', 'string'],
             'size_guidance' => ['nullable', 'string'],
-            'price_regular' => ['required', 'numeric', 'min:0'],
-            'price_sale' => ['nullable', 'numeric', 'min:0'],
+            'price_regular' => ['nullable', 'numeric', 'min:0'],
             'price_tax' => ['nullable', 'numeric', 'min:0'],
             'tax_profile' => ['nullable', 'string', 'max:255'],
+            'price_inclusive_tax' => ['nullable', 'boolean'],
             'product_weight' => ['nullable', 'numeric', 'min:0'],
             'tag_name' => ['nullable', 'string', 'max:255'],
             'inventory_stock' => ['required', 'integer', 'min:0'],
@@ -274,6 +393,8 @@ class CatalogController extends Controller
             'video_url' => ['nullable', 'url', 'max:255'],
             'variants' => ['nullable', 'array'],
             'variants.*.option' => ['required_with:variants', 'string', 'max:255'],
+            'variants.*.price' => ['nullable', 'numeric', 'min:0'],
+            'variants.*.weight' => ['nullable', 'numeric', 'min:0'],
             'variants.*.stock' => ['nullable', 'integer', 'min:0'],
             'variants.*.low_stock_threshold' => ['nullable', 'integer', 'min:0'],
             'existing_media_images' => ['nullable', 'array'],
@@ -292,12 +413,105 @@ class CatalogController extends Controller
         } else {
             $rules['size_chart_path'] = ['nullable', 'string', 'max:2048'];
         }
+        
+        if ($request->hasFile('size_measurement_image')) {
+            $rules['size_measurement_image'] = ['image', 'max:2048']; 
+        } else {
+            $rules['size_measurement_image'] = ['nullable', 'string', 'max:2048'];
+        }
 
         if ($request->hasFile('media_images')) {
             $rules['media_images.*'] = ['image', 'max:2048'];
         }
 
         $validated = $request->validate($rules);
+        
+        // Validate: Either price_regular OR grade pricing must be provided
+        $hasGradePricing = false;
+        $gradePricingErrors = [];
+        
+        if ($request->has('enable_grade_pricing') && $request->enable_grade_pricing && $request->has('grade_pricing_ranges')) {
+            foreach ($request->grade_pricing_ranges as $index => $range) {
+                // Validate: If "to" is provided, "from" must also be provided
+                if (!empty($range['to']) && empty($range['from'])) {
+                    $gradePricingErrors["grade_pricing_ranges.{$index}.from"] = ['From Grade is required when To Grade is provided.'];
+                }
+                
+                // Check if valid grade pricing exists (from is required, to is optional)
+                if (!empty($range['from']) && !empty($range['price']) && is_numeric($range['price'])) {
+                    $hasGradePricing = true;
+                }
+            }
+        }
+        
+        if (!empty($gradePricingErrors)) {
+            throw \Illuminate\Validation\ValidationException::withMessages($gradePricingErrors);
+        }
+        
+        $hasRegularPrice = !empty($validated['price_regular']);
+        
+        // Check for variant prices when variant-based pricing is enabled
+        // Note: If grade pricing is also enabled, variant prices might be hidden/not required
+        $hasVariantPrice = false;
+        if ($variantBasedPricing && $request->has('variants')) {
+            $variants = $request->input('variants', []);
+            foreach ($variants as $index => $variant) {
+                // Check if variant has a valid price (can be string or numeric, but must be > 0)
+                $variantPrice = $variant['price'] ?? null;
+                if (!empty($variant['option']) && $variantPrice !== null && $variantPrice !== '') {
+                    // Convert to float to handle string numbers (including "0.00", "0", etc.)
+                    $priceValue = is_numeric($variantPrice) ? (float)$variantPrice : 0;
+                    if ($priceValue > 0) {
+                        $hasVariantPrice = true;
+                        break; // At least one variant has a price
+                    }
+                }
+            }
+        }
+        
+        // Validate: Either regular price, grade pricing, OR variant prices must be provided
+        // Special case: If both variant pricing AND grade pricing are enabled, grade pricing takes precedence
+        // So we only require variant prices if variant pricing is enabled AND grade pricing is NOT enabled
+        $requireVariantPrice = $variantBasedPricing && !$hasGradePricing;
+        
+        if (!$hasRegularPrice && !$hasGradePricing && !$hasVariantPrice) {
+            // If variant-based pricing is enabled but no variant prices found, give a more specific error
+            if ($variantBasedPricing && !$hasGradePricing) {
+                throw \Illuminate\Validation\ValidationException::withMessages([
+                    'variants' => ['Variant-based pricing is enabled, but no variant prices were provided. Please add prices for at least one variant in the "Price of Fabric" field.']
+                ]);
+            } else {
+                throw \Illuminate\Validation\ValidationException::withMessages([
+                    'price_regular' => ['Either regular price or grade-wise pricing must be provided.']
+                ]);
+            }
+        }
+        
+        // Handle checkbox
+        $validated['price_inclusive_tax'] = $request->has('price_inclusive_tax') ? 1 : 0;
+        
+        // Validate variant prices when variant-based pricing is enabled (detailed validation)
+        if ($variantBasedPricing && $request->has('variants')) {
+            $errors = [];
+            foreach ($request->input('variants', []) as $index => $variant) {
+                if (!empty($variant['option'])) {
+                    // If variant has an option, it must have a price
+                    if (empty($variant['price']) || $variant['price'] <= 0) {
+                        $errors["variants.{$index}.price"] = "Price is required for variant '{$variant['option']}' when variant-based pricing is enabled.";
+                    }
+                }
+            }
+            if (!empty($errors)) {
+                throw \Illuminate\Validation\ValidationException::withMessages($errors);
+            }
+            // Only require variant prices if grade pricing is NOT enabled
+            // If grade pricing is enabled, it takes precedence and variant prices are not required
+            if (!$hasVariantPrice && !$hasGradePricing) {
+                throw \Illuminate\Validation\ValidationException::withMessages([
+                    'variants' => ['At least one variant with an option must have a price when variant-based pricing is enabled (and grade pricing is disabled).']
+                ]);
+            }
+        }
 
         // Handle Featured Image
         if ($request->hasFile('featured_image')) {
@@ -307,6 +521,11 @@ class CatalogController extends Controller
         // Handle Size Chart
         if ($request->hasFile('size_chart_path')) {
             $validated['size_chart_path'] = $request->file('size_chart_path')->store('size_charts', 'public');
+        }
+        
+        // Handle Size Measurement Image
+        if ($request->hasFile('size_measurement_image')) {
+            $validated['size_measurement_image'] = $request->file('size_measurement_image')->store('size_charts', 'public');
         }
 
         // Handle Gallery Images

@@ -320,6 +320,7 @@ class ReturnExchangeController extends Controller
             // Create Refund Record in Payments Table
             \App\Models\Payment::create([
                 'order_id' => $order->id,
+                'product_type' => $order->product_type,
                 'payment_id' => $refundData['id'] ?? ('ref_' . time()), // Refund ID from Razorpay
                 'total_amount' => -1 * $refundAmount, // Negative to show deduction? Or just positive with type refund? User said "payment_for" column handles distiction.
                 // Let's keep amounts positive but distinction via payment_for, OR negative for financial purity.

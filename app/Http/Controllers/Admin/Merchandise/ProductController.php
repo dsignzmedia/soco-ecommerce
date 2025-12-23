@@ -13,7 +13,7 @@ class ProductController extends Controller
 {
     public function index(Request $request): View
     {
-        $query = Product::with(['school']);
+        $query = Product::with(['school'])->withCount('variants');
 
         if ($request->has('q')) {
             $query->where('product_name', 'like', '%' . $request->q . '%');
@@ -115,12 +115,37 @@ class ProductController extends Controller
     {
         $schools = \App\Models\Admin\Master\School::orderBy('name')->get();
         // Provide typical defaults for Merch products
-        $grades = ['Pre-KG' => 'Pre-KG', 'LKG' => 'LKG', 'UKG' => 'UKG', '1' => '1', '2' => '2', '3' => '3', '4' => '4', '5' => '5', '6' => '6', '7' => '7', '8' => '8', '9' => '9', '10' => '10', '11' => '11', '12' => '12'];
-        $categories = ['T-Shirts' => 'T-Shirts', 'Hoodies' => 'Hoodies', 'Caps' => 'Caps', 'Mugs' => 'Mugs', 'Accessories' => 'Accessories'];
-        $productTypes = ['merchandised' => 'Merchandise'];
+        $grades = [
+            'Pre-KG' => 'Pre-KG',
+            'LKG' => 'LKG',
+            'UKG' => 'UKG',
+            '1' => 'Class 1',
+            '2' => 'Class 2',
+            '3' => 'Class 3',
+            '4' => 'Class 4',
+            '5' => 'Class 5',
+            '6' => 'Class 6',
+            '7' => 'Class 7',
+            '8' => 'Class 8',
+            '9' => 'Class 9',
+            '10' => 'Class 10',
+            '11' => 'Class 11',
+            '12' => 'Class 12',
+        ];
+        // Fetch categories from database, fallback to defaults if empty
+        $categories = \App\Models\Admin\Master\Category::getForSelect();
+        if (empty($categories)) {
+            $categories = ['T-Shirts' => 'T-Shirts', 'Hoodies' => 'Hoodies', 'Caps' => 'Caps', 'Mugs' => 'Mugs', 'Accessories' => 'Accessories'];
+        }
+        // Fetch product types from database, fallback to defaults if empty
+        $productTypes = \App\Models\Admin\Master\ProductType::getForSelect();
+        if (empty($productTypes)) {
+            $productTypes = ['merchandised' => 'Merchandise'];
+        }
 
         $product = new Product();
         $product->gender = 'unisex';
+        $product->product_type = 'merchandised'; // Set default product type
 
         return view('admin.merchandise.products.form', [
             'product' => $product, 
@@ -134,21 +159,73 @@ class ProductController extends Controller
 
     public function store(Request $request): RedirectResponse
     {
-        $data = $request->validate([
+        // Check if variant-based pricing is enabled
+        $variantBasedPricing = $request->has('variant_based_pricing') && $request->input('variant_based_pricing') == '1';
+        
+        $validationRules = [
             'product_name' => 'required|string|max:255',
-            'category' => 'required|string',
+            'category' => 'nullable|string',
             'grade' => 'nullable|string',
             'school_id' => 'nullable|exists:schools,id',
             'gender' => 'nullable|string',
-            'price_regular' => 'required|numeric|min:0',
+            'tag_name' => 'nullable|string',
+            'price_regular' => $variantBasedPricing ? 'nullable|numeric|min:0' : 'required|numeric|min:0',
+            'price_tax' => 'nullable|numeric|min:0',
+            'tax_profile' => 'nullable|string',
+            'price_inclusive_tax' => 'nullable|boolean',
+            'product_weight' => 'nullable|numeric|min:0',
             'inventory_stock' => 'required|integer|min:0',
             'status' => 'required|in:live,draft',
             'description' => 'nullable|string',
-        ]);
+            'variants' => 'nullable|array',
+            'variants.*.option' => 'nullable|string',
+            'variants.*.price' => 'nullable|numeric|min:0',
+            'variants.*.weight' => 'nullable|numeric|min:0',
+            'variants.*.stock' => 'nullable|integer|min:0',
+            'variants.*.low_stock_threshold' => 'nullable|integer|min:0',
+        ];
+        
+        $data = $request->validate($validationRules);
+        
+        // Handle checkbox
+        $data['price_inclusive_tax'] = $request->has('price_inclusive_tax') ? 1 : 0;
+        
+        // Validate variant prices when variant-based pricing is enabled
+        if ($variantBasedPricing && $request->has('variants')) {
+            $hasVariantPrice = false;
+            $errors = [];
+            foreach ($request->input('variants', []) as $index => $variant) {
+                if (!empty($variant['option'])) {
+                    // If variant has an option, it must have a price
+                    if (empty($variant['price']) || $variant['price'] <= 0) {
+                        $errors["variants.{$index}.price"] = "Price is required for variant '{$variant['option']}' when variant-based pricing is enabled.";
+                    } else {
+                        $hasVariantPrice = true;
+                    }
+                }
+            }
+            if (!empty($errors)) {
+                return redirect()->back()->withErrors($errors)->withInput();
+            }
+            if (!$hasVariantPrice) {
+                return redirect()->back()->withErrors(['variants' => 'At least one variant with an option must have a price when variant-based pricing is enabled.'])->withInput();
+            }
+        }
 
         $data['product_type'] = 'merchandised';
         $data['stock_status'] = $data['inventory_stock'] > 0 ? 'in_stock' : 'out_of_stock';
         // Merch might not have School ID, or it is null (Public/Custom)
+        
+        // Handle file uploads
+        if ($request->hasFile('featured_image')) {
+            $data['featured_image'] = $request->file('featured_image')->store('products', 'public');
+        }
+        if ($request->hasFile('size_chart_path')) {
+            $data['size_chart_path'] = $request->file('size_chart_path')->store('size_charts', 'public');
+        }
+        if ($request->hasFile('size_measurement_image')) {
+            $data['size_measurement_image'] = $request->file('size_measurement_image')->store('size_charts', 'public');
+        }
 
         $product = Product::create($data);
 
@@ -163,9 +240,33 @@ class ProductController extends Controller
     {
         $product = Product::findOrFail($id);
         $schools = \App\Models\Admin\Master\School::orderBy('name')->get();
-        $grades = ['Pre-KG' => 'Pre-KG', 'LKG' => 'LKG', 'UKG' => 'UKG', '1' => '1', '2' => '2', '3' => '3', '4' => '4', '5' => '5', '6' => '6', '7' => '7', '8' => '8', '9' => '9', '10' => '10', '11' => '11', '12' => '12'];
-        $categories = ['T-Shirts' => 'T-Shirts', 'Hoodies' => 'Hoodies', 'Caps' => 'Caps', 'Mugs' => 'Mugs', 'Accessories' => 'Accessories'];
-        $productTypes = ['merchandised' => 'Merchandise'];
+        $grades = [
+            'Pre-KG' => 'Pre-KG',
+            'LKG' => 'LKG',
+            'UKG' => 'UKG',
+            '1' => 'Class 1',
+            '2' => 'Class 2',
+            '3' => 'Class 3',
+            '4' => 'Class 4',
+            '5' => 'Class 5',
+            '6' => 'Class 6',
+            '7' => 'Class 7',
+            '8' => 'Class 8',
+            '9' => 'Class 9',
+            '10' => 'Class 10',
+            '11' => 'Class 11',
+            '12' => 'Class 12',
+        ];
+        // Fetch categories from database, fallback to defaults if empty
+        $categories = \App\Models\Admin\Master\Category::getForSelect();
+        if (empty($categories)) {
+            $categories = ['T-Shirts' => 'T-Shirts', 'Hoodies' => 'Hoodies', 'Caps' => 'Caps', 'Mugs' => 'Mugs', 'Accessories' => 'Accessories'];
+        }
+        // Fetch product types from database, fallback to defaults if empty
+        $productTypes = \App\Models\Admin\Master\ProductType::getForSelect();
+        if (empty($productTypes)) {
+            $productTypes = ['merchandised' => 'Merchandise'];
+        }
 
         return view('admin.merchandise.products.form', [
             'product' => $product,
@@ -180,21 +281,73 @@ class ProductController extends Controller
     public function update(Request $request, $id): RedirectResponse
     {
         $product = Product::findOrFail($id);
+        
+        // Check if variant-based pricing is enabled
+        $variantBasedPricing = $request->has('variant_based_pricing') && $request->input('variant_based_pricing') == '1';
 
-        $data = $request->validate([
+        $validationRules = [
             'product_name' => 'required|string|max:255',
-            'category' => 'required|string',
+            'category' => 'nullable|string',
             'grade' => 'nullable|string',
             'school_id' => 'nullable|exists:schools,id',
             'gender' => 'nullable|string',
-            'price_regular' => 'required|numeric|min:0',
+            'tag_name' => 'nullable|string',
+            'price_regular' => $variantBasedPricing ? 'nullable|numeric|min:0' : 'required|numeric|min:0',
+            'price_tax' => 'nullable|numeric|min:0',
+            'tax_profile' => 'nullable|string',
+            'price_inclusive_tax' => 'nullable|boolean',
+            'product_weight' => 'nullable|numeric|min:0',
             'inventory_stock' => 'required|integer|min:0',
             'product_type' => 'required|string',
             'status' => 'required|in:live,draft',
             'description' => 'nullable|string',
-        ]);
+            'variants' => 'nullable|array',
+            'variants.*.option' => 'nullable|string',
+            'variants.*.price' => 'nullable|numeric|min:0',
+            'variants.*.weight' => 'nullable|numeric|min:0',
+            'variants.*.stock' => 'nullable|integer|min:0',
+            'variants.*.low_stock_threshold' => 'nullable|integer|min:0',
+        ];
+        
+        $data = $request->validate($validationRules);
+        
+        // Handle checkbox
+        $data['price_inclusive_tax'] = $request->has('price_inclusive_tax') ? 1 : 0;
+        
+        // Validate variant prices when variant-based pricing is enabled
+        if ($variantBasedPricing && $request->has('variants')) {
+            $hasVariantPrice = false;
+            $errors = [];
+            foreach ($request->input('variants', []) as $index => $variant) {
+                if (!empty($variant['option'])) {
+                    // If variant has an option, it must have a price
+                    if (empty($variant['price']) || $variant['price'] <= 0) {
+                        $errors["variants.{$index}.price"] = "Price is required for variant '{$variant['option']}' when variant-based pricing is enabled.";
+                    } else {
+                        $hasVariantPrice = true;
+                    }
+                }
+            }
+            if (!empty($errors)) {
+                return redirect()->back()->withErrors($errors)->withInput();
+            }
+            if (!$hasVariantPrice) {
+                return redirect()->back()->withErrors(['variants' => 'At least one variant with an option must have a price when variant-based pricing is enabled.'])->withInput();
+            }
+        }
         
         $data['stock_status'] = $data['inventory_stock'] > 0 ? 'in_stock' : 'out_of_stock';
+        
+        // Handle file uploads
+        if ($request->hasFile('featured_image')) {
+            $data['featured_image'] = $request->file('featured_image')->store('products', 'public');
+        }
+        if ($request->hasFile('size_chart_path')) {
+            $data['size_chart_path'] = $request->file('size_chart_path')->store('size_charts', 'public');
+        }
+        if ($request->hasFile('size_measurement_image')) {
+            $data['size_measurement_image'] = $request->file('size_measurement_image')->store('size_charts', 'public');
+        }
 
         $product->update($data);
 
@@ -229,6 +382,8 @@ class ProductController extends Controller
             if (isset($variantData['id']) && in_array($variantData['id'], $existingIds)) {
                 ProductVariant::where('id', $variantData['id'])->update([
                     'option' => $variantData['option'],
+                    'price' => $variantData['price'] ?? null,
+                    'weight' => $variantData['weight'] ?? null,
                     'stock' => $stock,
                     'low_stock_threshold' => $lowStock,
                     'name' => 'Size'
@@ -237,6 +392,8 @@ class ProductController extends Controller
             } else {
                 $product->variants()->create([
                     'option' => $variantData['option'],
+                    'price' => $variantData['price'] ?? null,
+                    'weight' => $variantData['weight'] ?? null,
                     'stock' => $stock,
                     'low_stock_threshold' => $lowStock,
                     'name' => 'Size'

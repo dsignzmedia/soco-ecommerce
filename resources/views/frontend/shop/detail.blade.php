@@ -28,11 +28,11 @@
             <div class="col-lg-6">
                 <div class="product-big-img vs-carousel" data-slide-show="1" data-fade="true" data-asnavfor=".product-thumb-slide">
                         @php
-                            $productImages = $product['images'] ?? [$product['image'] ?? asset('assets/img/product/product1-1.png')];
+                            $productImages = $product['images'] ?? [$product['image'] ?? asset('assets/img/no image/no_image.png')];
                         @endphp
                         @foreach($productImages as $index => $image)
                         <div class="img">
-                                <img src="{{ $image }}" alt="{{ $product['name'] }} - Image {{ $index + 1 }}">
+                                <img src="{{ $image }}" alt="{{ $product['name'] }} - Image {{ $index + 1 }}" onerror="this.onerror=null; this.src='{{ asset('assets/img/no image/no_image.png') }}';">
                             </div>
                         @endforeach
                     </div>
@@ -40,7 +40,7 @@
                     @foreach($productImages as $index => $image)
                         <div class="col-3">
                             <div class="thumb">
-                                <img src="{{ $image }}" alt="{{ $product['name'] }} - Image {{ $index + 1 }}">
+                                <img src="{{ $image }}" alt="{{ $product['name'] }} - Image {{ $index + 1 }}" onerror="this.onerror=null; this.src='{{ asset('assets/img/no image/no_image.png') }}';">
                         </div>
                             </div>
                     @endforeach
@@ -75,7 +75,7 @@
                         <div class="mb-4">
                             <div class="d-flex align-items-center gap-2 mb-2">
                                 <label class="form-label fw-bold mb-0">Size:</label>
-                                @if(!empty($product['size_chart_path']) || !empty($product['video_url']))
+                                @if(!empty($product['size_chart_path']) || !empty($product['size_measurement_image']) || !empty($product['video_url']))
                                     <a href="#" class="text-primary small" data-bs-toggle="modal" data-bs-target="#sizeGuideModal" style="text-decoration: underline;">Size Guide</a>
                                 @endif
                             </div>
@@ -122,8 +122,8 @@
                         <span class="getway-title">GUARANTEED SAFE CHECKOUT:</span>
                         <img src="{{ asset('assets/img/widget/cards-2.png') }}" alt="cards">
                     </div>
-
-                    <div class="product_meta">
+                
+                <div class="product_meta">
                         @if(isset($product['sku']))
                             <span class="sku_wrapper">SKU: <span class="sku">#{{ $product['sku'] }}</span></span>
                         @endif
@@ -157,9 +157,9 @@
                                 <div class="product-img">
                                     <a href="{{ route('frontend.shop.detail', $relatedProduct['id']) }}">
                                         @if(isset($relatedProduct['image']) && $relatedProduct['image'])
-                                            <img src="{{ $relatedProduct['image'] }}" alt="{{ $relatedProduct['name'] }}" class="w-100">
+                                            <img src="{{ $relatedProduct['image'] }}" alt="{{ $relatedProduct['name'] }}" class="w-100" onerror="this.onerror=null; this.src='{{ asset('assets/img/no image/no_image.png') }}';">
                                         @else
-                                            <img src="{{ asset('assets/img/logo.svg') }}" alt="{{ $relatedProduct['name'] }}" class="w-100">
+                                            <img src="{{ asset('assets/img/no image/no_image.png') }}" alt="{{ $relatedProduct['name'] }}" class="w-100">
                                         @endif
                                     </a>
                             </div>
@@ -203,15 +203,23 @@
             <div class="modal-body">
                 <div class="row g-4">
                      @if(!empty($product['size_chart_path']))
-                        <div class="{{ !empty($product['video_url']) ? 'col-md-6' : 'col-12' }}">
+                        <div class="{{ (!empty($product['size_measurement_image']) || !empty($product['video_url'])) ? 'col-md-6' : 'col-12' }}">
                             <div class="size-guide-image">
                                 <img src="{{ asset('storage/' . $product['size_chart_path']) }}" alt="Size Guide" class="w-100" style="border-radius: 8px;">
                             </div>
                         </div>
                     @endif
                     
+                    @if(!empty($product['size_measurement_image']))
+                        <div class="{{ (!empty($product['size_chart_path']) || !empty($product['video_url'])) ? 'col-md-6' : 'col-12' }}">
+                            <div class="size-guide-image">
+                                <img src="{{ asset('storage/' . $product['size_measurement_image']) }}" alt="Size Measurement" class="w-100" style="border-radius: 8px;">
+                            </div>
+                        </div>
+                    @endif
+                    
                     @if(!empty($product['video_url']))
-                        <div class="{{ !empty($product['size_chart_path']) ? 'col-md-6' : 'col-12' }}">
+                        <div class="{{ (!empty($product['size_chart_path']) || !empty($product['size_measurement_image'])) ? 'col-md-6' : 'col-12' }}">
                             <div class="size-guide-video">
                                 <div class="ratio ratio-16x9">
                                     <iframe src="{{ str_replace('watch?v=', 'embed/', $product['video_url']) }}" title="Size Guide Video" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
@@ -280,27 +288,60 @@
         const sizeInputs = document.querySelectorAll('input[name="size"]');
         const addToCartForm = document.getElementById('addToCartForm');
 
-        if (quantityMinus && quantityInput) {
-            quantityMinus.addEventListener('click', function() {
-                let currentValue = parseInt(quantityInput.value) || 1;
-                const minValue = parseInt(quantityInput.getAttribute('min')) || 1;
-                if (currentValue > minValue) {
-                    quantityInput.value = currentValue - 1;
-                    if (cartQuantity) cartQuantity.value = quantityInput.value;
+        // Quantity +/- buttons - Remove jQuery handlers and attach our own
+        // Use setTimeout to ensure this runs after main.js jQuery handlers are attached
+        setTimeout(function() {
+            const qtyMinus = document.querySelector('.quantity-minus');
+            const qtyPlus = document.querySelector('.quantity-plus');
+            const qtyInput = document.getElementById('quantity');
+            const cartQty = document.getElementById('cart-quantity');
+            
+            if (qtyMinus && qtyInput) {
+                // Remove any existing jQuery handlers
+                if (typeof jQuery !== 'undefined') {
+                    jQuery(qtyMinus).off('click');
                 }
-            });
-        }
+                // Remove any existing event listeners by cloning and replacing
+                const newMinus = qtyMinus.cloneNode(true);
+                qtyMinus.parentNode.replaceChild(newMinus, qtyMinus);
+                
+                newMinus.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    e.stopImmediatePropagation();
+                    let currentValue = parseInt(qtyInput.value) || 1;
+                    const minValue = parseInt(qtyInput.getAttribute('min')) || 1;
+                    if (currentValue > minValue) {
+                        qtyInput.value = currentValue - 1;
+                        if (cartQty) cartQty.value = qtyInput.value;
+                    }
+                    return false;
+                }, true);
+            }
 
-        if (quantityPlus && quantityInput) {
-            quantityPlus.addEventListener('click', function() {
-                let currentValue = parseInt(quantityInput.value) || 1;
-                const maxValue = parseInt(quantityInput.getAttribute('max')) || 100;
-                if (currentValue < maxValue) {
-                    quantityInput.value = currentValue + 1;
-                    if (cartQuantity) cartQuantity.value = quantityInput.value;
+            if (qtyPlus && qtyInput) {
+                // Remove any existing jQuery handlers
+                if (typeof jQuery !== 'undefined') {
+                    jQuery(qtyPlus).off('click');
                 }
-            });
-        }
+                // Remove any existing event listeners by cloning and replacing
+                const newPlus = qtyPlus.cloneNode(true);
+                qtyPlus.parentNode.replaceChild(newPlus, qtyPlus);
+                
+                newPlus.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    e.stopImmediatePropagation();
+                    let currentValue = parseInt(qtyInput.value) || 1;
+                    const maxValue = parseInt(qtyInput.getAttribute('max')) || 100;
+                    if (currentValue < maxValue) {
+                        qtyInput.value = currentValue + 1;
+                        if (cartQty) cartQty.value = qtyInput.value;
+                    }
+                    return false;
+                }, true);
+            }
+        }, 100);
         
         // Update cart quantity when input changes
         if (quantityInput && cartQuantity) {
