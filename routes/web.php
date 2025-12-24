@@ -40,6 +40,27 @@ Route::post('/shop/add-to-cart', [App\Http\Controllers\Front\ShopController::cla
 // Unified Login Route (for both parents and schools)
 Route::get('/login', [AuthController::class, 'showLogin'])->name('login')->middleware('guest');
 
+Route::get('/clear-all', function () {
+
+    Artisan::call('config:clear');
+    Artisan::call('cache:clear');
+    Artisan::call('route:clear');
+    Artisan::call('view:clear');
+    Artisan::call('optimize:clear');
+
+    return ":white_check_mark: All Laravel cache cleared successfully.";
+});
+
+
+Route::get('/fix-storage', function () {
+
+
+
+    Artisan::call('storage:link');
+Artisan::call('config:clear');
+    Artisan::call('cache:clear');
+});
+
 // Backward compatibility routes - also point to unified login
 Route::get('/parent/login', [AuthController::class, 'showLogin'])->middleware('guest');
 Route::get('/school/login', [AuthController::class, 'showLogin'])->middleware('guest');
