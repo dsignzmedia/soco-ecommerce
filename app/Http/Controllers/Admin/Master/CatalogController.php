@@ -19,7 +19,7 @@ class CatalogController extends Controller
     {
         $filters = $request->only(['school_id', 'grade_id', 'status', 'gender', 'category', 'product_type', 'stock_status', 'q']);
 
-        $query = ProductMapping::with(['school'])->withCount('variants');
+        $query = ProductMapping::with(['school', 'gradePricing'])->withCount('variants');
         $this->applyFilters($query, $filters);
 
         if (! empty($filters['q'])) {
@@ -192,6 +192,10 @@ class CatalogController extends Controller
             // Delete all existing grade pricing first
             $product->gradePricing()->delete();
             
+            // Clear the grade field since we're using grade-wise pricing
+            $product->grade = null;
+            $product->save();
+            
             // Get all grades in order
             $gradeOrder = ['Pre-KG', 'LKG', 'UKG', '1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11', '12'];
             
@@ -287,6 +291,10 @@ class CatalogController extends Controller
             // Delete all existing grade pricing first
             $productMapping->gradePricing()->delete();
             
+            // Clear the grade field since we're using grade-wise pricing
+            $productMapping->grade = null;
+            $productMapping->save();
+            
             // Get all grades in order
             $gradeOrder = ['Pre-KG', 'LKG', 'UKG', '1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11', '12'];
             
@@ -362,7 +370,37 @@ class CatalogController extends Controller
         return redirect()->route('master.admin.catalog.index')->with('status', 'Product deleted.');
     }
 
-    // ... (export methods remain unchanged)
+    public function export(Request $request, string $type)
+    {
+        $filters = $request->only(['school_id', 'grade_id', 'status', 'gender', 'category', 'product_type', 'stock_status', 'q']);
+
+        $query = ProductMapping::with(['school']);
+        $this->applyFilters($query, $filters);
+
+        if (! empty($filters['q'])) {
+            $query->where(function (Builder $builder) use ($filters) {
+                $builder->where('product_name', 'like', '%' . $filters['q'] . '%')
+                    ->orWhere('product_type', 'like', '%' . $filters['q'] . '%');
+            });
+        }
+
+        $products = $query->orderBy('product_name')->get();
+
+        switch (strtolower($type)) {
+            case 'csv':
+                return $this->downloadDelimited($products, ',', 'catalog-export-' . date('Y-m-d') . '.csv', 'text/csv');
+            
+            case 'excel':
+                return $this->downloadDelimited($products, "\t", 'catalog-export-' . date('Y-m-d') . '.xls', 'application/vnd.ms-excel');
+            
+            case 'pdf':
+                return $this->downloadPdf($products);
+            
+            default:
+                return redirect()->route('master.admin.catalog.index')
+                    ->with('error', 'Invalid export type. Supported types: csv, excel, pdf.');
+        }
+    }
 
     protected function validatedData(Request $request, ?ProductMapping $product = null): array
     {
@@ -431,6 +469,9 @@ class CatalogController extends Controller
         $gradePricingErrors = [];
         
         if ($request->has('enable_grade_pricing') && $request->enable_grade_pricing && $request->has('grade_pricing_ranges')) {
+            // Clear the grade field when grade-wise pricing is enabled
+            $validated['grade'] = null;
+            
             foreach ($request->grade_pricing_ranges as $index => $range) {
                 // Validate: If "to" is provided, "from" must also be provided
                 if (!empty($range['to']) && empty($range['from'])) {

@@ -97,6 +97,71 @@
     </style>
 @endpush
 
+@php
+    // Helper function to format grades display
+    if (!function_exists('formatGradesDisplay')) {
+        function formatGradesDisplay($mapping) {
+            // Ensure relationship is loaded
+            if (!$mapping->relationLoaded('gradePricing')) {
+                $mapping->load('gradePricing');
+            }
+            
+            // Check if grade pricing exists and has data
+            if ($mapping->gradePricing && $mapping->gradePricing->count() > 0) {
+                $gradeOrder = ['Pre-KG', 'LKG', 'UKG', '1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11', '12'];
+                $grades = $mapping->gradePricing->pluck('grade')->toArray();
+                
+                if (empty($grades)) {
+                    return $mapping->grade ?? 'All grades';
+                }
+                
+                usort($grades, function($a, $b) use ($gradeOrder) {
+                    $aIndex = array_search($a, $gradeOrder);
+                    $bIndex = array_search($b, $gradeOrder);
+                    if ($aIndex === false) $aIndex = 999;
+                    if ($bIndex === false) $bIndex = 999;
+                    return $aIndex <=> $bIndex;
+                });
+                
+                // Format grades display: group consecutive grades into ranges
+                $displayGrades = [];
+                $currentRange = null;
+                foreach ($grades as $i => $grade) {
+                    $gradeIndex = array_search($grade, $gradeOrder);
+                    if ($i === 0) {
+                        $currentRange = ['start' => $grade, 'end' => $grade, 'index' => $gradeIndex];
+                    } else {
+                        $prevIndex = array_search($grades[$i-1], $gradeOrder);
+                        if ($gradeIndex === $prevIndex + 1) {
+                            // Consecutive grade
+                            $currentRange['end'] = $grade;
+                        } else {
+                            // Not consecutive, save current range and start new
+                            if ($currentRange['start'] === $currentRange['end']) {
+                                $displayGrades[] = $currentRange['start'];
+                            } else {
+                                $displayGrades[] = $currentRange['start'] . '-' . $currentRange['end'];
+                            }
+                            $currentRange = ['start' => $grade, 'end' => $grade, 'index' => $gradeIndex];
+                        }
+                    }
+                }
+                // Add last range
+                if ($currentRange) {
+                    if ($currentRange['start'] === $currentRange['end']) {
+                        $displayGrades[] = $currentRange['start'];
+                    } else {
+                        $displayGrades[] = $currentRange['start'] . '-' . $currentRange['end'];
+                    }
+                }
+                return implode(', ', $displayGrades);
+            } else {
+                return $mapping->grade ?? 'All grades';
+            }
+        }
+    }
+@endphp
+
 @section('content')
     <section class="card" style="margin-bottom:24px; border: 1px solid #e5e7eb; border-radius: 12px; padding: 20px; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 16px;">
@@ -213,7 +278,7 @@
                             </td>
                             <td>
                                 <div style="font-weight:500;color:#111827;">{{ optional($mapping->school)->name ?? '—' }}</div>
-                                <small>{{ $mapping->grade ?? 'All grades' }}</small>
+                                <small>{{ formatGradesDisplay($mapping) }}</small>
                                 @if($mapping->gender)
                                     <small>{{ ucfirst($mapping->gender) }}</small>
                                 @endif
@@ -299,7 +364,7 @@
                                 </h4>
                                 <div style="display: flex; flex-wrap: wrap; gap: 6px;">
                                     <span class="status-pill status-{{ $mapping->status }}" style="padding: 2px 10px; font-size: 11px;">{{ ucfirst($mapping->status) }}</span>
-                                    <span style="font-size: 11px; color: #344054; background: #f2f4f7; padding: 2px 10px; border-radius: 999px; border: 1px solid #e4e7ec;">{{ $mapping->grade ?? 'All grades' }}</span>
+                                    <span style="font-size: 11px; color: #344054; background: #f2f4f7; padding: 2px 10px; border-radius: 999px; border: 1px solid #e4e7ec;">{{ formatGradesDisplay($mapping) }}</span>
                                 </div>
                             </div>
                         </div>
