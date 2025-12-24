@@ -2144,7 +2144,28 @@ class AuthController extends Controller
              $allProducts = [];
         }
 
-        return view('frontend.store.index', compact('selectedProfile', 'allProducts'));
+        // Get categories dynamically from database (active categories only)
+        $categories = \App\Models\Admin\Master\Category::where('is_active', true)
+            ->orderBy('sort_order')
+            ->orderBy('name')
+            ->get();
+
+        // Create a mapping of category names/slugs to slugs for normalization
+        $categoryMap = [];
+        foreach ($categories as $cat) {
+            $categoryMap[strtolower($cat->name)] = $cat->slug;
+            $categoryMap[strtolower($cat->slug)] = $cat->slug;
+        }
+
+        // Normalize product categories to use slugs
+        foreach ($allProducts as &$product) {
+            $productCategory = $product['category'] ?? 'regular_uniforms';
+            $normalizedCategory = $categoryMap[strtolower($productCategory)] ?? $productCategory;
+            $product['category'] = $normalizedCategory;
+        }
+        unset($product); // Break the reference
+
+        return view('frontend.store.index', compact('selectedProfile', 'allProducts', 'categories'));
     }
 
     public function productDetail($productId, Request $request)

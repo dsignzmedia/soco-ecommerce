@@ -19,11 +19,34 @@ class CategoryController extends Controller
         return view('admin.categories.index', compact('categories'));
     }
 
-    public function create(): View
+    public function create(Request $request): View
     {
+        $routeName = $request->route()?->getName() ?? '';
+        $layout = match (true) {
+            str_starts_with($routeName, 'admin.back_to_school.') => 'admin.layouts.back_to_school',
+            str_starts_with($routeName, 'admin.merchandise.') => 'admin.layouts.merchandise',
+            default => 'admin.layouts.base',
+        };
+        
+        // Determine redirect route and form routes based on context
+        $redirectRoute = match (true) {
+            str_starts_with($routeName, 'admin.back_to_school.') => 'admin.back_to_school.product-settings.index',
+            str_starts_with($routeName, 'admin.merchandise.') => 'admin.merchandise.product-settings.index',
+            default => 'master.admin.product-settings.index',
+        };
+        
+        $storeRoute = match (true) {
+            str_starts_with($routeName, 'admin.back_to_school.') => 'admin.back_to_school.categories.store',
+            str_starts_with($routeName, 'admin.merchandise.') => 'admin.merchandise.categories.store',
+            default => 'master.admin.categories.store',
+        };
+
         return view('admin.categories.form', [
             'category' => new Category(),
             'mode' => 'create',
+            'layout' => $layout,
+            'redirectRoute' => $redirectRoute,
+            'storeRoute' => $storeRoute,
         ]);
     }
 
@@ -48,15 +71,46 @@ class CategoryController extends Controller
             'sort_order' => $validated['sort_order'] ?? 0,
         ]);
 
-        return redirect()->route('master.admin.product-settings.index')
+        // Determine redirect route based on referrer or route context
+        $routeName = $request->route()?->getName() ?? '';
+        $redirectRoute = match (true) {
+            str_starts_with($routeName, 'admin.back_to_school.') => 'admin.back_to_school.product-settings.index',
+            str_starts_with($routeName, 'admin.merchandise.') => 'admin.merchandise.product-settings.index',
+            default => 'master.admin.product-settings.index',
+        };
+
+        return redirect()->route($redirectRoute)
             ->with('success', 'Category created successfully.');
     }
 
-    public function edit(Category $category): View
+    public function edit(Category $category, Request $request): View
     {
+        $routeName = $request->route()?->getName() ?? '';
+        $layout = match (true) {
+            str_starts_with($routeName, 'admin.back_to_school.') => 'admin.layouts.back_to_school',
+            str_starts_with($routeName, 'admin.merchandise.') => 'admin.layouts.merchandise',
+            default => 'admin.layouts.base',
+        };
+        
+        // Determine redirect route and form routes based on context
+        $redirectRoute = match (true) {
+            str_starts_with($routeName, 'admin.back_to_school.') => 'admin.back_to_school.product-settings.index',
+            str_starts_with($routeName, 'admin.merchandise.') => 'admin.merchandise.product-settings.index',
+            default => 'master.admin.product-settings.index',
+        };
+        
+        $updateRoute = match (true) {
+            str_starts_with($routeName, 'admin.back_to_school.') => 'admin.back_to_school.categories.update',
+            str_starts_with($routeName, 'admin.merchandise.') => 'admin.merchandise.categories.update',
+            default => 'master.admin.categories.update',
+        };
+
         return view('admin.categories.form', [
             'category' => $category,
             'mode' => 'edit',
+            'layout' => $layout,
+            'redirectRoute' => $redirectRoute,
+            'updateRoute' => $updateRoute,
         ]);
     }
 
@@ -81,23 +135,39 @@ class CategoryController extends Controller
             'sort_order' => $validated['sort_order'] ?? 0,
         ]);
 
-        return redirect()->route('master.admin.product-settings.index')
+        // Determine redirect route based on referrer or route context
+        $routeName = $request->route()?->getName() ?? '';
+        $redirectRoute = match (true) {
+            str_starts_with($routeName, 'admin.back_to_school.') => 'admin.back_to_school.product-settings.index',
+            str_starts_with($routeName, 'admin.merchandise.') => 'admin.merchandise.product-settings.index',
+            default => 'master.admin.product-settings.index',
+        };
+
+        return redirect()->route($redirectRoute)
             ->with('success', 'Category updated successfully.');
     }
 
-    public function destroy(Category $category): RedirectResponse
+    public function destroy(Category $category, Request $request): RedirectResponse
     {
         // Check if category is being used
         $usageCount = \App\Models\Admin\Master\ProductMapping::where('category', $category->slug)->count();
         
+        // Determine redirect route based on referrer or route context
+        $routeName = $request->route()?->getName() ?? '';
+        $redirectRoute = match (true) {
+            str_starts_with($routeName, 'admin.back_to_school.') => 'admin.back_to_school.product-settings.index',
+            str_starts_with($routeName, 'admin.merchandise.') => 'admin.merchandise.product-settings.index',
+            default => 'master.admin.product-settings.index',
+        };
+        
         if ($usageCount > 0) {
-            return redirect()->route('master.admin.product-settings.index')
+            return redirect()->route($redirectRoute)
                 ->with('error', "Cannot delete category. It is being used by {$usageCount} product(s).");
         }
 
         $category->delete();
 
-        return redirect()->route('master.admin.product-settings.index')
+        return redirect()->route($redirectRoute)
             ->with('success', 'Category deleted successfully.');
     }
 }

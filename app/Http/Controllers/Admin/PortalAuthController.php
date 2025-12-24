@@ -33,12 +33,22 @@ class PortalAuthController extends Controller
             if ($user->role === User::ROLE_BACK_TO_SCHOOL_ADMIN) {
                 Auth::guard('bts_admin')->login($user, $request->filled('remember'));
                 $request->session()->regenerate();
-                return redirect()->intended(route('admin.back_to_school.dashboard'));
+                // Check for intended URL first, then fallback to dashboard
+                $intendedUrl = $request->session()->pull('url.intended');
+                if ($intendedUrl && str_starts_with($intendedUrl, url('/BackToSchoolAdmin'))) {
+                    return redirect($intendedUrl);
+                }
+                return redirect()->route('admin.back_to_school.dashboard');
             } 
             elseif ($user->role === User::ROLE_MERCHANDISE_ADMIN) {
                 Auth::guard('merch_admin')->login($user, $request->filled('remember'));
                 $request->session()->regenerate();
-                return redirect()->intended(route('admin.merchandise.dashboard'));
+                // Check for intended URL first, then fallback to dashboard
+                $intendedUrl = $request->session()->pull('url.intended');
+                if ($intendedUrl && str_starts_with($intendedUrl, url('/MerchandiseAdmin'))) {
+                    return redirect($intendedUrl);
+                }
+                return redirect()->route('admin.merchandise.dashboard');
             }
             
             // Invalid role for this portal

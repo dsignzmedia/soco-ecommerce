@@ -112,110 +112,13 @@
                     <div class="filter-section">
                         <h6 class="filter-title">Categories</h6>
                         <div class="filter-options">
-                            <label class="filter-option">
-                                <input type="checkbox" name="category" value="regular_uniforms" class="filter-checkbox" checked>
-                                <span class="checkbox-mark"></span>
-                                <span class="option-label">Regular Uniforms</span>
-                            </label>
-                            <label class="filter-option">
-                                <input type="checkbox" name="category" value="house_uniforms" class="filter-checkbox" checked>
-                                <span class="checkbox-mark"></span>
-                                <span class="option-label">House Uniforms</span>
-                            </label>
-                            <label class="filter-option">
-                                <input type="checkbox" name="category" value="sports" class="filter-checkbox" checked>
-                                <span class="checkbox-mark"></span>
-                                <span class="option-label">Sports Uniforms</span>
-                            </label>
-                            <label class="filter-option">
-                                <input type="checkbox" name="category" value="shoes" class="filter-checkbox" checked>
-                                <span class="checkbox-mark"></span>
-                                <span class="option-label">Shoes</span>
-                            </label>
-                            <label class="filter-option">
-                                <input type="checkbox" name="category" value="belts" class="filter-checkbox" checked>
-                                <span class="checkbox-mark"></span>
-                                <span class="option-label">Belts</span>
-                            </label>
-                            <label class="filter-option">
-                                <input type="checkbox" name="category" value="socks" class="filter-checkbox" checked>
-                                <span class="checkbox-mark"></span>
-                                <span class="option-label">Socks</span>
-                            </label>
-                            <label class="filter-option">
-                                <input type="checkbox" name="category" value="ties" class="filter-checkbox" checked>
-                                <span class="checkbox-mark"></span>
-                                <span class="option-label">Ties</span>
-                            </label>
-                            <label class="filter-option">
-                                <input type="checkbox" name="category" value="fabrics" class="filter-checkbox" checked>
-                                <span class="checkbox-mark"></span>
-                                <span class="option-label">Fabrics</span>
-                            </label>
-
-                            <!-- Back to School Categories -->
-                            <label class="filter-option">
-                                <input type="checkbox" name="category" value="Uniform" class="filter-checkbox" checked>
-                                <span class="checkbox-mark"></span>
-                                <span class="option-label">Uniform (BTS)</span>
-                            </label>
-                            <label class="filter-option">
-                                <input type="checkbox" name="category" value="Shoes" class="filter-checkbox" checked>
-                                <span class="checkbox-mark"></span>
-                                <span class="option-label">Shoes (BTS)</span>
-                            </label>
-                            <label class="filter-option">
-                                <input type="checkbox" name="category" value="Bags" class="filter-checkbox" checked>
-                                <span class="checkbox-mark"></span>
-                                <span class="option-label">Bags</span>
-                            </label>
-                            <label class="filter-option">
-                                <input type="checkbox" name="category" value="Stationery" class="filter-checkbox" checked>
-                                <span class="checkbox-mark"></span>
-                                <span class="option-label">Stationery</span>
-                            </label>
-                            <label class="filter-option">
-                                <input type="checkbox" name="category" value="Food Container" class="filter-checkbox" checked>
-                                <span class="checkbox-mark"></span>
-                                <span class="option-label">Food Container</span>
-                            </label>
-                            <label class="filter-option">
-                                <input type="checkbox" name="category" value="Drinkware" class="filter-checkbox" checked>
-                                <span class="checkbox-mark"></span>
-                                <span class="option-label">Drinkware</span>
-                            </label>
-                             <label class="filter-option">
-                                <input type="checkbox" name="category" value="School-Day Essentials" class="filter-checkbox" checked>
-                                <span class="checkbox-mark"></span>
-                                <span class="option-label">School-Day Essentials</span>
-                            </label>
-                            
-                            <!-- Merchandise Categories -->
-                            <label class="filter-option">
-                                <input type="checkbox" name="category" value="T-Shirts" class="filter-checkbox" checked>
-                                <span class="checkbox-mark"></span>
-                                <span class="option-label">T-Shirts</span>
-                            </label>
-                            <label class="filter-option">
-                                <input type="checkbox" name="category" value="Hoodies" class="filter-checkbox" checked>
-                                <span class="checkbox-mark"></span>
-                                <span class="option-label">Hoodies</span>
-                            </label>
-                            <label class="filter-option">
-                                <input type="checkbox" name="category" value="Caps" class="filter-checkbox" checked>
-                                <span class="checkbox-mark"></span>
-                                <span class="option-label">Caps</span>
-                            </label>
-                            <label class="filter-option">
-                                <input type="checkbox" name="category" value="Mugs" class="filter-checkbox" checked>
-                                <span class="checkbox-mark"></span>
-                                <span class="option-label">Mugs</span>
-                            </label>
-                            <label class="filter-option">
-                                <input type="checkbox" name="category" value="Accessories" class="filter-checkbox" checked>
-                                <span class="checkbox-mark"></span>
-                                <span class="option-label">Accessories</span>
-                            </label>
+                            @foreach($categories as $category)
+                                <label class="filter-option">
+                                    <input type="checkbox" name="category" value="{{ $category->slug }}" class="filter-checkbox" checked>
+                                    <span class="checkbox-mark"></span>
+                                    <span class="option-label">{{ $category->name }}</span>
+                                </label>
+                            @endforeach
                         </div>
                     </div>
 
