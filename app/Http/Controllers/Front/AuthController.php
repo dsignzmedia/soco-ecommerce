@@ -1981,9 +1981,18 @@ class AuthController extends Controller
                     $q->where('school_id', $school->id)
                       ->orWhereNull('school_id');
                 })
-                ->where('status', 'live');
+                ->where('status', 'live')
+                // Show: authorized/optional (school products), merchandised, and back_to_school products
+                ->where(function($q) {
+                    $q->whereIn('product_type', ['authorized', 'optional', 'authorized_product', 'optional_product', 'merchandised', 'back_to_school'])
+                      ->orWhereNull('product_type')
+                      ->orWhere('product_type', '');
+                });
+            
 
             // Filter by grade if available in profile
+            // Note: Grade filter only applies to school products (authorized/optional)
+            // Merchandised and BTS products are shown regardless of grade
             if ($selectedProfile->grade) {
                 $rawGrade = $selectedProfile->grade;
                 $gradeVariants = [$rawGrade];
@@ -2014,14 +2023,24 @@ class AuthController extends Controller
                 $gradeVariants = array_merge($gradeVariants, $extras);
 
 
+                // Filter by grade: Only apply to school products (authorized/optional)
+                // Merchandised and BTS products bypass this filter
                 $dbProductsQuery->where(function($q) use ($gradeVariants) {
-                    $q->whereIn('grade', $gradeVariants)
-                      ->orWhereNull('grade')
-                      ->orWhere('grade', ''); 
+                    $q->where(function($subQ) use ($gradeVariants) {
+                        // For school products: check grade field
+                        $subQ->whereIn('product_type', ['authorized', 'optional', 'authorized_product', 'optional_product'])
+                             ->where(function($gradeQ) use ($gradeVariants) {
+                                 $gradeQ->whereIn('grade', $gradeVariants)
+                                        ->orWhereNull('grade')  // Products with grade-wise pricing have NULL grade
+                                        ->orWhere('grade', '');
+                             });
+                    })
+                    ->orWhereIn('product_type', ['merchandised', 'back_to_school']); // Merchandised and BTS always show
                 });
             }
 
             // Filter by gender if available in profile (but allow products with no gender set)
+            // Note: Gender filter applies to all products, but merchandised and BTS can still show if unisex
             if ($selectedProfile->gender) {
                 $gender = strtolower($selectedProfile->gender);
                 // Map legacy terms if necessary, though profile should ideally be 'male'/'female'
@@ -2045,39 +2064,69 @@ class AuthController extends Controller
             $dbProducts = $dbProductsQuery->with('gradePricing')->get();
             $studentGrade = $selectedProfile->grade ?? null;
 
-            foreach ($dbProducts as $dbProduct) {
-                // Filter: If product has grade-wise pricing, check if student's grade has pricing
-                if ($dbProduct->gradePricing && $dbProduct->gradePricing->count() > 0) {
-                    // Product has grade-wise pricing enabled
-                    if ($studentGrade) {
-                        // Check if there's pricing for this student's grade
-                        $hasPricingForGrade = false;
+            // Filter products with grade-wise pricing: only show if student's grade has pricing
+            // Only apply this filter if student has a grade set
+            // Note: This filter only applies to authorized/optional products (school products)
+            // Merchandised and BTS products are shown regardless of grade
+            if ($studentGrade) {
+                $dbProducts = $dbProducts->filter(function($dbProduct) use ($studentGrade) {
+                    // Only filter grade-wise pricing for authorized/optional products
+                    $productType = strtolower($dbProduct->product_type ?? '');
+                    $isSchoolProduct = in_array($productType, ['authorized', 'optional', 'authorized_product', 'optional_product']) 
+                                       || empty($productType);
+                    
+                    // For merchandised and back_to_school products, always show (no grade filter)
+                    if (!$isSchoolProduct) {
+                        return true;
+                    }
+                    
+                    // For school products, check grade-wise pricing
+                    if ($dbProduct->gradePricing && $dbProduct->gradePricing->count() > 0) {
+                        // Normalize student grade for comparison
+                        $normalizedStudentGrade = $this->normalizeGrade($studentGrade);
                         
-                        // Try exact match first
-                        $gradePricing = $dbProduct->gradePricing->firstWhere('grade', $studentGrade);
-                        if ($gradePricing && $gradePricing->price > 0) {
-                            $hasPricingForGrade = true;
-                        } else {
-                            // Try normalized match
-                            $normalizedStudentGrade = $this->normalizeGrade($studentGrade);
-                            foreach ($dbProduct->gradePricing as $gp) {
-                                $normalizedGpGrade = $this->normalizeGrade($gp->grade);
-                                if ($normalizedStudentGrade === $normalizedGpGrade && $gp->price > 0) {
-                                    $hasPricingForGrade = true;
-                                    break;
-                                }
+                        if (empty($normalizedStudentGrade)) {
+                            return false; // Can't match if student grade is empty
+                        }
+                        
+                        // Check if any grade pricing matches the student's grade
+                        foreach ($dbProduct->gradePricing as $gp) {
+                            $normalizedGpGrade = $this->normalizeGrade($gp->grade);
+                            if ($normalizedStudentGrade === $normalizedGpGrade) {
+                                return true; // Student's grade has pricing, include product
                             }
                         }
-                        
-                        // Skip this product if no pricing exists for the student's grade
-                        if (!$hasPricingForGrade) {
-                            continue;
-                        }
-                    } else {
-                        // Student has no grade, skip products with grade-wise pricing
-                        continue;
+                        return false; // Student's grade not in grade pricing, exclude product
                     }
+                    // Product doesn't have grade-wise pricing, use grade field (already filtered above)
+                    return true;
+                });
+            }
+            
+            // Sort products: School products first, then Merchandised, then BTS
+            $dbProducts = $dbProducts->sortBy(function($product) {
+                $productType = strtolower($product->product_type ?? '');
+                
+                // School products (authorized/optional) = priority 1
+                if (in_array($productType, ['authorized', 'optional', 'authorized_product', 'optional_product']) || empty($productType)) {
+                    return 1;
                 }
+                // Merchandised = priority 2
+                if ($productType === 'merchandised') {
+                    return 2;
+                }
+                // Back to School = priority 3
+                if ($productType === 'back_to_school') {
+                    return 3;
+                }
+                // Others = priority 4
+                return 4;
+            })->values();
+
+            foreach ($dbProducts as $dbProduct) {
+                // Note: Products with grade-wise pricing will still show, but will use regular price
+                // if no grade-specific pricing exists for the student's grade
+                // The getProductPriceForGrade() method handles this fallback logic
                 
                 // Determine image URL
                 $image = $dbProduct->featured_image
@@ -2112,6 +2161,16 @@ class AuthController extends Controller
                 // Get price based on grade pricing if available
                 $productPrice = $this->getProductPriceForGrade($dbProduct, $studentGrade);
                 
+                // Normalize product type for JavaScript filtering
+                $productType = strtolower($dbProduct->product_type ?? 'authorized');
+                $normalizedType = match($productType) {
+                    'authorized_product' => 'authorized',
+                    'optional_product' => 'optional',
+                    'back_to_school' => 'back_to_school',
+                    'merchandised' => 'merchandised',
+                    default => $productType
+                };
+                
                 $allProducts[] = [
                     'id' => $dbProduct->id,
                     'name' => $dbProduct->product_name,
@@ -2120,7 +2179,7 @@ class AuthController extends Controller
                     'image' => $image,
                     'images' => $images,
                     'description' => $dbProduct->description,
-                    'type' => strtolower($dbProduct->product_type ?? 'authorized'),
+                    'type' => $normalizedType,
                     'category' => $dbProduct->category ?? 'regular_uniforms',
                     'gender' => match(strtolower($dbProduct->gender ?? 'unisex')) {
                         'male' => 'Male',
@@ -2132,11 +2191,10 @@ class AuthController extends Controller
                     'sku' => $dbProduct->id, // Use ID as SKU for now
                 ];
             }
+            
         } else {
             // Fallback or empty if school not found in DB
-            // You might want to keep the fake data here for testing if DB is empty
-            // For now, let's return empty to prove the connection (or lack thereof)
-             $allProducts = [];
+            $allProducts = [];
         }
 
         // Get categories dynamically from database (active categories only)
@@ -2161,6 +2219,84 @@ class AuthController extends Controller
         unset($product); // Break the reference
 
         return view('frontend.store.index', compact('selectedProfile', 'allProducts', 'categories'));
+    }
+
+    public function storeDebug(Request $request)
+    {
+        // Debug route to check product data
+        $user = Auth::user();
+        if (!$user) {
+            return response()->json(['error' => 'Not authenticated'], 401);
+        }
+
+        $profileId = $request->get('profile_id');
+        $profiles = $user->studentProfiles;
+        
+        if (!$profileId && $profiles->count() > 0) {
+            $profileId = $profiles->first()->id;
+        }
+
+        $selectedProfile = $profileId ? $profiles->firstWhere('id', (int)$profileId) : null;
+
+        if (!$selectedProfile) {
+            return response()->json(['error' => 'No profile selected'], 400);
+        }
+
+        $schoolName = $selectedProfile->school_name;
+        $school = \App\Models\Admin\Master\School::where('name', $schoolName)->first();
+
+        $debug = [
+            'profile' => [
+                'id' => $selectedProfile->id,
+                'student_name' => $selectedProfile->student_name,
+                'school_name' => $selectedProfile->school_name,
+                'grade' => $selectedProfile->grade,
+                'gender' => $selectedProfile->gender,
+            ],
+            'school' => $school ? [
+                'id' => $school->id,
+                'name' => $school->name,
+                'found' => true,
+            ] : ['found' => false, 'searched_name' => $schoolName],
+        ];
+
+        if ($school) {
+            // Get all products for this school
+            $allProducts = \App\Models\Admin\Master\ProductMapping::with('gradePricing')
+                ->where(function($q) use ($school) {
+                    $q->where('school_id', $school->id)->orWhereNull('school_id');
+                })
+                ->where('status', 'live')
+                ->where(function($q) {
+                    $q->whereIn('product_type', ['authorized', 'optional'])
+                      ->orWhereNull('product_type')
+                      ->orWhere('product_type', '');
+                })
+                ->get();
+
+            $debug['products'] = $allProducts->map(function($p) {
+                return [
+                    'id' => $p->id,
+                    'name' => $p->product_name,
+                    'school_id' => $p->school_id,
+                    'status' => $p->status,
+                    'product_type' => $p->product_type,
+                    'grade' => $p->grade,
+                    'category' => $p->category,
+                    'gender' => $p->gender,
+                    'grade_pricing' => $p->gradePricing->map(function($gp) {
+                        return ['grade' => $gp->grade, 'price' => $gp->price];
+                    })->toArray(),
+                ];
+            })->toArray();
+
+            $debug['product_count'] = $allProducts->count();
+        } else {
+            $debug['products'] = [];
+            $debug['product_count'] = 0;
+        }
+
+        return response()->json($debug, 200, [], JSON_PRETTY_PRINT);
     }
 
     public function productDetail($productId, Request $request)
