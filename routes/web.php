@@ -331,6 +331,15 @@ Route::prefix('BackToSchoolAdmin')->name('admin.back_to_school.')->group(functio
         
         // Product Settings (alias for BTS admins)
         Route::get('/product-settings', [App\Http\Controllers\Admin\Master\ProductSettingsController::class, 'index'])->name('product-settings.index');
+        
+        // Categories (using same controller, but with BTS context)
+        Route::resource('categories', App\Http\Controllers\Admin\Master\CategoryController::class)->names([
+            'create' => 'categories.create',
+            'store' => 'categories.store',
+            'edit' => 'categories.edit',
+            'update' => 'categories.update',
+            'destroy' => 'categories.destroy',
+        ]);
 
         // Returns & Exchanges
         Route::get('/returns-exchange', [App\Http\Controllers\Admin\BackToSchool\ReturnExchangeController::class, 'index'])->name('returns-exchange.index');
@@ -370,6 +379,15 @@ Route::prefix('MerchandiseAdmin')->name('admin.merchandise.')->group(function ()
         
         // Product Settings (alias for merch admins)
         Route::get('/product-settings', [App\Http\Controllers\Admin\Master\ProductSettingsController::class, 'index'])->name('product-settings.index');
+        
+        // Categories (using same controller, but with Merch context)
+        Route::resource('categories', App\Http\Controllers\Admin\Master\CategoryController::class)->names([
+            'create' => 'categories.create',
+            'store' => 'categories.store',
+            'edit' => 'categories.edit',
+            'update' => 'categories.update',
+            'destroy' => 'categories.destroy',
+        ]);
 
         // Returns & Exchanges
         Route::get('/returns-exchange', [App\Http\Controllers\Admin\Merchandise\ReturnExchangeController::class, 'index'])->name('returns-exchange.index');

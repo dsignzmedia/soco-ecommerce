@@ -1,12 +1,4 @@
-<<<<<<< HEAD
-<<<<<<< HEAD
 @extends($layout ?? 'admin.layouts.base')
-=======
-@extends('admin.layouts.base')
->>>>>>> 299705238ea0ca997c2d2210725d7c82bc6ed1a2
-=======
-@extends($layout ?? 'admin.layouts.base')
->>>>>>> 5797570e74ac3bac92db108bc67bc9e89a56197a
 
 @section('title', 'Product Settings | The Skool Store')
 @section('page_heading', 'Product Settings')
@@ -243,7 +235,14 @@
                     <h3 style="margin:0;color:#111827;">Categories</h3>
                     <p style="margin:4px 0 0;color:#475467;font-size:14px;">Manage product categories for better organization</p>
                 </div>
-                <a href="{{ route('master.admin.categories.create') }}" class="nav__item" style="background:#490d59;color:#fff;border-radius:9999px;padding:8px 16px;width:auto;font-size:13px;font-weight:600;">
+                @php
+                    $createRoute = match($layout) {
+                        'admin.layouts.back_to_school' => 'admin.back_to_school.categories.create',
+                        'admin.layouts.merchandise' => 'admin.merchandise.categories.create',
+                        default => 'master.admin.categories.create',
+                    };
+                @endphp
+                <a href="{{ route($createRoute) }}" class="nav__item" style="background:#490d59;color:#fff;border-radius:9999px;padding:8px 16px;width:auto;font-size:13px;font-weight:600;">
                     <i class="fas fa-plus"></i> Add Category
                 </a>
             </div>
@@ -270,9 +269,21 @@
                                 </span>
                             </td>
                             <td class="actions">
+                                @php
+                                    $editRoute = match($layout) {
+                                        'admin.layouts.back_to_school' => 'admin.back_to_school.categories.edit',
+                                        'admin.layouts.merchandise' => 'admin.merchandise.categories.edit',
+                                        default => 'master.admin.categories.edit',
+                                    };
+                                    $destroyRoute = match($layout) {
+                                        'admin.layouts.back_to_school' => 'admin.back_to_school.categories.destroy',
+                                        'admin.layouts.merchandise' => 'admin.merchandise.categories.destroy',
+                                        default => 'master.admin.categories.destroy',
+                                    };
+                                @endphp
                                 <div class="d-flex flex-wrap gap-2">
-                                    <a href="{{ route('master.admin.categories.edit', $category) }}" class="btn-vs-sm">Edit</a>
-                                    <form action="{{ route('master.admin.categories.destroy', $category) }}" method="POST" style="display:inline;" onsubmit="return confirm('Are you sure you want to delete this category?');">
+                                    <a href="{{ route($editRoute, $category) }}" class="btn-vs-sm">Edit</a>
+                                    <form action="{{ route($destroyRoute, $category) }}" method="POST" style="display:inline;" onsubmit="return confirm('Are you sure you want to delete this category?');">
                                         @csrf
                                         @method('DELETE')
                                         <button type="submit" class="btn-vs-sm" style="background:#b42318;color:#fff;border:none;">Delete</button>
@@ -282,7 +293,7 @@
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="5">No categories yet. <a href="{{ route('master.admin.categories.create') }}">Create one</a></td>
+                            <td colspan="5">No categories yet. <a href="{{ route($createRoute ?? 'master.admin.categories.create') }}">Create one</a></td>
                         </tr>
                     @endforelse
                 </tbody>

@@ -1,6 +1,12 @@
-@extends('admin.layouts.base')
+@php
+    $isEdit = $mode === 'edit';
+    $layout = $layout ?? 'admin.layouts.base';
+    $redirectRoute = $redirectRoute ?? 'master.admin.product-settings.index';
+    $storeRoute = $storeRoute ?? 'master.admin.categories.store';
+    $updateRoute = $updateRoute ?? 'master.admin.categories.update';
+@endphp
 
-@php($isEdit = $mode === 'edit')
+@extends($layout)
 
 @section('title', ($isEdit ? 'Edit' : 'Add') . ' Category | The Skool Store')
 @section('page_heading', $isEdit ? 'Edit Category' : 'Add Category')
@@ -8,13 +14,13 @@
 
 @section('content')
     <div style="display:flex;justify-content:flex-end;align-items:center;margin-bottom:24px;">
-        <a href="{{ route('master.admin.product-settings.index') }}" class="btn-back-outline">
+        <a href="{{ route($redirectRoute) }}" class="btn-back-outline">
             <i class="fas fa-arrow-left"></i> Back to Product Settings
         </a>
     </div>
 
     <div class="card">
-        <form method="POST" action="{{ $mode === 'edit' ? route('master.admin.categories.update', $category) : route('master.admin.categories.store') }}">
+        <form method="POST" action="{{ $mode === 'edit' ? route($updateRoute, $category) : route($storeRoute) }}">
             @csrf
             @if($mode === 'edit')
                 @method('PUT')
@@ -54,7 +60,7 @@
             <input type="hidden" name="slug" value="{{ old('slug', $category->slug) }}" id="slug-field">
 
             <div style="display:flex;gap:12px;justify-content:flex-end;margin-top:24px;">
-                <a href="{{ route('master.admin.product-settings.index') }}" class="btn-back-outline">Cancel</a>
+                <a href="{{ route($redirectRoute) }}" class="btn-back-outline">Cancel</a>
                 <button type="submit" class="nav__item" style="background:#490d59;color:#fff;border:none;border-radius:9999px;padding:8px 24px;font-size:14px;font-weight:600;cursor:pointer;">
                     {{ $isEdit ? 'Update' : 'Create' }} Category
                 </button>

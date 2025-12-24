@@ -17,6 +17,7 @@ class ProductSettingsController extends Controller
             ->paginate(10, ['*'], 'product_types')
             ->appends($request->query());
 
+        // Fetch all categories (admin panel should show all, regardless of is_active status)
         $categories = Category::orderBy('sort_order')
             ->orderBy('name')
             ->paginate(10, ['*'], 'categories')
