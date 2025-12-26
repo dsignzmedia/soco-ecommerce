@@ -216,6 +216,53 @@ class ProductController extends Controller
         $data['stock_status'] = $data['inventory_stock'] > 0 ? 'in_stock' : 'out_of_stock';
         // Merch might not have School ID, or it is null (Public/Custom)
         
+        // Handle Gallery Images
+        $paths = [];
+        if ($request->hasFile('media_images')) {
+            foreach ($request->file('media_images') as $file) {
+                $paths[] = $file->store('products', 'public');
+            }
+        }
+
+        // Handle gallery images with reordering support
+        if ($request->filled('media_order_ids')) {
+            $existing = $request->input('existing_media_images', []);
+            $orderMap = explode(',', $request->input('media_order_ids'));
+            $finalImages = [];
+            
+            $existingIndex = 0;
+            $newIndex = 0;
+
+            foreach ($orderMap as $type) {
+                if ($type === 'existing') {
+                    if (isset($existing[$existingIndex])) {
+                        $finalImages[] = $existing[$existingIndex];
+                        $existingIndex++;
+                    }
+                } elseif ($type === 'new') {
+                    if (isset($paths[$newIndex])) {
+                        $finalImages[] = $paths[$newIndex];
+                        $newIndex++;
+                    }
+                }
+            }
+            
+            // Safety: Append any remaining
+            while(isset($existing[$existingIndex])) {
+                $finalImages[] = $existing[$existingIndex++];
+            }
+            while(isset($paths[$newIndex])) {
+                $finalImages[] = $paths[$newIndex++];
+            }
+
+            $data['media_images'] = $finalImages;
+        } elseif ($request->exists('existing_media_images') || $request->has('media_list_modified')) {
+            $existing = $request->input('existing_media_images', []);
+            $data['media_images'] = array_merge($existing, $paths);
+        } elseif (!empty($paths)) {
+            $data['media_images'] = $paths;
+        }
+        
         // Handle file uploads
         if ($request->hasFile('featured_image')) {
             $data['featured_image'] = $request->file('featured_image')->store('products', 'public');
@@ -239,6 +286,12 @@ class ProductController extends Controller
     public function edit($id): View
     {
         $product = Product::findOrFail($id);
+        
+        // Set default product_type if not set
+        if (empty($product->product_type)) {
+            $product->product_type = 'merchandised';
+        }
+        
         $schools = \App\Models\Admin\Master\School::orderBy('name')->get();
         $grades = [
             'Pre-KG' => 'Pre-KG',
@@ -298,7 +351,7 @@ class ProductController extends Controller
             'price_inclusive_tax' => 'nullable|boolean',
             'product_weight' => 'nullable|numeric|min:0',
             'inventory_stock' => 'required|integer|min:0',
-            'product_type' => 'required|string',
+            'product_type' => 'nullable|string',
             'status' => 'required|in:live,draft',
             'description' => 'nullable|string',
             'variants' => 'nullable|array',
@@ -310,6 +363,11 @@ class ProductController extends Controller
         ];
         
         $data = $request->validate($validationRules);
+        
+        // Set default product_type if not provided
+        if (empty($data['product_type'])) {
+            $data['product_type'] = 'merchandised';
+        }
         
         // Handle checkbox
         $data['price_inclusive_tax'] = $request->has('price_inclusive_tax') ? 1 : 0;
@@ -337,6 +395,58 @@ class ProductController extends Controller
         }
         
         $data['stock_status'] = $data['inventory_stock'] > 0 ? 'in_stock' : 'out_of_stock';
+        
+        // Handle Gallery Images
+        $paths = [];
+        if ($request->hasFile('media_images')) {
+            foreach ($request->file('media_images') as $file) {
+                $paths[] = $file->store('products', 'public');
+            }
+        }
+
+        // Handle gallery images with reordering support
+        if ($request->filled('media_order_ids')) {
+            $existing = $request->input('existing_media_images', []);
+            $orderMap = explode(',', $request->input('media_order_ids'));
+            $finalImages = [];
+            
+            $existingIndex = 0;
+            $newIndex = 0;
+
+            foreach ($orderMap as $type) {
+                if ($type === 'existing') {
+                    if (isset($existing[$existingIndex])) {
+                        $finalImages[] = $existing[$existingIndex];
+                        $existingIndex++;
+                    }
+                } elseif ($type === 'new') {
+                    if (isset($paths[$newIndex])) {
+                        $finalImages[] = $paths[$newIndex];
+                        $newIndex++;
+                    }
+                }
+            }
+            
+            // Safety: Append any remaining
+            while(isset($existing[$existingIndex])) {
+                $finalImages[] = $existing[$existingIndex++];
+            }
+            while(isset($paths[$newIndex])) {
+                $finalImages[] = $paths[$newIndex++];
+            }
+
+            $data['media_images'] = $finalImages;
+        } elseif ($request->exists('existing_media_images') || $request->has('media_list_modified')) {
+            $existing = $request->input('existing_media_images', []);
+            $data['media_images'] = array_merge($existing, $paths);
+        } elseif (!empty($paths)) {
+            // Fallback: Append only mode
+            if ($product && $product->media_images) {
+                $data['media_images'] = array_merge($product->media_images, $paths);
+            } else {
+                $data['media_images'] = $paths;
+            }
+        }
         
         // Handle file uploads
         if ($request->hasFile('featured_image')) {

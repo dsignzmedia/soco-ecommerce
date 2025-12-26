@@ -66,6 +66,9 @@ class OrderController extends Controller
         ]);
 
         $original = $order->only(['order_status', 'payment_status', 'tracking_number']);
+        $previousOrderStatus = $order->order_status;
+        $previousPaymentStatus = $order->payment_status;
+        
         $order->update(array_filter($data, fn($value) => $value !== null));
 
         $changes = [];
@@ -89,6 +92,26 @@ class OrderController extends Controller
                 ],
                 'Order override / status update'
             );
+            
+            // Send Order Status Update Email if order status changed
+            if (isset($changes['order_status']) && !empty($order->customer_email)) {
+                try {
+                    \Illuminate\Support\Facades\Mail::to($order->customer_email)->send(new \App\Mail\OrderStatusUpdateMail($order, $previousOrderStatus));
+                    \Illuminate\Support\Facades\Log::info("Order status update email sent to {$order->customer_email} for order {$order->order_number}");
+                } catch (\Exception $e) {
+                    \Illuminate\Support\Facades\Log::error("Failed to send order status update email: " . $e->getMessage());
+                }
+            }
+            
+            // Send Payment Status Update Email if payment status changed
+            if (isset($changes['payment_status']) && !empty($order->customer_email)) {
+                try {
+                    \Illuminate\Support\Facades\Mail::to($order->customer_email)->send(new \App\Mail\PaymentStatusMail($order, $previousPaymentStatus));
+                    \Illuminate\Support\Facades\Log::info("Payment status update email sent to {$order->customer_email} for order {$order->order_number}");
+                } catch (\Exception $e) {
+                    \Illuminate\Support\Facades\Log::error("Failed to send payment status update email: " . $e->getMessage());
+                }
+            }
         }
 
         return back()->with('status', 'Order updated successfully.');

@@ -26,19 +26,53 @@
         </div>
     @endif
 
+    <style>
+        .password-toggle-btn {
+            position: absolute;
+            right: 12px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: none;
+            border: none;
+            cursor: pointer;
+            color: #64748b;
+            font-size: 16px;
+            padding: 0;
+            width: 24px;
+            height: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: none;
+        }
+        .password-toggle-btn:hover {
+            transform: translateY(-50%);
+            top: 50%;
+        }
+    </style>
+
     <form method="POST" action="{{ route('inventory.admin.profile.password.update') }}" style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
         @csrf
-        <div style="grid-column:span 2;">
+        <div style="grid-column:span 2;position:relative;">
             <label for="current_password" style="display:block;margin-bottom:8px;color:#334155;font-weight:600;">Current Password</label>
-            <input type="password" id="current_password" name="current_password" required style="width:100%;padding:12px;border:1px solid rgba(15, 23, 42, 0.12);border-radius:12px;">
+            <input type="password" id="current_password" name="current_password" required style="width:100%;padding:12px;padding-right:45px;border:1px solid rgba(15, 23, 42, 0.12);border-radius:12px;">
+            <button type="button" class="password-toggle-btn" onclick="togglePasswordVisibility('current_password', 'toggleCurrentPassword')" aria-label="Toggle password visibility">
+                <i class="fas fa-eye" id="toggleCurrentPassword"></i>
+            </button>
         </div>
-        <div>
+        <div style="position:relative;">
             <label for="password" style="display:block;margin-bottom:8px;color:#334155;font-weight:600;">New Password</label>
-            <input type="password" id="password" name="password" required style="width:100%;padding:12px;border:1px solid rgba(15, 23, 42, 0.12);border-radius:12px;">
+            <input type="password" id="password" name="password" required style="width:100%;padding:12px;padding-right:45px;border:1px solid rgba(15, 23, 42, 0.12);border-radius:12px;">
+            <button type="button" class="password-toggle-btn" onclick="togglePasswordVisibility('password', 'togglePassword')" aria-label="Toggle password visibility">
+                <i class="fas fa-eye" id="togglePassword"></i>
+            </button>
         </div>
-        <div>
+        <div style="position:relative;">
             <label for="password_confirmation" style="display:block;margin-bottom:8px;color:#334155;font-weight:600;">Confirm New Password</label>
-            <input type="password" id="password_confirmation" name="password_confirmation" required style="width:100%;padding:12px;border:1px solid rgba(15, 23, 42, 0.12);border-radius:12px;">
+            <input type="password" id="password_confirmation" name="password_confirmation" required style="width:100%;padding:12px;padding-right:45px;border:1px solid rgba(15, 23, 42, 0.12);border-radius:12px;">
+            <button type="button" class="password-toggle-btn" onclick="togglePasswordVisibility('password_confirmation', 'togglePasswordConfirmation')" aria-label="Toggle password visibility">
+                <i class="fas fa-eye" id="togglePasswordConfirmation"></i>
+            </button>
         </div>
         <div style="grid-column:span 2;text-align:right;">
             <button type="submit" style="background:#4f46e5;color:#fff;border:none;border-radius:12px;padding:12px 20px;font-weight:600;">Update Password</button>
@@ -64,4 +98,21 @@
         @endforeach
     </div>
 </div>
+
+<script>
+    function togglePasswordVisibility(inputId, iconId) {
+        const passwordInput = document.getElementById(inputId);
+        const passwordIcon = document.getElementById(iconId);
+        
+        if (passwordInput.type === 'password') {
+            passwordInput.type = 'text';
+            passwordIcon.classList.remove('fa-eye');
+            passwordIcon.classList.add('fa-eye-slash');
+        } else {
+            passwordInput.type = 'password';
+            passwordIcon.classList.remove('fa-eye-slash');
+            passwordIcon.classList.add('fa-eye');
+        }
+    }
+</script>
 @endsection

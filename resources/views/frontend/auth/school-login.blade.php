@@ -39,8 +39,20 @@
                     <i class="fas fa-lock me-2" style="color: #490D59;"></i>
                     Password
                 </label>
-                <input type="password" class="form-control" id="password" name="password" 
-                    placeholder="Enter your password" required>
+                <div style="position: relative;">
+                    <input type="password" class="form-control" id="password" name="password" 
+                        placeholder="Enter your password" required style="padding-right: 45px;">
+                    <button type="button" id="togglePassword" aria-label="Toggle password visibility" 
+                        style="position: absolute; right: 12px; top: 50%; transform: translateY(-50%); background: none; border: none; cursor: pointer; color: #666; font-size: 16px; padding: 0; width: 24px; height: 24px; display: flex; align-items: center; justify-content: center; transition: none;">
+                        <i class="fas fa-eye" id="togglePasswordIcon"></i>
+                    </button>
+                    <style>
+                        #togglePassword:hover {
+                            transform: translateY(-50%);
+                            top: 50%;
+                        }
+                    </style>
+                </div>
             </div>
 
             <div class="d-flex justify-content-between align-items-center mb-3">
@@ -110,6 +122,25 @@
 <script>
 document.addEventListener('DOMContentLoaded', function() {
     const form = document.getElementById('schoolLoginForm');
+
+    // Password visibility toggle
+    const togglePassword = document.getElementById('togglePassword');
+    if (togglePassword) {
+        togglePassword.addEventListener('click', function() {
+            const passwordInput = document.getElementById('password');
+            const passwordIcon = document.getElementById('togglePasswordIcon');
+            
+            if (passwordInput.type === 'password') {
+                passwordInput.type = 'text';
+                passwordIcon.classList.remove('fa-eye');
+                passwordIcon.classList.add('fa-eye-slash');
+            } else {
+                passwordInput.type = 'password';
+                passwordIcon.classList.remove('fa-eye-slash');
+                passwordIcon.classList.add('fa-eye');
+            }
+        });
+    }
 
     form.addEventListener('submit', function(e) {
         const username = document.getElementById('username').value;

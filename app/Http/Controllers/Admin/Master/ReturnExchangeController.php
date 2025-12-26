@@ -94,6 +94,16 @@ class ReturnExchangeController extends Controller
             'status' => 'approved',
         ], 'Approved return/exchange request');
 
+        // Send Return/Exchange Request Approved Email
+        if ($returnRequest->order && !empty($returnRequest->order->customer_email)) {
+            try {
+                \Illuminate\Support\Facades\Mail::to($returnRequest->order->customer_email)->send(new \App\Mail\ReturnExchangeRequestMail($returnRequest, 'approved'));
+                \Illuminate\Support\Facades\Log::info("Return/Exchange approval email sent to {$returnRequest->order->customer_email} for request #{$returnRequest->id}");
+            } catch (\Exception $e) {
+                \Illuminate\Support\Facades\Log::error("Failed to send return/exchange approval email: " . $e->getMessage());
+            }
+        }
+
         return back()->with('status', 'Request approved');
     }
 
@@ -109,6 +119,16 @@ class ReturnExchangeController extends Controller
             'type' => $returnRequest->type,
             'status' => 'rejected',
         ], 'Denied return/exchange request');
+
+        // Send Return/Exchange Request Rejected Email
+        if ($returnRequest->order && !empty($returnRequest->order->customer_email)) {
+            try {
+                \Illuminate\Support\Facades\Mail::to($returnRequest->order->customer_email)->send(new \App\Mail\ReturnExchangeRequestMail($returnRequest, 'rejected'));
+                \Illuminate\Support\Facades\Log::info("Return/Exchange rejection email sent to {$returnRequest->order->customer_email} for request #{$returnRequest->id}");
+            } catch (\Exception $e) {
+                \Illuminate\Support\Facades\Log::error("Failed to send return/exchange rejection email: " . $e->getMessage());
+            }
+        }
 
         return back()->with('status', 'Request denied');
     }
@@ -155,6 +175,16 @@ class ReturnExchangeController extends Controller
             'action' => $data['action'],
             'status' => $status,
         ], 'Marked received for return/exchange request');
+
+        // Send Return Item Received Email
+        if ($returnRequest->order && !empty($returnRequest->order->customer_email)) {
+            try {
+                \Illuminate\Support\Facades\Mail::to($returnRequest->order->customer_email)->send(new \App\Mail\ReturnExchangeRequestMail($returnRequest, 'received'));
+                \Illuminate\Support\Facades\Log::info("Return received email sent to {$returnRequest->order->customer_email} for request #{$returnRequest->id}");
+            } catch (\Exception $e) {
+                \Illuminate\Support\Facades\Log::error("Failed to send return received email: " . $e->getMessage());
+            }
+        }
 
         return back()->with('status', 'Request updated');
     }
@@ -249,6 +279,16 @@ class ReturnExchangeController extends Controller
             'exchange_number' => $exchangeNumber,
             'new_order_id' => $newOrder->id,
         ], 'Generated exchange order');
+
+        // Send Exchange Order Generated Email
+        if (!empty($newOrder->customer_email)) {
+            try {
+                \Illuminate\Support\Facades\Mail::to($newOrder->customer_email)->send(new \App\Mail\ExchangeOrderMail($newOrder, $order));
+                \Illuminate\Support\Facades\Log::info("Exchange order email sent to {$newOrder->customer_email} for exchange order {$exchangeNumber}");
+            } catch (\Exception $e) {
+                \Illuminate\Support\Facades\Log::error("Failed to send exchange order email: " . $e->getMessage());
+            }
+        }
 
         return redirect()->route('master.admin.returns-exchange.show', $returnRequest)->with('status', 'Exchange order generated');
     }
@@ -353,6 +393,16 @@ class ReturnExchangeController extends Controller
                 'payment_id' => $originalPayment->payment_id,
                 'refund_id' => $refundData['id'] ?? null
             ], 'Processed refund via Razorpay');
+
+            // Send Refund Processed Email
+            if (!empty($order->customer_email)) {
+                try {
+                    \Illuminate\Support\Facades\Mail::to($order->customer_email)->send(new \App\Mail\RefundProcessedMail($order, $refundAmount, $refundData['id'] ?? null));
+                    \Illuminate\Support\Facades\Log::info("Refund processed email sent to {$order->customer_email} for order {$order->order_number}");
+                } catch (\Exception $e) {
+                    \Illuminate\Support\Facades\Log::error("Failed to send refund processed email: " . $e->getMessage());
+                }
+            }
 
             return back()->with('status', 'Refund processed successfully.');
 

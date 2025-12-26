@@ -83,6 +83,7 @@ class OrderController extends Controller
         ]);
 
         $original = $order->only(['order_status', 'tracking_number', 'courier_name', 'notes']);
+        $previousOrderStatus = $order->order_status;
         $order->update(array_filter($data, fn($value) => $value !== null));
 
         // Audit Log logic (simplified for now, reusing existing if available or skipping)
@@ -102,6 +103,16 @@ class OrderController extends Controller
                     ['order_number' => $order->order_number, 'changes' => $changes],
                     'Inventory Admin status update'
                 );
+                
+                // Send Order Status Update Email if order status changed
+                if (isset($changes['order_status']) && !empty($order->customer_email)) {
+                    try {
+                        \Illuminate\Support\Facades\Mail::to($order->customer_email)->send(new \App\Mail\OrderStatusUpdateMail($order, $previousOrderStatus));
+                        \Illuminate\Support\Facades\Log::info("Order status update email sent to {$order->customer_email} for order {$order->order_number}");
+                    } catch (\Exception $e) {
+                        \Illuminate\Support\Facades\Log::error("Failed to send order status update email: " . $e->getMessage());
+                    }
+                }
             }
         } catch (\Exception $e) {
             // Silently fail logging if AuditLogger has issues in this context

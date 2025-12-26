@@ -283,7 +283,7 @@
     .product-thumb-slide .thumb img {
         width: 100%;
         height: 100%;
-        object-fit: cover;
+        object-fit: contain;
     }
 
     .product-thumb-slide .thumb:hover,
@@ -634,7 +634,11 @@
         display: flex;
         align-items: center;
         gap: 10px;
-        margin-bottom: 30px;
+        margin-bottom: 2px !important;
+    }
+    
+    .product-style1 .actions {
+        margin-bottom: 2px !important;
     }
 
     /* Product Getway */
@@ -672,14 +676,6 @@
         display: block;
     }
 
-    .product_meta .category-label {
-        color: #dc3545;
-    }
-
-    .product_meta .category-value {
-        color: #000000;
-    }
-
     .product_meta a {
         color: #490D59;
         text-decoration: none;
@@ -688,11 +684,6 @@
 
     .product_meta a:hover {
         text-decoration: underline;
-    }
-
-    .sku {
-        font-weight: 600;
-        color: #333;
     }
 
     /* Mobile Responsiveness */

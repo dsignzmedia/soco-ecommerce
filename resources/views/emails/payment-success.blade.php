@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width">
 
-<title>Your Login OTP - The Skool Store</title>
+<title>Payment Successful - The Skool Store</title>
 
 <style>
 /* CLIENT RESETS */
@@ -18,6 +18,8 @@ table td { border-collapse:collapse; }
 .wrapper { width:100% !important; max-width:100% !important; }
 .pad { padding:16px !important; }
 .h1 { font-size:26px !important; }
+.two-column { width:100% !important; max-width:100% !important; display:block !important; }
+.two-column td { width:100% !important; display:block !important; padding-bottom:10px !important; }
 }
 </style>
 </head>
@@ -42,6 +44,9 @@ table td { border-collapse:collapse; }
 <td align="left" style="width:auto;">
 <img src="https://dev-soco-ecommerce.back2skool.in/assets/img/new%20logo/new_logo.png" alt="The Skool Store" style="max-width:150px;width:150px;height:auto;display:block;">
 </td>
+<td align="right" style="font-size:13px;color:#9a6c4c;width:auto;text-align:right;">
+Order #{{ $order->order_number }}
+</td>
 </tr>
 </table>
 </td>
@@ -55,38 +60,71 @@ table td { border-collapse:collapse; }
 
 <!-- TITLE -->
 <h1 class="h1" style="margin:0 0 10px;font-size:30px;font-weight:800;">
-Login Verification
+Payment Successful!
 </h1>
 
 <p style="margin:0 0 20px;color:#9a6c4c;">
-Hello! Use the following One Time Password (OTP) to log in to your account. This OTP is valid for 10 minutes.
+Great news, {{ $order->customer_name }}! Your payment has been successfully processed. Thank you for your order!
 </p>
 
-<!-- OTP BOX -->
-<table width="100%" cellpadding="20" cellspacing="0" style="background:#fcfaf8;border:2px dashed #490D59;border-radius:10px;margin-bottom:20px;">
+<!-- SUCCESS BOX -->
+<table width="100%" cellpadding="12" cellspacing="0" style="background:#d4edda;border:2px solid #28a745;border-radius:10px;margin-bottom:20px;">
+<tr><td align="center">
+
+<p style="margin:0;font-size:48px;">✓</p>
+<p style="margin:10px 0;font-size:20px;font-weight:700;color:#28a745;">
+Payment Confirmed
+</p>
+
+</td></tr>
+</table>
+
+<!-- PAYMENT INFO -->
+<table width="100%" cellspacing="0" cellpadding="0" style="margin-bottom:20px;" class="two-column">
 <tr>
-<td align="center">
-<p style="margin:0;color:#490D59;font-size:12px;font-weight:bold;text-transform:uppercase;">
-Your OTP Code
-</p>
-<p style="margin:10px 0;font-size:48px;font-weight:900;color:#490D59;letter-spacing:8px;">
-{{ $otp }}
-</p>
+
+<td width="50%" valign="top" style="padding-right:10px;width:50%;" class="two-column">
+<p style="font-size:11px;color:#9a6c4c;font-weight:bold;text-transform:uppercase;">Transaction Details</p>
+<p style="margin:0;font-weight:bold;">{{ $order->item_name }}</p>
+@if($order->payment_id)
+<p style="margin:0;">Transaction ID: {{ $order->payment_id }}</p>
+@endif
 </td>
+
+<td width="50%" valign="top" style="width:50%;" class="two-column">
+<p style="font-size:11px;color:#9a6c4c;font-weight:bold;text-transform:uppercase;">Payment Method</p>
+<p style="margin:0;font-weight:bold;">{{ $order->payment_method ? ucfirst($order->payment_method) : 'Online' }}</p>
+@if(isset($paymentDetails['created_at']))
+<p style="margin:0;">{{ date('M d, Y, h:i A', $paymentDetails['created_at']) }}</p>
+@endif
+</td>
+
 </tr>
 </table>
 
-<p style="margin:0 0 20px;color:#9a6c4c;font-size:13px;">
-If you didn't request this code, please ignore this email.
+<!-- TOTALS -->
+<hr style="border:0;border-top:1px solid #eee;margin:20px 0;">
+
+<table width="100%" cellpadding="0" cellspacing="0" style="width:100%;max-width:100%;">
+<tr>
+<td style="padding-top:10px;font-weight:bold;width:50%;">Amount Paid</td>
+<td align="right" style="color:#28a745;font-weight:bold;font-size:20px;padding-top:10px;width:50%;text-align:right;">₹{{ number_format($order->total_amount, 2) }}</td>
+</tr>
+</table>
+
+<p style="margin:20px 0;color:#9a6c4c;">
+Your order is now being processed. You'll receive an order confirmation email shortly, and we'll notify you when your order ships.
 </p>
 
 <!-- SUPPORT BOX -->
 <table width="100%" cellpadding="16" cellspacing="0" style="width:100%;max-width:100%;background:#fcfaf8;border-radius:10px;margin-top:24px;">
 <tr>
 <td align="center" style="text-align:center;">
-<p style="font-weight:bold;margin:0 0 6px;">Need help?</p>
-<p style="margin:0 0 10px;color:#9a6c4c;">If you're having trouble logging in, contact our support team.</p>
+<p style="font-weight:bold;margin:0 0 6px;">Have a question?</p>
+<p style="margin:0 0 10px;color:#9a6c4c;">We're here to help if you have any issues with your order.</p>
 <a href="mailto:support@theskoolstore.com" style="color:#490D59;text-decoration:none;font-weight:bold;">Contact Support</a>
+&nbsp; | &nbsp;
+<a href="{{ route('frontend.parent.orders') }}" style="color:#490D59;text-decoration:none;font-weight:bold;">View Order</a>
 </td>
 </tr>
 </table>

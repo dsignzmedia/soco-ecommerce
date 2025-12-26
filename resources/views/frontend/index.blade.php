@@ -112,15 +112,79 @@ Shop by Category Area
             -ms-overflow-style: none; /* IE and Edge */
         }
 
+        /* Hide content initially to prevent flash, show after JS determines layout */
+        .category-marquee-wrapper:not(.layout-ready) {
+            opacity: 0;
+            visibility: hidden;
+        }
+        
+        .category-marquee-wrapper.layout-ready {
+            opacity: 1;
+            visibility: visible;
+            transition: opacity 0.2s ease-in;
+        }
+        
+        /* Default: Center content to prevent flash (JS will change if content overflows) */
+        .category-marquee-wrapper .category_box_row {
+            justify-content: center !important;
+        }
+        
+        /* Override when content overflows */
+        .category-marquee-wrapper.content-overflows .category_box_row {
+            justify-content: flex-start !important; /* Align left when content overflows */
+        }
+        
+        /* When content fits screen - center it (explicit) */
+        .category-marquee-wrapper.content-fits-screen {
+            overflow-x: visible;
+        }
+        
+        .category-marquee-wrapper.content-fits-screen .category_box_row {
+            justify-content: center;
+            transform: none !important;
+            width: 100%;
+            padding-left: 20px;
+            padding-right: 20px;
+        }
+
+        /* When content overflows - enable scrolling and align left */
+        .category-marquee-wrapper.content-overflows {
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+        }
+        
+        .category-marquee-wrapper.content-overflows .category_box_row {
+            justify-content: flex-start; /* Align left when content overflows */
+        }
+        
+        .category-marquee-wrapper.content-overflows::-webkit-scrollbar {
+            height: 6px;
+        }
+        
+        .category-marquee-wrapper.content-overflows::-webkit-scrollbar-track {
+            background: #f1f1f1;
+            border-radius: 10px;
+        }
+        
+        .category-marquee-wrapper.content-overflows::-webkit-scrollbar-thumb {
+            background: #490D59;
+            border-radius: 10px;
+        }
+
         .category_box_row {
             display: flex;
             gap: 30px;
-            justify-content: flex-start;
+            justify-content: center; /* Default to center, JS will change if content overflows */
             padding-top: 60px;
             padding-left: 20px;
             padding-right: 20px;
             flex-wrap: nowrap; /* Keep in single row */
             width: max-content; /* Allow content to exceed container */
+        }
+        
+        /* When content overflows, change to flex-start */
+        .category-marquee-wrapper.content-overflows .category_box_row {
+            justify-content: flex-start;
         }
 
         /* Tablet/Medium screens: adjust layout */
@@ -172,7 +236,7 @@ Shop by Category Area
                 gap: 15px;
                 padding-top: 40px;
                 flex-wrap: nowrap;
-                justify-content: flex-start;
+                justify-content: center; /* Default to center on mobile too */
                 padding-left: 0;
                 padding-right: 0;
                 /* animation: scroll 15s linear infinite; REMOVED */
@@ -180,6 +244,11 @@ Shop by Category Area
                 will-change: transform; 
                 display: flex;
                 align-items: flex-start;
+            }
+            
+            /* When content overflows on mobile, change to flex-start */
+            .category-marquee-wrapper.content-overflows .category_box_row {
+                justify-content: flex-start;
             }
             
             /* Service Section Marquee */
@@ -361,10 +430,28 @@ Featured Products Area
 <!--==============================
 Featured Products Area
 ==============================-->
+<style>
+/* Critical CSS - prevents flash, loads before content */
+.category-marquee-wrapper:not(.layout-ready) {
+    opacity: 0 !important;
+    visibility: hidden !important;
+}
+.category-marquee-wrapper.layout-ready {
+    opacity: 1 !important;
+    visibility: visible !important;
+    transition: opacity 0.15s ease-in;
+}
+.category-marquee-wrapper .category_box_row {
+    justify-content: center !important;
+}
+.category-marquee-wrapper.content-overflows .category_box_row {
+    justify-content: flex-start !important;
+}
+</style>
 @if(isset($publicProducts) && $publicProducts->count() > 0)
 <section style="background-color:#ffffff;">
     <div class="category-marquee-wrapper">
-        <div class="category_box_row">
+        <div class="category_box_row" style="justify-content: center !important;">
 
             @foreach($publicProducts as $product)
                 <a href="{{ route('frontend.shop.detail', $product->id) }}" class="simple-cat">
@@ -930,6 +1017,67 @@ Process Area
 
 <!-- Mobile Marquee Auto-Scroll Script -->
 <script>
+// Immediate check to prevent flash - runs synchronously
+(function() {
+  function quickCheck() {
+    document.querySelectorAll('.category-marquee-wrapper').forEach((wrapper) => {
+      const row = wrapper.querySelector('.category_box_row');
+      if (row && row.children.length > 0) {
+        // Temporarily reset transform to measure
+        const currentTransform = row.style.transform;
+        row.style.transform = 'none';
+        
+        const contentWidth = row.scrollWidth;
+        const screenWidth = wrapper.clientWidth || wrapper.offsetWidth;
+        
+        // Restore transform
+        row.style.transform = currentTransform;
+        
+        // If content fits, ensure it's centered immediately
+        if (contentWidth <= screenWidth) {
+          wrapper.classList.add('content-fits-screen');
+          row.style.justifyContent = 'center';
+        } else {
+          wrapper.classList.add('content-overflows');
+          row.style.justifyContent = '';
+        }
+        
+        // Show the content after layout is determined
+        wrapper.classList.add('layout-ready');
+      }
+    });
+  }
+  
+  // Run immediately - use multiple strategies to catch it early
+  function runCheck() {
+    if (document.querySelector('.category-marquee-wrapper')) {
+      quickCheck();
+    } else {
+      // If not found, wait a tiny bit and try again
+      setTimeout(runCheck, 10);
+    }
+  }
+  
+  // Try multiple approaches to run as early as possible
+  if (document.readyState === 'complete') {
+    runCheck();
+  } else if (document.readyState === 'interactive') {
+    runCheck();
+  } else {
+    document.addEventListener('DOMContentLoaded', runCheck);
+    // Also try immediately in case script loads after DOMContentLoaded
+    runCheck();
+  }
+  
+  // Fallback: run after a very short delay
+  setTimeout(runCheck, 10);
+  
+  // Also try on next tick
+  if (typeof requestAnimationFrame !== 'undefined') {
+    requestAnimationFrame(runCheck);
+  }
+})();
+
 document.addEventListener('DOMContentLoaded', function () {
 
   function setupTransformMarquee(wrapperSelectorOrElement, rowSelectorOrElement, options = {}) {
@@ -949,6 +1097,21 @@ document.addEventListener('DOMContentLoaded', function () {
       row.dataset.originalContent = row.innerHTML;
     }
     const originalContent = row.dataset.originalContent;
+    
+    // Function to check if content fits screen
+    function shouldAutoScroll() {
+      // Reset transform to measure actual width
+      const currentTransform = row.style.transform;
+      row.style.transform = 'none';
+      
+      const contentWidth = row.scrollWidth; // Total width of all products
+      const screenWidth = wrapper.clientWidth; // Visible area width
+      
+      // Restore transform
+      row.style.transform = currentTransform;
+      
+      return contentWidth > screenWidth;
+    }
 
     // Settings
     const speedPxPerSec = typeof options.speed === 'number' ? options.speed : 20;
@@ -968,7 +1131,8 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     function step(timestamp) {
-      if (isPaused || touchDragging) {
+      // Don't auto-scroll if content fits or is manually scrolling
+      if (!shouldAutoScroll() || isPaused || touchDragging || isManuallyScrolling) {
         lastTime = timestamp;
         rafId = requestAnimationFrame(step);
         return;
@@ -1014,7 +1178,35 @@ document.addEventListener('DOMContentLoaded', function () {
     function checkMode() {
       const width = window.innerWidth;
       
-      // Always enable auto-scroll (for both mobile and desktop)
+      // Check if content fits screen
+      if (!shouldAutoScroll()) {
+        // Content fits - center it and disable auto-scroll
+        wrapper.classList.add('content-fits-screen');
+        wrapper.classList.remove('content-overflows');
+        row.style.transform = 'none';
+        row.dataset.duplicated = 'false';
+        // Restore original content if duplicated
+        if (row.dataset.duplicated === 'true') {
+          row.innerHTML = originalContent;
+          row.dataset.duplicated = 'false';
+        }
+        pause(); // Stop auto-scroll
+        // Show content after layout is determined
+        wrapper.classList.add('layout-ready');
+        return;
+      }
+      
+      // Content overflows - enable auto-scroll
+      wrapper.classList.remove('content-fits-screen');
+      wrapper.classList.add('content-overflows');
+      
+      // Remove inline center style when content overflows (allows CSS to align left)
+      row.style.justifyContent = '';
+      
+      // Show content after layout is determined
+      wrapper.classList.add('layout-ready');
+      
+      // Enable auto-scroll (for both mobile and desktop)
       if (row.dataset.duplicated !== 'true') {
         // Ensure we have content to duplicate
         if (originalContent && originalContent.trim() !== '') {
@@ -1034,6 +1226,9 @@ document.addEventListener('DOMContentLoaded', function () {
     let isHorizontalScroll = null;
     
     function onTouchStart(e) {
+      // Only handle drag if content overflows
+      if (!shouldAutoScroll()) return;
+      
       pause();
       touchDragging = true;
       if (e.type === 'touchstart') {
@@ -1084,11 +1279,40 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     function onMouseEnter() { 
-      pause(); // Pause on hover for all screen sizes
+      // Only pause if content overflows
+      if (shouldAutoScroll()) {
+        pause(); // Pause on hover for all screen sizes
+      }
     }
     
     function onMouseLeave() { 
-      resume(200); // Resume after hover for all screen sizes
+      // Only resume if content overflows
+      if (shouldAutoScroll()) {
+        resume(200); // Resume after hover for all screen sizes
+      }
+    }
+    
+    // Manual scroll detection for native scrolling
+    let scrollTimeout = null;
+    let isManuallyScrolling = false;
+    
+    function onScroll() {
+      // Only handle if content overflows
+      if (!shouldAutoScroll()) return;
+      
+      isManuallyScrolling = true;
+      pause();
+      
+      // Clear existing timeout
+      if (scrollTimeout) clearTimeout(scrollTimeout);
+      
+      // Resume auto-scroll after user stops scrolling
+      scrollTimeout = setTimeout(() => {
+        isManuallyScrolling = false;
+        if (shouldAutoScroll()) {
+          resume(500);
+        }
+      }, 1000);
     }
 
     let resizeTimer = null;
@@ -1112,6 +1336,9 @@ document.addEventListener('DOMContentLoaded', function () {
 
     wrapper.addEventListener('mouseenter', onMouseEnter);
     wrapper.addEventListener('mouseleave', onMouseLeave);
+    
+    // Add scroll event for manual scrolling detection
+    wrapper.addEventListener('scroll', onScroll, {passive: true});
 
     window.addEventListener('resize', onResize);
 
@@ -1160,8 +1387,8 @@ document.addEventListener('DOMContentLoaded', function () {
     }
   }
 
-  // Setup marquees - handle all instances with a slight delay to ensure DOM is ready
-  setTimeout(() => {
+  // Setup marquees - run immediately to prevent flash
+  function initializeMarquees() {
     document.querySelectorAll('.category-marquee-wrapper').forEach((wrapper, index) => {
       const row = wrapper.querySelector('.category_box_row');
       if (row && row.children.length > 0) {
@@ -1170,7 +1397,15 @@ document.addEventListener('DOMContentLoaded', function () {
       }
     });
     setupTransformMarquee('.service-marquee-wrapper', '.service-marquee-row', { maxWidth: 1116, speed: 18, resumeDelay: 700 });
-  }, 100);
+  }
+  
+  // Run immediately if DOM is ready, otherwise wait
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initializeMarquees);
+  } else {
+    // DOM already loaded, run immediately
+    initializeMarquees();
+  }
 
 });
 </script>

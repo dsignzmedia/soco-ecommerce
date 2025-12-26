@@ -124,12 +124,6 @@
                     </div>
                 
                 <div class="product_meta">
-                        @if(isset($product['sku']))
-                            <span class="sku_wrapper">SKU: <span class="sku">#{{ $product['sku'] }}</span></span>
-                        @endif
-                        @if(isset($product['category']))
-                            <span class="posted_in"><span class="category-label">Category:</span> <span class="category-value">{{ str_replace('_', ' ', $product['category']) }}</span></span>
-                        @endif
                         @if(isset($product['tags']) && count($product['tags']) > 0)
                             <span>Tags: 
                                 @foreach($product['tags'] as $tag)
@@ -267,7 +261,8 @@
     .qty-btn { width: 40px; height: 50px; background: #fff; border: none; cursor: pointer; }
     .qty-btn:hover { background: #490D59; color: #fff; }
     .qty-input { width: 60px; height: 50px; border: none; text-align: center; font-size: 16px; font-weight: 600; }
-    .actions { display: flex; align-items: center; gap: 10px; margin-bottom: 30px; }
+    .actions { display: flex; align-items: center; gap: 10px; margin-bottom: 2px !important; }
+    .product-style1 .actions { margin-bottom: 2px !important; }
 
     @media (max-width: 767px) {
         .product-big-img .img { height: 300px; }
