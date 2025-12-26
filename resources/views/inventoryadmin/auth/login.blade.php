@@ -7,66 +7,227 @@
     <title>Inventory Admin Login | The Skool Store</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
         :root {
-            --primary: #4f46e5;
-            --surface: #f5f7fb;
-            --border: rgba(15, 23, 42, 0.08);
-            --text: #475467;
-            --heading: #0f172a;
+            --primary: #3b82f6;
+            --primary-dark: #2563eb;
+            --primary-light: #60a5fa;
+            --accent: #10b981;
+            --heading: #1a202c;
+            --text: #4a5568;
+            --text-light: #718096;
+            --border: #e2e8f0;
+            --card-bg: #ffffff;
+            --surface: #f7fafc;
+            --success: #10b981;
+            --error: #ef4444;
+            --warning: #f59e0b;
+            --info: #3b82f6;
         }
 
         * {
+            margin: 0;
+            padding: 0;
             box-sizing: border-box;
         }
 
         body {
-            margin: 0;
             min-height: 100vh;
-            font-family: 'Inter', sans-serif;
-            background: linear-gradient(135deg, #f4f0ff, #f0f5ff);
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: #f6f4ef;
             display: flex;
             align-items: center;
             justify-content: center;
             padding: 24px;
+            position: relative;
+            overflow-x: hidden;
         }
 
-        .login-shell {
-            width: min(960px, 100%);
+
+        .login-container {
+            width: 100%;
+            max-width: 900px;
+            position: relative;
+            z-index: 1;
+        }
+
+        .login-card {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
-            background: #fff;
-            border-radius: 28px;
+            grid-template-columns: 1fr 1fr;
+            background: var(--card-bg);
+            border-radius: 32px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
             overflow: hidden;
-            box-shadow: 0 30px 80px rgba(15, 23, 42, 0.08);
+            animation: slideUp 0.6s ease-out;
         }
 
-        .login-shell__hero {
-            padding: 48px;
-            background: #f6f8ff;
-            color: #e2e8f0;
+        @keyframes slideUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .login-card__brand {
+            background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe29 50%, #dbeafe 100%);
+            padding: 48px 40px;
             display: flex;
             flex-direction: column;
-            gap: 20px;
+            align-items: center;
             justify-content: center;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
         }
 
-        .login-shell__hero h1 {
-            margin: 0;
-            color: #000000;
-            font-size: 34px;
+
+        .brand-content {
+            position: relative;
+            z-index: 2;
         }
 
-        .login-shell__hero p {
-            margin: 0;
-            opacity: 0.8;
-            color: #000000;
+        .brand-logo {
+            width: 180px;
+            height: auto;
+            margin-bottom: 32px;
         }
 
-        .login-shell__form {
+        .brand-name {
+            font-size: 36px;
+            font-weight: 700;
+            color: #2563eb;
+            margin-bottom: 16px;
+            letter-spacing: -0.5px;
+        }
+
+        .brand-tagline {
+            font-size: 16px;
+            color: #1e40af;
+            font-weight: 400;
+            line-height: 1.6;
+            max-width: 300px;
+        }
+
+        .brand-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            margin-top: 32px;
+            padding: 12px 24px;
+            background: rgba(59, 130, 246, 0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 50px;
+            border: 1px solid rgba(59, 130, 246, 0.2);
+            color: #2563eb;
+            font-size: 14px;
+            font-weight: 600;
+        }
+
+        .brand-badge i {
+            font-size: 18px;
+        }
+
+        .login-card__form {
             padding: 48px 40px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            background: #ffffff;
+        }
+
+        .form-header {
+            margin-bottom: 40px;
+        }
+
+        .form-heading {
+            font-size: 32px;
+            font-weight: 700;
+            color: var(--heading);
+            margin-bottom: 12px;
+            letter-spacing: -0.5px;
+            line-height: 1.2;
+        }
+
+        .form-heading strong {
+            color: var(--primary);
+        }
+
+        .form-subtitle {
+            font-size: 16px;
+            color: var(--text-light);
+            font-weight: 400;
+            line-height: 1.6;
+        }
+
+        .alert {
+            padding: 16px 20px;
+            border-radius: 12px;
+            margin-bottom: 24px;
+            display: flex;
+            align-items: flex-start;
+            gap: 12px;
+            font-size: 14px;
+            line-height: 1.5;
+            animation: slideIn 0.3s ease-out;
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateX(-10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+
+        .alert-success {
+            background: #ecfdf5;
+            border: 1px solid #86efac;
+            color: #065f46;
+        }
+
+        .alert-info {
+            background: #eff6ff;
+            border: 1px solid #93c5fd;
+            color: #1e40af;
+        }
+
+        .alert-error {
+            background: #fef2f2;
+            border: 1px solid #fca5a5;
+            color: #991b1b;
+        }
+
+        .alert i {
+            font-size: 18px;
+            flex-shrink: 0;
+            margin-top: 2px;
+        }
+
+        .alert ul {
+            margin: 0;
+            padding-left: 0;
+            list-style: none;
+        }
+
+        .alert li {
+            margin-top: 4px;
+        }
+
+        .alert li:first-child {
+            margin-top: 0;
+        }
+
+        .form-group {
+            margin-bottom: 24px;
         }
 
         label {
@@ -74,99 +235,372 @@
             font-size: 14px;
             font-weight: 600;
             color: var(--heading);
-            margin-bottom: 6px;
+            margin-bottom: 8px;
+            letter-spacing: -0.2px;
+        }
+
+        .input-wrapper {
+            position: relative;
+        }
+
+        .input-wrapper i {
+            position: absolute;
+            left: 16px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--text-light);
+            font-size: 18px;
+            pointer-events: none;
+            transition: color 0.2s ease;
         }
 
         input {
             width: 100%;
-            border-radius: 14px;
-            border: 1px solid var(--border);
-            padding: 14px 16px;
+            padding: 16px 16px 16px 48px;
+            border-radius: 12px;
+            border: 2px solid var(--border);
             font-size: 15px;
             font-family: inherit;
-            margin-bottom: 18px;
+            color: var(--heading);
+            background: var(--surface);
+            transition: all 0.2s ease;
+        }
+
+        input[type="password"],
+        input[type="text"][name="password"] {
+            padding-right: 48px;
+        }
+
+        input::placeholder {
+            color: var(--text-light);
         }
 
         input:focus {
             outline: none;
             border-color: var(--primary);
-            box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.15);
+            background: #ffffff;
+            box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.1);
         }
 
-        button {
+        input.error {
+            border-color: var(--error);
+            background: #fff5f5;
+        }
+
+        input.error:focus {
+            border-color: var(--error);
+            box-shadow: 0 0 0 4px rgba(239, 68, 68, 0.1);
+        }
+
+        .input-wrapper.error i {
+            color: var(--error);
+        }
+
+        .input-wrapper.focused i {
+            color: var(--primary);
+        }
+
+        .field-error {
+            color: var(--error);
+            font-size: 13px;
+            margin-top: 6px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .field-error i {
+            font-size: 14px;
+        }
+
+        .password-toggle {
+            position: absolute;
+            right: 12px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: none;
+            border: none;
+            color: var(--text-light);
+            cursor: pointer;
+            padding: 8px;
+            font-size: 18px;
+            transition: color 0.2s ease;
+            z-index: 10;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 36px;
+            height: 36px;
+        }
+
+        .password-toggle:hover {
+            color: var(--primary);
+        }
+
+        button[type="submit"] {
             width: 100%;
-            padding: 14px 16px;
-            border-radius: 14px;
+            padding: 16px 24px;
+            border-radius: 12px;
             border: none;
             font-size: 16px;
             font-weight: 600;
-            background: var(--primary);
-            color: #fff;
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-light) 100%);
+            color: #ffffff;
             cursor: pointer;
-            transition: transform 0.2s ease, box-shadow 0.2s ease;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 12px rgba(59, 130, 246, 0.25);
+            position: relative;
+            overflow: hidden;
+            margin-top: 8px;
         }
 
-        button:hover {
-            transform: translateY(-1px);
-            box-shadow: 0 18px 30px rgba(79, 70, 229, 0.25);
+        button[type="submit"]::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+            transition: left 0.5s ease;
         }
 
-        .switch-link {
-            display: block;
+        button[type="submit"]:hover::before {
+            left: 100%;
+        }
+
+        button[type="submit"]:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(59, 130, 246, 0.3);
+        }
+
+        button[type="submit"]:active {
+            transform: translateY(0);
+        }
+
+        .login-note {
+            margin-top: 32px;
             text-align: center;
-            margin-top: 24px;
+            font-size: 14px;
+            color: var(--text-light);
+        }
+
+        .login-note a {
             color: var(--primary);
-            font-weight: 600;
             text-decoration: none;
+            font-weight: 600;
+            transition: all 0.2s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .login-note a:hover {
+            color: var(--primary-light);
+            gap: 10px;
+        }
+
+        .login-note a i {
+            font-size: 12px;
+            transition: transform 0.2s ease;
+        }
+
+        .login-note a:hover i {
+            transform: translateX(4px);
+        }
+
+        @media (max-width: 968px) {
+            .login-card {
+                grid-template-columns: 1fr;
+            }
+
+            .login-card__brand {
+                padding: 48px 32px;
+            }
+
+            .login-card__form {
+                padding: 48px 32px;
+            }
+
+            .brand-name {
+                font-size: 28px;
+            }
+
+            .form-heading {
+                font-size: 28px;
+            }
+        }
+
+        @media (max-width: 640px) {
+            body {
+                padding: 16px;
+            }
+
+            .login-card {
+                border-radius: 24px;
+            }
+
+            .login-card__brand {
+                padding: 40px 24px;
+            }
+
+            .login-card__form {
+                padding: 40px 24px;
+            }
+
+            .brand-logo {
+                width: 140px;
+            }
+
+            .form-heading {
+                font-size: 24px;
+            }
         }
     </style>
 </head>
 <body>
-    <section class="login-shell">
-        <div class="login-shell__hero">
-            <img src="{{ asset('assets/img/new logo/new_logo.png') }}" alt="The Skool Store" style="width:140px;">
-            <h1>Inventory Admin</h1>
-            <p>Focused tooling for stock managers. Track low stock, log adjustments and stay in sync with Master Admin directives.</p>
-        </div>
-        <div class="login-shell__form">
-            <h2 style="margin:0 0 8px;font-size:28px;">Sign in</h2>
-            <p style="margin:0 0 24px;color:var(--text);">Enter credentials shared by the Master Admin team.</p>
+    <div class="login-container">
+        <div class="login-card">
+            <div class="login-card__brand">
+                <div class="brand-content">
+                    <img class="brand-logo" src="{{ asset('assets/img/new logo/new_logo.png') }}" alt="The Skool Store logo">
+                    <h1 class="brand-name">The Skool Store</h1>
+                    <p class="brand-tagline">Streamlined inventory management for warehouse operations</p>
+                    <div class="brand-badge">
+                        <i class="fas fa-boxes"></i>
+                        <span>Inventory Admin Portal</span>
+                    </div>
+                </div>
+            </div>
+            <div class="login-card__form">
+                <div class="form-header">
+                    <h2 class="form-heading">Sign in to <strong>Inventory Admin</strong></h2>
+                    <p class="form-subtitle">Manage stock levels, track adjustments, and sync with orders</p>
+                </div>
+                
+                @if (session('status'))
+                    <div class="alert alert-success">
+                        <i class="fas fa-check-circle"></i>
+                        <div>{{ session('status') }}</div>
+                    </div>
+                @endif
+                
+                @if (session('info'))
+                    <div class="alert alert-info">
+                        <i class="fas fa-info-circle"></i>
+                        <div>{{ session('info') }}</div>
+                    </div>
+                @endif
+
+
+
+                <form method="POST" action="{{ route('inventory.admin.login.submit') }}" autocomplete="off" id="loginForm">
+                    @csrf
+                    <div class="form-group">
+                        <label for="email">Email or Phone</label>
+                        <div class="input-wrapper {{ $errors->has('email') ? 'error' : '' }}">
+                            <i class="fas fa-user"></i>
+                            <input 
+                                type="text" 
+                                id="email" 
+                                name="email" 
+                                class="{{ $errors->has('email') ? 'error' : '' }}"
+                                placeholder="inventory.manager@example.com" 
+                                value="{{ old('email') }}"
+                                autocomplete="off" 
+                                autofocus
+                            >
+                        </div>
+                        @if ($errors->has('email'))
+                            <div class="field-error">
+                                <i class="fas fa-exclamation-circle"></i>
+                                <span>{{ $errors->first('email') }}</span>
+                            </div>
+                        @endif
+                    </div>
+                    <div class="form-group">
+                        <label for="password">Password</label>
+                        <div class="input-wrapper {{ $errors->has('password') ? 'error' : '' }}">
+                            <i class="fas fa-lock"></i>
+                            <input 
+                                type="password" 
+                                id="password" 
+                                name="password" 
+                                class="{{ $errors->has('password') ? 'error' : '' }}"
+                                placeholder="Enter your password" 
+                                autocomplete="new-password"
+                            >
+                            <button type="button" class="password-toggle" onclick="togglePassword()">
+                                <i class="fas fa-eye" id="passwordToggleIcon"></i>
+                            </button>
+                        </div>
+                        @if ($errors->has('password'))
+                            <div class="field-error">
+                                <i class="fas fa-exclamation-circle"></i>
+                                <span>{{ $errors->first('password') }}</span>
+                            </div>
+                        @endif
+                    </div>
+                    <button type="submit">
+                        <span>Sign In</span>
+                    </button>
+                </form>
             
-            @if (session('status'))
-                <div style="background:#ecfdf3;border:1px solid #6ee7b7;padding:12px;border-radius:8px;margin-bottom:16px;color:#065f46;">
-                    <i class="fas fa-check-circle" style="margin-right:8px;"></i>{{ session('status') }}
-                </div>
-            @endif
-            
-            @if (session('info'))
-                <div style="background:#eff6ff;border:1px solid #93c5fd;padding:12px;border-radius:8px;margin-bottom:16px;color:#1e40af;">
-                    <i class="fas fa-info-circle" style="margin-right:8px;"></i>{{ session('info') }}
-                </div>
-            @endif
-
-            @if ($errors->any())
-                <div style="background:#fee;border:1px solid #fcc;padding:12px;border-radius:8px;margin-bottom:16px;">
-                    <ul style="margin:0;padding-left:20px;color:#c33;">
-                        @foreach ($errors->all() as $error)
-                            <li>{{ $error }}</li>
-                        @endforeach
-                    </ul>
-                </div>
-            @endif
-
-            <form method="POST" action="{{ route('inventory.admin.login.submit') }}" autocomplete="off">
-                @csrf
-                <label for="email">Email</label>
-                <input type="text" id="email" name="email" placeholder="inventory.manager@school.com" autocomplete="off" required>
-
-                <label for="password">Password</label>
-                <input type="password" id="password" name="password" placeholder="••••••••••" autocomplete="new-password" required>
-
-                <button type="submit">Login</button>
-            </form>
-            <a class="switch-link" href="{{ route('master.admin.login') }}">Master Admin Login →</a>
+            </div>
         </div>
-    </section>
+    </div>
+
+    <script>
+        function togglePassword() {
+            const passwordInput = document.getElementById('password');
+            const toggleIcon = document.getElementById('passwordToggleIcon');
+            
+            if (passwordInput.type === 'password') {
+                passwordInput.type = 'text';
+                toggleIcon.classList.remove('fa-eye');
+                toggleIcon.classList.add('fa-eye-slash');
+            } else {
+                passwordInput.type = 'password';
+                toggleIcon.classList.remove('fa-eye-slash');
+                toggleIcon.classList.add('fa-eye');
+            }
+        }
+
+        // Handle input focus for icon color change and clear errors
+        document.querySelectorAll('.input-wrapper input').forEach(input => {
+            const wrapper = input.closest('.input-wrapper');
+            const formGroup = wrapper.closest('.form-group');
+            
+            input.addEventListener('focus', () => {
+                wrapper.classList.add('focused');
+                // Remove error state when user starts typing
+                input.classList.remove('error');
+                wrapper.classList.remove('error');
+            });
+            
+            input.addEventListener('blur', () => {
+                wrapper.classList.remove('focused');
+            });
+
+            // Clear error on input
+            input.addEventListener('input', () => {
+                if (input.classList.contains('error')) {
+                    input.classList.remove('error');
+                    wrapper.classList.remove('error');
+                    const fieldError = formGroup.querySelector('.field-error');
+                    if (fieldError) {
+                        fieldError.style.display = 'none';
+                    }
+                }
+            });
+        });
+
+        // Form submission loading state
+        document.getElementById('loginForm').addEventListener('submit', function(e) {
+            const submitButton = this.querySelector('button[type="submit"]');
+            submitButton.disabled = true;
+            submitButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Signing In...';
+        });
+    </script>
 </body>
 </html>
-

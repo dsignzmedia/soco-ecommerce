@@ -60,10 +60,6 @@ class AuthController extends Controller
         $credentials = $request->validate([
             'email' => ['required', 'string', 'max:255'],
             'password' => ['required', 'string', 'min:6'],
-        ], [
-            'email.required' => 'Email or phone is required.',
-            'password.required' => 'Password is required.',
-            'password.min' => 'Password must be at least 6 characters.',
         ]);
 
         // Sanitize email input
