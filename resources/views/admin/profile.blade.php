@@ -21,6 +21,34 @@
             font-weight: 600;
             margin: 0 auto 24px;
         }
+        .password-wrapper {
+            position: relative;
+        }
+        .password-toggle {
+            position: absolute;
+            right: 12px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: none;
+            border: none;
+            cursor: pointer;
+            color: #6b7280;
+            font-size: 16px;
+            padding: 0;
+            width: 24px;
+            height: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: none;
+        }
+        .password-toggle:hover {
+            transform: translateY(-50%);
+            top: 50%;
+        }
+        .password-wrapper input {
+            padding-right: 40px;
+        }
     </style>
 @endpush
 
@@ -50,16 +78,31 @@
                 @csrf
                 <label>
                     <span>Current Password</span>
-                    <input type="password" name="current_password" required>
+                    <div class="password-wrapper">
+                        <input type="password" name="current_password" id="current_password" required>
+                        <button type="button" class="password-toggle" onclick="togglePasswordVisibility('current_password', 'toggleCurrentPassword')" aria-label="Toggle password visibility">
+                            <i class="fas fa-eye" id="toggleCurrentPassword"></i>
+                        </button>
+                    </div>
                 </label>
                 <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:16px;">
                     <label>
                         <span>New Password</span>
-                        <input type="password" name="password" required>
+                        <div class="password-wrapper">
+                            <input type="password" name="password" id="password" required>
+                            <button type="button" class="password-toggle" onclick="togglePasswordVisibility('password', 'togglePassword')" aria-label="Toggle password visibility">
+                                <i class="fas fa-eye" id="togglePassword"></i>
+                            </button>
+                        </div>
                     </label>
                     <label>
                         <span>Confirm New Password</span>
-                        <input type="password" name="password_confirmation" required>
+                        <div class="password-wrapper">
+                            <input type="password" name="password_confirmation" id="password_confirmation" required>
+                            <button type="button" class="password-toggle" onclick="togglePasswordVisibility('password_confirmation', 'togglePasswordConfirmation')" aria-label="Toggle password visibility">
+                                <i class="fas fa-eye" id="togglePasswordConfirmation"></i>
+                            </button>
+                        </div>
                     </label>
                 </div>
                 <div style="margin-top:16px;">
@@ -88,5 +131,22 @@
             @endif
         </div>
     </div>
+
+    <script>
+        function togglePasswordVisibility(inputId, iconId) {
+            const passwordInput = document.getElementById(inputId);
+            const passwordIcon = document.getElementById(iconId);
+            
+            if (passwordInput.type === 'password') {
+                passwordInput.type = 'text';
+                passwordIcon.classList.remove('fa-eye');
+                passwordIcon.classList.add('fa-eye-slash');
+            } else {
+                passwordInput.type = 'password';
+                passwordIcon.classList.remove('fa-eye-slash');
+                passwordIcon.classList.add('fa-eye');
+            }
+        }
+    </script>
 @endsection
 

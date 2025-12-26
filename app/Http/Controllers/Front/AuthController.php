@@ -3164,6 +3164,26 @@ class AuthController extends Controller
 
                 // Track processed cart item IDs
                 $processedCartIds[] = $item->id;
+                
+                // Send Order Confirmation Email
+                if (!empty($order->customer_email)) {
+                    try {
+                        \Illuminate\Support\Facades\Mail::to($order->customer_email)->send(new \App\Mail\OrderConfirmationMail($order));
+                        \Illuminate\Support\Facades\Log::info("Order confirmation email sent to {$order->customer_email} for order {$order->order_number}");
+                    } catch (\Exception $e) {
+                        \Illuminate\Support\Facades\Log::error("Failed to send order confirmation email: " . $e->getMessage());
+                    }
+                }
+                
+                // Send Payment Success Email if payment was successful
+                if (session('payment_method') === 'razorpay' && session('payment_id') && !empty($order->customer_email)) {
+                    try {
+                        \Illuminate\Support\Facades\Mail::to($order->customer_email)->send(new \App\Mail\PaymentSuccessMail($order, session('payment_details', [])));
+                        \Illuminate\Support\Facades\Log::info("Payment success email sent to {$order->customer_email} for order {$order->order_number}");
+                    } catch (\Exception $e) {
+                        \Illuminate\Support\Facades\Log::error("Failed to send payment success email: " . $e->getMessage());
+                    }
+                }
             }
 
             \Illuminate\Support\Facades\DB::commit();
@@ -3547,7 +3567,7 @@ class AuthController extends Controller
                 continue;
             }
 
-            \App\Models\Admin\Master\ReturnExchangeRequest::create([
+            $returnRequest = \App\Models\Admin\Master\ReturnExchangeRequest::create([
                 'order_id' => $order->id,
                 'type' => $request->action,
                 'reason' => $request->reason,
@@ -3555,6 +3575,16 @@ class AuthController extends Controller
                 'status' => 'pending',
                 'customer_notes' => $request->reason,
             ]);
+            
+            // Send Return/Exchange Request Submitted Email
+            if (!empty($order->customer_email)) {
+                try {
+                    \Illuminate\Support\Facades\Mail::to($order->customer_email)->send(new \App\Mail\ReturnExchangeRequestMail($returnRequest, 'submitted'));
+                    \Illuminate\Support\Facades\Log::info("Return/Exchange request email sent to {$order->customer_email} for order {$order->order_number}");
+                } catch (\Exception $e) {
+                    \Illuminate\Support\Facades\Log::error("Failed to send return/exchange request email: " . $e->getMessage());
+                }
+            }
         }
 
         if ($orders->isNotEmpty()) {
