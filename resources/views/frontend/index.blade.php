@@ -182,11 +182,14 @@ Shop by Category Area
             width: max-content; /* Allow content to exceed container */
             /* Ensure row can be scrolled natively when needed */
             position: relative;
+<<<<<<< HEAD
         }
         
         /* When content overflows, change to flex-start */
         .category-marquee-wrapper.content-overflows .category_box_row {
             justify-content: flex-start;
+=======
+>>>>>>> 8da25f1e54eaa07215c57ed1e8f159850574279a
         }
         
         /* When content overflows, change to flex-start */

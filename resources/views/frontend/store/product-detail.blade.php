@@ -767,7 +767,12 @@
         margin-bottom: 2px !important;
     }
 
+<<<<<<< HEAD
     /* Login ModalModal .modal-body {
+=======
+    /* Login Modal Scrollable Styles */
+    #loginRequiredModal .modal-body {
+>>>>>>> 8da25f1e54eaa07215c57ed1e8f159850574279a
         max-height: 70vh;
         overflow-y: auto;
         overflow-x: hidden;
