@@ -188,6 +188,11 @@ Shop by Category Area
         .category-marquee-wrapper.content-overflows .category_box_row {
             justify-content: flex-start;
         }
+        
+        /* When content overflows, change to flex-start */
+        .category-marquee-wrapper.content-overflows .category_box_row {
+            justify-content: flex-start;
+        }
 
         /* Tablet/Medium screens: adjust layout */
         @media (min-width: 769px) and (max-width: 1116px) {

@@ -3,7 +3,7 @@
 @section('title', $product->product_name . ' | Products & Catalog')
 @section('page_heading', $product->product_name)
 @section('page_subheading', 'Detailed listing overview')
-
+@push('styles')
 @section('content')
     <div style="display:flex;flex-direction:column;gap:24px;">
         <section class="card" style="display:flex;justify-content:space-between;align-items:center;">
