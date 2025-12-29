@@ -408,10 +408,10 @@
                             @endforeach
                         </select>
                     </label>
-                    <!-- <label style="margin-bottom:20px;">
-                        <span>Availability label</span>
-                        <input type="text" name="availability_label" value="{{ old('availability_label', $product->availability_label) }}" placeholder="Eg: Ships in 2-3 days">
-                    </label> -->
+                    <label style="margin-bottom:16px;">
+                        <span>Delivery Duration</span>
+                        <input type="text" name="delivery_duration" value="{{ old('delivery_duration', $product->delivery_duration) }}" placeholder="e.g. 2-3 days, 1 week">
+                    </label>
 
                     <div style="display:flex;flex-direction:column;gap:10px;">
                         <button type="submit" name="status" value="live" style="width:100%;padding:12px;border:none;border-radius:8px;background:#490d59;color:#fff;font-weight:600;cursor:pointer;">
@@ -450,7 +450,7 @@
                             </div>
                         </label>
                         <div>
-                            <span>Gallery images (Drag & Drop to Reorder)</span>
+                            <span>Gallery images & videos (Drag & Drop to Reorder)</span>
                             <div id="media-drop-zone" style="border: 2px dashed #d1d5db; border-radius: 8px; padding: 20px; text-align: center; cursor: pointer; transition: border-color 0.3s;" onclick="document.getElementById('gallery-upload-input').click()">
                                 <i class="fas fa-cloud-upload-alt" style="font-size: 24px; color: #9ca3af; margin-bottom: 8px;"></i>
                                 <p style="margin: 0; color: #6b7280;">Click or Drag files here to upload</p>
@@ -461,12 +461,25 @@
                             
                             <!-- Unified Media Grid -->
                             <div id="unifiedMediaPreview" style="display: flex; flex-wrap: nowrap; gap: 12px; margin-top: 16px; overflow-x: auto; overflow-y: hidden; padding-bottom: 8px; -webkit-overflow-scrolling: touch;">
-                                <!-- Existing images rendered as media items -->
+                                <!-- Existing images and videos rendered as media items -->
                                 @if($product->media_images)
                                     @foreach($product->media_images as $index => $img)
                                         @if(empty($img) || !is_string($img)) @continue @endif
+                                        @php
+                                            $isVideo = preg_match('/\.(mp4|webm|ogg|mov|avi|wmv|flv|mkv|m3u8)(\?.*)?$/i', $img);
+                                            $mediaUrl = Str::startsWith($img, 'http') ? $img : asset('storage/' . $img);
+                                        @endphp
                                         <div class="media-item existing-media" draggable="true">
-                                            <img src="{{ Str::startsWith($img, 'http') ? $img : asset('storage/' . $img) }}" style="width: 100%; height: 100%; object-fit: cover;">
+                                            @if($isVideo)
+                                                <div class="video-thumbnail">
+                                                    <video style="width: 100%; height: 100%; object-fit: cover;" preload="metadata">
+                                                        <source src="{{ $mediaUrl }}" type="video/mp4">
+                                                    </video>
+                                                    <div class="video-play-button"><i class="fas fa-play"></i></div>
+                                                </div>
+                                            @else
+                                                <img src="{{ $mediaUrl }}" style="width: 100%; height: 100%; object-fit: cover;">
+                                            @endif
                                             <div class="position-number">{{ $loop->iteration }}</div>
                                             <div class="remove-btn" onclick="this.parentElement.remove(); updatePositionNumbers();">
                                                 <i class="fas fa-times"></i>
@@ -480,7 +493,7 @@
                         
                     </div>
 
-                    <div style="margin-top:16px;display:grid;grid-template-columns:1fr 1fr;gap:16px;">
+                    <div style="margin-top:16px;display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px;">
                         
                     <label style="margin-bottom:16px;">
                             <span>Size Chart (Image)</span>
@@ -491,6 +504,18 @@
                                 @if($product->size_chart_path)
                                     <img src="{{ asset('storage/' . $product->size_chart_path) }}" alt="Size Chart" style="width:120px;height:120px;object-fit:cover;border-radius:8px;border:2px solid #ddd;">
                                     <a href="{{ asset('storage/' . $product->size_chart_path) }}" target="_blank" style="font-size:12px;color:#490d59;display:block;margin-top:4px;">View current chart</a>
+                                @endif
+                            </div>
+                        </label>
+                        <label style="margin-bottom:16px;">
+                            <span>Size Measurement Image</span>
+                            <div class="file-input-wrapper">
+                                <input type="file" id="size_measurement_image_input" name="size_measurement_image" accept="image/*">
+                            </div>
+                            <div id="size_measurement_image_preview" style="margin-top:8px;">
+                                @if($product->size_measurement_image)
+                                    <img src="{{ Str::startsWith($product->size_measurement_image, 'http') ? $product->size_measurement_image : asset('storage/' . $product->size_measurement_image) }}" alt="Size Measurement" style="width:120px;height:120px;object-fit:cover;border-radius:8px;border:2px solid #ddd;">
+                                    <a href="{{ Str::startsWith($product->size_measurement_image, 'http') ? $product->size_measurement_image : asset('storage/' . $product->size_measurement_image) }}" target="_blank" style="font-size:12px;color:#490d59;display:block;margin-top:4px;">View current image</a>
                                 @endif
                             </div>
                         </label>

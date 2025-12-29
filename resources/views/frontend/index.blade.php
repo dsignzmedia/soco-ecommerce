@@ -149,8 +149,8 @@ Shop by Category Area
 
         /* When content overflows - enable scrolling and align left */
         .category-marquee-wrapper.content-overflows {
-            overflow-x: auto;
-            -webkit-overflow-scrolling: touch;
+            overflow-x: hidden;
+            overflow-y: hidden;
         }
         
         .category-marquee-wrapper.content-overflows .category_box_row {
@@ -180,6 +180,8 @@ Shop by Category Area
             padding-right: 20px;
             flex-wrap: nowrap; /* Keep in single row */
             width: max-content; /* Allow content to exceed container */
+            /* Ensure row can be scrolled natively when needed */
+            position: relative;
         }
         
         /* When content overflows, change to flex-start */
@@ -222,14 +224,8 @@ Shop by Category Area
         /* Mobile Responsiveness */
         @media (max-width: 768px) {
             .category-marquee-wrapper {
-                overflow-x: hidden; /* Hide scrollbar but allow JavaScript transform */
+                overflow-x: hidden;
                 width: 100%;
-                -webkit-overflow-scrolling: touch;
-            }
-            
-            /* Hide scrollbar completely on mobile too */
-            .category-marquee-wrapper::-webkit-scrollbar {
-                display: none;
             }
 
             .category_box_row {
@@ -424,9 +420,6 @@ Shop by Category Area
 }
 </style>
 
-<!--==============================
-Featured Products Area
-==============================-->
 <!--==============================
 Featured Products Area
 ==============================-->
@@ -1081,7 +1074,6 @@ Process Area
 document.addEventListener('DOMContentLoaded', function () {
 
   function setupTransformMarquee(wrapperSelectorOrElement, rowSelectorOrElement, options = {}) {
-    // Handle both selector strings and DOM elements
     const wrapper = typeof wrapperSelectorOrElement === 'string' 
       ? document.querySelector(wrapperSelectorOrElement) 
       : wrapperSelectorOrElement;
@@ -1092,47 +1084,33 @@ document.addEventListener('DOMContentLoaded', function () {
 
     const maxWidth = options.maxWidth || 768;
     
-    // Store original content before any duplication
     if (!row.dataset.originalContent) {
       row.dataset.originalContent = row.innerHTML;
     }
     const originalContent = row.dataset.originalContent;
     
-    // Function to check if content fits screen
     function shouldAutoScroll() {
-      // Reset transform to measure actual width
       const currentTransform = row.style.transform;
       row.style.transform = 'none';
-      
-      const contentWidth = row.scrollWidth; // Total width of all products
-      const screenWidth = wrapper.clientWidth; // Visible area width
-      
-      // Restore transform
+      const contentWidth = row.scrollWidth;
+      const screenWidth = wrapper.clientWidth;
       row.style.transform = currentTransform;
-      
       return contentWidth > screenWidth;
     }
 
-    // Settings
     const speedPxPerSec = typeof options.speed === 'number' ? options.speed : 20;
-    const resumeDelay = typeof options.resumeDelay === 'number' ? options.resumeDelay : 800;
     let isPaused = false;
     let lastTime = null;
     let currentX = 0;
     let contentWidth = 0;
     let rafId = null;
-    let touchDragging = false;
-    let dragStartX = 0;
-    let dragStartOffset = 0;
-    let resumeTimeout = null;
 
     function measure() {
       contentWidth = row.scrollWidth / 2;
     }
 
     function step(timestamp) {
-      // Don't auto-scroll if content fits or is manually scrolling
-      if (!shouldAutoScroll() || isPaused || touchDragging || isManuallyScrolling) {
+      if (!shouldAutoScroll() || isPaused) {
         lastTime = timestamp;
         rafId = requestAnimationFrame(step);
         return;
@@ -1162,57 +1140,37 @@ document.addEventListener('DOMContentLoaded', function () {
 
     function pause() {
       isPaused = true;
-      if (resumeTimeout) { clearTimeout(resumeTimeout); resumeTimeout = null; }
     }
     
-    function resume(after = 0) {
-      if (resumeTimeout) clearTimeout(resumeTimeout);
-      if (after > 0) {
-        resumeTimeout = setTimeout(() => { isPaused = false; lastTime = null; }, after);
-      } else {
-        isPaused = false;
-        lastTime = null;
-      }
+    function resume() {
+      isPaused = false;
+      lastTime = null;
     }
 
     function checkMode() {
-      const width = window.innerWidth;
-      
-      // Check if content fits screen
       if (!shouldAutoScroll()) {
-        // Content fits - center it and disable auto-scroll
         wrapper.classList.add('content-fits-screen');
         wrapper.classList.remove('content-overflows');
         row.style.transform = 'none';
         row.dataset.duplicated = 'false';
-        // Restore original content if duplicated
         if (row.dataset.duplicated === 'true') {
           row.innerHTML = originalContent;
           row.dataset.duplicated = 'false';
         }
-        pause(); // Stop auto-scroll
-        // Show content after layout is determined
+        pause();
         wrapper.classList.add('layout-ready');
         return;
       }
       
-      // Content overflows - enable auto-scroll
       wrapper.classList.remove('content-fits-screen');
       wrapper.classList.add('content-overflows');
-      
-      // Remove inline center style when content overflows (allows CSS to align left)
       row.style.justifyContent = '';
-      
-      // Show content after layout is determined
       wrapper.classList.add('layout-ready');
       
-      // Enable auto-scroll (for both mobile and desktop)
       if (row.dataset.duplicated !== 'true') {
-        // Ensure we have content to duplicate
         if (originalContent && originalContent.trim() !== '') {
           row.innerHTML = originalContent + originalContent;
           row.dataset.duplicated = 'true';
-          // Small delay to ensure DOM is updated
           setTimeout(() => {
             measure();
             start();
@@ -1221,98 +1179,16 @@ document.addEventListener('DOMContentLoaded', function () {
       }
     }
 
-    // Touch / Pointer drag support for iOS
-    let touchStartY = 0;
-    let isHorizontalScroll = null;
-    
-    function onTouchStart(e) {
-      // Only handle drag if content overflows
-      if (!shouldAutoScroll()) return;
-      
-      pause();
-      touchDragging = true;
-      if (e.type === 'touchstart') {
-        dragStartX = e.touches[0].clientX;
-        touchStartY = e.touches[0].clientY;
-      } else {
-        dragStartX = e.clientX;
-      }
-      dragStartOffset = currentX;
-      isHorizontalScroll = null;
-    }
-    
-    function onTouchMove(e) {
-      if (!touchDragging) return;
-      
-      let clientX, clientY;
-      if (e.type === 'touchmove') {
-        clientX = e.touches[0].clientX;
-        clientY = e.touches[0].clientY;
-      } else {
-        clientX = e.clientX;
-        return;
-      }
-      
-      const dx = clientX - dragStartX;
-      const dy = clientY - touchStartY;
-      
-      if (isHorizontalScroll === null && (Math.abs(dx) > 5 || Math.abs(dy) > 5)) {
-        isHorizontalScroll = Math.abs(dx) > Math.abs(dy);
-      }
-      
-      if (isHorizontalScroll) {
-        e.preventDefault();
-        currentX = dragStartOffset + dx;
-        if (Math.abs(currentX) >= contentWidth) {
-          currentX += contentWidth * Math.sign(currentX) * -1;
-        }
-        row.style.transform = `translateX(${currentX}px)`;
-      } else if (isHorizontalScroll === false) {
-        touchDragging = false;
-        resume(0);
-      }
-    }
-    
-    function onTouchEnd(e) {
-      touchDragging = false;
-      resume(options.resumeDelay || resumeDelay);
-    }
-
     function onMouseEnter() { 
-      // Only pause if content overflows
       if (shouldAutoScroll()) {
-        pause(); // Pause on hover for all screen sizes
+        pause();
       }
     }
     
     function onMouseLeave() { 
-      // Only resume if content overflows
       if (shouldAutoScroll()) {
-        resume(200); // Resume after hover for all screen sizes
+        resume();
       }
-    }
-    
-    // Manual scroll detection for native scrolling
-    let scrollTimeout = null;
-    let isManuallyScrolling = false;
-    
-    function onScroll() {
-      // Only handle if content overflows
-      if (!shouldAutoScroll()) return;
-      
-      isManuallyScrolling = true;
-      pause();
-      
-      // Clear existing timeout
-      if (scrollTimeout) clearTimeout(scrollTimeout);
-      
-      // Resume auto-scroll after user stops scrolling
-      scrollTimeout = setTimeout(() => {
-        isManuallyScrolling = false;
-        if (shouldAutoScroll()) {
-          resume(500);
-        }
-      }, 1000);
     }
 
     let resizeTimer = null;
@@ -1323,29 +1199,12 @@ document.addEventListener('DOMContentLoaded', function () {
       }, 120);
     }
 
-    // Attach events
-    wrapper.addEventListener('touchstart', onTouchStart, {passive: true});
-    wrapper.addEventListener('touchmove', onTouchMove, {passive: false});
-    wrapper.addEventListener('touchend', onTouchEnd, {passive: true});
-    wrapper.addEventListener('touchcancel', onTouchEnd, {passive: true});
-
-    wrapper.addEventListener('pointerdown', onTouchStart, {passive: true});
-    wrapper.addEventListener('pointermove', onTouchMove, {passive: true});
-    wrapper.addEventListener('pointerup', onTouchEnd, {passive: true});
-    wrapper.addEventListener('pointercancel', onTouchEnd, {passive: true});
-
     wrapper.addEventListener('mouseenter', onMouseEnter);
     wrapper.addEventListener('mouseleave', onMouseLeave);
-    
-    // Add scroll event for manual scrolling detection
-    wrapper.addEventListener('scroll', onScroll, {passive: true});
-
     window.addEventListener('resize', onResize);
 
-    // Initialize
     checkMode();
 
-    // Handle image loading
     const imgs = row.querySelectorAll('img');
     let imgsLoaded = 0;
     if (imgs.length > 0) {
@@ -1357,7 +1216,6 @@ document.addEventListener('DOMContentLoaded', function () {
             imgsLoaded++;
             if (imgsLoaded === imgs.length) {
               measure();
-              // Re-check mode in case animation needs to start
               if (row.dataset.duplicated !== 'true') {
                 checkMode();
               }
@@ -1367,7 +1225,6 @@ document.addEventListener('DOMContentLoaded', function () {
             imgsLoaded++;
             if (imgsLoaded === imgs.length) {
               measure();
-              // Re-check mode in case animation needs to start
               if (row.dataset.duplicated !== 'true') {
                 checkMode();
               }
@@ -1375,7 +1232,6 @@ document.addEventListener('DOMContentLoaded', function () {
           }, {passive: true});
         }
       });
-      // If all images are already loaded, check mode
       if (imgsLoaded === imgs.length) {
         setTimeout(() => {
           measure();
@@ -1387,23 +1243,19 @@ document.addEventListener('DOMContentLoaded', function () {
     }
   }
 
-  // Setup marquees - run immediately to prevent flash
   function initializeMarquees() {
     document.querySelectorAll('.category-marquee-wrapper').forEach((wrapper, index) => {
       const row = wrapper.querySelector('.category_box_row');
       if (row && row.children.length > 0) {
-        // Enable auto-scroll on all screen sizes (remove maxWidth restriction)
         setupTransformMarquee(wrapper, row, { maxWidth: 99999, speed: 20, resumeDelay: 700 });
       }
     });
     setupTransformMarquee('.service-marquee-wrapper', '.service-marquee-row', { maxWidth: 1116, speed: 18, resumeDelay: 700 });
   }
   
-  // Run immediately if DOM is ready, otherwise wait
   if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', initializeMarquees);
   } else {
-    // DOM already loaded, run immediately
     initializeMarquees();
   }
 

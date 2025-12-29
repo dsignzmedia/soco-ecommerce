@@ -186,7 +186,11 @@ class ProductController extends Controller
             'availability_label' => 'nullable|string',
             'featured_image' => 'nullable|image',
             'media_images' => 'nullable|array',
-            'media_images.*' => 'image',
+            'media_images.*' => [
+                'file',
+                'mimes:jpeg,jpg,png,gif,webp,mp4,webm,ogg,mov,avi,wmv,flv,mkv,m3u8',
+                'max:20480' // 20MB for videos
+            ],
             'variants' => 'nullable|array',
             'variants.*.option' => 'nullable|string',
             'variants.*.price' => 'nullable|numeric|min:0',
