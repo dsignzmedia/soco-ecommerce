@@ -1,6 +1,7 @@
 @extends('frontend.layouts.app')
 
 @section('content')
+@include('frontend.partials.header')
 
 <!--==============================
     Breadcumb
@@ -61,6 +62,17 @@
                     
                     <p class="product-text">{{ $product['description'] ?? 'Unknown Description' }}</p>
 
+                    @if(!empty($product['delivery_duration']))
+                    <div class="delivery-info" style="margin-bottom: 20px; padding: 12px 16px; background-color: #f7f2fb; border-left: 4px solid #490D59; border-radius: 8px;">
+                        <div style="display: flex; align-items: center; gap: 8px;">
+                            <i class="fas fa-truck" style="color: #490D59; font-size: 16px;"></i>
+                            <span style="color: #374151; font-size: 14px; font-weight: 500;">
+                                <strong>Delivery:</strong> {{ $product['delivery_duration'] }}
+                            </span>
+                        </div>
+                    </div>
+                    @endif
+
                     @php
                         $defaultSize = isset($product['sizes']) && count($product['sizes']) > 0 ? $product['sizes'][0] : 'Standard';
                     @endphp
@@ -118,7 +130,7 @@
                             <button type="submit" class="vs-btn" form="addToCartForm">Add to Cart</button>
                         </div>
 
-                    <div class="product-getway">
+                    <div class="product-getway" style="margin-top: 22px !important;">
                         <span class="getway-title">GUARANTEED SAFE CHECKOUT:</span>
                         <img src="{{ asset('assets/img/widget/cards-2.png') }}" alt="cards">
                     </div>
@@ -186,6 +198,51 @@
     </div>
 </section>
 
+<!-- Login Required Modal -->
+<div class="modal fade" id="loginRequiredModal" tabindex="-1" aria-labelledby="loginRequiredModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content" style="border-radius: 12px; border: none; box-shadow: 0 10px 40px rgba(0,0,0,0.2);">
+            <div class="modal-header" style="border-bottom: 1px solid #e5e7eb; padding: 20px 24px;">
+                <h5 class="modal-title" id="loginRequiredModalLabel" style="color: #111827; font-weight: 600; font-size: 20px;">
+                    <i class="fas fa-lock" style="color: #490D59; margin-right: 10px;"></i>
+                    Login Required
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body" style="padding: 24px; max-height: 70vh; overflow-y: auto;">
+                <div class="text-center mb-4">
+                    <div style="width: 80px; height: 80px; background: linear-gradient(135deg, #f7f2fb 0%, #ede7f3 100%); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 20px;">
+                        <i class="fas fa-shopping-cart" style="font-size: 36px; color: #490D59;"></i>
+                    </div>
+                    <h4 style="color: #111827; font-weight: 600; margin-bottom: 16px;">Please Login to Continue</h4>
+                    <div style="background: #f9fafb; border-left: 4px solid #490D59; padding: 16px; border-radius: 8px; text-align: left; margin-bottom: 20px;">
+                        <p style="color: #374151; font-size: 14px; line-height: 1.7; margin: 0 0 12px 0; font-weight: 500;">
+                            <i class="fas fa-info-circle" style="color: #490D59; margin-right: 8px;"></i>
+                            <strong>Choose your shopping mode:</strong>
+                        </p>
+                        <ul style="color: #6b7280; font-size: 14px; line-height: 1.8; margin: 0; padding-left: 24px;">
+                            <li style="margin-bottom: 8px;">If you want to <strong>buy this product for yourself</strong>, you can continue as <strong>Guest</strong> after logging in.</li>
+                            <li style="margin-bottom: 0;">If you want to <strong>purchase this product for your child</strong>, continue as <strong>Parent</strong> after logging in.</li>
+                        </ul>
+                    </div>
+                    <p style="color: #6b7280; font-size: 14px; line-height: 1.6; margin: 0;">
+                        Please login to proceed with your purchase.
+                    </p>
+                </div>
+            </div>
+            <div class="modal-footer" style="border-top: 1px solid #e5e7eb; padding: 20px 24px; gap: 12px; display: flex; justify-content: flex-end;">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" style="border-radius: 8px; padding: 10px 20px; font-weight: 500; border: 1px solid #d1d5db; background: #fff; color: #374151;">
+                    Cancel
+                </button>
+                <a href="{{ route('login') }}" class="btn btn-primary" style="background: linear-gradient(135deg, #490D59 0%, #6b1179 100%); border: none; border-radius: 8px; padding: 10px 24px; font-weight: 600; text-decoration: none; color: white; display: inline-flex; align-items: center; gap: 8px;">
+                    <i class="fas fa-sign-in-alt"></i>
+                    Login
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
 <!-- Size Guide Modal -->
 <div class="modal fade" id="sizeGuideModal" tabindex="-1" aria-labelledby="sizeGuideModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-lg modal-dialog-centered">
@@ -199,7 +256,7 @@
                      @if(!empty($product['size_chart_path']))
                         <div class="{{ (!empty($product['size_measurement_image']) || !empty($product['video_url'])) ? 'col-md-6' : 'col-12' }}">
                             <div class="size-guide-image">
-                                <img src="{{ asset('storage/' . $product['size_chart_path']) }}" alt="Size Guide" class="w-100" style="border-radius: 8px;">
+                                <img src="{{ asset('storage/' . $product['size_chart_path']) }}" alt="Size Guide" class="w-100" style="border-radius: 8px; object-fit: contain;">
                             </div>
                         </div>
                     @endif
@@ -207,7 +264,7 @@
                     @if(!empty($product['size_measurement_image']))
                         <div class="{{ (!empty($product['size_chart_path']) || !empty($product['video_url'])) ? 'col-md-6' : 'col-12' }}">
                             <div class="size-guide-image">
-                                <img src="{{ asset('storage/' . $product['size_measurement_image']) }}" alt="Size Measurement" class="w-100" style="border-radius: 8px;">
+                                <img src="{{ asset('storage/' . $product['size_measurement_image']) }}" alt="Size Measurement" class="w-100" style="border-radius: 8px; object-fit: contain;">
                             </div>
                         </div>
                     @endif
@@ -232,13 +289,31 @@
     
     .product-big-img { margin-bottom: 15px; }
     .product-big-img .img { width: 100%; height: 500px; background-color: #f8f5ff; border-radius: 12px; overflow: hidden; margin: 0; border: 2px solid #e0d5f0; }
-    .product-big-img .img img { width: 100%; height: 100%; object-fit: cover; display: block; }
+    .product-big-img .img img { width: 100%; height: 100%; object-fit: contain; display: block; }
 
     .product-thumb-slide { margin: 0 -5px; }
     .product-thumb-slide .col-3 { padding: 0 5px; }
     .product-thumb-slide .thumb { width: 100%; height: 100px; border: 2px solid #e0d5f0; border-radius: 8px; overflow: hidden; cursor: pointer; transition: all 0.3s ease; background-color: #f8f5ff; display: flex; align-items: center; justify-content: center; }
-    .product-thumb-slide .thumb img { width: 100%; height: 100%; object-fit: cover; }
+    .product-thumb-slide .thumb img { width: 100%; height: 100%; object-fit: contain; }
     .product-thumb-slide .thumb:hover, .product-thumb-slide .thumb.active { border-color: #490D59; }
+
+    /* Size Guide Modal Images */
+    .size-guide-image {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: #f9fafb;
+        border-radius: 8px;
+        padding: 10px;
+        min-height: 300px;
+    }
+    
+    .size-guide-image img {
+        max-width: 100%;
+        max-height: 100%;
+        object-fit: contain;
+        border-radius: 8px;
+    }
 
     .title-divider1 { height: 3px; width: 80px; background-color: #490D59; margin-bottom: 20px; }
     
@@ -264,7 +339,37 @@
     .actions { display: flex; align-items: center; gap: 10px; margin-bottom: 2px !important; }
     .product-style1 .actions { margin-bottom: 2px !important; }
 
+    /* Login Modal Scrollable Styles */
+    #loginRequiredModal .modal-body {
+        max-height: 70vh;
+        overflow-y: auto;
+        overflow-x: hidden;
+        scrollbar-width: thin;
+        scrollbar-color: #490D59 #f0f0f0;
+    }
+    
+    #loginRequiredModal .modal-body::-webkit-scrollbar {
+        width: 8px;
+    }
+    
+    #loginRequiredModal .modal-body::-webkit-scrollbar-track {
+        background: #f0f0f0;
+        border-radius: 4px;
+    }
+    
+    #loginRequiredModal .modal-body::-webkit-scrollbar-thumb {
+        background: #490D59;
+        border-radius: 4px;
+    }
+    
+    #loginRequiredModal .modal-body::-webkit-scrollbar-thumb:hover {
+        background: #6b1179;
+    }
+
     @media (max-width: 767px) {
+        #loginRequiredModal .modal-body {
+            max-height: 60vh;
+        }
         .product-big-img .img { height: 300px; }
         .product-about { padding: 20px; margin-top: 20px; }
         .actions { flex-wrap: wrap; }
@@ -363,6 +468,43 @@
                 });
             });
         } 
+
+        // Form submission validation with authentication check
+        if (addToCartForm) {
+            addToCartForm.addEventListener('submit', function(e) {
+                // Check if user is authenticated
+                const isAuthenticated = @json(auth()->check());
+                
+                if (!isAuthenticated) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    // Show login modal
+                    const loginModalElement = document.getElementById('loginRequiredModal');
+                    if (loginModalElement) {
+                        // Check if Bootstrap is available
+                        if (typeof bootstrap !== 'undefined' && bootstrap.Modal) {
+                            const loginModal = new bootstrap.Modal(loginModalElement);
+                            loginModal.show();
+                        } else if (typeof jQuery !== 'undefined' && jQuery.fn.modal) {
+                            // Fallback to jQuery Bootstrap modal
+                            jQuery(loginModalElement).modal('show');
+                        } else {
+                            // Fallback: redirect to login
+                            window.location.href = '{{ route("login") }}';
+                        }
+                    } else {
+                        // If modal doesn't exist, redirect to login
+                        window.location.href = '{{ route("login") }}';
+                    }
+                    return false;
+                }
+                
+                // Update cart quantity before submission
+                if (cartQuantity && quantityInput) {
+                    cartQuantity.value = quantityInput.value;
+                }
+            });
+        }
     });
 </script>
 

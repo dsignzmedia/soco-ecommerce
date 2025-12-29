@@ -288,7 +288,7 @@
                                 <small>{{ ucfirst(str_replace('_', ' ', $mapping->product_type ?? '—')) }}</small>
                             </td>
                             <td style="text-align:right;">
-                                <div style="font-weight:600;color:#111827;">₹{{ number_format($mapping->price_regular ?? 0, 2) }}</div>
+                                <div style="font-weight:600;color:#111827;">₹{{ number_format($mapping->getDisplayPrice(), 2) }}</div>
                                 @if($mapping->price_sale && $mapping->price_sale > 0)
                                     <small style="color:#b42318;">Sale: ₹{{ number_format($mapping->price_sale, 2) }}</small>
                                 @endif
@@ -373,7 +373,7 @@
                             <div style="display: flex; justify-content: space-between;">
                                 <span>Price:</span>
                                 <span style="font-weight: 600; color: #101828;">
-                                    ₹{{ number_format($mapping->price_regular ?? 0, 2) }}
+                                    ₹{{ number_format($mapping->getDisplayPrice(), 2) }}
                                     @if($mapping->price_sale && $mapping->price_sale > 0)
                                         <span style="color:#b42318; margin-left: 4px; font-size: 12px;">(₹{{ number_format($mapping->price_sale, 2) }})</span>
                                     @endif

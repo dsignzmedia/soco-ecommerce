@@ -24,6 +24,7 @@ class ProductMapping extends Model
         'price_regular',
         'price_sale',
         'delivery_price',
+        'delivery_duration',
         'price_tax',
         'tax_profile',
         'price_inclusive_tax',
@@ -88,6 +89,57 @@ class ProductMapping extends Model
             $this->update(['inventory_stock' => $total]);
         }
         // If no variants exist, don't modify inventory_stock (preserves manual entry)
+    }
+
+    /**
+     * Get the display price for the product.
+     * Checks price_regular first, then grade pricing, then variant pricing.
+     * 
+     * @return float
+     */
+    public function getDisplayPrice(): float
+    {
+        // First, check if there's a direct price_regular value
+        if ($this->price_regular && $this->price_regular > 0) {
+            return (float) $this->price_regular;
+        }
+
+        // Load grade pricing if not already loaded
+        if (!$this->relationLoaded('gradePricing')) {
+            $this->load('gradePricing');
+        }
+
+        // Check if there's grade-based pricing
+        if ($this->gradePricing && $this->gradePricing->count() > 0) {
+            $prices = $this->gradePricing->pluck('price')->filter(function($price) {
+                return $price !== null && $price > 0;
+            });
+            
+            if ($prices->count() > 0) {
+                // Return the minimum price from grade pricing
+                return (float) $prices->min();
+            }
+        }
+
+        // Load variants if not already loaded
+        if (!$this->relationLoaded('variants')) {
+            $this->load('variants');
+        }
+
+        // Check if there are variants with prices
+        if ($this->variants && $this->variants->count() > 0) {
+            $prices = $this->variants->pluck('price')->filter(function($price) {
+                return $price !== null && $price > 0;
+            });
+            
+            if ($prices->count() > 0) {
+                // Return the minimum price from variants
+                return (float) $prices->min();
+            }
+        }
+
+        // Fallback to 0 if no price found
+        return 0.0;
     }
 }
 

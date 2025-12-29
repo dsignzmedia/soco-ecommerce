@@ -26,23 +26,47 @@
 <section class="vs-product-wrapper product-details space-top space-extra-bottom" style="background-color: #ffffff;">
     <div class="container">
         <div class="row gx-60">
-            <!-- Left: Product Images -->
+            <!-- Left: Product Images & Videos -->
             <div class="col-lg-6">
                 <div class="product-big-img vs-carousel" data-slide-show="1" data-fade="true" data-asnavfor=".product-thumb-slide">
                         @php
                             $productImages = $product['images'] ?? [$product['image'] ?? asset('assets/img/no image/no_image.png')];
                         @endphp
                         @foreach($productImages as $index => $image)
+                        @php
+                            $isVideo = preg_match('/\.(mp4|webm|ogg|mov|avi|wmv|flv|mkv|m3u8)(\?.*)?$/i', $image);
+                            $mediaUrl = \Illuminate\Support\Str::startsWith($image, 'http') ? $image : asset('storage/' . $image);
+                        @endphp
                         <div class="img">
+                                @if($isVideo)
+                                    <video controls style="width: 100%; height: 100%; object-fit: contain; border-radius: 12px;">
+                                        <source src="{{ $mediaUrl }}" type="video/mp4">
+                                        Your browser does not support the video tag.
+                                    </video>
+                                @else
                                 <img src="{{ $image }}" alt="{{ $product['name'] }} - Image {{ $index + 1 }}" onerror="this.onerror=null; this.src='{{ asset('assets/img/no image/no_image.png') }}';">
+                                @endif
                             </div>
                         @endforeach
                     </div>
                 <div class="product-thumb-slide row vs-carousel" data-slide-show="4" data-md-slide-show="4" data-sm-slide-show="3" data-xs-slide-show="3" data-asnavfor=".product-big-img">
                     @foreach($productImages as $index => $image)
+                        @php
+                            $isVideo = preg_match('/\.(mp4|webm|ogg|mov|avi|wmv|flv|mkv|m3u8)(\?.*)?$/i', $image);
+                            $mediaUrl = \Illuminate\Support\Str::startsWith($image, 'http') ? $image : asset('storage/' . $image);
+                        @endphp
                         <div class="col-3">
                             <div class="thumb">
+                                @if($isVideo)
+                                    <div style="position: relative; width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; background: #000;">
+                                        <video style="width: 100%; height: 100%; object-fit: contain;" preload="metadata">
+                                            <source src="{{ $mediaUrl }}" type="video/mp4">
+                                        </video>
+                                        <i class="fas fa-play" style="position: absolute; color: white; font-size: 20px; z-index: 1;"></i>
+                                    </div>
+                                @else
                                 <img src="{{ $image }}" alt="{{ $product['name'] }} - Image {{ $index + 1 }}" onerror="this.onerror=null; this.src='{{ asset('assets/img/no image/no_image.png') }}';">
+                                @endif
                         </div>
                             </div>
                     @endforeach
@@ -129,7 +153,7 @@
                             
                         </div>
 
-                    <div class="product-getway">
+                    <div class="product-getway" style="margin-top: 22px !important;">
                         <span class="getway-title">GUARANTEED SAFE CHECKOUT:</span>
                         <img src="{{ asset('assets/img/widget/cards-2.png') }}" alt="cards">
                     </div>
@@ -192,6 +216,51 @@
     </div>
 </section>
 
+<!-- Login Required Modal -->
+<div class="modal fade" id="loginRequiredModal" tabindex="-1" aria-labelledby="loginRequiredModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content" style="border-radius: 12px; border: none; box-shadow: 0 10px 40px rgba(0,0,0,0.2);">
+            <div class="modal-header" style="border-bottom: 1px solid #e5e7eb; padding: 20px 24px;">
+                <h5 class="modal-title" id="loginRequiredModalLabel" style="color: #111827; font-weight: 600; font-size: 20px;">
+                    <i class="fas fa-lock" style="color: #490D59; margin-right: 10px;"></i>
+                    Login Required
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body" style="padding: 24px; max-height: 70vh; overflow-y: auto;">
+                <div class="text-center mb-4">
+                    <div style="width: 80px; height: 80px; background: linear-gradient(135deg, #f7f2fb 0%, #ede7f3 100%); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 20px;">
+                        <i class="fas fa-shopping-cart" style="font-size: 36px; color: #490D59;"></i>
+                    </div>
+                    <h4 style="color: #111827; font-weight: 600; margin-bottom: 16px;">Please Login to Continue</h4>
+                    <div style="background: #f9fafb; border-left: 4px solid #490D59; padding: 16px; border-radius: 8px; text-align: left; margin-bottom: 20px;">
+                        <p style="color: #374151; font-size: 14px; line-height: 1.7; margin: 0 0 12px 0; font-weight: 500;">
+                            <i class="fas fa-info-circle" style="color: #490D59; margin-right: 8px;"></i>
+                            <strong>Choose your shopping mode:</strong>
+                        </p>
+                        <ul style="color: #6b7280; font-size: 14px; line-height: 1.8; margin: 0; padding-left: 24px;">
+                            <li style="margin-bottom: 8px;">If you want to <strong>buy this product for yourself</strong>, you can continue as <strong>Guest</strong> after logging in.</li>
+                            <li style="margin-bottom: 0;">If you want to <strong>purchase this product for your child</strong>, continue as <strong>Parent</strong> after logging in.</li>
+                        </ul>
+                    </div>
+                    <p style="color: #6b7280; font-size: 14px; line-height: 1.6; margin: 0;">
+                        Please login to proceed with your purchase.
+                    </p>
+                </div>
+            </div>
+            <div class="modal-footer" style="border-top: 1px solid #e5e7eb; padding: 20px 24px; gap: 12px; display: flex; justify-content: flex-end;">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" style="border-radius: 8px; padding: 10px 20px; font-weight: 500; border: 1px solid #d1d5db; background: #fff; color: #374151;">
+                    Cancel
+                </button>
+                <a href="{{ route('login') }}" class="btn btn-primary" style="background: linear-gradient(135deg, #490D59 0%, #6b1179 100%); border: none; border-radius: 8px; padding: 10px 24px; font-weight: 600; text-decoration: none; color: white; display: inline-flex; align-items: center; gap: 8px;">
+                    <i class="fas fa-sign-in-alt"></i>
+                    Login
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
 <!-- Size Guide Modal -->
 <div class="modal fade" id="sizeGuideModal" tabindex="-1" aria-labelledby="sizeGuideModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-lg modal-dialog-centered">
@@ -205,7 +274,7 @@
                      @if(!empty($product['size_chart_path']))
                         <div class="{{ (!empty($product['size_measurement_image']) || !empty($product['video_url'])) ? 'col-md-6' : 'col-12' }}">
                             <div class="size-guide-image">
-                                <img src="{{ asset('storage/' . $product['size_chart_path']) }}" alt="Size Guide" class="w-100" style="border-radius: 8px;">
+                                <img src="{{ asset('storage/' . $product['size_chart_path']) }}" alt="Size Guide" class="w-100" style="border-radius: 8px; object-fit: contain;">
                             </div>
                         </div>
                     @endif
@@ -213,19 +282,40 @@
                     @if(!empty($product['size_measurement_image']))
                         <div class="{{ (!empty($product['size_chart_path']) || !empty($product['video_url'])) ? 'col-md-6' : 'col-12' }}">
                             <div class="size-guide-image">
-                                <img src="{{ asset('storage/' . $product['size_measurement_image']) }}" alt="Size Measurement" class="w-100" style="border-radius: 8px;">
+                                <img src="{{ asset('storage/' . $product['size_measurement_image']) }}" alt="Size Measurement" class="w-100" style="border-radius: 8px; object-fit: contain;">
                             </div>
                         </div>
                     @endif
                     
                     @if(!empty($product['video_url']))
-                        <div class="{{ (!empty($product['size_chart_path']) || !empty($product['size_measurement_image'])) ? 'col-md-6' : 'col-12' }}">
-                            <div class="size-guide-video">
-                                <div class="ratio ratio-16x9">
-                                    <iframe src="{{ str_replace('watch?v=', 'embed/', $product['video_url']) }}" title="Size Guide Video" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+                    @php
+                            $videoUrl = $product['video_url'];
+                            $videoId = '';
+                            if (Str::contains($videoUrl, 'youtu.be/')) {
+                                $videoId = explode('youtu.be/', $videoUrl)[1];
+                            } elseif (Str::contains($videoUrl, 'watch?v=')) {
+                                parse_str(parse_url($videoUrl, PHP_URL_QUERY), $query);
+                                $videoId = $query['v'] ?? '';
+                            } elseif (Str::contains($videoUrl, 'shorts/')) {
+                                $videoId = explode('shorts/', $videoUrl)[1];
+                            }
+                            $embedUrl = $videoId ? 'https://www.youtube.com/embed/' . $videoId : '';
+                        @endphp
+                        @if(!empty($embedUrl))
+                            <div class="{{ (!empty($product['size_chart_path']) || !empty($product['size_measurement_image'])) ? 'col-md-6' : 'col-12' }}">
+                                <div class="size-guide-video">
+                                    <div class="ratio ratio-16x9">
+                                        <iframe
+                                            src="{{ $embedUrl }}"
+                                            title="Size Guide Video"
+                                            frameborder="0"
+                                            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                                            allowfullscreen>
+                                        </iframe>
+                                    </div>
                                 </div>
                             </div>
-                        </div>
+                        @endif
                     @endif
                 </div>
             </div>
@@ -250,12 +340,17 @@
         border: 2px solid #e0d5f0;
     }
 
-    .product-big-img .img img {
+    .product-big-img .img img,
+    .product-big-img .img video {
         width: 100%;
         height: 100%;
-        object-fit: cover;
+        object-fit: contain;
         display: block;
         border-radius: 12px;
+    }
+    
+    .product-big-img .img video {
+        background: #000;
     }
 
     .product-thumb-slide {
@@ -280,15 +375,38 @@
         justify-content: center;
     }
 
-    .product-thumb-slide .thumb img {
+    .product-thumb-slide .thumb img,
+    .product-thumb-slide .thumb video {
         width: 100%;
         height: 100%;
         object-fit: contain;
+    }
+    
+    .product-thumb-slide .thumb video {
+        background: #000;
     }
 
     .product-thumb-slide .thumb:hover,
     .product-thumb-slide .thumb.active {
         border-color: #490D59;
+    }
+
+    /* Size Guide Modal Images */
+    .size-guide-image {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: #f9fafb;
+        border-radius: 8px;
+        padding: 10px;
+        min-height: 300px;
+    }
+    
+    .size-guide-image img {
+        max-width: 100%;
+        max-height: 100%;
+        object-fit: contain;
+        border-radius: 8px;
     }
 
     .title-divider1 {
@@ -649,9 +767,36 @@
         margin-bottom: 2px !important;
     }
 
+    /* Login Modal Scrollable Styles */
+    #loginRequiredModal .modal-body {
+        max-height: 70vh;
+        overflow-y: auto;
+        overflow-x: hidden;
+        scrollbar-width: thin;
+        scrollbar-color: #490D59 #f0f0f0;
+    }
+    
+    #loginRequiredModal .modal-body::-webkit-scrollbar {
+        width: 8px;
+    }
+    
+    #loginRequiredModal .modal-body::-webkit-scrollbar-track {
+        background: #f0f0f0;
+        border-radius: 4px;
+    }
+    
+    #loginRequiredModal .modal-body::-webkit-scrollbar-thumb {
+        background: #490D59;
+        border-radius: 4px;
+    }
+    
+    #loginRequiredModal .modal-body::-webkit-scrollbar-thumb:hover {
+        background: #6b1179;
+    }
+
     /* Product Getway */
     .product-getway {
-        margin-bottom: 25px;
+        margin-top: 22px !important;
         padding-top: 25px;
     }
 
@@ -735,6 +880,10 @@
         .qty-input {
             width: 80px; /* Wider input for easier tapping */
         }
+        
+        #loginRequiredModal .modal-body {
+            max-height: 60vh;
+        }
 
         /* Compact Breadcrumb for Mobile */
         .breadcumb-title,
@@ -811,7 +960,7 @@
         .product-big-img .img img {
             width: 100%;
             height: 100%;
-            object-fit: cover;
+            object-fit: contain;
         }
 
         .actions {
@@ -1135,6 +1284,33 @@
         // Form submission validation
         if (addToCartForm) {
         addToCartForm.addEventListener('submit', function(e) {
+            // Check if user is authenticated
+            const isAuthenticated = @json(auth()->check());
+            
+            if (!isAuthenticated) {
+                e.preventDefault();
+                e.stopPropagation();
+                // Show login modal
+                const loginModalElement = document.getElementById('loginRequiredModal');
+                if (loginModalElement) {
+                    // Check if Bootstrap is available
+                    if (typeof bootstrap !== 'undefined' && bootstrap.Modal) {
+                        const loginModal = new bootstrap.Modal(loginModalElement);
+                        loginModal.show();
+                    } else if (typeof jQuery !== 'undefined' && jQuery.fn.modal) {
+                        // Fallback to jQuery Bootstrap modal
+                        jQuery(loginModalElement).modal('show');
+                    } else {
+                        // Fallback: redirect to login
+                        window.location.href = '{{ route("login") }}';
+                    }
+                } else {
+                    // If modal doesn't exist, redirect to login
+                    window.location.href = '{{ route("login") }}';
+                }
+                return false;
+            }
+            
             const selectedSize = document.querySelector('input[name="size"]:checked');
                 if (sizeInputs.length > 0 && !selectedSize) {
                 e.preventDefault();

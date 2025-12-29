@@ -19,7 +19,7 @@ class CatalogController extends Controller
     {
         $filters = $request->only(['school_id', 'grade_id', 'status', 'gender', 'category', 'product_type', 'stock_status', 'q']);
 
-        $query = ProductMapping::with(['school', 'gradePricing'])->withCount('variants');
+        $query = ProductMapping::with(['school', 'gradePricing', 'variants'])->withCount('variants');
         $this->applyFilters($query, $filters);
 
         if (! empty($filters['q'])) {
@@ -416,6 +416,7 @@ class CatalogController extends Controller
             'gender' => ['required', 'in:male,female,unisex'],
             'stock_status' => ['required', 'in:in_stock,out_of_stock'],
             'availability_label' => ['nullable', 'string', 'max:255'],
+            'delivery_duration' => ['nullable', 'string', 'max:255'],
             'status' => ['required', 'in:live,draft,archived'],
             'description' => ['nullable', 'string'],
             'size_guidance' => ['nullable', 'string'],
@@ -459,7 +460,11 @@ class CatalogController extends Controller
         }
 
         if ($request->hasFile('media_images')) {
-            $rules['media_images.*'] = ['image', 'max:2048'];
+            $rules['media_images.*'] = [
+                'file',
+                'mimes:jpeg,jpg,png,gif,webp,mp4,webm,ogg,mov,avi,wmv,flv,mkv,m3u8',
+                'max:20480' // 20MB for videos (increased from 2MB)
+            ];
         }
 
         $validated = $request->validate($rules);

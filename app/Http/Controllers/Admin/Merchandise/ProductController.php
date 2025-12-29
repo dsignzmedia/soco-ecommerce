@@ -185,6 +185,15 @@ class ProductController extends Controller
             'variants.*.low_stock_threshold' => 'nullable|integer|min:0',
         ];
         
+        // Add file validation rules for media_images
+        if ($request->hasFile('media_images')) {
+            $validationRules['media_images.*'] = [
+                'file',
+                'mimes:jpeg,jpg,png,gif,webp,mp4,webm,ogg,mov,avi,wmv,flv,mkv,m3u8',
+                'max:20480' // 20MB for videos
+            ];
+        }
+        
         $data = $request->validate($validationRules);
         
         // Handle checkbox
@@ -361,6 +370,15 @@ class ProductController extends Controller
             'variants.*.stock' => 'nullable|integer|min:0',
             'variants.*.low_stock_threshold' => 'nullable|integer|min:0',
         ];
+        
+        // Add file validation rules for media_images
+        if ($request->hasFile('media_images')) {
+            $validationRules['media_images.*'] = [
+                'file',
+                'mimes:jpeg,jpg,png,gif,webp,mp4,webm,ogg,mov,avi,wmv,flv,mkv,m3u8',
+                'max:20480' // 20MB for videos
+            ];
+        }
         
         $data = $request->validate($validationRules);
         

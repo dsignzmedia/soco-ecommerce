@@ -197,93 +197,6 @@
                     </button>
                     </div>
                 </div>
-
-                <!-- Media -->
-                <div class="card">
-                    <h3 style="margin:0 0 20px;color:#111827;display:flex;align-items:center;gap:10px;">
-                        <i class="fas fa-images" style="color:#490d59;background:#f7f2fb;padding:8px;border-radius:8px;"></i>
-                        Media
-                    </h3>
-                    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px;">
-                        <label>
-                            <span>Featured product image</span>
-                            <div class="file-input-wrapper">
-                                <input type="file" name="featured_image" accept="image/*">
-                            </div>
-                            @if($product->featured_image)
-                                <div style="margin-top:8px;">
-                                    <img src="{{ Str::startsWith($product->featured_image, 'http') ? $product->featured_image : asset('storage/' . $product->featured_image) }}" alt="Featured" style="width:80px;height:80px;object-fit:cover;border-radius:8px;">
-                                </div>
-                            @endif
-                        </label>
-                        <div>
-                            <span>Gallery images (Drag & Drop to Reorder)</span>
-                            <div id="media-drop-zone" style="border: 2px dashed #d1d5db; border-radius: 8px; padding: 20px; text-align: center; cursor: pointer; transition: border-color 0.3s;" onclick="document.getElementById('gallery-upload-input').click()">
-                                <i class="fas fa-cloud-upload-alt" style="font-size: 24px; color: #9ca3af; margin-bottom: 8px;"></i>
-                                <p style="margin: 0; color: #6b7280;">Click or Drag files here to upload</p>
-                                <input type="file" id="gallery-upload-input" multiple accept="image/*,video/*" style="display: none;">
-                                <input type="hidden" name="media_list_modified" value="1">
-                                <input type="hidden" name="media_order_ids" id="media_order_ids">
-                            </div>
-                            
-                            <!-- Unified Media Grid -->
-                            <div id="unifiedMediaPreview" style="display: flex; flex-wrap: wrap; gap: 12px; margin-top: 16px;">
-                                <!-- Existing images rendered as media items -->
-                                <?php 
-                                if($product->media_images): 
-                                    $index = 0;
-                                    foreach($product->media_images as $mediaItem):
-                                        $finalImgUrl = is_array($mediaItem) ? ($mediaItem[0] ?? '') : $mediaItem;
-                                        if(is_string($finalImgUrl) && !empty($finalImgUrl)):
-                                            $index++;
-                                ?>
-                                            <div class="media-item existing-media" draggable="true">
-                                                <img src="{{ \Illuminate\Support\Str::startsWith($finalImgUrl, 'http') ? $finalImgUrl : asset('storage/' . $finalImgUrl) }}" style="width: 100%; height: 100%; object-fit: cover;">
-                                                <div class="position-number">{{ $index }}</div>
-                                                <div class="remove-btn" onclick="this.parentElement.remove(); updatePositionNumbers();">
-                                                    <i class="fas fa-times"></i>
-                                                </div>
-                                                <input type="hidden" name="existing_media_images[]" value="{{ $finalImgUrl }}">
-                                            </div>
-                                <?php 
-                                        endif;
-                                    endforeach;
-                                endif; 
-                                ?>
-                            </div>
-                        </div>
-                        <label>
-                            <span>Size Measurement Image</span>
-                            <div class="file-input-wrapper">
-                                <input type="file" name="size_measurement_image" accept="image/*">
-                            </div>
-                            @if($product->size_measurement_image)
-                                <div style="margin-top:8px;">
-                                    <img src="{{ asset('storage/' . $product->size_measurement_image) }}" alt="Size Measurement" style="width:80px;height:80px;object-fit:cover;border-radius:8px;">
-                                    <a href="{{ asset('storage/' . $product->size_measurement_image) }}" target="_blank" style="font-size:12px;color:#490d59;display:block;margin-top:4px;">View image</a>
-                                </div>
-                            @endif
-                        </label>
-                    </div>
-                    
-                    <div style="margin-top:16px;display:grid;grid-template-columns:1fr 1fr;gap:16px;">
-                        <label>
-                            <span>Size Chart (Image)</span>
-                            <div class="file-input-wrapper">
-                                <input type="file" name="size_chart_path" accept="image/*">
-                            </div>
-                            @if($product->size_chart_path)
-                                <div style="margin-top:8px;">
-                                    <a href="{{ asset('storage/' . $product->size_chart_path) }}" target="_blank" style="font-size:12px;color:#490d59;">View current chart</a>
-                                </div>
-                            @endif
-                        </label>
-                        <label>
-                            <span>Measurement Video (YouTube URL)</span>
-                            <input type="url" name="video_url" value="{{ old('video_url', $product->video_url) }}" placeholder="https://youtube.com/watch?v=...">
-                        </label>
-                    </div>
-                </div>
             </div>
 
             <!-- Right Column (Sidebar Style) -->
@@ -397,6 +310,107 @@
                 </div>
             </div>
         </div>
+
+        <!-- Media -->
+        <div class="card" style="margin-top:24px;width:100%;">
+            <h3 style="margin:0 0 20px;color:#111827;display:flex;align-items:center;gap:10px;">
+                <i class="fas fa-images" style="color:#490d59;background:#f7f2fb;padding:8px;border-radius:8px;"></i>
+                Media
+            </h3>
+            <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px;">
+                <label>
+                    <span>Featured product image</span>
+                    <div class="file-input-wrapper">
+                        <input type="file" id="featured_image_input" name="featured_image" accept="image/*">
+                    </div>
+                    <div id="featured_image_preview" style="margin-top:8px;">
+                        @if($product->featured_image)
+                            <img src="{{ Str::startsWith($product->featured_image, 'http') ? $product->featured_image : asset('storage/' . $product->featured_image) }}" alt="Featured" style="width:120px;height:120px;object-fit:cover;border-radius:8px;border:2px solid #ddd;">
+                        @endif
+                    </div>
+                </label>
+                <div>
+                    <span>Gallery images & videos (Drag & Drop to Reorder)</span>
+                    <div id="media-drop-zone" style="border: 2px dashed #d1d5db; border-radius: 8px; padding: 20px; text-align: center; cursor: pointer; transition: border-color 0.3s;" onclick="document.getElementById('gallery-upload-input').click()">
+                        <i class="fas fa-cloud-upload-alt" style="font-size: 24px; color: #9ca3af; margin-bottom: 8px;"></i>
+                        <p style="margin: 0; color: #6b7280;">Click or Drag files here to upload</p>
+                        <input type="file" id="gallery-upload-input" multiple accept="image/*,video/*" style="display: none;">
+                        <input type="hidden" name="media_list_modified" value="1">
+                        <input type="hidden" name="media_order_ids" id="media_order_ids">
+                    </div>
+                    
+                    <!-- Unified Media Grid -->
+                    <div id="unifiedMediaPreview" style="display: flex; flex-wrap: nowrap; gap: 12px; margin-top: 16px; overflow-x: auto; overflow-y: hidden; padding-bottom: 8px; -webkit-overflow-scrolling: touch;">
+                        <!-- Existing images and videos rendered as media items -->
+                        <?php 
+                        if($product->media_images): 
+                            $index = 0;
+                            foreach($product->media_images as $mediaItem):
+                                $finalImgUrl = is_array($mediaItem) ? ($mediaItem[0] ?? '') : $mediaItem;
+                                if(is_string($finalImgUrl) && !empty($finalImgUrl)):
+                                    $index++;
+                                    $isVideo = preg_match('/\.(mp4|webm|ogg|mov|avi|wmv|flv|mkv|m3u8)(\?.*)?$/i', $finalImgUrl);
+                                    $mediaUrl = \Illuminate\Support\Str::startsWith($finalImgUrl, 'http') ? $finalImgUrl : asset('storage/' . $finalImgUrl);
+                        ?>
+                                <div class="media-item existing-media" draggable="true">
+                                    @if($isVideo)
+                                        <div class="video-thumbnail">
+                                            <video style="width: 100%; height: 100%; object-fit: cover;" preload="metadata">
+                                                <source src="{{ $mediaUrl }}" type="video/mp4">
+                                            </video>
+                                            <div class="video-play-button"><i class="fas fa-play"></i></div>
+                                        </div>
+                                    @else
+                                        <img src="{{ $mediaUrl }}" style="width: 100%; height: 100%; object-fit: cover;">
+                                    @endif
+                                    <div class="position-number">{{ $index }}</div>
+                                    <div class="remove-btn" onclick="this.parentElement.remove(); updatePositionNumbers();">
+                                        <i class="fas fa-times"></i>
+                                    </div>
+                                    <input type="hidden" name="existing_media_images[]" value="{{ $finalImgUrl }}">
+                                </div>
+                        <?php 
+                                endif;
+                            endforeach;
+                        endif; 
+                        ?>
+                    </div>
+                </div>
+                
+            </div>
+
+            <div style="margin-top:16px;display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px;">
+                
+            <label style="margin-bottom:16px;">
+                    <span>Size Chart (Image)</span>
+                    <div class="file-input-wrapper">
+                        <input type="file" id="size_chart_path_input" name="size_chart_path" accept="image/*">
+                    </div>
+                    <div id="size_chart_path_preview" style="margin-top:8px;">
+                        @if($product->size_chart_path)
+                            <img src="{{ asset('storage/' . $product->size_chart_path) }}" alt="Size Chart" style="width:120px;height:120px;object-fit:cover;border-radius:8px;border:2px solid #ddd;">
+                            <a href="{{ asset('storage/' . $product->size_chart_path) }}" target="_blank" style="font-size:12px;color:#490d59;display:block;margin-top:4px;">View current chart</a>
+                        @endif
+                    </div>
+                </label>
+                <label style="margin-bottom:16px;">
+                    <span>Size Measurement Image</span>
+                    <div class="file-input-wrapper">
+                        <input type="file" id="size_measurement_image_input" name="size_measurement_image" accept="image/*">
+                    </div>
+                    <div id="size_measurement_image_preview" style="margin-top:8px;">
+                        @if($product->size_measurement_image)
+                            <img src="{{ Str::startsWith($product->size_measurement_image, 'http') ? $product->size_measurement_image : asset('storage/' . $product->size_measurement_image) }}" alt="Size Measurement" style="width:120px;height:120px;object-fit:cover;border-radius:8px;border:2px solid #ddd;">
+                            <a href="{{ Str::startsWith($product->size_measurement_image, 'http') ? $product->size_measurement_image : asset('storage/' . $product->size_measurement_image) }}" target="_blank" style="font-size:12px;color:#490d59;display:block;margin-top:4px;">View current image</a>
+                        @endif
+                    </div>
+                </label>
+                <label>
+                    <span>Measurement Video (YouTube URL)</span>
+                    <input type="url" name="video_url" value="{{ old('video_url', $product->video_url) }}" placeholder="https://youtube.com/watch?v=...">
+                </label>
+            </div>
+        </div>
     </form>
     
 @push('scripts')
@@ -508,6 +522,42 @@
             }
 
             document.querySelectorAll('.existing-media').forEach(item => addDragEvents(item));
+
+            // Image Preview Functionality
+            function setupImagePreview(inputId, previewId) {
+                const input = document.getElementById(inputId);
+                const preview = document.getElementById(previewId);
+                
+                if (input && preview) {
+                    input.addEventListener('change', function(e) {
+                        const file = e.target.files[0];
+                        if (file && file.type.startsWith('image/')) {
+                            const reader = new FileReader();
+                            reader.onload = function(e) {
+                                // Clear existing content
+                                preview.innerHTML = '';
+                                
+                                // Create image element
+                                const img = document.createElement('img');
+                                img.src = e.target.result;
+                                img.alt = 'Preview';
+                                img.style.cssText = 'width:120px;height:120px;object-fit:cover;border-radius:8px;border:2px solid #ddd;';
+                                
+                                preview.appendChild(img);
+                            };
+                            reader.readAsDataURL(file);
+                        } else {
+                            // Clear preview if not an image
+                            preview.innerHTML = '';
+                        }
+                    });
+                }
+            }
+
+            // Setup previews for all three image fields
+            setupImagePreview('featured_image_input', 'featured_image_preview');
+            setupImagePreview('size_measurement_image_input', 'size_measurement_image_preview');
+            setupImagePreview('size_chart_path_input', 'size_chart_path_preview');
 
             // --- Variants Logic (Original) ---
             const container = document.getElementById('variants-container');
@@ -743,4 +793,647 @@
         });
     </script>
 @endpush
+
+<!-- Add this enhanced CSS to your stylesheet or in a <style> tag -->
+<style>
+
+    /* Force native/default select UI */
+.grade-from-select,
+.grade-to-select {
+    appearance: auto !important;
+    -webkit-appearance: auto !important;
+    -moz-appearance: auto !important;
+
+    background: initial !important;
+    border-radius: 4px !important;
+    padding: 6px 8px !important;
+    box-shadow: none !important;
+}
+.grade-pricing-range-row select {
+    all: revert;
+}
+    /* Enhanced Card Styling */
+    .card {
+        background: white;
+        border-radius: 12px;
+        padding: 24px;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        transition: box-shadow 0.3s ease;
+    }
+    
+    .card:hover {
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    }
+
+    /* Enhanced Input Styling */
+    input[type="text"],
+    input[type="number"],
+    input[type="url"],
+    select,
+    textarea {
+        width: 100%;
+        padding: 10px 14px;
+        border: 1px solid #d1d5db;
+        border-radius: 8px;
+        font-size: 14px;
+        transition: all 0.2s ease;
+        background: white;
+    }
+    
+    input[type="text"]:focus,
+    input[type="number"]:focus,
+    input[type="url"]:focus,
+    select:focus,
+    textarea:focus {
+        outline: none;
+        border-color: #490d59;
+        box-shadow: 0 0 0 3px rgba(73, 13, 89, 0.1);
+    }
+    
+    input[type="text"]:hover,
+    input[type="number"]:hover,
+    input[type="url"]:hover,
+    select:hover,
+    textarea:hover {
+        border-color: #9ca3af;
+    }
+
+    /* Label Styling */
+    label {
+        display: block;
+    }
+    
+    label > span {
+        display: block;
+        font-size: 13px;
+        font-weight: 500;
+        color: #374151;
+        margin-bottom: 6px;
+    }
+
+    /* Section Headers with Icons */
+    .card h3 {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        margin: 0 0 20px;
+        color: #111827;
+        font-size: 16px;
+        font-weight: 600;
+    }
+    
+    .card h3 i {
+        color: #490d59;
+        background: linear-gradient(135deg, #f7f2fb 0%, #ede7f3 100%);
+        padding: 10px;
+        border-radius: 10px;
+        font-size: 16px;
+        width: 36px;
+        height: 36px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+    
+    .card h4 {
+        color: #374151;
+        font-size: 15px;
+        font-weight: 600;
+        margin: 0 0 16px;
+        padding-bottom: 8px;
+        border-bottom: 2px solid #f3f4f6;
+    }
+
+    /* Button Enhancements */
+    .btn-back-outline {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        padding: 10px 20px;
+        background: white;
+        border: 1.5px solid #d1d5db;
+        border-radius: 8px;
+        color: #374151;
+        font-size: 14px;
+        font-weight: 500;
+        text-decoration: none;
+        transition: all 0.2s ease;
+    }
+    
+    .btn-back-outline:hover {
+        background: #f9fafb;
+        border-color: #490d59;
+        color: #490d59;
+        transform: translateY(-1px);
+    }
+
+    /* Primary Buttons */
+    button[type="submit"],
+    button[style*="background:#490d59"],
+    #add-variant-btn,
+    #add-grade-range-btn {
+        transition: all 0.2s ease;
+        font-weight: 600;
+        position: relative;
+        overflow: hidden;
+    }
+    
+    button[type="submit"]:hover,
+    button[style*="background:#490d59"]:hover,
+    #add-variant-btn:hover,
+    #add-grade-range-btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(73, 13, 89, 0.3);
+    }
+    
+    button[type="submit"]:active,
+    button[style*="background:#490d59"]:active {
+        transform: translateY(0);
+    }
+
+    /* Variant Row Enhancements */
+    .variant-row {
+        background: #f9fafb;
+        padding: 16px;
+        border-radius: 10px;
+        border: 1px solid #e5e7eb;
+        transition: all 0.2s ease;
+    }
+    
+    .variant-row:hover {
+        border-color: #d1d5db;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+    }
+
+    /* Grade Pricing Range Row */
+    .grade-pricing-range-row {
+        background: white;
+        padding: 20px;
+        border: 1.5px solid #e5e7eb;
+        border-radius: 12px;
+        transition: all 0.2s ease;
+        margin-bottom: 16px;
+    }
+    
+    .grade-pricing-range-row:hover {
+        border-color: #490d59;
+        box-shadow: 0 4px 12px rgba(73, 13, 89, 0.08);
+        transform: translateY(-2px);
+    }
+    
+    /* Grade pricing row labels */
+    .grade-pricing-range-row label {
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+    }
+    
+    .grade-pricing-range-row label > span {
+        font-size: 13px;
+        font-weight: 600;
+        color: #374151;
+        display: block;
+    }
+    
+    /* Optional text styling */
+    .grade-pricing-range-row label > span span {
+        font-size: 12px;
+        font-weight: 400;
+        color: #6b7280;
+        font-style: italic;
+    }
+    
+    /* Grade pricing select and input styling */
+    .grade-pricing-range-row select,
+    .grade-pricing-range-row input[type="number"] {
+        width: 100%;
+        padding: 10px 14px;
+        border: 1.5px solid #d1d5db;
+        border-radius: 8px;
+        font-size: 14px;
+        background: #fafbfc;
+        transition: all 0.2s ease;
+    }
+    
+    .grade-pricing-range-row select:focus,
+    .grade-pricing-range-row input[type="number"]:focus {
+        border-color: #490d59;
+        background: white;
+        box-shadow: 0 0 0 3px rgba(73, 13, 89, 0.1);
+        outline: none;
+    }
+    
+    .grade-pricing-range-row select:hover,
+    .grade-pricing-range-row input[type="number"]:hover {
+        border-color: #9ca3af;
+        background: white;
+    }
+    
+    /* Remove button in grade pricing row */
+    .grade-pricing-range-row .remove-grade-range-btn {
+        padding: 10px 14px;
+        background: #fee2e2;
+        color: #dc2626;
+        border: none;
+        border-radius: 8px;
+        cursor: pointer;
+        font-size: 14px;
+        font-weight: 600;
+        transition: all 0.2s ease;
+        height: 44px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+    
+    .grade-pricing-range-row .remove-grade-range-btn:hover {
+        background: #fecaca;
+        transform: scale(1.05);
+        box-shadow: 0 2px 8px rgba(220, 38, 38, 0.2);
+    }
+
+    /* Remove Button Styling */
+    .btn-remove-variant,
+    .remove-grade-range-btn {
+        transition: all 0.2s ease;
+        border-radius: 8px;
+    }
+    
+    .btn-remove-variant:hover,
+    .remove-grade-range-btn:hover {
+        background: #fee2e2 !important;
+        transform: scale(1.05);
+    }
+
+    /* File Input Wrapper */
+    .file-input-wrapper {
+        position: relative;
+        overflow: hidden;
+        display: inline-block;
+        width: 100%;
+    }
+    
+    .file-input-wrapper input[type="file"] {
+        position: absolute;
+        left: -9999px;
+    }
+    
+    .file-input-wrapper::before {
+        content: 'Choose File';
+        display: inline-block;
+        background: linear-gradient(135deg, #490d59 0%, #6b1179 100%);
+        color: white;
+        padding: 10px 20px;
+        border-radius: 8px;
+        cursor: pointer;
+        font-size: 14px;
+        font-weight: 500;
+        transition: all 0.2s ease;
+    }
+    
+    
+
+    /* Media Drop Zone Enhancement */
+    #media-drop-zone {
+        border: 2px dashed #d1d5db;
+        border-radius: 12px;
+        padding: 24px;
+        text-align: center;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        background: linear-gradient(135deg, #fafbfc 0%, #f9fafb 100%);
+    }
+    
+    #media-drop-zone:hover {
+        border-color: #490d59;
+        background: linear-gradient(135deg, #f7f2fb 0%, #ede7f3 100%);
+        transform: scale(1.01);
+    }
+    
+    #media-drop-zone i {
+        font-size: 32px;
+        color: #490d59;
+        margin-bottom: 12px;
+        display: block;
+    }
+    
+    #media-drop-zone p {
+        margin: 0;
+        color: #6b7280;
+        font-size: 14px;
+        font-weight: 500;
+    }
+
+    /* Toggle Switch Wrapper */
+    label:has(input[type="checkbox"]) {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        cursor: pointer;
+        user-select: none;
+        margin: 0 !important;
+    }
+    
+    /* Hide default checkbox */
+    input[type="checkbox"] {
+        appearance: none;
+        -webkit-appearance: none;
+        width: 0;
+        height: 0;
+        position: absolute;
+        opacity: 0;
+    }
+    
+    /* Toggle switch container */
+    input[type="checkbox"] + span {
+        position: relative;
+        display: flex;
+        align-items: center;
+        padding-left: 0;
+    }
+    
+    /* Create toggle background track */
+    input[type="checkbox"] + span::before {
+        content: '';
+        display: inline-block;
+        width: 50px;
+        height: 26px;
+        background: #d1d5db;
+        border-radius: 13px;
+        margin-right: 12px;
+        position: relative;
+        transition: background 0.3s ease;
+        box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.1);
+        flex-shrink: 0;
+    }
+    
+    /* Toggle knob/circle */
+    input[type="checkbox"] + span::after {
+        content: '';
+        position: absolute;
+        width: 22px;
+        height: 22px;
+        background: white;
+        border-radius: 50%;
+        top: 50%;
+        left: 2px;
+        transform: translateY(-50%);
+        transition: left 0.3s ease;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+    }
+    
+    /* Checked state - violet/purple color */
+    input[type="checkbox"]:checked + span::before {
+        background: linear-gradient(135deg, #490d59 0%, #6b1179 100%);
+        box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.2), 0 0 8px rgba(73, 13, 89, 0.3);
+    }
+    
+    input[type="checkbox"]:checked + span::after {
+        left: 26px;
+    }
+    
+    /* Hover effects */
+    label:has(input[type="checkbox"]):hover input[type="checkbox"]:not(:checked) + span::before {
+        background: #b5b8bd;
+    }
+    
+    label:has(input[type="checkbox"]):hover input[type="checkbox"]:checked + span::before {
+        background: linear-gradient(135deg, #5a0f6a 0%, #7d1a8a 100%);
+    }
+    
+    /* Focus state for accessibility */
+    input[type="checkbox"]:focus-visible + span::before {
+        outline: 2px solid #490d59;
+        outline-offset: 2px;
+    }
+    
+    /* Ensure text doesn't wrap oddly */
+    input[type="checkbox"] + span {
+        font-size: 13px;
+        color: #475467;
+        font-weight: 500;
+        white-space: nowrap;
+    }
+
+    /* Alert/Info Box */
+    .info-box {
+        background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%);
+        border-left: 4px solid #3b82f6;
+        padding: 12px 16px;
+        border-radius: 8px;
+        margin-bottom: 16px;
+        font-size: 13px;
+        color: #1e40af;
+    }
+    
+    .info-box strong {
+        color: #1e3a8a;
+    }
+
+    /* Success State */
+    .success-message {
+        background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%);
+        border-left: 4px solid #22c55e;
+        padding: 12px 16px;
+        border-radius: 8px;
+        margin-bottom: 16px;
+        font-size: 13px;
+        color: #15803d;
+    }
+
+    /* Loading State */
+    .loading-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(255, 255, 255, 0.9);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 9999;
+        backdrop-filter: blur(4px);
+    }
+    
+    .spinner {
+        width: 48px;
+        height: 48px;
+        border: 4px solid #f3f4f6;
+        border-top-color: #490d59;
+        border-radius: 50%;
+        animation: spin 0.8s linear infinite;
+    }
+    
+    @keyframes spin {
+        to { transform: rotate(360deg); }
+    }
+
+    /* Responsive Grid Improvements */
+    @media (max-width: 1024px) {
+        div[style*="grid-template-columns:2fr 1fr"] {
+            grid-template-columns: 1fr !important;
+        }
+    }
+
+    /* Smooth Transitions */
+    * {
+        transition-property: background-color, border-color, color, fill, stroke, opacity, box-shadow, transform;
+        transition-duration: 0.2s;
+        transition-timing-function: ease;
+    }
+    
+    button,
+    a,
+    input,
+    select,
+    textarea {
+        transition-duration: 0.2s;
+    }
+
+    /* Enhanced Placeholder Styling */
+    ::placeholder {
+        color: #9ca3af;
+        opacity: 1;
+    }
+
+    /* Focus Visible for Accessibility */
+    *:focus-visible {
+        outline: 2px solid #490d59;
+        outline-offset: 2px;
+    }
+
+    /* Improved Textarea */
+    textarea {
+        resize: vertical;
+        min-height: 100px;
+        font-family: inherit;
+    }
+
+    /* Badge/Tag Styling */
+    .badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+        padding: 4px 10px;
+        background: linear-gradient(135deg, #f7f2fb 0%, #ede7f3 100%);
+        color: #490d59;
+        border-radius: 6px;
+        font-size: 12px;
+        font-weight: 600;
+    }
+
+    /* Image Preview Enhancement */
+    img[style*="border-radius:8px"] {
+        transition: all 0.3s ease;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    }
+    
+    img[style*="border-radius:8px"]:hover {
+        transform: scale(1.05);
+        box-shadow: 0 8px 16px rgba(0, 0, 0, 0.15);
+    }
+
+    /* Enhanced Section Spacing */
+    .card + .card {
+        margin-top: 24px;
+    }
+
+    /* Improved Number Input Buttons */
+    input[type="number"]::-webkit-inner-spin-button,
+    input[type="number"]::-webkit-outer-spin-button {
+        opacity: 1;
+    }
+</style>
+
+<!-- Add this JavaScript for enhanced interactions -->
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Add ripple effect to buttons
+    document.querySelectorAll('button, .btn-back-outline').forEach(button => {
+        button.addEventListener('click', function(e) {
+            const ripple = document.createElement('span');
+            const rect = this.getBoundingClientRect();
+            const size = Math.max(rect.width, rect.height);
+            const x = e.clientX - rect.left - size / 2;
+            const y = e.clientY - rect.top - size / 2;
+            
+            ripple.style.cssText = `
+                position: absolute;
+                width: ${size}px;
+                height: ${size}px;
+                border-radius: 50%;
+                background: rgba(255, 255, 255, 0.6);
+                left: ${x}px;
+                top: ${y}px;
+                pointer-events: none;
+                transform: scale(0);
+                animation: ripple 0.6s ease-out;
+            `;
+            
+            this.style.position = 'relative';
+            this.style.overflow = 'hidden';
+            this.appendChild(ripple);
+            
+            setTimeout(() => ripple.remove(), 600);
+        });
+    });
+    
+    // Add animation to form sections on scroll
+    const observerOptions = {
+        threshold: 0.1,
+        rootMargin: '0px 0px -50px 0px'
+    };
+    
+    const observer = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+            if (entry.isIntersecting) {
+                entry.target.style.opacity = '0';
+                entry.target.style.transform = 'translateY(20px)';
+                setTimeout(() => {
+                    entry.target.style.transition = 'all 0.5s ease';
+                    entry.target.style.opacity = '1';
+                    entry.target.style.transform = 'translateY(0)';
+                }, 100);
+                observer.unobserve(entry.target);
+            }
+        });
+    }, observerOptions);
+    
+    document.querySelectorAll('.card').forEach(card => {
+        observer.observe(card);
+    });
+    
+    // Show loading overlay on form submit
+    document.querySelector('form')?.addEventListener('submit', function() {
+        const overlay = document.createElement('div');
+        overlay.className = 'loading-overlay';
+        overlay.innerHTML = '<div class="spinner"></div>';
+        document.body.appendChild(overlay);
+    });
+    
+    // Auto-save draft indicator (optional)
+    let autoSaveTimeout;
+    document.querySelectorAll('input, select, textarea').forEach(input => {
+        input.addEventListener('input', function() {
+            clearTimeout(autoSaveTimeout);
+            autoSaveTimeout = setTimeout(() => {
+                console.log('Auto-save triggered (implement backend integration)');
+            }, 2000);
+        });
+    });
+});
+
+// Add ripple animation keyframes
+const style = document.createElement('style');
+style.textContent = `
+    @keyframes ripple {
+        to {
+            transform: scale(4);
+            opacity: 0;
+        }
+    }
+`;
+document.head.appendChild(style);
+</script>  
 @endsection
