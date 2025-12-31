@@ -19,14 +19,23 @@ class ShopController extends Controller
              $query->where('category', $request->category);
         }
 
-        $products = $query->paginate(12);
+        // Get categories first - only categories that have products
+        $allProductsQuery = ProductMapping::whereIn('product_type', ['merchandised', 'back_to_school'])
+            ->where('status', 'live')
+            ->whereNotNull('category');
         
-        // Get categories for sidebar
+        $categoryIds = $allProductsQuery->distinct()->pluck('category')->filter()->unique();
+        
+        // Get categories that have at least one product
         $categories = ProductMapping::whereIn('product_type', ['merchandised', 'back_to_school'])
             ->where('status', 'live')
             ->whereNotNull('category')
+            ->whereIn('category', $categoryIds)
             ->distinct()
+            ->orderBy('category')
             ->pluck('category');
+        
+        $products = $query->paginate(12);
 
         return view('frontend.shop.index', compact('products', 'categories'));
     }

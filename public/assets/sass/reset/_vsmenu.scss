@@ -120,13 +120,22 @@
         font-weight: 700;
 
         &:before {
-          content: '\f105';
+          content: '' !important;
           font-family: $icon-font;
           position: relative;
           left: 0;
           top: 0;
-          margin-right: 10px;
-          display: inline-block;
+          margin-right: 0;
+          display: none !important;
+          visibility: hidden !important;
+          opacity: 0 !important;
+          width: 0 !important;
+          height: 0 !important;
+        }
+        
+        &:after {
+          content: '' !important;
+          display: none !important;
         }
       }
 
@@ -135,7 +144,9 @@
           color: $theme-color;
 
           &:before {
-            transform: rotate(90deg);
+            transform: none !important;
+            content: '' !important;
+            display: none !important;
           }
         }
       }

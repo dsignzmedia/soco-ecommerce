@@ -49,7 +49,7 @@
                     <a href="{{ route('frontend.parent.dashboard', ['student_id' => $selectedProfile['id']]) }}" class="vs-btn btn-sm d-none d-lg-inline-flex">
                         <i class="fas fa-arrow-left me-2"></i> Back to Dashboard
                     </a>
-                    <button class="vs-btn btn-sm d-lg-none style-outline" id="toggleFilters" style="padding: 10px 20px; width: auto; border: 1px solid #490D59; color: #490D59; background: transparent;">
+                    <button class="vs-btn btn-sm d-lg-none style-outline" id="toggleFilters" data-bs-toggle="modal" data-bs-target="#filterModal" style="padding: 10px 20px; width: auto; border: 1px solid #490D59; color: #490D59; background: transparent;">
                         <i class="fas fa-sliders-h me-2"></i> <span>Filter</span>
                     </button>
                 </div>
@@ -135,10 +135,10 @@
                 <div class="row justify-content-start align-items-stretch" id="productsContainer">
                     @foreach($allProducts as $product)
                         <div class="col-6 col-md-6 col-lg-4 col-xl-4 product-item" 
-                             data-product-type="{{ $product['type'] }}"
+                             data-product-type="{{ strtolower($product['type'] ?? '') }}"
                              data-product-name="{{ strtolower($product['name']) }}"
-                             data-product-category="{{ $product['category'] ?? 'regular_uniforms' }}"
-                             data-product-gender="{{ $product['gender'] ?? 'unisex' }}">
+                             data-product-category="{{ strtolower($product['category'] ?? 'regular_uniforms') }}"
+                             data-product-gender="{{ strtolower($product['gender'] ?? 'unisex') }}">
                             <div class="vs-product product-style1 product-card-clickable" 
                                  data-product-url="{{ route('frontend.parent.product-detail', ['productId' => $product['id'], 'profile_id' => $selectedProfile['id']]) }}">
                                 <div class="product-img">
@@ -193,6 +193,75 @@
         </div>
     </div>
 </section>
+
+<!-- Mobile Filter Modal -->
+<div class="modal fade d-lg-none" id="filterModal" tabindex="-1" aria-labelledby="filterModalLabel" aria-hidden="true" style="z-index: 9999;">
+    <div class="modal-dialog modal-fullscreen">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="filterModalLabel">
+                    <i class="fas fa-filter me-2"></i>Filters
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <!-- Search -->
+                <div class="filter-section">
+                    <div class="search-box">
+                        <input type="text" id="productSearchMobile" class="form-control" placeholder="Search...">
+                        <button type="button" class="search-clear" id="clearSearchMobile" style="display: none;">
+                            <i class="fas fa-times"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Product Type -->
+                <div class="filter-section">
+                    <h6 class="filter-title">Product Type</h6>
+                    <div class="filter-options">
+                        <!-- Hidden filters for Authorized and Optional (checked by default) -->
+                        <input type="checkbox" name="product_type_mobile" value="authorized" class="filter-checkbox-mobile d-none" checked>
+                        <input type="checkbox" name="product_type_mobile" value="optional" class="filter-checkbox-mobile d-none" checked>
+
+                        <label class="filter-option">
+                            <input type="checkbox" name="product_type_mobile" value="merchandised" class="filter-checkbox-mobile" checked>
+                            <span class="checkbox-mark"></span>
+                            <span class="option-label">Merchandised Product</span>
+                        </label>
+                        <label class="filter-option">
+                            <input type="checkbox" name="product_type_mobile" value="back_to_school" class="filter-checkbox-mobile" checked>
+                            <span class="checkbox-mark"></span>
+                            <span class="option-label">Back to School Product</span>
+                        </label>
+                    </div>
+                    <div class="filter-divider"></div>
+                </div>
+
+                <!-- Categories -->
+                <div class="filter-section">
+                    <h6 class="filter-title">Categories</h6>
+                    <div class="filter-options">
+                        @foreach($categories as $category)
+                            <label class="filter-option">
+                                <input type="checkbox" name="category_mobile" value="{{ $category->slug }}" class="filter-checkbox-mobile" checked>
+                                <span class="checkbox-mark"></span>
+                                <span class="option-label">{{ $category->name }}</span>
+                            </label>
+                        @endforeach
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                    Cancel
+                </button>
+                <button type="button" class="btn btn-primary" id="applyFiltersMobile">
+                    Apply Filters
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
 
 <style>
     .filter-sidebar {
@@ -340,6 +409,42 @@
         font-weight: 500;
     }
 
+    /* Mobile filter checkboxes - same styling as desktop */
+    .filter-checkbox-mobile {
+        position: absolute;
+        opacity: 0 !important;
+        cursor: pointer;
+        height: 0;
+        width: 0;
+        margin: 0;
+        padding: 0;
+        z-index: -1;
+        -webkit-appearance: none;
+        appearance: none;
+    }
+
+    .filter-checkbox-mobile:checked ~ .checkbox-mark {
+        background-color: #490D59;
+        border-color: #490D59;
+    }
+
+    .filter-checkbox-mobile:checked ~ .checkbox-mark:after {
+        content: "✓";
+        position: absolute;
+        display: block;
+        left: 50%;
+        top: 50%;
+        transform: translate(-50%, -50%);
+        color: white;
+        font-size: 12px;
+        font-weight: bold;
+    }
+
+    .filter-checkbox-mobile:checked ~ .option-label {
+        color: #490D59;
+        font-weight: 500;
+    }
+
     /* Product Card Styles */
     .product-img {
         position: relative;
@@ -399,7 +504,7 @@
         font-weight: 600;
         color: #dc3545;
         font-family: var(--title-font, inherit);
-        margin-bottom: 4px;
+        margin-bottom: 12px;
         display: block;
         line-height: 1;
     }
@@ -561,7 +666,7 @@
     .product-item {
         display: flex;
         flex-direction: column;
-        margin-bottom: 30px;
+        /* margin-bottom: 30px; */
         height: 100%;
     }
     
@@ -571,11 +676,11 @@
         flex-direction: column;
     }
 
-    @media (max-width: 767px) {
+    /* @media (max-width: 767px) {
         .product-item {
             margin-bottom: 15px;
         }
-    }
+    } */
 
     .product-item.hidden {
         display: none;
@@ -630,7 +735,7 @@
 
         .product-price {
             font-size: 14px;
-            margin-bottom: 0 !important;
+            margin-bottom: 12px !important;
         }
     }
 
@@ -643,9 +748,111 @@
             opacity: 1;
             transform: translateY(0);
         }
-        to {
-            opacity: 1;
-            transform: translateY(0);
+    }
+
+    /* Mobile Filter Modal Styles */
+    #filterModal {
+        z-index: 9999 !important;
+    }
+
+    #filterModal .modal-dialog {
+        margin: 0;
+        max-width: 100%;
+        height: 100vh;
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+    }
+
+    #filterModal .modal-content {
+        height: 100vh;
+        border-radius: 0;
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+        border: none;
+    }
+
+    #filterModal .modal-header {
+        flex-shrink: 0;
+        z-index: 1;
+        background: #fff;
+        border-bottom: 2px solid #e0d5f0;
+        padding: 15px 20px;
+    }
+
+    #filterModal .modal-header .modal-title {
+        color: #333;
+        font-weight: 600;
+    }
+
+    #filterModal .modal-header .modal-title i {
+        color: #490D59;
+    }
+
+    #filterModal .modal-body {
+        flex: 1;
+        overflow-y: auto;
+        -webkit-overflow-scrolling: touch;
+        padding: 20px;
+    }
+
+    #filterModal .modal-footer {
+        flex-shrink: 0;
+        z-index: 1;
+        background: #fff;
+        border-top: 2px solid #e0d5f0;
+        padding: 15px 20px;
+        display: flex;
+        gap: 10px;
+    }
+
+    #filterModal .modal-footer .btn {
+        flex: 1;
+        padding: 12px;
+        border-radius: 8px;
+        font-weight: 600;
+    }
+
+    #filterModal .modal-footer .btn-secondary {
+        border: 1px solid #ddd;
+        background: #fff;
+        color: #333;
+    }
+
+    #filterModal .modal-footer .btn-primary {
+        background: #490D59;
+        border: none;
+        color: white;
+    }
+
+    /* Modal backdrop */
+    .modal-backdrop {
+        z-index: 9998 !important;
+        background-color: rgba(0, 0, 0, 0.5);
+    }
+
+    /* Ensure modal is above everything */
+    .modal.show {
+        display: block !important;
+    }
+
+    /* Prevent body scroll when modal is open */
+    body.modal-open {
+        overflow: hidden !important;
+        padding-right: 0 !important;
+    }
+
+    /* Ensure modal is above header and other elements */
+    @media (max-width: 991px) {
+        #filterModal {
+            position: fixed !important;
+            top: 0 !important;
+            left: 0 !important;
+            right: 0 !important;
+            bottom: 0 !important;
         }
     }
 
@@ -784,34 +991,45 @@ document.addEventListener('DOMContentLoaded', function() {
     const searchInput = document.getElementById('productSearch');
     const clearSearchBtn = document.getElementById('clearSearch');
 
-    function filterProducts() {
-        const selectedTypes = Array.from(productTypeCheckboxes)
-            .filter(cb => cb.checked)
-            .map(cb => cb.value);
-        
-        const selectedCategories = Array.from(categoryCheckboxes)
-            .filter(cb => cb.checked)
-            .map(cb => cb.value);
+    // Mobile filter elements
+    const productTypeCheckboxesMobile = document.querySelectorAll('input[name="product_type_mobile"]');
+    const categoryCheckboxesMobile = document.querySelectorAll('input[name="category_mobile"]');
+    const searchInputMobile = document.getElementById('productSearchMobile');
+    const clearSearchBtnMobile = document.getElementById('clearSearchMobile');
+    const applyFiltersBtnMobile = document.getElementById('applyFiltersMobile');
+    const filterModal = document.getElementById('filterModal');
 
-        const selectedGenders = Array.from(genderCheckboxes)
-            .filter(cb => cb.checked)
-            .map(cb => cb.value);
-        
-        const searchTerm = searchInput.value.toLowerCase().trim();
+    // Check if mobile view
+    const isMobile = window.innerWidth < 992;
 
-        // Get all checkboxes to check if any are checked
-        const allTypeCheckboxes = Array.from(productTypeCheckboxes);
-        const allCategoryCheckboxes = Array.from(categoryCheckboxes);
-        const allGenderCheckboxes = Array.from(genderCheckboxes);
-        const hasAnyTypeChecked = allTypeCheckboxes.some(cb => cb.checked);
-        const hasAnyCategoryChecked = allCategoryCheckboxes.some(cb => cb.checked);
-        const hasAnyGenderChecked = allGenderCheckboxes.some(cb => cb.checked);
+    function filterProducts(useMobileFilters = false) {
+        let selectedTypes, selectedCategories, selectedGenders, searchTerm, hasAnyTypeChecked, hasAnyCategoryChecked, hasAnyGenderChecked;
+
+        if (useMobileFilters && isMobile) {
+            // Use mobile filter values
+            selectedTypes = Array.from(productTypeCheckboxesMobile).filter(cb => cb.checked).map(cb => cb.value);
+            selectedCategories = Array.from(categoryCheckboxesMobile).filter(cb => cb.checked).map(cb => cb.value);
+            selectedGenders = []; // No gender filter in mobile modal for now
+            searchTerm = searchInputMobile ? searchInputMobile.value.toLowerCase().trim() : '';
+            hasAnyTypeChecked = productTypeCheckboxesMobile.length ? Array.from(productTypeCheckboxesMobile).some(cb => cb.checked) : false;
+            hasAnyCategoryChecked = categoryCheckboxesMobile.length ? Array.from(categoryCheckboxesMobile).some(cb => cb.checked) : false;
+            hasAnyGenderChecked = false;
+        } else {
+            // Use desktop filter values
+            selectedTypes = Array.from(productTypeCheckboxes).filter(cb => cb.checked).map(cb => cb.value);
+            selectedCategories = Array.from(categoryCheckboxes).filter(cb => cb.checked).map(cb => cb.value);
+            selectedGenders = Array.from(genderCheckboxes).filter(cb => cb.checked).map(cb => cb.value);
+            searchTerm = searchInput.value.toLowerCase().trim();
+            hasAnyTypeChecked = productTypeCheckboxes.length ? Array.from(productTypeCheckboxes).some(cb => cb.checked) : false;
+            hasAnyCategoryChecked = categoryCheckboxes.length ? Array.from(categoryCheckboxes).some(cb => cb.checked) : false;
+            hasAnyGenderChecked = genderCheckboxes.length ? Array.from(genderCheckboxes).some(cb => cb.checked) : false;
+        }
 
         productItems.forEach(item => {
-            const productType = item.getAttribute('data-product-type');
-            const productName = item.getAttribute('data-product-name') || '';
-            const productCategory = item.getAttribute('data-product-category') || 'regular_uniforms';
-            const productGender = item.getAttribute('data-product-gender') || 'unisex';
+            const productType = (item.getAttribute('data-product-type') || '').toLowerCase();
+            const productName = (item.getAttribute('data-product-name') || '').toLowerCase();
+            const productCategory = (item.getAttribute('data-product-category') || 'regular_uniforms').toLowerCase();
+            const productGender = (item.getAttribute('data-product-gender') || 'unisex').toLowerCase();
 
             let show = true;
 
@@ -819,7 +1037,24 @@ document.addEventListener('DOMContentLoaded', function() {
             // If any type checkbox is checked, show only products matching selected types
             // If no type checkbox is checked, show all products (don't filter by type)
             if (hasAnyTypeChecked) {
-                if (!selectedTypes.includes(productType)) {
+                const matchesType = selectedTypes.some(type => {
+                    const typeLower = type.toLowerCase();
+                    // Handle different type formats
+                    if (typeLower === 'merchandised' && (productType.includes('merchandise') || productType === 'merchandised')) {
+                        return true;
+                    }
+                    if (typeLower === 'back_to_school' && (productType.includes('back') || productType.includes('school') || productType === 'back_to_school')) {
+                        return true;
+                    }
+                    if (typeLower === 'authorized' && (productType === 'authorized' || productType.includes('authorized'))) {
+                        return true;
+                    }
+                    if (typeLower === 'optional' && (productType === 'optional' || productType.includes('optional'))) {
+                        return true;
+                    }
+                    return productType === typeLower;
+                });
+                if (!matchesType) {
                     show = false;
                 }
             }
@@ -828,9 +1063,11 @@ document.addEventListener('DOMContentLoaded', function() {
             // If any category checkbox is checked, show only products matching selected categories
             // If no category checkbox is checked, show all products (don't filter by category)
             if (hasAnyCategoryChecked) {
-                // Case-insensitive comparison
-                const productCategoryLower = productCategory.toLowerCase();
-                const matchesCategory = selectedCategories.some(cat => cat.toLowerCase() === productCategoryLower);
+                const matchesCategory = selectedCategories.some(cat => {
+                    const catLower = cat.toLowerCase();
+                    // Try exact match first, then partial match
+                    return productCategory === catLower || productCategory.includes(catLower) || catLower.includes(productCategory);
+                });
                 if (!matchesCategory) {
                     show = false;
                 }
@@ -838,78 +1075,150 @@ document.addEventListener('DOMContentLoaded', function() {
 
             // Filter by gender (multi-select)
             if (hasAnyGenderChecked) {
-                if (!selectedGenders.includes(productGender)) {
+                const matchesGender = selectedGenders.some(gender => {
+                    const genderLower = gender.toLowerCase();
+                    return productGender === genderLower;
+                });
+                if (!matchesGender) {
                     show = false;
                 }
             }
 
             // Filter by search term
-            if (searchTerm && !productName.toLowerCase().includes(searchTerm)) {
+            if (searchTerm && !productName.includes(searchTerm)) {
                 show = false;
             }
 
             // Show or hide the product
             if (show) {
+                item.style.display = '';
                 item.classList.remove('hidden');
             } else {
+                item.style.display = 'none';
                 item.classList.add('hidden');
             }
         });
     }
 
-    // Event listeners
-    productTypeCheckboxes.forEach(checkbox => {
-        checkbox.addEventListener('change', filterProducts);
-    });
+    // Desktop: Apply filters immediately
+    if (!isMobile) {
+        productTypeCheckboxes.forEach(checkbox => {
+            checkbox.addEventListener('change', () => filterProducts(false));
+        });
 
-    categoryCheckboxes.forEach(checkbox => {
-        checkbox.addEventListener('change', filterProducts);
-    });
+        categoryCheckboxes.forEach(checkbox => {
+            checkbox.addEventListener('change', () => filterProducts(false));
+        });
 
-    genderCheckboxes.forEach(checkbox => {
-        checkbox.addEventListener('change', filterProducts);
-    });
+        genderCheckboxes.forEach(checkbox => {
+            checkbox.addEventListener('change', () => filterProducts(false));
+        });
 
-    // Initial filter run
-    filterProducts();
-
-    searchInput.addEventListener('input', function() {
-        if (this.value.trim()) {
-            clearSearchBtn.style.display = 'block';
-        } else {
-            clearSearchBtn.style.display = 'none';
-        }
-        filterProducts();
-    });
-
-    clearSearchBtn.addEventListener('click', function() {
-        searchInput.value = '';
-        this.style.display = 'none';
-        filterProducts();
-    });
-
-    const filterSidebar = document.getElementById('filterSidebar');
-    const toggleFiltersBtn = document.getElementById('toggleFilters');
-
-    if (toggleFiltersBtn && filterSidebar) {
-        toggleFiltersBtn.addEventListener('click', function() {
-            filterSidebar.classList.toggle('active');
-            this.classList.toggle('active-filter-btn');
-            
-            const label = this.querySelector('span');
-            
-            if (filterSidebar.classList.contains('active')) {
-                label.textContent = 'Close';
-                // Remove inline styles as class handles it
-                this.style.backgroundColor = '';
-                this.style.color = '';
+        searchInput.addEventListener('input', function() {
+            if (this.value.trim()) {
+                clearSearchBtn.style.display = 'block';
             } else {
-                label.textContent = 'Filter';
-                this.style.backgroundColor = '';
-                this.style.color = '';
+                clearSearchBtn.style.display = 'none';
             }
+            filterProducts(false);
+        });
+
+        clearSearchBtn.addEventListener('click', function() {
+            searchInput.value = '';
+            this.style.display = 'none';
+            filterProducts(false);
         });
     }
+
+    // Mobile: Sync desktop filters to mobile when modal opens
+    if (isMobile && filterModal) {
+        filterModal.addEventListener('show.bs.modal', function() {
+            // Sync desktop filter values to mobile filters
+            productTypeCheckboxes.forEach((desktopCb) => {
+                const matchingMobile = Array.from(productTypeCheckboxesMobile).find(mc => mc.value === desktopCb.value);
+                if (matchingMobile) {
+                    matchingMobile.checked = desktopCb.checked;
+                    // Trigger change event to update visual state
+                    matchingMobile.dispatchEvent(new Event('change'));
+                }
+            });
+            categoryCheckboxes.forEach((desktopCb) => {
+                const matchingMobile = Array.from(categoryCheckboxesMobile).find(mc => mc.value === desktopCb.value);
+                if (matchingMobile) {
+                    matchingMobile.checked = desktopCb.checked;
+                    // Trigger change event to update visual state
+                    matchingMobile.dispatchEvent(new Event('change'));
+                }
+            });
+            if (searchInput && searchInputMobile) {
+                searchInputMobile.value = searchInput.value;
+                clearSearchBtnMobile.style.display = searchInputMobile.value.trim() ? 'block' : 'none';
+            }
+        });
+        
+        // Also ensure all checkboxes are checked on initial load
+        filterModal.addEventListener('shown.bs.modal', function() {
+            // Force update visual state of all checkboxes
+            productTypeCheckboxesMobile.forEach(cb => {
+                if (cb.checked) {
+                    cb.dispatchEvent(new Event('change'));
+                }
+            });
+            categoryCheckboxesMobile.forEach(cb => {
+                if (cb.checked) {
+                    cb.dispatchEvent(new Event('change'));
+                }
+            });
+        });
+    }
+
+    // Mobile: Apply filters only when Apply button is clicked
+    if (isMobile && applyFiltersBtnMobile) {
+        applyFiltersBtnMobile.addEventListener('click', function() {
+            // Sync mobile filter values to desktop filters
+            productTypeCheckboxesMobile.forEach((mobileCb) => {
+                const matchingDesktop = Array.from(productTypeCheckboxes).find(dc => dc.value === mobileCb.value);
+                if (matchingDesktop) {
+                    matchingDesktop.checked = mobileCb.checked;
+                }
+            });
+            categoryCheckboxesMobile.forEach((mobileCb) => {
+                const matchingDesktop = Array.from(categoryCheckboxes).find(dc => dc.value === mobileCb.value);
+                if (matchingDesktop) {
+                    matchingDesktop.checked = mobileCb.checked;
+                }
+            });
+            if (searchInput && searchInputMobile) {
+                searchInput.value = searchInputMobile.value;
+            }
+
+            // Apply filters
+            filterProducts(true);
+
+            // Close modal
+            if (filterModal) {
+                const bsModal = bootstrap.Modal.getInstance(filterModal);
+                if (bsModal) {
+                    bsModal.hide();
+                }
+            }
+        });
+
+        // Mobile search clear button
+        if (searchInputMobile && clearSearchBtnMobile) {
+            searchInputMobile.addEventListener('input', function() {
+                clearSearchBtnMobile.style.display = this.value.trim() ? 'block' : 'none';
+            });
+
+            clearSearchBtnMobile.addEventListener('click', function() {
+                searchInputMobile.value = '';
+                this.style.display = 'none';
+            });
+        }
+    }
+
+    // Initialize filters
+    filterProducts(false);
 
     // Make product cards clickable
     document.querySelectorAll('.product-card-clickable').forEach(card => {

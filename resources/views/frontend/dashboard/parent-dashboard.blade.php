@@ -132,29 +132,48 @@
                             </div>
                             
                             @if(isset($purchasedProducts) && count($purchasedProducts) > 0)
-                                <div class="row g-3">
-                                    @foreach(array_slice($purchasedProducts, 0, 4) as $product)
-                                        <div class="col-md-6">
-                                            <div class="card border" style="border-radius: 8px;">
-                                                <div class="card-body p-3">
-                                                    <div class="d-flex gap-3">
-                                                        <div class="flex-shrink-0">
-                                                            @if(isset($product['image']) && $product['image'])
-                                                                <img src="{{ $product['image'] }}" alt="{{ $product['name'] }}" style="width: 80px; height: 80px; object-fit: cover; border-radius: 6px;">
-                                                            @else
-                                                                <div class="bg-light rounded d-flex align-items-center justify-content-center" style="width: 80px; height: 80px;">
-                                                                    <i class="fas fa-image text-muted"></i>
-                                                                </div>
-                                                            @endif
+                                <div class="purchased-products-list">
+                                    @foreach($purchasedProducts as $product)
+                                        <a href="{{ route('frontend.shop.detail', $product['id']) }}" class="card shadow-sm border-0 mb-3 position-relative text-decoration-none purchased-product-card" style="border-radius: 12px; transition: all 0.3s; display: block;"
+                                            onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 6px 20px rgba(73, 13, 89, 0.15)'"
+                                            onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 2px 8px rgba(0,0,0,0.1)'">
+                                            <div class="card-body p-3">
+                                                <div class="row align-items-center">
+                                                    <!-- Product Image -->
+                                                    <div class="col-auto">
+                                                        @if(isset($product['image']) && $product['image'])
+                                                            <img src="{{ $product['image'] }}" alt="{{ $product['name'] }}" 
+                                                                style="width: 80px; height: 80px; object-fit: cover; border-radius: 8px; border: 1px solid #e0e0e0;"
+                                                                onerror="this.onerror=null; this.src='{{ asset('assets/img/no image/no_image.png') }}';">
+                                                        @else
+                                                            <div class="bg-light rounded d-flex align-items-center justify-content-center" 
+                                                                style="width: 80px; height: 80px; border: 1px solid #e0e0e0;">
+                                                                <i class="fas fa-image text-muted fa-2x"></i>
+                                                            </div>
+                                                        @endif
+                                                    </div>
+
+                                                    <!-- Product Details -->
+                                                    <div class="col">
+                                                        <!-- Product Name -->
+                                                        <h6 class="mb-2" style="font-weight: 600; color: #333; font-size: 1rem;">
+                                                            {{ $product['name'] }}
+                                                        </h6>
+
+                                                        <!-- Size and Quantity Display -->
+                                                        <div class="mb-2 position-relative" style="z-index: 2;">
+                                                            <span class="text-muted small me-3">Size: <strong>{{ $product['size'] ?? 'N/A' }}</strong></span>
+                                                            <span class="text-muted small">Qty: <strong>{{ $product['quantity'] ?? 1 }}</strong></span>
                                                         </div>
-                                                        <div class="flex-grow-1">
-                                                            <h6 class="mb-1" style="font-size: 0.95rem; font-weight: 600;">{{ $product['name'] }}</h6>
-                                                            <p class="text-muted mb-0 small" style="font-size: 0.85rem;">{{ Str::limit($product['description'] ?? '', 50) }}</p>
-                                                        </div>
+                                                    </div>
+
+                                                    <!-- Arrow Icon -->
+                                                    <div class="col-auto">
+                                                        <i class="fas fa-chevron-right" style="color: #999; font-size: 1.2rem;"></i>
                                                     </div>
                                                 </div>
                                             </div>
-                                        </div>
+                                        </a>
                                     @endforeach
                                 </div>
                             @else
@@ -963,7 +982,7 @@ document.addEventListener('DOMContentLoaded', function() {
         }
 
         .tab-content-inner .d-flex.justify-content-end.gap-2 {
-            justify-content: flex-end !important;
+            justify-content: space-between !important;
         }
     }
 
@@ -985,7 +1004,7 @@ document.addEventListener('DOMContentLoaded', function() {
             position: relative !important;
             top: 0 !important;
             right: 0 !important;
-            margin-bottom: 0px !important; /* Removed margin as requested */
+            margin-bottom: 8px !important; /* Added 8px margin for neat look */
             justify-content: flex-end !important; /* Align right */
             gap: 10px !important;
             width: 100%; /* Ensure container takes full width to allow right alignment */
@@ -1194,6 +1213,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
         .parent-dashboard-wrapper {
             padding-top: 10px !important; /* Reduced padding as requested */
+            padding-bottom: 8px !important; /* Added bottom padding for neat look */
         }
 
         .tab-navigation {
@@ -1215,6 +1235,24 @@ document.addEventListener('DOMContentLoaded', function() {
 
         .tab-content-container {
             padding: 15px !important;
+            margin-bottom: 8px !important; /* Added bottom margin for neat look */
+        }
+
+        .student-info-card.mb-4 {
+            margin-bottom: 8px !important; /* Override Bootstrap mb-4 with 8px for neat look */
+        }
+
+        .student-info-card {
+            margin-bottom: 8px !important; /* Added bottom margin for neat look */
+        }
+
+        /* Override Bootstrap mb-3 for Purchased Products section in mobile */
+        .tab-content-inner .mb-3 h5 {
+            margin-bottom: 8px !important;
+        }
+        
+        .tab-content-inner > .mb-3 {
+            margin-bottom: 8px !important; /* Override Bootstrap mb-3 with 8px */
         }
 
         .student-info-card .row {
@@ -1259,10 +1297,32 @@ document.addEventListener('DOMContentLoaded', function() {
             padding: 8px 12px !important;
             font-size: 12px;
         }
+
+        .parent-dashboard-wrapper {
+            padding-bottom: 8px !important; /* Added bottom padding for neat look */
+        }
+
+        .tab-content-container {
+            margin-bottom: 8px !important; /* Added bottom margin for neat look */
+        }
     }
     .btn-guest-continue:hover {
         color: #ffffff !important;
         background-color: #490D59 !important;
+    }
+
+    /* Purchased Products Cards */
+    .purchased-product-card {
+        cursor: pointer;
+    }
+
+    .purchased-product-card:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 4px 12px rgba(0,0,0,0.15) !important;
+    }
+
+    .purchased-product-card .card-body {
+        min-height: 100px;
     }
 </style>
 @endsection

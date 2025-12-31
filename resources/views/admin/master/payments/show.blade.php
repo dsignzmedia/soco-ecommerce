@@ -173,11 +173,11 @@
                     </div>
                     <div class="info-row">
                         <span class="info-label">Date</span>
-                        <span class="info-value">{{ $payment->created_at->format('d M Y') }}</span>
+                        <span class="info-value">{{ $payment->created_at->setTimezone('Asia/Kolkata')->format('d M Y') }}</span>
                     </div>
                     <div class="info-row">
                         <span class="info-label">Time</span>
-                        <span class="info-value">{{ $payment->created_at->format('h:i A') }}</span>
+                        <span class="info-value">{{ $payment->created_at->setTimezone('Asia/Kolkata')->format('h:i A') }}</span>
                     </div>
                 </div>
             </div>

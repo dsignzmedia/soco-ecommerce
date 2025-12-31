@@ -23,75 +23,78 @@
             <div class="vs-mobile-menu">
                 <ul>
                     <li class="menu-item-has-children">
-                        <a href="{{ route('frontend.index') }}" class="{{ request()->routeIs('frontend.index') || request()->path() == '/' ? 'active' : '' }}">Home</a>
+                        <a href="{{ route('frontend.index') }}" class="{{ request()->routeIs('frontend.index') || request()->path() == '/' ? 'active' : '' }}"><i class="fas fa-home me-2"></i>Home</a>
                     </li>
                     <li>
-                        <a href="{{ route('frontend.about-us') }}">About Us</a>
+                        <a href="{{ route('frontend.about-us') }}" class="{{ request()->routeIs('frontend.about-us') ? 'active' : '' }}"><i class="fas fa-info-circle me-2"></i>About Us</a>
                     </li>
                     <li>
-                        <a href="{{ route('frontend.services') }}">Services</a>
+                        <a href="{{ route('frontend.services') }}" class="{{ request()->routeIs('frontend.services') ? 'active' : '' }}"><i class="fas fa-handshake me-2"></i>Services</a>
                     </li>
                     <li class="menu-item-has-children">
-                        <a href="{{ route('frontend.faq') }}" class="{{ request()->routeIs('frontend.faq') ? 'active' : '' }}">FAQ</a>
+                        <a href="{{ route('frontend.faq') }}" class="{{ request()->routeIs('frontend.faq') ? 'active' : '' }}"><i class="fas fa-question-circle me-2"></i>FAQ</a>
+                    </li>
+                    <li>
+                        <a href="{{ route('frontend.contact') }}" class="{{ request()->routeIs('frontend.contact') ? 'active' : '' }}"><i class="fas fa-comments me-2"></i>Contact Us</a>
                     </li>
                     @auth
                         @if(Auth::user()->isMasterAdmin())
-                            <li><a href="{{ route('master.admin.dashboard') }}">Dashboard</a></li>
-                            <li><a href="{{ route('master.admin.profile') }}">Profile</a></li>
+                            <li><a href="{{ route('master.admin.dashboard') }}"><i class="fas fa-tachometer-alt me-2"></i>Dashboard</a></li>
+                            <li><a href="{{ route('master.admin.profile') }}"><i class="fas fa-user-circle me-2"></i>Profile</a></li>
                             <li>
                                 <form action="{{ route('master.admin.logout') }}" method="POST">
                                     @csrf
-                                    <button type="submit" style="background: none; border: none; padding: 12px 0; font-size: 16px; font-weight: 700; color: var(--title-color); width: 100%; text-align: left;">Logout</button>
+                                    <button type="submit" class="mobile-logout-btn"><i class="fas fa-sign-out-alt me-2"></i>Logout</button>
                                 </form>
                             </li>
                         @elseif(Auth::user()->isInventoryAdmin())
-                            <li><a href="{{ route('inventory.admin.dashboard') }}">Dashboard</a></li>
-                            <li><a href="{{ route('inventory.admin.profile') }}">Profile</a></li>
+                            <li><a href="{{ route('inventory.admin.dashboard') }}"><i class="fas fa-tachometer-alt me-2"></i>Dashboard</a></li>
+                            <li><a href="{{ route('inventory.admin.profile') }}"><i class="fas fa-user-circle me-2"></i>Profile</a></li>
                             <li>
                                 <form action="{{ route('inventory.admin.logout') }}" method="POST">
                                     @csrf
-                                    <button type="submit" style="background: none; border: none; padding: 12px 0; font-size: 16px; font-weight: 700; color: var(--title-color); width: 100%; text-align: left;">Logout</button>
+                                    <button type="submit" class="mobile-logout-btn"><i class="fas fa-sign-out-alt me-2"></i>Logout</button>
                                 </form>
                             </li>
                         @elseif(Auth::user()->isBackToSchoolAdmin())
-                             <li><a href="{{ route('admin.back_to_school.dashboard') }}">Dashboard</a></li>
+                             <li><a href="{{ route('admin.back_to_school.dashboard') }}"><i class="fas fa-tachometer-alt me-2"></i>Dashboard</a></li>
                              <li>
                                 <form action="{{ route('store.admin.logout') }}" method="POST">
                                     @csrf
-                                    <button type="submit" style="background: none; border: none; padding: 12px 0; font-size: 16px; font-weight: 700; color: var(--title-color); width: 100%; text-align: left;">Logout</button>
+                                    <button type="submit" class="mobile-logout-btn"><i class="fas fa-sign-out-alt me-2"></i>Logout</button>
                                 </form>
                             </li>
                         @elseif(Auth::user()->isMerchandiseAdmin())
-                             <li><a href="{{ route('admin.merchandise.dashboard') }}">Dashboard</a></li>
+                             <li><a href="{{ route('admin.merchandise.dashboard') }}"><i class="fas fa-tachometer-alt me-2"></i>Dashboard</a></li>
                              <li>
                                 <form action="{{ route('store.admin.logout') }}" method="POST">
                                     @csrf
-                                    <button type="submit" style="background: none; border: none; padding: 12px 0; font-size: 16px; font-weight: 700; color: var(--title-color); width: 100%; text-align: left;">Logout</button>
+                                    <button type="submit" class="mobile-logout-btn"><i class="fas fa-sign-out-alt me-2"></i>Logout</button>
                                 </form>
                             </li>
                         @elseif(Auth::user()->isSchool())
-                             <li><a href="{{ route('frontend.school.dashboard') }}">Dashboard</a></li>
+                             <li><a href="{{ route('frontend.school.dashboard') }}"><i class="fas fa-tachometer-alt me-2"></i>Dashboard</a></li>
                              <li>
                                 <form action="{{ route('frontend.school.logout') }}" method="POST">
                                     @csrf
-                                    <button type="submit" style="background: none; border: none; padding: 12px 0; font-size: 16px; font-weight: 700; color: var(--title-color); width: 100%; text-align: left;">Logout</button>
+                                    <button type="submit" class="mobile-logout-btn"><i class="fas fa-sign-out-alt me-2"></i>Logout</button>
                                 </form>
                             </li>
                         @else
-                            <li><a href="{{ route('frontend.parent.dashboard') }}">Dashboard</a></li>
-                            <li><a href="{{ route('frontend.parent.profile') }}">Profile</a></li>
-                            <li><a href="{{ route('frontend.parent.orders') }}">My Orders</a></li>
-                            <li><a href="{{ route('frontend.parent.cart') }}">Cart</a></li>
+                            <li><a href="{{ route('frontend.parent.dashboard') }}"><i class="fas fa-tachometer-alt me-2"></i>Dashboard</a></li>
+                            <li><a href="{{ route('frontend.parent.profile') }}"><i class="fas fa-user-circle me-2"></i>Profile</a></li>
+                            <li><a href="{{ route('frontend.parent.orders') }}"><i class="fas fa-shopping-bag me-2"></i>My Orders</a></li>
+                            <li><a href="{{ route('frontend.parent.cart') }}"><i class="fas fa-shopping-cart me-2"></i>Cart</a></li>
                             <li>
                                 <form action="{{ route('logout') }}" method="POST">
                                     @csrf
-                                    <button type="submit" style="background: none; border: none; padding: 12px 0; font-size: 16px; font-weight: 700; color: var(--title-color); width: 100%; text-align: left;">Logout</button>
+                                    <button type="submit" class="mobile-logout-btn"><i class="fas fa-sign-out-alt me-2"></i>Logout</button>
                                 </form>
                             </li>
                         @endif
                     @else
                         <li>
-                            <a href="{{ route('login') }}">Login</a>
+                            <a href="{{ route('login') }}"><i class="fas fa-sign-in-alt me-2"></i>Login</a>
                         </li>
                     @endauth
                 </ul>
@@ -152,21 +155,19 @@
                             <nav class="main-menu menu-style5 d-none d-lg-block">
                                 <ul>
                                     <li class="menu-item-has-children">
-                                        <a href="{{ route('frontend.index') }}">Home</a>
+                                        <a href="{{ route('frontend.index') }}" class="{{ request()->routeIs('frontend.index') || request()->path() == '/' ? 'active' : '' }}">Home</a>
                                     </li>
                                     <li>
-                                        <a href="{{ route('frontend.about-us') }}">About Us</a>
+                                        <a href="{{ route('frontend.about-us') }}" class="{{ request()->routeIs('frontend.about-us') ? 'active' : '' }}">About Us</a>
                                     </li>
                                     <li>
-                                        <a href="{{ route('frontend.services') }}">Services</a>
-                                    </li>
-
+                                        <a href="{{ route('frontend.services') }}" class="{{ request()->routeIs('frontend.services') ? 'active' : '' }}">Services</a>
                                     </li>
                                     <li class="menu-item-has-children">
-                                        <a href="{{ route('frontend.faq') }}">FAQ</a>
+                                        <a href="{{ route('frontend.faq') }}" class="{{ request()->routeIs('frontend.faq') ? 'active' : '' }}">FAQ</a>
                                     </li>
                                     <li class="menu-item-has-children mega-menu-wrap">
-                                        <a href="{{ route('frontend.contact') }}">Contact Us</a>
+                                        <a href="{{ route('frontend.contact') }}" class="{{ request()->routeIs('frontend.contact') ? 'active' : '' }}">Contact Us</a>
                                     </li>
                                 </ul>
                             </nav>
@@ -275,6 +276,37 @@
 
 
     <style>
+        /* Mobile Logout Button Styling */
+        .mobile-logout-btn {
+            background: #dc3545 !important;
+            border: none !important;
+            padding: 12px 20px !important;
+            font-size: 16px !important;
+            font-weight: 700 !important;
+            color: #ffffff !important;
+            width: 100% !important;
+            text-align: center !important;
+            border-radius: 8px !important;
+            cursor: pointer !important;
+            transition: background-color 0.3s ease !important;
+            margin-top: 10px !important;
+            display: flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+        }
+        
+        .mobile-logout-btn i {
+            margin-right: 8px !important;
+        }
+        
+        .mobile-logout-btn:hover {
+            background: #c82333 !important;
+        }
+        
+        .mobile-logout-btn:active {
+            background: #bd2130 !important;
+        }
+        
         /* Header padding adjustments - more specific selectors */
             .vs-header .header-top .row.top-pad {
                 padding-left: 60px !important;
@@ -464,7 +496,25 @@
                 margin: 0 auto -40.5px auto !important;
             }
         }
-      
+
+        /* Remove all arrows from mobile menu items */
+        .vs-mobile-menu ul li a:before,
+        .vs-mobile-menu ul li a:after,
+        .vs-mobile-menu ul li.menu-item-has-children a:before,
+        .vs-mobile-menu ul li.menu-item-has-children a:after,
+        .vs-mobile-menu ul li.vs-active a:before,
+        .vs-mobile-menu ul li.vs-active a:after {
+            content: "" !important;
+            display: none !important;
+            visibility: hidden !important;
+            opacity: 0 !important;
+            width: 0 !important;
+            height: 0 !important;
+            margin: 0 !important;
+            padding: 0 !important;
+            font-size: 0 !important;
+            line-height: 0 !important;
+        }
 
     </style>
 

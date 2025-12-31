@@ -244,8 +244,8 @@
                             @endif
                         </td>
                         <td>
-                            <div style="color:#111827;">{{ $payment->created_at->format('d M Y') }}</div>
-                            <small>{{ $payment->created_at->format('h:i A') }}</small>
+                            <div style="color:#111827;">{{ $payment->created_at->setTimezone('Asia/Kolkata')->format('d M Y') }}</div>
+                            <small>{{ $payment->created_at->setTimezone('Asia/Kolkata')->format('h:i A') }}</small>
                         </td>
                         <td style="text-align:right;">
                             <a href="{{ route($routePrefix . '.payments.show', $payment->id) }}" class="btn-vs-sm" title="View Details">

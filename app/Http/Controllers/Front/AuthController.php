@@ -1148,49 +1148,76 @@ class AuthController extends Controller
             $selectedProfile = $profiles->firstWhere('id', (int)$selectedStudentId);
         }
 
-        // Get purchased products for selected student from actual orders
+        // Get purchased products for selected student from actual orders in database
         $purchasedProducts = [];
         if ($selectedProfile) {
-            // Get all orders from session
-            $orders = session('orders', []);
+            // Query orders from database for this user and student
+            $orders = \App\Models\Admin\Master\Order::where('user_id', $user->id)
+                ->where('student_name', $selectedProfile->student_name)
+                ->orderBy('created_at', 'desc')
+                ->get();
 
-            // Load all products using the same logic as store page
-            $folderProducts = $this->loadProductsFromFolder($selectedProfile->school_name);
-            $additionalProducts = $this->getAdditionalProducts();
-            $allProductsList = array_merge($folderProducts, $additionalProducts);
+            // Track unique products to avoid duplicates
+            $productMap = [];
 
-            // Create a map by product ID
-            $allProducts = [];
-            foreach ($allProductsList as $product) {
-                $allProducts[$product['id']] = $product;
-            }
-
-            // Collect all products from orders for this student profile
             foreach ($orders as $order) {
-                // Check if order belongs to this student (check items in order)
-                foreach ($order['items'] as $item) {
-                    if (isset($item['profile_id']) && (int)$item['profile_id'] === (int)$selectedProfile->id) {
-                        // Get product details
-                        if (isset($allProducts[$item['product_id']])) {
-                            $product = $allProducts[$item['product_id']];
-                            // Add to purchased products if not already added
-                            $exists = false;
-                            foreach ($purchasedProducts as $existingProduct) {
-                                if ($existingProduct['id'] === $product['id']) {
-                                    $exists = true;
-                                    break;
-                                }
-                            }
-                            if (!$exists) {
-                                $purchasedProducts[] = array_merge($product, [
-                                    'quantity' => $item['quantity'],
-                                    'purchased_date' => $order['created_at'],
-                                ]);
-                            }
+                // Get product details from ProductMapping
+                $product = \App\Models\Admin\Master\ProductMapping::where('product_name', $order->item_name)
+                    ->where('school_id', $order->school_id)
+                    ->first();
+
+                if (!$product) {
+                    // Fallback: try matching just by name
+                    $product = \App\Models\Admin\Master\ProductMapping::where('product_name', $order->item_name)->first();
+                }
+
+                if ($product) {
+                    // Use product ID as key to avoid duplicates
+                    $productKey = $product->id . '_' . ($order->size ?? 'default');
+                    
+                    if (!isset($productMap[$productKey])) {
+                        // Get product image
+                        $productImage = null;
+                        if ($product->featured_image) {
+                            $productImage = \Illuminate\Support\Str::startsWith($product->featured_image, 'http') 
+                                ? $product->featured_image 
+                                : asset('storage/' . $product->featured_image);
+                        } elseif ($product->media_images && is_array($product->media_images) && !empty($product->media_images)) {
+                            $firstImage = $product->media_images[0];
+                            $productImage = \Illuminate\Support\Str::startsWith($firstImage, 'http') 
+                                ? $firstImage 
+                                : asset('storage/' . $firstImage);
+                        } elseif ($product->media_gallery && is_array($product->media_gallery) && !empty($product->media_gallery)) {
+                            $firstImage = $product->media_gallery[0];
+                            $productImage = \Illuminate\Support\Str::startsWith($firstImage, 'http') 
+                                ? $firstImage 
+                                : asset('storage/' . $firstImage);
+                        }
+
+                        // Add to purchased products
+                        $productMap[$productKey] = [
+                            'id' => $product->id,
+                            'name' => $product->product_name,
+                            'description' => $product->description ?? '',
+                            'image' => $productImage ?: asset('assets/img/no image/no_image.png'),
+                            'quantity' => $order->quantity,
+                            'size' => $order->size,
+                            'purchased_date' => $order->created_at->format('M d, Y'),
+                            'order_number' => $order->order_number,
+                            'price' => $order->total_amount,
+                        ];
+                    } else {
+                        // If product already exists, update quantity and keep latest order date
+                        $productMap[$productKey]['quantity'] += $order->quantity;
+                        if ($order->created_at > \Carbon\Carbon::parse($productMap[$productKey]['purchased_date'])) {
+                            $productMap[$productKey]['purchased_date'] = $order->created_at->format('M d, Y');
                         }
                     }
                 }
             }
+
+            // Convert map to array
+            $purchasedProducts = array_values($productMap);
         }
 
         // Get school logo and address for selected profile
@@ -2192,7 +2219,11 @@ class AuthController extends Controller
         }
 
         // Get categories dynamically from database (active categories only)
+        // But only show categories that have products in $allProducts
+        $allCategorySlugs = collect($allProducts)->pluck('category')->filter()->unique();
+        
         $categories = \App\Models\Admin\Master\Category::where('is_active', true)
+            ->whereIn('slug', $allCategorySlugs)
             ->orderBy('sort_order')
             ->orderBy('name')
             ->get();

@@ -998,13 +998,23 @@ textarea.is-invalid {
 }
 
 .vs-mobile-menu ul li a:before {
-  content: "\f105";
+  content: "" !important;
   font-family: var(--icon-font);
   position: relative;
   left: 0;
   top: 0;
-  margin-right: 10px;
-  display: inline-block;
+  margin-right: 0;
+  display: none !important;
+  visibility: hidden !important;
+  opacity: 0 !important;
+  width: 0 !important;
+  height: 0 !important;
+  overflow: hidden !important;
+}
+
+.vs-mobile-menu ul li a:after {
+  content: "" !important;
+  display: none !important;
 }
 
 .vs-mobile-menu ul li.vs-active>a {
@@ -1012,7 +1022,9 @@ textarea.is-invalid {
 }
 
 .vs-mobile-menu ul li.vs-active>a:before {
-  transform: rotate(90deg);
+  transform: none !important;
+  content: "" !important;
+  display: none !important;
 }
 
 .vs-mobile-menu ul li ul li {
@@ -3202,7 +3214,7 @@ a.text-theme:hover,
   border: none;
   font-size: 18px;
   font-weight: 400;
-  margin-bottom: 23px;
+  margin-bottom: 23px !important;
   max-width: 100%;
   padding: 0 0 0 20px;
   background-color: transparent;
@@ -3563,7 +3575,7 @@ a.text-theme:hover,
 }
 
 .main-menu ul.sub-menu li.menu-item-has-children>a:after {
-  content: "\f105";
+
   float: right;
   top: 3px;
 }
@@ -11215,10 +11227,7 @@ body.layout5 .slick-dots li.slick-active button {
   content: "\f107";
 }
 
-.accordion-style1.v2 .accordion-button:hover:before,
-.accordion-style1.v2 .accordion-button:before {
-  content: "\f105";
-}
+
 
 /* Medium Large devices */
 @media (max-width: 1399px) {
@@ -14236,7 +14245,7 @@ body.layout4 {
 .product-style1 .product-img img {
   width: 100%;
   height: 100%;
-  object-fit: contain;
+  object-fit: contain ;
   display: block;
 }
 
@@ -15018,9 +15027,6 @@ span.select2-selection.select2-selection--single:focus {
   margin-bottom: -3rem;
 }
 
-.mb-30 {
-  margin-bottom: 30px;
-}
 
 .mb-40 {
   margin-bottom: 40px;

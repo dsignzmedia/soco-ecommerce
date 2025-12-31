@@ -26,6 +26,7 @@ Route::get('/get-started', [HomeController::class, 'getStarted'])->name('fronten
 Route::get('/about-us', [HomeController::class, 'aboutUs'])->name('frontend.about-us');
 Route::get('/services', [HomeController::class, 'services'])->name('frontend.services');
 Route::get('/contact', [HomeController::class, 'contact'])->name('frontend.contact');
+Route::post('/contact', [App\Http\Controllers\Front\ContactController::class, 'store'])->name('frontend.contact.submit');
 Route::get('/faq', [HomeController::class, 'faq'])->name('frontend.faq');
 Route::get('/return-exchange', [HomeController::class, 'returnExchange'])->name('frontend.return-exchange');
 Route::get('/privacy-policy', [HomeController::class, 'privacyPolicy'])->name('frontend.privacy-policy');

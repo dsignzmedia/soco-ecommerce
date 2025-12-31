@@ -90,172 +90,7 @@ Shop by Category Area
        
        
     <style>
-        .simple-cat {
-            text-align: center;
-            margin-bottom: 20px;
-        }
-
-        /* Desktop and Tablet: enable horizontal scroll when content exceeds */
-        .category-marquee-wrapper {
-            overflow-x: hidden; /* Hide scrollbar but allow JavaScript transform */
-            overflow-y: hidden;
-            -webkit-overflow-scrolling: touch;
-        }
-        
-        /* Hide scrollbar completely */
-        .category-marquee-wrapper::-webkit-scrollbar {
-            display: none;
-        }
-        
-        .category-marquee-wrapper {
-            scrollbar-width: none; /* Firefox */
-            -ms-overflow-style: none; /* IE and Edge */
-        }
-
-        /* Hide content initially to prevent flash, show after JS determines layout */
-        .category-marquee-wrapper:not(.layout-ready) {
-            opacity: 0;
-            visibility: hidden;
-        }
-        
-        .category-marquee-wrapper.layout-ready {
-            opacity: 1;
-            visibility: visible;
-            transition: opacity 0.2s ease-in;
-        }
-        
-        /* Default: Center content to prevent flash (JS will change if content overflows) */
-        .category-marquee-wrapper .category_box_row {
-            justify-content: center !important;
-        }
-        
-        /* Override when content overflows */
-        .category-marquee-wrapper.content-overflows .category_box_row {
-            justify-content: flex-start !important; /* Align left when content overflows */
-        }
-        
-        /* When content fits screen - center it (explicit) */
-        .category-marquee-wrapper.content-fits-screen {
-            overflow-x: visible;
-        }
-        
-        .category-marquee-wrapper.content-fits-screen .category_box_row {
-            justify-content: center;
-            transform: none !important;
-            width: 100%;
-            padding-left: 20px;
-            padding-right: 20px;
-        }
-
-        /* When content overflows - enable scrolling and align left */
-        .category-marquee-wrapper.content-overflows {
-            overflow-x: hidden;
-            overflow-y: hidden;
-        }
-        
-        .category-marquee-wrapper.content-overflows .category_box_row {
-            justify-content: flex-start; /* Align left when content overflows */
-        }
-        
-        .category-marquee-wrapper.content-overflows::-webkit-scrollbar {
-            height: 6px;
-        }
-        
-        .category-marquee-wrapper.content-overflows::-webkit-scrollbar-track {
-            background: #f1f1f1;
-            border-radius: 10px;
-        }
-        
-        .category-marquee-wrapper.content-overflows::-webkit-scrollbar-thumb {
-            background: #490D59;
-            border-radius: 10px;
-        }
-
-        .category_box_row {
-            display: flex;
-            gap: 30px;
-            justify-content: center; /* Default to center, JS will change if content overflows */
-            padding-top: 60px;
-            padding-left: 20px;
-            padding-right: 20px;
-            flex-wrap: nowrap; /* Keep in single row */
-            width: max-content; /* Allow content to exceed container */
-            /* Ensure row can be scrolled natively when needed */
-            position: relative;
-<<<<<<< HEAD
-        }
-        
-        /* When content overflows, change to flex-start */
-        .category-marquee-wrapper.content-overflows .category_box_row {
-            justify-content: flex-start;
-=======
->>>>>>> 8da25f1e54eaa07215c57ed1e8f159850574279a
-        }
-        
-        /* When content overflows, change to flex-start */
-        .category-marquee-wrapper.content-overflows .category_box_row {
-            justify-content: flex-start;
-        }
-
-        /* Tablet/Medium screens: adjust layout */
-        @media (min-width: 769px) and (max-width: 1116px) {
-            .category_box_row {
-                gap: 20px;
-            }
-        }
-
-        .simple-box {
-            width: 160px;
-            height: 160px;
-            border-radius: 18px;
-            border: 2px solid #ccc;
-            overflow: hidden;
-            margin: 0 auto; /* Center in column */
-        }
-
-        .simple-box img {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-            transition: transform 0.4s ease;
-        }
-
-        .simple-box:hover img {
-            transform: scale(1.15);
-        }
-
-        .simple-title {
-            margin-top: 8px;
-            color: #333;
-        }
-
-        /* Mobile Responsiveness */
-        @media (max-width: 768px) {
-            .category-marquee-wrapper {
-                overflow-x: hidden;
-                width: 100%;
-            }
-
-            .category_box_row {
-                gap: 15px;
-                padding-top: 40px;
-                flex-wrap: nowrap;
-                justify-content: center; /* Default to center on mobile too */
-                padding-left: 0;
-                padding-right: 0;
-                /* animation: scroll 15s linear infinite; REMOVED */
-                width: max-content;
-                will-change: transform; 
-                display: flex;
-                align-items: flex-start;
-            }
-            
-            /* When content overflows on mobile, change to flex-start */
-            .category-marquee-wrapper.content-overflows .category_box_row {
-                justify-content: flex-start;
-            }
-            
-            /* Service Section Marquee */
+        /* Service Section Marquee */
             .service-marquee-wrapper {
                 overflow-x: auto;
                 width: 100%;
@@ -431,32 +266,12 @@ Shop by Category Area
 <!--==============================
 Featured Products Area
 ==============================-->
-<style>
-/* Critical CSS - prevents flash, loads before content */
-.category-marquee-wrapper:not(.layout-ready) {
-    opacity: 0 !important;
-    visibility: hidden !important;
-}
-.category-marquee-wrapper.layout-ready {
-    opacity: 1 !important;
-    visibility: visible !important;
-    transition: opacity 0.15s ease-in;
-}
-.category-marquee-wrapper .category_box_row {
-    justify-content: center !important;
-}
-.category-marquee-wrapper.content-overflows .category_box_row {
-    justify-content: flex-start !important;
-}
-</style>
 @if(isset($publicProducts) && $publicProducts->count() > 0)
-<section style="background-color:#ffffff;">
-    <div class="category-marquee-wrapper">
-        <div class="category_box_row" style="justify-content: center !important;">
-
+<section class="featured-products" style="background-color:#ffffff;">
+    <div class="fp-scroll">
+        <div class="fp-track">
             @foreach($publicProducts as $product)
-                <a href="{{ route('frontend.shop.detail', $product->id) }}" class="simple-cat">
-
+                <a href="{{ route('frontend.shop.detail', $product->id) }}" class="fp-card">
                     <div class="simple-box">
                         @if($product->featured_image)
                             <img 
@@ -473,17 +288,356 @@ Featured Products Area
                             >
                         @endif
                     </div>
-
                     <p class="sec-text simple-title">
                         {{ $product->product_name }}
                     </p>
-
                 </a>
             @endforeach
 
+            {{-- Duplicate once for seamless loop --}}
+            @foreach($publicProducts as $product)
+                <a href="{{ route('frontend.shop.detail', $product->id) }}" class="fp-card">
+                    <div class="simple-box">
+                        @if($product->featured_image)
+                            <img 
+                                src="{{ Str::startsWith($product->featured_image, 'http') 
+                                    ? $product->featured_image 
+                                    : asset('storage/' . $product->featured_image) }}" 
+                                alt="{{ $product->product_name }}"
+                                onerror="this.onerror=null; this.src='{{ asset('assets/img/no image/no_image.png') }}';"
+                            >
+                        @else
+                            <img 
+                                src="{{ asset('assets/img/no image/no_image.png') }}" 
+                                alt="{{ $product->product_name }}"
+                            >
+                        @endif
+                    </div>
+                    <p class="sec-text simple-title">
+                        {{ $product->product_name }}
+                    </p>
+                </a>
+            @endforeach
         </div>
     </div>
 </section>
+
+<style>
+/* Featured Products - Fresh Implementation */
+.featured-products {
+    background: #fff;
+    padding: 20px 0;
+}
+
+/* Scroll container */
+.fp-scroll {
+    overflow-x: auto;
+    overflow-y: hidden;
+    -webkit-overflow-scrolling: touch;
+    scroll-behavior: smooth;
+    width: 100%;
+    cursor: grab;
+}
+
+.fp-scroll:active {
+    cursor: grabbing;
+}
+
+/* Hide scrollbar */
+.fp-scroll::-webkit-scrollbar {
+    display: none;
+    width: 0;
+    height: 0;
+}
+
+.fp-scroll {
+    scrollbar-width: none; /* Firefox */
+    -ms-overflow-style: none; /* IE and Edge */
+}
+
+/* Moving track */
+.fp-track {
+    display: flex;
+    gap: 30px;
+    width: max-content;
+    padding-top: 60px;
+    padding-left: 20px;
+    padding-right: 20px;
+    flex-wrap: nowrap;
+}
+
+/* Cards */
+.fp-card {
+    flex: 0 0 auto;
+    width: 160px;
+    text-align: center;
+    text-decoration: none;
+    color: inherit;
+}
+
+.fp-card .simple-box {
+    width: 160px;
+    height: 160px;
+    border-radius: 18px;
+    border: 2px solid #ccc;
+    overflow: hidden;
+    margin: 0 auto;
+}
+
+.fp-card .simple-box img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.4s ease;
+}
+
+.fp-card:hover .simple-box img {
+    transform: scale(1.15);
+}
+
+.fp-card .simple-title {
+    margin-top: 8px;
+    color: #333;
+}
+
+/* Mobile Responsiveness */
+@media (max-width: 768px) {
+    .fp-track {
+        gap: 15px;
+        padding-top: 40px;
+        padding-left: 0;
+        padding-right: 0;
+    }
+    
+    .fp-card {
+        width: 140px;
+    }
+    
+    .fp-card .simple-box {
+        width: 100%;
+        height: 140px;
+    }
+}
+
+/* Tablet/Medium screens */
+@media (min-width: 769px) and (max-width: 1116px) {
+    .fp-track {
+        gap: 20px;
+    }
+}
+</style>
+
+<script>
+document.addEventListener("DOMContentLoaded", () => {
+    const scroller = document.querySelector(".fp-scroll");
+    if (!scroller) return;
+    
+    let isUserInteracting = false;
+    let rafId = null;
+    let lastScrollLeft = scroller.scrollLeft;
+    let lastScrollTime = Date.now();
+    let isAutoScrolling = false;
+    let resumeTimeout = null;
+    let autoScrollSpeed = 0.5;
+
+    function autoScroll() {
+        if (!isUserInteracting && scroller) {
+            const halfWidth = scroller.scrollWidth / 2;
+            
+            // Mark as auto-scrolling before changing scroll position
+            isAutoScrolling = true;
+            
+            // Increment scroll position
+            scroller.scrollLeft += autoScrollSpeed;
+            
+            // Seamless infinite loop: when reaching half of duplicated content, 
+            // subtract half width to continue from the beginning seamlessly
+            if (scroller.scrollLeft >= halfWidth) {
+                scroller.scrollLeft = scroller.scrollLeft - halfWidth;
+            }
+            
+            // Update last scroll position for auto-scroll
+            lastScrollLeft = scroller.scrollLeft;
+            
+            // Reset auto-scrolling flag after a short delay
+            setTimeout(() => {
+                isAutoScrolling = false;
+            }, 100);
+        }
+        rafId = requestAnimationFrame(autoScroll);
+    }
+
+    // Detect manual scrolling by tracking scroll position changes
+    scroller.addEventListener('scroll', () => {
+        const currentScrollLeft = scroller.scrollLeft;
+        const currentTime = Date.now();
+        const timeDelta = currentTime - lastScrollTime;
+        const scrollDelta = Math.abs(currentScrollLeft - lastScrollLeft);
+        
+        // If scroll position changed significantly and it's not from auto-scroll, it's user scrolling
+        if (scrollDelta > 2 && !isAutoScrolling) {
+            isUserInteracting = true;
+            
+            // Clear any existing resume timeout
+            if (resumeTimeout) {
+                clearTimeout(resumeTimeout);
+            }
+            
+            // Resume auto-scroll after user stops scrolling
+            resumeTimeout = setTimeout(() => {
+                isUserInteracting = false;
+            }, 800); // Resume after 800ms of no scrolling
+        }
+        
+        lastScrollLeft = currentScrollLeft;
+        lastScrollTime = currentTime;
+    }, { passive: true });
+
+    // Pause on direct interaction (touch/mouse drag)
+    ["touchstart", "mousedown"].forEach(evt => {
+        scroller.addEventListener(evt, () => {
+            isUserInteracting = true;
+            if (resumeTimeout) {
+                clearTimeout(resumeTimeout);
+            }
+        }, { passive: true });
+    });
+
+    // Resume after direct interaction ends
+    ["touchend", "mouseup"].forEach(evt => {
+        scroller.addEventListener(evt, () => {
+            resumeTimeout = setTimeout(() => {
+                isUserInteracting = false;
+            }, 300);
+        }, { passive: true });
+    });
+
+    // Handle mouse wheel scrolling (desktop) - convert vertical wheel to horizontal scroll
+    let wheelTimeout = null;
+    scroller.addEventListener('wheel', (e) => {
+        // Only handle if not a touch event (touch devices use native scrolling)
+        if (e.touches && e.touches.length > 0) return;
+        
+        // Prevent default vertical scrolling
+        e.preventDefault();
+        
+        // Convert vertical wheel delta to horizontal scroll
+        const deltaY = e.deltaY;
+        const deltaX = e.deltaX;
+        
+        // Use deltaX if available (horizontal scroll), otherwise use deltaY (vertical wheel)
+        const scrollAmount = deltaX !== 0 ? deltaX : deltaY;
+        
+        // Scroll horizontally with smooth behavior
+        scroller.scrollBy({
+            left: scrollAmount,
+            behavior: 'auto'
+        });
+        
+        isUserInteracting = true;
+        
+        // Clear any existing timeouts
+        if (resumeTimeout) {
+            clearTimeout(resumeTimeout);
+        }
+        if (wheelTimeout) {
+            clearTimeout(wheelTimeout);
+        }
+        
+        // Resume auto-scroll after wheel stops
+        wheelTimeout = setTimeout(() => {
+            resumeTimeout = setTimeout(() => {
+                isUserInteracting = false;
+            }, 500);
+        }, 100);
+    }, { passive: false });
+
+    // Handle mouse drag scrolling (desktop) - enable click and drag to scroll
+    let isDragging = false;
+    let startX = 0;
+    let scrollLeftStart = 0;
+    let lastMoveTime = 0;
+    
+    scroller.addEventListener('mousedown', (e) => {
+        // Only handle mouse events, not touch
+        if (e.touches && e.touches.length > 0) return;
+        
+        // Prevent default to avoid text selection
+        e.preventDefault();
+        
+        isDragging = true;
+        isUserInteracting = true;
+        startX = e.clientX; // Use clientX for more accurate position
+        scrollLeftStart = scroller.scrollLeft;
+        lastMoveTime = Date.now();
+        
+        scroller.style.cursor = 'grabbing';
+        scroller.style.userSelect = 'none';
+        scroller.style.scrollBehavior = 'auto'; // Disable smooth scroll during drag for instant response
+        
+        if (resumeTimeout) {
+            clearTimeout(resumeTimeout);
+        }
+    });
+
+    document.addEventListener('mousemove', (e) => {
+        if (!isDragging) return;
+        
+        e.preventDefault();
+        
+        const currentX = e.clientX;
+        const diffX = startX - currentX; // Invert so dragging right scrolls right
+        const newScrollLeft = scrollLeftStart + diffX;
+        
+        // Update scroll position immediately for smooth movement
+        scroller.scrollLeft = newScrollLeft;
+        
+        // Update start position for smoother continuous dragging
+        startX = currentX;
+        scrollLeftStart = scroller.scrollLeft;
+        
+        isUserInteracting = true;
+        lastMoveTime = Date.now();
+        
+        if (resumeTimeout) {
+            clearTimeout(resumeTimeout);
+        }
+    });
+
+    document.addEventListener('mouseup', (e) => {
+        if (isDragging) {
+            isDragging = false;
+            scroller.style.cursor = 'grab';
+            scroller.style.userSelect = '';
+            scroller.style.scrollBehavior = 'smooth'; // Re-enable smooth scroll
+            
+            resumeTimeout = setTimeout(() => {
+                isUserInteracting = false;
+            }, 500);
+        }
+    });
+
+    // Also handle mouse leave to stop dragging if cursor leaves the area
+    scroller.addEventListener('mouseleave', () => {
+        if (isDragging) {
+            isDragging = false;
+            scroller.style.cursor = 'grab';
+            scroller.style.userSelect = '';
+            scroller.style.scrollBehavior = 'smooth';
+            
+            resumeTimeout = setTimeout(() => {
+                isUserInteracting = false;
+            }, 500);
+        }
+    });
+
+    // Set initial cursor style
+    scroller.style.cursor = 'grab';
+
+    // Start auto-scroll immediately
+    autoScroll();
+});
+</script>
 @endif
 
 
@@ -586,70 +740,70 @@ Service Area
             data-md-slide-show="2" data-autoplay="true">
             <div class="service-style1 col-xl-3">
                 <div class="service-body">
-                    <div class="service-img"><a href="#"><img
+                    <div class="service-img"><a href="{{ route('frontend.about-us') }}"><img
                                 src="{{ asset('assets/img/indian_faces/service_1.png') }}" alt="service"></a></div>
                     <div class="service-content">
                         <div class="service-icon"><img src="{{ asset('assets/img/icon/sr-1-1.svg') }}" alt="icon"></div>
-                        <h3 class="service-title"><a href="#">Comfort & Care</a></h3>
+                        <h3 class="service-title"><a href="{{ route('frontend.about-us') }}">Comfort & Care</a></h3>
                         <p class="service-text">Soft, skin-friendly fabrics designed for all-day comfort, ensuring durability, easy care, and lasting freshness.</p>
                         <div class="service-bottom">
-                            <a href="#" class="service-btn">Learn More</a>
+                            <a href="{{ route('frontend.about-us') }}" class="service-btn">Learn More</a>
                         </div>
                     </div>
                 </div>
             </div>
             <div class="service-style1 col-xl-3">
                 <div class="service-body">
-                    <div class="service-img"><a href="#"><img
+                    <div class="service-img"><a href="{{ route('frontend.about-us') }}"><img
                                 src="{{ asset('assets/img/indian_faces/service_5.png') }}" alt="service"></a></div>
                     <div class="service-content">
                         <div class="service-icon"><img src="{{ asset('assets/img/icon/sr-1-2.svg') }}" alt="icon"></div>
-                        <h3 class="service-title"><a href="#">On Time Delivery</a></h3>
+                        <h3 class="service-title"><a href="{{ route('frontend.about-us') }}">On Time Delivery</a></h3>
                         <p class="service-text">Reliable, punctual delivery—your school essentials arrive exactly when you need them</p>
                         <div class="service-bottom">
-                            <a href="#" class="service-btn">Learn More</a>
+                            <a href="{{ route('frontend.about-us') }}" class="service-btn">Learn More</a>
                         </div>
                     </div>
                 </div>
             </div>
             <div class="service-style1 col-xl-3">
                 <div class="service-body">
-                    <div class="service-img"><a href="#"><img
+                    <div class="service-img"><a href="{{ route('frontend.about-us') }}"><img
                                 src="{{ asset('assets/img/services/service (2).svg') }}" alt="service"></a></div>
                     <div class="service-content">
                         <div class="service-icon"><img src="{{ asset('assets/img/icon/sr-1-3.svg') }}" alt="icon"></div>
-                        <h3 class="service-title"><a href="#">Student Delight</a></h3>
+                        <h3 class="service-title"><a href="{{ route('frontend.about-us') }}">Student Delight</a></h3>
                         <p class="service-text">Designed to make every student feel confident and happy.creating a delightful experience from classroom to playground.</p>
                         <div class="service-bottom">
-                            <a href="#" class="service-btn">Learn More</a>
+                            <a href="{{ route('frontend.about-us') }}" class="service-btn">Learn More</a>
                         </div>
                     </div>
                 </div>
             </div>
             <div class="service-style1 col-xl-3">
                 <div class="service-body">
-                    <div class="service-img"><a href="#"><img
+                    <div class="service-img"><a href="{{ route('frontend.about-us') }}"><img
                                 src="{{ asset('assets/img/indian_faces/service_4.png') }}" alt="service"></a></div>
                     <div class="service-content">
                         <div class="service-icon"><img src="{{ asset('assets/img/icon/sr-1-4.svg') }}" alt="icon"></div>
-                        <h3 class="service-title"><a href="#">Wide Range</a></h3>
+                        <h3 class="service-title"><a href="{{ route('frontend.about-us') }}">Wide Range</a></h3>
                         <p class="service-text">A complete collection under one roof. Explore a wide range tailored to meet every school and student’s needs.</p>
                         <div class="service-bottom">
-                            <a href="#" class="service-btn">Learn More</a>
+                            <a href="{{ route('frontend.about-us') }}" class="service-btn">Learn More</a>
                         </div>
                     </div>
                 </div>
             </div>
             <div class="service-style1 col-xl-3">
                 <div class="service-body">
-                    <div class="service-img"><a href="#"><img style="height: 350px; object-fit: cover;"
+                    <div class="service-img"><a href="{{ route('frontend.about-us') }}"><img style="height: 350px; object-fit: cover;"
                                 src="{{ asset('assets/img/indian_faces/service_2.png') }}" alt="service"></a></div>
                     <div class="service-content">
                         <div class="service-icon"><img src="{{ asset('assets/img/icon/check-list.svg') }}" alt="icon"></div>
-                        <h3 class="service-title"><a href="#">Transparency</a></h3>
+                        <h3 class="service-title"><a href="{{ route('frontend.about-us') }}">Transparency</a></h3>
                         <p class="service-text">Clear, honest, and straightforward at every step. From pricing to product quality, we ensure complete visibility</p>
                         <div class="service-bottom">
-                            <a href="#" class="service-btn">Learn More</a>
+                            <a href="{{ route('frontend.about-us') }}" class="service-btn">Learn More</a>
                         </div>
                     </div>
                 </div>
@@ -661,10 +815,10 @@ Service Area
             <div class="service-marquee-row">
                 <div class="service-style1">
                     <div class="service-body">
-                        <div class="service-img"><a href="#"><img src="{{ asset('assets/img/indian_faces/service_1.png') }}" alt="service"></a></div>
+                        <div class="service-img"><a href="{{ route('frontend.about-us') }}"><img src="{{ asset('assets/img/indian_faces/service_1.png') }}" alt="service"></a></div>
                         <div class="service-content">
                             <div class="service-icon"><img src="{{ asset('assets/img/icon/sr-1-1.svg') }}" alt="icon"></div>
-                            <h3 class="service-title"><a href="#">Comfort & Care</a></h3>
+                            <h3 class="service-title"><a href="{{ route('frontend.about-us') }}">Comfort & Care</a></h3>
                             <p class="service-text">Soft, skin-friendly fabrics designed for all-day comfort, ensuring durability, easy care, and lasting freshness.</p>
                             <div class="service-bottom">
                                 <a href="#" class="service-btn">Learn More</a>
@@ -674,10 +828,10 @@ Service Area
                 </div>
                 <div class="service-style1">
                     <div class="service-body">
-                        <div class="service-img"><a href="#"><img src="{{ asset('assets/img/indian_faces/service_5.png') }}" alt="service"></a></div>
+                        <div class="service-img"><a href="{{ route('frontend.about-us') }}"><img src="{{ asset('assets/img/indian_faces/service_5.png') }}" alt="service"></a></div>
                         <div class="service-content">
                             <div class="service-icon"><img src="{{ asset('assets/img/icon/sr-1-2.svg') }}" alt="icon"></div>
-                            <h3 class="service-title"><a href="#">On Time Delivery</a></h3>
+                            <h3 class="service-title"><a href="{{ route('frontend.about-us') }}">On Time Delivery</a></h3>
                             <p class="service-text">Reliable, punctual delivery—your school essentials arrive exactly when you need them</p>
                             <div class="service-bottom">
                                 <a href="#" class="service-btn">Learn More</a>
@@ -687,10 +841,10 @@ Service Area
                 </div>
                 <div class="service-style1">
                     <div class="service-body">
-                        <div class="service-img"><a href="#"><img src="{{ asset('assets/img/services/service (2).svg') }}" alt="service"></a></div>
+                        <div class="service-img"><a href="{{ route('frontend.about-us') }}"><img src="{{ asset('assets/img/services/service (2).svg') }}" alt="service"></a></div>
                         <div class="service-content">
                             <div class="service-icon"><img src="{{ asset('assets/img/icon/sr-1-3.svg') }}" alt="icon"></div>
-                            <h3 class="service-title"><a href="#">Student Delight</a></h3>
+                            <h3 class="service-title"><a href="{{ route('frontend.about-us') }}">Student Delight</a></h3>
                             <p class="service-text">Designed to make every student feel confident and happy.creating a delightful experience from classroom to playground.</p>
                             <div class="service-bottom">
                                 <a href="#" class="service-btn">Learn More</a>
@@ -700,10 +854,10 @@ Service Area
                 </div>
                 <div class="service-style1">
                     <div class="service-body">
-                        <div class="service-img"><a href="#"><img src="{{ asset('assets/img/indian_faces/service_4.png') }}" alt="service"></a></div>
+                        <div class="service-img"><a href="{{ route('frontend.about-us') }}"><img src="{{ asset('assets/img/indian_faces/service_4.png') }}" alt="service"></a></div>
                         <div class="service-content">
                             <div class="service-icon"><img src="{{ asset('assets/img/icon/sr-1-4.svg') }}" alt="icon"></div>
-                            <h3 class="service-title"><a href="#">Wide Range</a></h3>
+                            <h3 class="service-title"><a href="{{ route('frontend.about-us') }}">Wide Range</a></h3>
                             <p class="service-text">A complete collection under one roof. Explore a wide range tailored to meet every school and student’s needs.</p>
                             <div class="service-bottom">
                                 <a href="#" class="service-btn">Learn More</a>
@@ -713,10 +867,10 @@ Service Area
                 </div>
                 <div class="service-style1">
                     <div class="service-body">
-                        <div class="service-img"><a href="#"><img style="height: 350px; object-fit: cover;" src="{{ asset('assets/img/indian_faces/service_2.png') }}" alt="service"></a></div>
+                        <div class="service-img"><a href="{{ route('frontend.about-us') }}"><img style="height: 350px; object-fit: cover;" src="{{ asset('assets/img/indian_faces/service_2.png') }}" alt="service"></a></div>
                         <div class="service-content">
                             <div class="service-icon"><img src="{{ asset('assets/img/icon/check-list.svg') }}" alt="icon"></div>
-                            <h3 class="service-title"><a href="#">Transparency</a></h3>
+                            <h3 class="service-title"><a href="{{ route('frontend.about-us') }}">Transparency</a></h3>
                             <p class="service-text">Clear, honest, and straightforward at every step. From pricing to product quality, we ensure complete visibility</p>
                             <div class="service-bottom">
                                 <a href="#" class="service-btn">Learn More</a>
@@ -1016,71 +1170,9 @@ Process Area
 
 
 
-<!-- Mobile Marquee Auto-Scroll Script -->
+<!-- Service Marquee Auto-Scroll Script (kept for service section) -->
 <script>
-// Immediate check to prevent flash - runs synchronously
-(function() {
-  function quickCheck() {
-    document.querySelectorAll('.category-marquee-wrapper').forEach((wrapper) => {
-      const row = wrapper.querySelector('.category_box_row');
-      if (row && row.children.length > 0) {
-        // Temporarily reset transform to measure
-        const currentTransform = row.style.transform;
-        row.style.transform = 'none';
-        
-        const contentWidth = row.scrollWidth;
-        const screenWidth = wrapper.clientWidth || wrapper.offsetWidth;
-        
-        // Restore transform
-        row.style.transform = currentTransform;
-        
-        // If content fits, ensure it's centered immediately
-        if (contentWidth <= screenWidth) {
-          wrapper.classList.add('content-fits-screen');
-          row.style.justifyContent = 'center';
-        } else {
-          wrapper.classList.add('content-overflows');
-          row.style.justifyContent = '';
-        }
-        
-        // Show the content after layout is determined
-        wrapper.classList.add('layout-ready');
-      }
-    });
-  }
-  
-  // Run immediately - use multiple strategies to catch it early
-  function runCheck() {
-    if (document.querySelector('.category-marquee-wrapper')) {
-      quickCheck();
-    } else {
-      // If not found, wait a tiny bit and try again
-      setTimeout(runCheck, 10);
-    }
-  }
-  
-  // Try multiple approaches to run as early as possible
-  if (document.readyState === 'complete') {
-    runCheck();
-  } else if (document.readyState === 'interactive') {
-    runCheck();
-  } else {
-    document.addEventListener('DOMContentLoaded', runCheck);
-    // Also try immediately in case script loads after DOMContentLoaded
-    runCheck();
-  }
-  
-  // Fallback: run after a very short delay
-  setTimeout(runCheck, 10);
-  
-  // Also try on next tick
-  if (typeof requestAnimationFrame !== 'undefined') {
-    requestAnimationFrame(runCheck);
-  }
-})();
-
 document.addEventListener('DOMContentLoaded', function () {
-
   function setupTransformMarquee(wrapperSelectorOrElement, rowSelectorOrElement, options = {}) {
     const wrapper = typeof wrapperSelectorOrElement === 'string' 
       ? document.querySelector(wrapperSelectorOrElement) 
@@ -1098,27 +1190,32 @@ document.addEventListener('DOMContentLoaded', function () {
     const originalContent = row.dataset.originalContent;
     
     function shouldAutoScroll() {
-      const currentTransform = row.style.transform;
-      row.style.transform = 'none';
       const contentWidth = row.scrollWidth;
       const screenWidth = wrapper.clientWidth;
-      row.style.transform = currentTransform;
       return contentWidth > screenWidth;
     }
 
     const speedPxPerSec = typeof options.speed === 'number' ? options.speed : 20;
     let isPaused = false;
+    let isUserScrolling = false;
+    let isAutoScrolling = false;
     let lastTime = null;
-    let currentX = 0;
     let contentWidth = 0;
     let rafId = null;
+    let resumeTimeout = null;
+    let lastScrollLeft = 0;
+    let lastScrollTime = Date.now();
 
     function measure() {
-      contentWidth = row.scrollWidth / 2;
+      const fullWidth = row.scrollWidth;
+      contentWidth = fullWidth / 2;
+      if (!contentWidth || contentWidth <= 0) {
+        contentWidth = wrapper.clientWidth;
+      }
     }
 
     function step(timestamp) {
-      if (!shouldAutoScroll() || isPaused) {
+      if (!shouldAutoScroll() || isPaused || isUserScrolling) {
         lastTime = timestamp;
         rafId = requestAnimationFrame(step);
         return;
@@ -1128,21 +1225,34 @@ document.addEventListener('DOMContentLoaded', function () {
       const delta = (timestamp - lastTime) / 1000;
       lastTime = timestamp;
 
-      currentX -= speedPxPerSec * delta;
-      if (Math.abs(currentX) >= contentWidth) {
-        currentX += contentWidth;
+      isAutoScrolling = true;
+      let scrollLeft = wrapper.scrollLeft;
+      scrollLeft += speedPxPerSec * delta;
+      
+      if (scrollLeft >= contentWidth) {
+        scrollLeft = scrollLeft - contentWidth;
       }
 
-      row.style.transform = `translateX(${currentX}px)`;
+      wrapper.scrollLeft = scrollLeft;
+      lastScrollLeft = scrollLeft;
+      
+      setTimeout(() => {
+        isAutoScrolling = false;
+      }, 10);
+      
       rafId = requestAnimationFrame(step);
     }
 
     function start() {
       cancelAnimationFrame(rafId);
       measure();
-      currentX = ((currentX % contentWidth) + contentWidth) % contentWidth;
-      currentX = -Math.abs(currentX);
       lastTime = null;
+      isPaused = false;
+      isUserScrolling = false;
+      isAutoScrolling = false;
+      wrapper.scrollLeft = 0;
+      lastScrollLeft = 0;
+      lastScrollTime = Date.now();
       rafId = requestAnimationFrame(step);
     }
 
@@ -1153,7 +1263,38 @@ document.addEventListener('DOMContentLoaded', function () {
     function resume() {
       isPaused = false;
       lastTime = null;
+      if (shouldAutoScroll() && !isUserScrolling) {
+        rafId = requestAnimationFrame(step);
+      }
     }
+
+    wrapper.addEventListener('scroll', function() {
+      if (isAutoScrolling || isUserScrolling) {
+        lastScrollLeft = wrapper.scrollLeft;
+        lastScrollTime = Date.now();
+        return;
+      }
+      
+      const currentScrollLeft = wrapper.scrollLeft;
+      const currentTime = Date.now();
+      const timeDelta = currentTime - lastScrollTime;
+      const scrollDelta = Math.abs(currentScrollLeft - lastScrollLeft);
+      
+      if (scrollDelta > 5 && timeDelta < 100) {
+        isUserScrolling = true;
+        pause();
+        if (resumeTimeout) clearTimeout(resumeTimeout);
+        resumeTimeout = setTimeout(function() {
+          isUserScrolling = false;
+          lastScrollLeft = wrapper.scrollLeft;
+          lastScrollTime = Date.now();
+          resume();
+        }, 2000);
+      }
+      
+      lastScrollLeft = currentScrollLeft;
+      lastScrollTime = currentTime;
+    }, { passive: true });
 
     function checkMode() {
       if (!shouldAutoScroll()) {
@@ -1181,20 +1322,31 @@ document.addEventListener('DOMContentLoaded', function () {
           row.dataset.duplicated = 'true';
           setTimeout(() => {
             measure();
+            wrapper.scrollLeft = 0;
+            lastScrollLeft = 0;
+            lastScrollTime = Date.now();
             start();
           }, 100);
         }
+      } else {
+        setTimeout(() => {
+          measure();
+          wrapper.scrollLeft = 0;
+          lastScrollLeft = 0;
+          lastScrollTime = Date.now();
+          start();
+        }, 50);
       }
     }
 
     function onMouseEnter() { 
-      if (shouldAutoScroll()) {
+      if (shouldAutoScroll() && !isUserScrolling) {
         pause();
       }
     }
     
     function onMouseLeave() { 
-      if (shouldAutoScroll()) {
+      if (shouldAutoScroll() && !isUserScrolling) {
         resume();
       }
     }
@@ -1226,6 +1378,8 @@ document.addEventListener('DOMContentLoaded', function () {
               measure();
               if (row.dataset.duplicated !== 'true') {
                 checkMode();
+              } else {
+                start();
               }
             }
           }, {passive: true});
@@ -1235,6 +1389,8 @@ document.addEventListener('DOMContentLoaded', function () {
               measure();
               if (row.dataset.duplicated !== 'true') {
                 checkMode();
+              } else {
+                start();
               }
             }
           }, {passive: true});
@@ -1245,28 +1401,54 @@ document.addEventListener('DOMContentLoaded', function () {
           measure();
           if (row.dataset.duplicated !== 'true') {
             checkMode();
+          } else {
+            start();
           }
         }, 50);
       }
     }
   }
 
-  function initializeMarquees() {
-    document.querySelectorAll('.category-marquee-wrapper').forEach((wrapper, index) => {
-      const row = wrapper.querySelector('.category_box_row');
-      if (row && row.children.length > 0) {
-        setupTransformMarquee(wrapper, row, { maxWidth: 99999, speed: 20, resumeDelay: 700 });
-      }
-    });
+  // Only initialize service marquee (featured products uses new simple JS)
+  function initializeServiceMarquee() {
     setupTransformMarquee('.service-marquee-wrapper', '.service-marquee-row', { maxWidth: 1116, speed: 18, resumeDelay: 700 });
   }
   
   if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', initializeMarquees);
+    document.addEventListener('DOMContentLoaded', initializeServiceMarquee);
   } else {
-    initializeMarquees();
+    initializeServiceMarquee();
   }
 
+  // Stop carousel autoplay and navigate immediately when Learn More is clicked
+  document.querySelectorAll('.service-btn[href]').forEach(function(btn) {
+    btn.addEventListener('click', function(e) {
+      e.preventDefault();
+      e.stopPropagation();
+      e.stopImmediatePropagation();
+      
+      // Stop carousel autoplay if it exists
+      const carousel = document.querySelector('.vs-carousel[data-autoplay="true"]');
+      if (carousel) {
+        // Try to access the carousel instance and stop it
+        if (window.Swiper && carousel.swiper) {
+          carousel.swiper.autoplay.stop();
+        }
+        // Also try to stop any jQuery carousel
+        if (window.$ && $(carousel).data('owlCarousel')) {
+          $(carousel).data('owlCarousel').stop();
+        }
+        // Remove autoplay attribute to prevent further transitions
+        carousel.removeAttribute('data-autoplay');
+      }
+      
+      // Navigate immediately - don't wait for any transitions
+      const href = this.getAttribute('href');
+      if (href && href !== '#') {
+        window.location.href = href;
+      }
+    }, true); // Use capture phase to run before other handlers
+  });
 });
 </script>
 

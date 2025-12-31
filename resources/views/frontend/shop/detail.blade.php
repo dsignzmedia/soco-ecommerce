@@ -10,7 +10,7 @@
     <div class="container z-index-common">
         <div class="breadcumb-content">
             <h1 class="breadcumb-title">{{ $product['name'] ?? 'Product Details' }}</h1>
-            <p class="breadcumb-text">{{ Str::limit($product['description'] ?? 'Explore Product Details', 80) }}</p>
+            <!-- <p class="breadcumb-text">{{ Str::limit($product['description'] ?? 'Explore Product Details', 80) }}</p> -->
             <div class="breadcumb-menu-wrap">
                 <ul class="breadcumb-menu">
                     <li><a href="{{ route('frontend.index') }}">Home</a></li>
@@ -25,23 +25,47 @@
 <section class="vs-product-wrapper product-details space-top space-extra-bottom" style="background-color: #ffffff;">
     <div class="container">
         <div class="row gx-60">
-            <!-- Left: Product Images -->
+            <!-- Left: Product Images & Videos -->
             <div class="col-lg-6">
                 <div class="product-big-img vs-carousel" data-slide-show="1" data-fade="true" data-asnavfor=".product-thumb-slide">
                         @php
                             $productImages = $product['images'] ?? [$product['image'] ?? asset('assets/img/no image/no_image.png')];
                         @endphp
                         @foreach($productImages as $index => $image)
+                        @php
+                            $isVideo = preg_match('/\.(mp4|webm|ogg|mov|avi|wmv|flv|mkv|m3u8)(\?.*)?$/i', $image);
+                            $mediaUrl = \Illuminate\Support\Str::startsWith($image, 'http') ? $image : asset('storage/' . $image);
+                        @endphp
                         <div class="img">
+                                @if($isVideo)
+                                    <video controls style="width: 100%; height: 100%; object-fit: contain; border-radius: 12px;">
+                                        <source src="{{ $mediaUrl }}" type="video/mp4">
+                                        Your browser does not support the video tag.
+                                    </video>
+                                @else
                                 <img src="{{ $image }}" alt="{{ $product['name'] }} - Image {{ $index + 1 }}" onerror="this.onerror=null; this.src='{{ asset('assets/img/no image/no_image.png') }}';">
+                                @endif
                             </div>
                         @endforeach
                     </div>
                 <div class="product-thumb-slide row vs-carousel" data-slide-show="4" data-md-slide-show="4" data-sm-slide-show="3" data-xs-slide-show="3" data-asnavfor=".product-big-img">
                     @foreach($productImages as $index => $image)
+                        @php
+                            $isVideo = preg_match('/\.(mp4|webm|ogg|mov|avi|wmv|flv|mkv|m3u8)(\?.*)?$/i', $image);
+                            $mediaUrl = \Illuminate\Support\Str::startsWith($image, 'http') ? $image : asset('storage/' . $image);
+                        @endphp
                         <div class="col-3">
                             <div class="thumb">
+                                @if($isVideo)
+                                    <div style="position: relative; width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; background: #000;">
+                                        <video style="width: 100%; height: 100%; object-fit: contain;" preload="metadata">
+                                            <source src="{{ $mediaUrl }}" type="video/mp4">
+                                        </video>
+                                        <i class="fas fa-play" style="position: absolute; color: white; font-size: 20px; z-index: 1;"></i>
+                                    </div>
+                                @else
                                 <img src="{{ $image }}" alt="{{ $product['name'] }} - Image {{ $index + 1 }}" onerror="this.onerror=null; this.src='{{ asset('assets/img/no image/no_image.png') }}';">
+                                @endif
                         </div>
                             </div>
                     @endforeach
@@ -115,6 +139,15 @@
                                 @endforeach
                             </div>
                         </div>
+                        @else
+                        <div class="mb-4">
+                            <div class="d-flex align-items-center gap-2 mb-2">
+                                <label class="form-label fw-bold mb-0">Size:</label>
+                            </div>
+                            <div class="alert alert-info" style="padding: 12px; border-radius: 8px; background-color: #f7f2fb; border-left: 4px solid #490D59;">
+                                <span style="color: #666; font-size: 14px;">Standard Size Available</span>
+                            </div>
+                        </div>
                         @endif
 
                     </form>
@@ -151,13 +184,23 @@
 
 
         <!-- Related Products Section -->
-        @if(isset($relatedProducts) && count($relatedProducts) > 0)
+        @php
+            $relatedProductsList = $relatedProducts ?? [];
+            // Convert Collection to array if needed
+            if ($relatedProductsList instanceof \Illuminate\Support\Collection) {
+                $relatedProductsList = $relatedProductsList->take(4)->toArray();
+            } else {
+                $relatedProductsList = array_slice($relatedProductsList, 0, 4);
+            }
+        @endphp
+
+        @if(count($relatedProductsList) > 0)
         <div class="row mt-5">
             <div class="col-12">
                 <h2>Related Products</h2>
                 <div class="title-divider1"></div>
                 <div class="row vs-carousel" data-slide-show="4" data-lg-slide-show="3" data-md-slide-show="2" data-sm-slide-show="2" data-xs-slide-show="2">
-                    @foreach($relatedProducts as $relatedProduct)
+                    @foreach($relatedProductsList as $relatedProduct)
                         <div class="col-md-6 col-lg-3 col-xl-3">
                             <div class="vs-product product-style1">
                                 <div class="product-img">
@@ -168,7 +211,7 @@
                                             <img src="{{ asset('assets/img/no image/no_image.png') }}" alt="{{ $relatedProduct['name'] }}" class="w-100">
                                         @endif
                                     </a>
-                            </div>
+                                </div>
                                 <div class="product-content">
                                     <span class="product-price">
                                         ₹{{ number_format($relatedProduct['price'] ?? 0) }}
@@ -183,7 +226,7 @@
                                     </h3>
                                     <div class="actions">
                                         <a href="{{ route('frontend.shop.detail', $relatedProduct['id']) }}" class="vs-btn">
-                                            <i class="far fa-shopping-cart"></i>View Details
+                                            <i class="far fa-shopping-cart"></i>Add to Cart
                                         </a>
 
                                     </div>
@@ -191,9 +234,9 @@
                             </div>
                         </div>
                     @endforeach
-                    </div>
                 </div>
             </div>
+        </div>
         @endif
     </div>
 </section>
@@ -252,31 +295,84 @@
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body">
-                <div class="row g-4">
+                <div class="row g-3 align-items-center">
                      @if(!empty($product['size_chart_path']))
-                        <div class="{{ (!empty($product['size_measurement_image']) || !empty($product['video_url'])) ? 'col-md-6' : 'col-12' }}">
+                        @php
+                            $hasBothImages = !empty($product['size_measurement_image']);
+                            $hasVideo = !empty($product['video_url']);
+                            $colClass = ($hasBothImages && $hasVideo) ? 'col-md-4' : (($hasBothImages || $hasVideo) ? 'col-md-6' : 'col-12');
+                        @endphp
+                        <div class="{{ $colClass }}">
                             <div class="size-guide-image">
-                                <img src="{{ asset('storage/' . $product['size_chart_path']) }}" alt="Size Guide" class="w-100" style="border-radius: 8px; object-fit: contain;">
+                                <img src="{{ asset('storage/' . $product['size_chart_path']) }}" alt="Size Guide" class="w-100" style="border-radius: 8px; object-fit: contain; max-height: 400px;">
                             </div>
                         </div>
                     @endif
                     
                     @if(!empty($product['size_measurement_image']))
-                        <div class="{{ (!empty($product['size_chart_path']) || !empty($product['video_url'])) ? 'col-md-6' : 'col-12' }}">
+                        @php
+                            $hasChart = !empty($product['size_chart_path']);
+                            $hasVideo = !empty($product['video_url']);
+                            $colClass = ($hasChart && $hasVideo) ? 'col-md-4' : (($hasChart || $hasVideo) ? 'col-md-6' : 'col-12');
+                        @endphp
+                        <div class="{{ $colClass }}">
                             <div class="size-guide-image">
-                                <img src="{{ asset('storage/' . $product['size_measurement_image']) }}" alt="Size Measurement" class="w-100" style="border-radius: 8px; object-fit: contain;">
+                                <img src="{{ asset('storage/' . $product['size_measurement_image']) }}" alt="Size Measurement" class="w-100" style="border-radius: 8px; object-fit: contain; max-height: 400px;">
                             </div>
                         </div>
                     @endif
                     
                     @if(!empty($product['video_url']))
-                        <div class="{{ (!empty($product['size_chart_path']) || !empty($product['size_measurement_image'])) ? 'col-md-6' : 'col-12' }}">
-                            <div class="size-guide-video">
-                                <div class="ratio ratio-16x9">
-                                    <iframe src="{{ str_replace('watch?v=', 'embed/', $product['video_url']) }}" title="Size Guide Video" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+                        @php
+                            $videoUrl = $product['video_url'];
+                            $videoId = '';
+                            
+                            // Extract video ID from various YouTube URL formats
+                            if (Str::contains($videoUrl, 'youtu.be/')) {
+                                $parts = explode('youtu.be/', $videoUrl);
+                                $videoId = explode('?', $parts[1] ?? '')[0];
+                                $videoId = explode('&', $videoId)[0];
+                            } elseif (Str::contains($videoUrl, 'watch?v=')) {
+                                parse_str(parse_url($videoUrl, PHP_URL_QUERY), $query);
+                                $videoId = $query['v'] ?? '';
+                            } elseif (Str::contains($videoUrl, 'shorts/')) {
+                                $parts = explode('shorts/', $videoUrl);
+                                $videoId = explode('?', $parts[1] ?? '')[0];
+                                $videoId = explode('&', $videoId)[0];
+                            } elseif (Str::contains($videoUrl, 'embed/')) {
+                                $parts = explode('embed/', $videoUrl);
+                                $videoId = explode('?', $parts[1] ?? '')[0];
+                                $videoId = explode('&', $videoId)[0];
+                            }
+                            
+                            // Clean video ID (remove any remaining query params or fragments)
+                            $videoId = trim($videoId);
+                            if (!empty($videoId)) {
+                                $videoId = explode('?', $videoId)[0];
+                                $videoId = explode('&', $videoId)[0];
+                                $videoId = explode('#', $videoId)[0];
+                            }
+                            
+                            $embedUrl = !empty($videoId) ? 'https://www.youtube.com/embed/' . $videoId : '';
+                            $hasChart = !empty($product['size_chart_path']);
+                            $hasMeasurement = !empty($product['size_measurement_image']);
+                            $colClass = ($hasChart && $hasMeasurement) ? 'col-md-4' : (($hasChart || $hasMeasurement) ? 'col-md-6' : 'col-12');
+                        @endphp
+                        @if(!empty($embedUrl))
+                            <div class="{{ $colClass }}">
+                                <div class="size-guide-video">
+                                    <div class="ratio ratio-16x9">
+                                        <iframe
+                                            src="{{ $embedUrl }}"
+                                            title="Size Guide Video"
+                                            frameborder="0"
+                                            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                                            allowfullscreen>
+                                        </iframe>
+                                    </div>
                                 </div>
                             </div>
-                        </div>
+                        @endif
                     @endif
                 </div>
             </div>
@@ -285,17 +381,72 @@
 </div>
 
 <style>
-    /* Copied Styles from Original */
-    
-    .product-big-img { margin-bottom: 15px; }
-    .product-big-img .img { width: 100%; height: 500px; background-color: #f8f5ff; border-radius: 12px; overflow: hidden; margin: 0; border: 2px solid #e0d5f0; }
-    .product-big-img .img img { width: 100%; height: 100%; object-fit: contain; display: block; }
+    /* Product Image Carousel */
+    .product-big-img {
+        margin-bottom: 15px;
+    }
 
-    .product-thumb-slide { margin: 0 -5px; }
-    .product-thumb-slide .col-3 { padding: 0 5px; }
-    .product-thumb-slide .thumb { width: 100%; height: 100px; border: 2px solid #e0d5f0; border-radius: 8px; overflow: hidden; cursor: pointer; transition: all 0.3s ease; background-color: #f8f5ff; display: flex; align-items: center; justify-content: center; }
-    .product-thumb-slide .thumb img { width: 100%; height: 100%; object-fit: contain; }
-    .product-thumb-slide .thumb:hover, .product-thumb-slide .thumb.active { border-color: #490D59; }
+    .product-big-img .img {
+        width: 100%;
+        height: 500px;
+        background-color: #f8f5ff;
+        border-radius: 12px;
+        overflow: hidden;
+        padding: 0;
+        margin: 0;
+        border: 2px solid #e0d5f0;
+    }
+
+    .product-big-img .img img,
+    .product-big-img .img video {
+        width: 100%;
+        height: 100%;
+        object-fit: contain;
+        display: block;
+        border-radius: 12px;
+    }
+    
+    .product-big-img .img video {
+        background: #000;
+    }
+
+    .product-thumb-slide {
+        margin: 0 -5px;
+    }
+
+    .product-thumb-slide .col-3 {
+        padding: 0 5px;
+    }
+
+    .product-thumb-slide .thumb {
+        width: 100%;
+        height: 100px;
+        border: 2px solid #e0d5f0;
+        border-radius: 8px;
+        overflow: hidden;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        background-color: #f8f5ff;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .product-thumb-slide .thumb img,
+    .product-thumb-slide .thumb video {
+        width: 100%;
+        height: 100%;
+        object-fit: contain;
+    }
+    
+    .product-thumb-slide .thumb video {
+        background: #000;
+    }
+
+    .product-thumb-slide .thumb:hover,
+    .product-thumb-slide .thumb.active {
+        border-color: #490D59;
+    }
 
     /* Size Guide Modal Images */
     .size-guide-image {
@@ -305,39 +456,382 @@
         background: #f9fafb;
         border-radius: 8px;
         padding: 10px;
-        min-height: 300px;
+        height: 100%;
     }
     
     .size-guide-image img {
         max-width: 100%;
-        max-height: 100%;
+        max-height: 400px;
         object-fit: contain;
         border-radius: 8px;
     }
+    
+    /* Size Guide Video */
+    .size-guide-video {
+        height: 100%;
+        min-height: 300px;
+    }
+    
+    .size-guide-video .ratio {
+        max-height: 400px;
+        min-height: 300px;
+    }
+    
+    .size-guide-video iframe {
+        width: 100%;
+        height: 100%;
+        min-height: 300px;
+    }
 
-    .title-divider1 { height: 3px; width: 80px; background-color: #490D59; margin-bottom: 20px; }
-    
-    .vs-product.product-style1 { display: flex; flex-direction: column; height: 100%; border: 3px solid #e0d5f0; border-radius: 30px; transition: all 0.4s; overflow: hidden; }
-    .vs-product.product-style1:hover { border-color: #490D59; box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1); }
-    .product-img { width: 100%; height: 280px; display: flex; align-items: center; justify-content: center; background-color: #fff; }
-    .product-img img { width: 100%; height: 100%; object-fit: contain; padding: 15px; }
-    
-    .product-price { font-size: 22px; font-weight: 500; color: #dc3545; }
-    .product-title { font-size: 16px; margin-bottom: 12px; text-transform: capitalize; }
-    
-    .size-option { position: relative; display: inline-block; }
-    .size-option input[type="radio"] { position: absolute; opacity: 0; cursor: pointer; }
-    .size-option span { display: inline-block; padding: 10px 20px; border: 2px solid #e0d5f0; border-radius: 8px; cursor: pointer; transition: all 0.3s ease; background-color: white; min-width: 60px; text-align: center; }
-    .size-option input[type="radio"]:checked + span { border-color: #490D59; background-color: #490D59; color: white; }
-    .size-option.disabled span { background-color: #f2f4f7; color: #98a2b3; border-color: #eaecf0; cursor: not-allowed; text-decoration: line-through; }
+    .title-divider1 {
+        height: 3px;
+        width: 80px;
+        background-color: #490D59;
+        margin-bottom: 20px;
+    }
 
-    .product-about { background-color: #fff; padding: 30px; border-radius: 12px; }
-    .quantity { display: flex; align-items: center; border: 1px solid #fff; }
-    .qty-btn { width: 40px; height: 50px; background: #fff; border: none; cursor: pointer; }
-    .qty-btn:hover { background: #490D59; color: #fff; }
-    .qty-input { width: 60px; height: 50px; border: none; text-align: center; font-size: 16px; font-weight: 600; }
-    .actions { display: flex; align-items: center; gap: 10px; margin-bottom: 2px !important; }
-    .product-style1 .actions { margin-bottom: 2px !important; }
+    /* Related Products Styles */
+    .product-img-wrapper {
+        position: relative;
+        overflow: hidden;
+        border-radius: 30px 30px 0 0;
+        background-color: #ffffff;
+    }
+
+    .product-badge {
+        position: absolute;
+        top: 10px;
+        right: 10px;
+        background-color: #000000;
+        color: #ffffff;
+        padding: 5px 12px;
+        font-size: 11px;
+        font-weight: 600;
+        letter-spacing: 0.5px;
+        z-index: 2;
+        border-radius: 4px;
+    }
+
+    .product-img {
+        width: 100%;
+        height: 280px;
+        overflow: hidden;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background-color: #ffffff;
+    }
+
+    .product-img img {
+        width: 100%;
+        height: 100%;
+        object-fit: contain;
+        padding: 15px;
+    }
+
+    .vs-product.product-style1 {
+        display: flex;
+        flex-direction: column;
+        height: 100%;
+        border: 3px solid var(--theme-color2, #e0d5f0);
+        border-radius: 30px;
+        transition: border-color ease 0.4s, box-shadow ease 0.4s;
+        overflow: hidden;
+        position: relative;
+    }
+
+    .vs-product.product-style1:hover {
+        border-color: var(--theme-color, #490D59);
+        box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+    }
+
+    .product-content {
+        padding: 8px;
+        flex-grow: 1;
+        display: flex;
+        flex-direction: column;
+    }
+
+    .product-price {
+        font-size: 22px;
+        font-weight: 500;
+        color: #dc3545;
+        font-family: var(--title-font, inherit);
+        margin-bottom: 12px;
+        display: block;
+        line-height: 1;
+    }
+
+    .product-title {
+        font-size: 16px;
+        margin-bottom: 12px;
+        text-transform: capitalize;
+        line-height: 1.4;
+        min-height: 44px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        max-width: 100%;
+    }
+
+    .product-title a {
+        color: #333;
+        text-decoration: none;
+        display: block;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+
+    .product-title a:hover {
+        color: #490D59;
+    }
+    
+    .size-option {
+        position: relative;
+        display: inline-block;
+    }
+
+    .size-option input[type="radio"] {
+        position: absolute;
+        opacity: 0;
+        cursor: pointer;
+    }
+
+    .size-option span {
+        display: inline-block;
+        padding: 10px 20px;
+        border: 2px solid #e0d5f0;
+        border-radius: 8px;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        background-color: #ffffff;
+        min-width: 60px;
+        text-align: center;
+    }
+
+    .size-option input[type="radio"]:checked + span {
+        border-color: #490D59;
+        background-color: #490D59;
+        color: #ffffff;
+    }
+
+    .size-option:hover span {
+        border-color: #490D59;
+    }
+
+    .size-option.disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+    }
+    
+    .size-option.disabled span {
+        background-color: #f2f4f7;
+        color: #98a2b3;
+        border-color: #eaecf0;
+        cursor: not-allowed;
+        text-decoration: line-through;
+    }
+    
+    .size-option.disabled:hover span {
+        border-color: #eaecf0;
+    }
+
+    .form-select {
+        border: 2px solid #e0d5f0;
+        border-radius: 8px;
+        padding: 10px 15px;
+        font-size: 16px;
+        font-weight: 600;
+    }
+
+    .form-select:focus {
+        border-color: #490D59;
+        box-shadow: 0 0 0 3px rgba(73, 13, 89, 0.1);
+        outline: none;
+    }
+
+    .product-about {
+        background-color: #ffffff;
+        padding: 30px;
+        border-radius: 12px;
+        box-shadow: none;
+        border: none;
+        outline: none;
+    }
+
+    .product-title {
+        font-size: 28px;
+        font-weight: 600;
+        color: #333;
+        margin-bottom: 15px;
+    }
+
+    .product-price {
+        font-size: 32px;
+        font-weight: 600;
+        color: #dc3545;
+        margin-bottom: 15px;
+    }
+
+    .product-price del {
+        font-size: 24px;
+        color: #999;
+        margin-left: 10px;
+        font-weight: 400;
+    }
+
+    .product-rating {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        margin-bottom: 20px;
+    }
+
+    .product-rating .star-rating {
+        margin-bottom: 0;
+        font-size: 14px;
+        line-height: 1.2;
+        position: relative;
+        display: inline-block;
+        overflow: hidden;
+    }
+
+    .product-rating .star-rating span {
+        display: block;
+        position: relative;
+        height: 1em;
+        line-height: 1;
+        font-size: 1em;
+        width: 5.4em;
+        font-family: star;
+        color: #ffb900;
+    }
+
+    .product-rating .star-rating span:before {
+        content: "\f005\f005\f005\f005\f005";
+        font-family: "Font Awesome 5 Free";
+        font-weight: 900;
+        color: #ffb900;
+        font-size: 14px;
+        letter-spacing: 2px;
+        position: absolute;
+        left: 0;
+        top: 0;
+        width: 100%;
+    }
+
+    .product-rating .star-rating span strong,
+    .product-rating .star-rating span {
+        font-size: 0;
+        line-height: 0;
+        color: transparent;
+        overflow: hidden;
+    }
+
+    .product-rating .star-rating .rating {
+        display: none;
+    }
+
+    .product-rating > span {
+        color: #666;
+        font-size: 14px;
+        display: inline-block;
+        margin-left: 5px;
+    }
+
+    .product-text {
+        color: #666;
+        line-height: 1.6;
+        margin-bottom: 25px;
+    }
+
+    /* Quantity Buttons */
+    .quantity {
+        display: flex;
+        align-items: center;
+        border: 1px solid #ffffff;
+        border-radius: 8px;
+        overflow: hidden;
+        background-color: #ffffff;
+    }
+
+    .qty-btn {
+        width: 40px;
+        height: 50px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background-color: #ffffff;
+        border: none;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        color: #333;
+    }
+
+    .qty-btn:hover {
+        background-color: #490D59;
+        color: #ffffff;
+    }
+
+    .qty-input {
+        width: 60px;
+        height: 50px;
+        border: none;
+        text-align: center;
+        font-size: 16px;
+        font-weight: 600;
+        padding: 0;
+        background-color: #ffffff;
+    }
+
+    .qty-input:focus {
+        outline: none;
+        border: none;
+        box-shadow: none;
+    }
+    
+    .quantity:focus,
+    .quantity:focus-within {
+        outline: none;
+        border: 1px solid #ffffff;
+        box-shadow: none;
+    }
+    
+    .product-about:focus,
+    .product-about:focus-within {
+        outline: none;
+        border: none;
+        box-shadow: none;
+    }
+
+    .screen-reader-text {
+        position: absolute;
+        clip: rect(1px, 1px, 1px, 1px);
+        width: 1px;
+        height: 1px;
+        overflow: hidden;
+    }
+
+    .actions {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        margin-bottom: 2px !important;
+    }
+    
+    .product-style1 .actions {
+        margin-bottom: 2px !important;
+    }
+
+    .product-style1 .vs-btn {
+        flex: 1;
+    }
+
+    .product-style1 .vs-btn i {
+        margin-right: 8px;
+        font-size: 14px;
+    }
 
     /* Login Modal Scrollable Styles */
     #loginRequiredModal .modal-body {
@@ -366,15 +860,193 @@
         background: #6b1179;
     }
 
+    /* Product Getway */
+    .product-getway {
+        margin-top: 22px !important;
+        padding-top: 25px;
+    }
+
+    .getway-title {
+        display: block;
+        font-size: 12px;
+        font-weight: 600;
+        color: #666;
+        margin-bottom: 10px;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+    .product-getway img {
+        max-width: 100%;
+        height: auto;
+    }
+
+    /* Product Meta */
+    .product_meta {
+        display: flex;
+            flex-direction: column;
+        gap: 10px;
+        font-size: 14px;
+        color: #666;
+        padding-top: 20px;
+    }
+
+    .product_meta span {
+        display: block;
+    }
+
+    .product_meta a {
+        color: #490D59;
+        text-decoration: none;
+        margin-left: 5px;
+    }
+
+    .product_meta a:hover {
+        text-decoration: underline;
+    }
+
+    /* Desktop breadcrumb and spacing */
+    @media (min-width: 768px) {
+        .breadcumb-wrapper {
+            padding-top: 115px !important;
+        }
+        
+        .product-details.space-top {
+            padding-top: 24px !important;
+        }
+    }
+
+    /* Mobile Responsiveness */
     @media (max-width: 767px) {
+        .product-big-img .img {
+            height: 300px;
+        }
+
+        .product-about {
+            padding: 20px;
+            margin-top: 20px;
+        }
+
+        .product-title {
+            font-size: 22px;
+        }
+
+        .product-price {
+            font-size: 24px;
+        }
+
+        .product-price del {
+            font-size: 18px;
+        }
+
+        .actions {
+            flex-wrap: wrap;
+        }
+
+        .product-style1 .vs-btn {
+            min-width: 100%; /* Full width button on mobile */
+            order: 2; /* Move below quantity if needed, or keep as is */
+        }
+        
+        .quantity {
+            width: 100%;
+            justify-content: center;
+            margin-bottom: 10px;
+        }
+        
+        .qty-input {
+            width: 80px; /* Wider input for easier tapping */
+        }
+        
         #loginRequiredModal .modal-body {
             max-height: 60vh;
         }
-        .product-big-img .img { height: 300px; }
-        .product-about { padding: 20px; margin-top: 20px; }
-        .actions { flex-wrap: wrap; }
-        .product-style1 .vs-btn { min-width: 100%; order: 2; }
-        .quantity { width: 100%; justify-content: center; margin-bottom: 10px; }
+
+        /* Compact Breadcrumb for Mobile */
+        .breadcumb-title,
+        .breadcumb-text {
+            display: none;
+        }
+
+        .breadcumb-wrapper {
+            padding-top: 50px; /* Clear header */
+            padding-bottom: 20px;
+            min-height: auto;
+        }
+
+        .breadcumb-content {
+            text-align: left;
+        }
+
+        .breadcumb-menu {
+            justify-content: flex-start;
+            margin-bottom: 0;
+        }
+
+        /* 2-Column Related Products */
+        .vs-carousel .col-md-6 {
+            padding: 0 5px; /* Reduce gap */
+        }
+        
+        .vs-product.product-style1 {
+            border-radius: 20px;
+        }
+
+        .product-img {
+            height: 180px; /* Smaller image height */
+            border-radius: 20px 20px 0 0;
+        }
+
+        .product-content {
+            padding: 8px;
+        }
+
+        .product-title {
+            font-size: 14px;
+            min-height: auto;
+            height: auto;
+            margin-bottom: 5px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .product-price {
+            font-size: 14px;
+            margin-bottom: 0 !important;
+        }
+
+        .actions .vs-btn {
+            font-size: 11px;
+            padding: 8px 10px;
+        }
+        
+        .actions .icon-btn {
+            width: 35px;
+            height: 35px;
+            font-size: 14px;
+        }
+    }
+
+    @media (max-width: 991px) {
+        .product-big-img .img {
+            height: 400px;
+            padding: 0;
+        }
+
+        .product-big-img .img img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+        }
+
+        .actions {
+            flex-wrap: wrap;
+        }
+
+        .actions .vs-btn {
+            width: 100%;
+        }
     }
 </style>
 

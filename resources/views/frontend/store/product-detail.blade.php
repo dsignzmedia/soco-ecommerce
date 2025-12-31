@@ -10,7 +10,7 @@
     <div class="container z-index-common">
         <div class="breadcumb-content">
             <h1 class="breadcumb-title">{{ $product['name'] ?? 'Product Details' }}</h1>
-            <p class="breadcumb-text">{{ Str::limit($product['description'] ?? 'Explore Product Details, Reviews, And Specifications', 80) }}</p>
+            <!-- <p class="breadcumb-text">{{ Str::limit($product['description'] ?? 'Explore Product Details, Reviews, And Specifications', 80) }}</p> -->
             <div class="breadcumb-menu-wrap">
                 <ul class="breadcumb-menu">
                     <li><a href="{{ route('frontend.index') }}">Home</a></li>
@@ -270,19 +270,29 @@
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body">
-                <div class="row g-4">
+                <div class="row g-3 align-items-center">
                      @if(!empty($product['size_chart_path']))
-                        <div class="{{ (!empty($product['size_measurement_image']) || !empty($product['video_url'])) ? 'col-md-6' : 'col-12' }}">
+                        @php
+                            $hasBothImages = !empty($product['size_measurement_image']);
+                            $hasVideo = !empty($product['video_url']);
+                            $colClass = ($hasBothImages && $hasVideo) ? 'col-md-4' : (($hasBothImages || $hasVideo) ? 'col-md-6' : 'col-12');
+                        @endphp
+                        <div class="{{ $colClass }}">
                             <div class="size-guide-image">
-                                <img src="{{ asset('storage/' . $product['size_chart_path']) }}" alt="Size Guide" class="w-100" style="border-radius: 8px; object-fit: contain;">
+                                <img src="{{ asset('storage/' . $product['size_chart_path']) }}" alt="Size Guide" class="w-100" style="border-radius: 8px; object-fit: contain; max-height: 400px;">
                             </div>
                         </div>
                     @endif
                     
                     @if(!empty($product['size_measurement_image']))
-                        <div class="{{ (!empty($product['size_chart_path']) || !empty($product['video_url'])) ? 'col-md-6' : 'col-12' }}">
+                        @php
+                            $hasChart = !empty($product['size_chart_path']);
+                            $hasVideo = !empty($product['video_url']);
+                            $colClass = ($hasChart && $hasVideo) ? 'col-md-4' : (($hasChart || $hasVideo) ? 'col-md-6' : 'col-12');
+                        @endphp
+                        <div class="{{ $colClass }}">
                             <div class="size-guide-image">
-                                <img src="{{ asset('storage/' . $product['size_measurement_image']) }}" alt="Size Measurement" class="w-100" style="border-radius: 8px; object-fit: contain;">
+                                <img src="{{ asset('storage/' . $product['size_measurement_image']) }}" alt="Size Measurement" class="w-100" style="border-radius: 8px; object-fit: contain; max-height: 400px;">
                             </div>
                         </div>
                     @endif
@@ -300,9 +310,12 @@
                                 $videoId = explode('shorts/', $videoUrl)[1];
                             }
                             $embedUrl = $videoId ? 'https://www.youtube.com/embed/' . $videoId : '';
+                            $hasChart = !empty($product['size_chart_path']);
+                            $hasMeasurement = !empty($product['size_measurement_image']);
+                            $colClass = ($hasChart && $hasMeasurement) ? 'col-md-4' : (($hasChart || $hasMeasurement) ? 'col-md-6' : 'col-12');
                         @endphp
                         @if(!empty($embedUrl))
-                            <div class="{{ (!empty($product['size_chart_path']) || !empty($product['size_measurement_image'])) ? 'col-md-6' : 'col-12' }}">
+                            <div class="{{ $colClass }}">
                                 <div class="size-guide-video">
                                     <div class="ratio ratio-16x9">
                                         <iframe
@@ -399,14 +412,23 @@
         background: #f9fafb;
         border-radius: 8px;
         padding: 10px;
-        min-height: 300px;
+        height: 100%;
     }
     
     .size-guide-image img {
         max-width: 100%;
-        max-height: 100%;
+        max-height: 400px;
         object-fit: contain;
         border-radius: 8px;
+    }
+    
+    /* Size Guide Video */
+    .size-guide-video {
+        height: 100%;
+    }
+    
+    .size-guide-video .ratio {
+        max-height: 400px;
     }
 
     .title-divider1 {
