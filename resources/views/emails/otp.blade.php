@@ -59,7 +59,7 @@ Login Verification
 </h1>
 
 <p style="margin:0 0 20px;color:#9a6c4c;">
-Hello! Use the following One Time Password (OTP) to log in to your account. This OTP is valid for 10 minutes.
+Hello! Use the following One Time Password (OTP) to log in to your account. This OTP is valid for 60 seconds.
 </p>
 
 <!-- OTP BOX -->

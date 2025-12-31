@@ -201,8 +201,30 @@ class AuthController extends Controller
 
         $field = $isEmail ? 'email' : 'phone';
 
-        // Check if user exists
+        // Check if user exists with this contact
         $user = User::where($field, $contact)->first();
+
+        // Validation: Prevent same email/phone from being stored separately in database
+        if ($isEmail) {
+            // If email is entered, check if this email already exists with a phone number
+            $existingUserWithEmail = User::where('email', $contact)->whereNotNull('phone')->first();
+            if ($existingUserWithEmail && (!$user || $user->id !== $existingUserWithEmail->id)) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'This email is already registered with a mobile number. Please use your registered mobile number to login.',
+                ], 422);
+            }
+        } else {
+            // If phone is entered, check if this phone already exists with an email
+            $existingUserWithPhone = User::where('phone', $contact)->whereNotNull('email')->first();
+            if ($existingUserWithPhone && (!$user || $user->id !== $existingUserWithPhone->id)) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'This mobile number is already registered with an email address. Please use your registered email to login.',
+                ], 422);
+            }
+        }
+
         $isNewUser = !$user;
 
         if (!$user) {
@@ -221,8 +243,9 @@ class AuthController extends Controller
         $otp = rand(1000, 9999);
 
         // Store in Users table
+        // OTP expires in 60 seconds (1 minute)
         $user->otp = $otp;
-        $user->otp_expires_at = now()->addMinutes(10);
+        $user->otp_expires_at = now()->addSeconds(60);
         $user->otp_verified = false; // Reset verification status
         $user->save();
 
@@ -238,7 +261,8 @@ class AuthController extends Controller
                 // Fallback or just log error? For now, we log.
             }
         } else {
-            $message = "Your OTP for The Skool Store is: {$otp}. Valid for 10 minutes.";
+            // Use exact template format that matches the registered SMS template
+            $message = "{$otp} is the OTP to login into your SOCO Products account. Don't share your OTP info with anyone. {$otp}";
             $smsService->send($contact, $message);
         }
 
@@ -526,10 +550,15 @@ class AuthController extends Controller
      */
     public function logout(Request $request)
     {
+        // Clear user-specific session data
+        $request->session()->forget('parent_phone');
+
+        // Logout the user
         Auth::logout();
 
-        // DO NOT invalidate the entire session as it would logout Master/Inventory Admin users too
-        // $request->session()->invalidate();
+        // Invalidate and regenerate session only for frontend users
+        // This ensures session is cleared when user explicitly logs out
+        $request->session()->invalidate();
         $request->session()->regenerateToken();
 
         return redirect()->route('frontend.index')
@@ -3177,7 +3206,7 @@ class AuthController extends Controller
 
                 // Track processed cart item IDs
                 $processedCartIds[] = $item->id;
-                
+
                 // Send Order Confirmation Email
                 if (!empty($order->customer_email)) {
                     try {
@@ -3187,7 +3216,7 @@ class AuthController extends Controller
                         \Illuminate\Support\Facades\Log::error("Failed to send order confirmation email: " . $e->getMessage());
                     }
                 }
-                
+
                 // Send Payment Success Email if payment was successful
                 if (session('payment_method') === 'razorpay' && session('payment_id') && !empty($order->customer_email)) {
                     try {
@@ -3590,7 +3619,7 @@ class AuthController extends Controller
                 'status' => 'pending',
                 'customer_notes' => $request->reason,
             ]);
-            
+
             // Send Return/Exchange Request Submitted Email
             if (!empty($order->customer_email)) {
                 try {
