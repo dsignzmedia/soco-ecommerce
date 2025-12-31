@@ -46,4 +46,11 @@ return [
         ],
     ],
 
+    'sms' => [
+        'api_key' => env('SMS_API_KEY', '67a09f00f0643'),
+        'sender' => env('SMS_SENDER', 'SOCOUS'),
+        'route' => env('SMS_ROUTE', 'transsms'),
+        'api_url' => env('SMS_API_URL', 'http://sms.creativepoint.in/api/push.json'),
+    ],
+
 ];
