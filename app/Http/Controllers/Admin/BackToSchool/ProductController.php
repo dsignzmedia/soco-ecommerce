@@ -184,6 +184,7 @@ class ProductController extends Controller
             'video_url' => 'nullable|url',
             'tag_name' => 'nullable|string',
             'availability_label' => 'nullable|string',
+            'delivery_duration' => 'nullable|string|max:255',
             'featured_image' => 'nullable|image',
             'media_images' => 'nullable|array',
             'media_images.*' => [
@@ -343,6 +344,7 @@ class ProductController extends Controller
             'video_url' => 'nullable|url',
             'tag_name' => 'nullable|string',
             'availability_label' => 'nullable|string',
+            'delivery_duration' => 'nullable|string|max:255',
             'variants' => 'nullable|array',
             'variants.*.option' => 'nullable|string',
             'variants.*.price' => 'nullable|numeric|min:0',

@@ -51,7 +51,7 @@
                     @forelse($logs as $log)
                         <tr>
                             <td style="padding:14px;border-bottom:1px solid #f1f1f1;">
-                                <strong>{{ optional($log->acted_at)->format('d M Y, H:i') ?? $log->created_at->format('d M Y, H:i') }}</strong>
+                                <strong>{{ optional($log->acted_at)->setTimezone('Asia/Kolkata')->format('d M Y, H:i') ?? $log->created_at->setTimezone('Asia/Kolkata')->format('d M Y, H:i') }}</strong>
                                 <div style="color:#6b7280;font-size:12px;">IP: {{ $log->ip_address ?? '—' }}</div>
                             </td>
                             <td style="padding:14px;border-bottom:1px solid #f1f1f1;">

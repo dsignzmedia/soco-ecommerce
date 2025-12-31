@@ -41,10 +41,10 @@
                                 src="{{ asset('assets/img/indian_faces/service_1.png') }}" alt="service"></a></div>
                     <div class="service-content">
                         <div class="service-icon"><img src="{{ asset('assets/img/icon/sr-1-1.svg') }}" alt="icon"></div>
-                        <h3 class="service-title"><a href="#">Comfort & Care</a></h3>
+                        <h3 class="service-title"><a href="{{ route('frontend.about-us') }}">Comfort & Care</a></h3>
                         <p class="service-text">Soft, skin-friendly fabrics designed for all-day comfort, ensuring durability, easy care, and lasting freshness.</p>
                         <div class="service-bottom">
-                            <a href="#" class="service-btn">Learn More</a>
+                            <a href="{{ route('frontend.about-us') }}" class="service-btn">Learn More</a>
                         </div>
                     </div>
                 </div>
@@ -55,10 +55,10 @@
                                 src="{{ asset('assets/img/indian_faces/service_5.png') }}" alt="service"></a></div>
                     <div class="service-content">
                         <div class="service-icon"><img src="{{ asset('assets/img/icon/sr-1-2.svg') }}" alt="icon"></div>
-                        <h3 class="service-title"><a href="#">On Time Delivery</a></h3>
+                        <h3 class="service-title"><a href="{{ route('frontend.about-us') }}">On Time Delivery</a></h3>
                         <p class="service-text">Reliable, punctual delivery—your school essentials arrive exactly when you need them</p>
                         <div class="service-bottom">
-                            <a href="#" class="service-btn">Learn More</a>
+                            <a href="{{ route('frontend.about-us') }}" class="service-btn">Learn More</a>
                         </div>
                     </div>
                 </div>
@@ -69,10 +69,10 @@
                                 src="{{ asset('assets/img/services/service (2).svg') }}" alt="service"></a></div>
                     <div class="service-content">
                         <div class="service-icon"><img src="{{ asset('assets/img/icon/sr-1-3.svg') }}" alt="icon"></div>
-                        <h3 class="service-title"><a href="#">Student Delight</a></h3>
+                        <h3 class="service-title"><a href="{{ route('frontend.about-us') }}">Student Delight</a></h3>
                         <p class="service-text">Designed to make every student feel confident and happy.creating a delightful experience from classroom to playground.</p>
                         <div class="service-bottom">
-                            <a href="#" class="service-btn">Learn More</a>
+                            <a href="{{ route('frontend.about-us') }}" class="service-btn">Learn More</a>
                         </div>
                     </div>
                 </div>
@@ -83,10 +83,10 @@
                                 src="{{ asset('assets/img/indian_faces/service_4.png') }}" alt="service"></a></div>
                     <div class="service-content">
                         <div class="service-icon"><img src="{{ asset('assets/img/icon/sr-1-4.svg') }}" alt="icon"></div>
-                        <h3 class="service-title"><a href="#">Wide Range</a></h3>
+                        <h3 class="service-title"><a href="{{ route('frontend.about-us') }}">Wide Range</a></h3>
                         <p class="service-text">A complete collection under one roof. Explore a wide range tailored to meet every school and student’s needs.</p>
                         <div class="service-bottom">
-                            <a href="#" class="service-btn">Learn More</a>
+                            <a href="{{ route('frontend.about-us') }}" class="service-btn">Learn More</a>
                         </div>
                     </div>
                 </div>
@@ -97,10 +97,10 @@
                                 src="{{ asset('assets/img/indian_faces/service_2.png') }}" alt="service"></a></div>
                     <div class="service-content">
                         <div class="service-icon"><img src="{{ asset('assets/img/icon/check-list.svg') }}" alt="icon"></div>
-                        <h3 class="service-title"><a href="#">Transparency</a></h3>
+                        <h3 class="service-title"><a href="{{ route('frontend.about-us') }}">Transparency</a></h3>
                         <p class="service-text">Clear, honest, and straightforward at every step. From pricing to product quality, we ensure complete visibility</p>
                         <div class="service-bottom">
-                            <a href="#" class="service-btn">Learn More</a>
+                            <a href="{{ route('frontend.about-us') }}" class="service-btn">Learn More</a>
                         </div>
                     </div>
                 </div>
@@ -115,10 +115,10 @@
                         <div class="service-img"><a href="#"><img style="height: 350px; object-fit: cover;" src="{{ asset('assets/img/indian_faces/service_1.png') }}" alt="service"></a></div>
                         <div class="service-content">
                             <div class="service-icon"><img src="{{ asset('assets/img/icon/sr-1-1.svg') }}" alt="icon"></div>
-                            <h3 class="service-title"><a href="#">Comfort & Care</a></h3>
+                            <h3 class="service-title"><a href="{{ route('frontend.about-us') }}">Comfort & Care</a></h3>
                             <p class="service-text">Soft, skin-friendly fabrics designed for all-day comfort, ensuring durability, easy care, and lasting freshness.</p>
                             <div class="service-bottom">
-                                <a href="#" class="service-btn">Learn More</a>
+                                <a href="{{ route('frontend.about-us') }}" class="service-btn">Learn More</a>
                             </div>
                         </div>
                     </div>
@@ -128,7 +128,7 @@
                         <div class="service-img"><a href="#"><img style="height: 350px; object-fit: cover;" src="{{ asset('assets/img/indian_faces/service_5.png') }}" alt="service"></a></div>
                         <div class="service-content">
                             <div class="service-icon"><img src="{{ asset('assets/img/icon/sr-1-2.svg') }}" alt="icon"></div>
-                            <h3 class="service-title"><a href="#">On Time Delivery</a></h3>
+                            <h3 class="service-title"><a href="{{ route('frontend.about-us') }}">On Time Delivery</a></h3>
                             <p class="service-text">Reliable, punctual delivery—your school essentials arrive exactly when you need them</p>
                             <div class="service-bottom">
                                 <a href="#" class="service-btn">Learn More</a>
@@ -141,7 +141,7 @@
                         <div class="service-img"><a href="#"><img style="height: 350px; object-fit: cover;" src="{{ asset('assets/img/services/service (2).svg') }}" alt="service"></a></div>
                         <div class="service-content">
                             <div class="service-icon"><img src="{{ asset('assets/img/icon/sr-1-3.svg') }}" alt="icon"></div>
-                            <h3 class="service-title"><a href="#">Student Delight</a></h3>
+                            <h3 class="service-title"><a href="{{ route('frontend.about-us') }}">Student Delight</a></h3>
                             <p class="service-text">Designed to make every student feel confident and happy.creating a delightful experience from classroom to playground.</p>
                             <div class="service-bottom">
                                 <a href="#" class="service-btn">Learn More</a>
@@ -154,7 +154,7 @@
                         <div class="service-img"><a href="#"><img style="height: 350px; object-fit: cover;" src="{{ asset('assets/img/indian_faces/service_4.png') }}" alt="service"></a></div>
                         <div class="service-content">
                             <div class="service-icon"><img src="{{ asset('assets/img/icon/sr-1-4.svg') }}" alt="icon"></div>
-                            <h3 class="service-title"><a href="#">Wide Range</a></h3>
+                            <h3 class="service-title"><a href="{{ route('frontend.about-us') }}">Wide Range</a></h3>
                             <p class="service-text">A complete collection under one roof. Explore a wide range tailored to meet every school and student’s needs.</p>
                             <div class="service-bottom">
                                 <a href="#" class="service-btn">Learn More</a>
@@ -167,7 +167,7 @@
                         <div class="service-img"><a href="#"><img style="height: 350px; object-fit: cover;" src="{{ asset('assets/img/indian_faces/service_2.png') }}" alt="service"></a></div>
                         <div class="service-content">
                             <div class="service-icon"><img src="{{ asset('assets/img/icon/check-list.svg') }}" alt="icon"></div>
-                            <h3 class="service-title"><a href="#">Transparency</a></h3>
+                            <h3 class="service-title"><a href="{{ route('frontend.about-us') }}">Transparency</a></h3>
                             <p class="service-text">Clear, honest, and straightforward at every step. From pricing to product quality, we ensure complete visibility</p>
                             <div class="service-bottom">
                                 <a href="#" class="service-btn">Learn More</a>
@@ -257,5 +257,40 @@
     </style>
     </div>
 </section>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  // Stop carousel autoplay and navigate immediately when Learn More is clicked
+  document.querySelectorAll('.service-btn[href]').forEach(function(btn) {
+    btn.addEventListener('click', function(e) {
+      e.preventDefault();
+      e.stopPropagation();
+      e.stopImmediatePropagation();
+      
+      // Stop carousel autoplay if it exists
+      const carousel = document.querySelector('.vs-carousel[data-autoplay="true"]');
+      if (carousel) {
+        // Try to access the carousel instance and stop it
+        if (window.Swiper && carousel.swiper) {
+          carousel.swiper.autoplay.stop();
+        }
+        // Also try to stop any jQuery carousel
+        if (window.$ && $(carousel).data('owlCarousel')) {
+          $(carousel).data('owlCarousel').stop();
+        }
+        // Remove autoplay attribute to prevent further transitions
+        carousel.removeAttribute('data-autoplay');
+      }
+      
+      // Navigate immediately - don't wait for any transitions
+      const href = this.getAttribute('href');
+      if (href && href !== '#') {
+        window.location.href = href;
+      }
+    }, true); // Use capture phase to run before other handlers
+  });
+});
+</script>
+
 @endsection
 

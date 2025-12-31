@@ -1,7 +1,54 @@
 @extends('frontend.layouts.app')
 
+@push('styles')
+<style>
+    /* Remove extra spacing at the end of FAQ page - direct approach */
+    .faq-page .faq-last-section {
+        padding-bottom: 0 !important;
+        margin-bottom: 0 !important;
+    }
+    
+    /* Remove spacing from last section before footer */
+    .faq-page > section:last-child {
+        padding-bottom: 0 !important;
+        margin-bottom: 0 !important;
+    }
+    
+    /* Remove spacing from widget area on FAQ page */
+    body:has(.faq-page) footer .widget-area,
+    body:has(.faq-page) footer .footer-top {
+        padding-top: 0 !important;
+        margin-top: 0 !important;
+    }
+    
+    /* Remove any white space between content and footer on FAQ page */
+    body:has(.faq-page) footer {
+        margin-top: 0 !important;
+    }
+    
+    /* Remove all bottom spacing from FAQ content area */
+    .faq-page {
+        margin-bottom: 0 !important;
+        padding-bottom: 0 !important;
+    }
+    
+    /* Direct fix for the white line - remove all spacing after last section */
+    .faq-page section:last-of-type {
+        margin-bottom: 0 !important;
+        padding-bottom: 0 !important;
+    }
+    
+    /* Ensure container doesn't add spacing */
+    .faq-page .container:last-child {
+        margin-bottom: 0 !important;
+        padding-bottom: 0 !important;
+    }
+</style>
+@endpush
+
 @section('content')
 @include('frontend.partials.header')
+<div class="faq-page">
  <div class="breadcumb-wrapper " data-bg-src="assets/img/contact/Background.png">
         <div class="container z-index-common">
             <div class="breadcumb-content">
@@ -16,10 +63,10 @@
             </div>
         </div>
     </div>
-<section class="space-top space-extra-bottom" style="background-color: #ffffff;">
+<section class="space-top" style="background-color: #ffffff;">
   
 
-<section class=" space-extra-bottom">
+<section class="faq-last-section" style="background-color: #ffffff; padding-bottom: 0 !important; margin-bottom: 0 !important;">
     <div class="container">
         <div class="row gx-80">
 
@@ -128,4 +175,5 @@ available only for the schools listed on our website. However, other back-tosch
             </div>
         </div>
 </section>
+</div>
 @endsection

@@ -200,6 +200,124 @@
             font-size: 30px;
             }
 
+        /* Mobile view - Make SoCo logo smaller and center it */
+        @media (max-width: 768px) {
+            /* Center and resize main footer logo */
+            .footer-top .col-lg {
+                text-align: center !important;
+                display: flex;
+                justify-content: center;
+            }
+            
+            .footer-top .col-lg img {
+                max-width: 150px !important;
+                height: auto !important;
+            }
+            
+            /* Center and resize SoCo initiative logo */
+            .sidebar-gallery .gallery-thumb {
+                display: flex;
+                justify-content: center;
+                align-items: center;
+            }
+            
+            .sidebar-gallery .gallery-thumb img {
+                width: 150px !important;
+                height: auto !important;
+                max-width: 100%;
+                margin: 0 auto;
+            }
+            
+            /* Center the logo container on mobile */
+            .widget-about {
+                text-align: center;
+            }
+        }
+
+        /* Fix footer menu spacing - remove extra space after FAQ */
+        .footer-widget.widget_nav_menu {
+            margin-bottom: 0 !important;
+            padding-bottom: 0 !important;
+        }
+        
+        .footer-widget.widget_nav_menu ul,
+        .footer-widget.widget_nav_menu .footer-menu ul,
+        .footer-widget.widget_nav_menu .footer-menu ul.menu {
+            padding: 0 !important;
+            margin: 0 !important;
+            margin-bottom: 0 !important;
+            gap: 0 !important;
+            row-gap: 0 !important;
+        }
+        
+        /* Set consistent margin-bottom for ALL footer menu links and list items */
+        .footer-widget.widget_nav_menu .footer-menu ul.menu li,
+        .footer-widget.widget_nav_menu .footer-menu ul.menu li a,
+        .footer-widget.widget_nav_menu ul li,
+        .footer-widget.widget_nav_menu ul li a {
+            margin-bottom: 18px !important;
+            margin-top: 0 !important;
+            padding-bottom: 0 !important;
+            padding-top: 0 !important;
+        }
+        
+        /* Ensure last items also have consistent margin */
+        .footer-widget.widget_nav_menu .footer-menu ul.menu li:nth-last-child(-n+2),
+        .footer-widget.widget_nav_menu .footer-menu ul.menu li:nth-last-child(-n+2) a {
+            margin-bottom: 15px !important;
+            padding-bottom: 0 !important;
+        }
+        
+        /* Remove any padding/margin from the menu container */
+        .footer-widget .footer-menu,
+        .footer-widget .menu-all-pages-container {
+            margin-bottom: 0 !important;
+            padding-bottom: 0 !important;
+            margin: 0 !important;
+            padding: 0 !important;
+        }
+        
+        /* Override ALL widget_nav_menu links in footer - most specific */
+        .footer-widget.widget_nav_menu a,
+        .footer-widget.widget_nav_menu .footer-menu a,
+        .footer-widget.widget_nav_menu .footer-menu ul.menu a {
+            margin-bottom: 0 !important;
+            padding-bottom: 0 !important;
+        }
+        
+        /* Ensure no spacing on the widget itself */
+        .footer-widget.widget_nav_menu .widget {
+            margin-bottom: 0 !important;
+            padding-bottom: 0 !important;
+        }
+       
+        
+        
+        /* Remove any bottom spacing from the last row of the grid */
+        .footer-widget.widget_nav_menu .footer-menu ul.menu > li:nth-last-child(-n+2) {
+            margin-bottom: 0 !important;
+            padding-bottom: 0 !important;
+        }
+        
+       
+        
+        /* Ensure widget title doesn't create extra space below */
+        .footer-widget.widget_nav_menu .widget_title {
+            margin-bottom: 20px !important;
+        }
+        
+        /* Final comprehensive override - remove ALL spacing from footer menu */
+        .footer-widget.widget_nav_menu .menu-all-pages-container.footer-menu ul.menu {
+            margin: 0 !important;
+            padding: 0 !important;
+        }
+        
+        .footer-widget.widget_nav_menu .menu-all-pages-container.footer-menu ul.menu li:last-child,
+        .footer-widget.widget_nav_menu .menu-all-pages-container.footer-menu ul.menu li:nth-last-child(2) {
+            margin-bottom: 0 !important;
+            padding-bottom: 0 !important;
+        }
+
     </style>
 
 </head>
@@ -214,8 +332,8 @@
         <div class="footer-top">
             <div class="container">
                 <div class="row gx-60 gy-4 text-center text-lg-start justify-content-between align-items-center">
-                    <div class="col-lg"><a href="{{ route('frontend.index') }}"><img
-                                src="{{ asset('assets/img/new logo/new_logo.png') }}" alt="logo"></a></div>
+                     <div class="col-lg"><a href="{{ route('frontend.index') }}"><img
+                                 src="{{ asset('assets/img/soco_logo/logo_voilet_v.png') }}" alt="logo"></a></div>
                     <div class="col-lg-auto">
                         <h3 class="h4 mb-0 text-white"><img src="{{ asset('assets/img/icon/check-list.svg') }}"
                                 alt="icon" class="me-2">Shop Your School’s Uniform & Essentials in one place.</h3>
@@ -274,7 +392,7 @@
                                     <li><a href="{{ route('frontend.index') }}">Home</a></li>
                                     <li><a href="{{ route('frontend.return-exchange') }}">Return/Exchange Policy</a></li>
                                     <li><a href="{{ route('frontend.about-us') }}">About Us</a></li>
-                                    <li><a href="{{ route('frontend.privacy-policy') }}"> Privacy Policy </a></li>
+                                    <li><a href="{{ route('frontend.privacy-policy') }}">Privacy Policy</a></li>
                                     <li><a href="{{ route('frontend.services') }}">Services</a></li>
                                     <li><a href="{{ route('frontend.shipping-policy') }}">Shipping Policy</a></li>
                                     <li><a href="{{ route('frontend.faq') }}">FAQ</a></li>
@@ -332,6 +450,8 @@
     <script src="{{ asset('assets/js/jquery-ui.min.js') }}"></script>
     <!-- Bootstrap -->
     <script src="{{ asset('assets/js/bootstrap.min.js') }}"></script>
+    <!-- SweetAlert2 -->
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <!-- Magnific Popup -->
     <script src="{{ asset('assets/js/jquery.magnific-popup.min.js') }}"></script>
     <!-- Isotope Filter -->

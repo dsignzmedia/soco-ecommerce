@@ -335,7 +335,7 @@
 
             <!-- Right Column (Sidebar Style) -->
             <div style="display:flex;flex-direction:column;gap:24px;">
-                <div class="card">
+                <div class="card organization-card">
                     <h3 style="margin:0 0 20px;color:#111827;display:flex;align-items:center;gap:10px;">
                         <i class="fas fa-sliders-h" style="color:#490d59;background:#f7f2fb;padding:8px;border-radius:8px;"></i>
                         Organization
@@ -362,9 +362,9 @@
                                 @endforeach
                             </select>
                         </label>
-                        <label id="category-label">
+                        <label id="category-label" style="display: block !important; position: relative; z-index: 100;">
                             <span>Category</span>
-                            <select name="category" id="category-select">
+                            <select name="category" id="category-select" style="width: 100%; padding: 10px 14px; border: 1px solid #d1d5db; border-radius: 8px; font-size: 14px; background: white; position: relative; z-index: 100;">
                                 <option value="">Select Category</option>
                                 @foreach($categories as $key => $label)
                                     <option value="{{ $key }}" @selected(old('category', $product->category) === $key)>{{ $label }}</option>
@@ -395,7 +395,7 @@
                     </div>
                 </div>
 
-                <div class="card">
+                <div class="card publish-card">
                     <h3 style="margin:0 0 20px;color:#111827;display:flex;align-items:center;gap:10px;">
                         <i class="fas fa-check-circle" style="color:#490d59;background:#f7f2fb;padding:8px;border-radius:8px;"></i>
                         Publish
@@ -443,9 +443,12 @@
                             <div class="file-input-wrapper">
                                 <input type="file" id="featured_image_input" name="featured_image" accept="image/*">
                             </div>
-                            <div id="featured_image_preview" style="margin-top:8px;">
+                            <div id="featured_image_preview" style="margin-top:8px;position:relative;display:inline-block;">
                                 @if($product->featured_image)
                                     <img src="{{ Str::startsWith($product->featured_image, 'http') ? $product->featured_image : asset('storage/' . $product->featured_image) }}" alt="Featured" style="width:120px;height:120px;object-fit:cover;border-radius:8px;border:2px solid #ddd;">
+                                    <button type="button" class="preview-remove-btn" onclick="removeFeaturedImage()" style="position:absolute;top:4px;right:4px;width:24px;height:24px;background:rgba(220,53,69,0.9);color:white;border:none;border-radius:50%;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:12px;z-index:2;">
+                                        <i class="fas fa-times"></i>
+                                    </button>
                                 @endif
                             </div>
                         </label>
@@ -459,8 +462,17 @@
                                 <input type="hidden" name="media_order_ids" id="media_order_ids">
                             </div>
                             
-                            <!-- Unified Media Grid -->
-                            <div id="unifiedMediaPreview" style="display: flex; flex-wrap: nowrap; gap: 12px; margin-top: 16px; overflow-x: auto; overflow-y: hidden; padding-bottom: 8px; -webkit-overflow-scrolling: touch;">
+                            <!-- Media Navigation Arrows -->
+                            <div style="position: relative; margin-top: 16px; min-height: 120px;">
+                                <button type="button" id="media-nav-left" class="media-nav-arrow" style="position: absolute; left: 8px; top: 50%; transform: translateY(-50%); z-index: 10; background: rgba(73, 13, 89, 0.9); color: white; border: none; border-radius: 50%; width: 36px; height: 36px; cursor: pointer; display: none; align-items: center; justify-content: center; font-size: 14px; box-shadow: 0 2px 8px rgba(0,0,0,0.2); transition: all 0.3s ease;">
+                                    <i class="fas fa-chevron-left"></i>
+                                </button>
+                                <button type="button" id="media-nav-right" class="media-nav-arrow" style="position: absolute; right: 8px; top: 50%; transform: translateY(-50%); z-index: 10; background: rgba(73, 13, 89, 0.9); color: white; border: none; border-radius: 50%; width: 36px; height: 36px; cursor: pointer; display: none; align-items: center; justify-content: center; font-size: 14px; box-shadow: 0 2px 8px rgba(0,0,0,0.2); transition: all 0.3s ease;">
+                                    <i class="fas fa-chevron-right"></i>
+                                </button>
+                                
+                                <!-- Unified Media Grid -->
+                                <div id="unifiedMediaPreview" style="display: flex; flex-wrap: nowrap; gap: 12px; overflow-x: auto; overflow-y: hidden; padding-bottom: 8px; -webkit-overflow-scrolling: touch; align-items: flex-start; scroll-behavior: smooth;">
                                 <!-- Existing images and videos rendered as media items -->
                                 @if($product->media_images)
                                     @foreach($product->media_images as $index => $img)
@@ -488,6 +500,7 @@
                                         </div>
                                     @endforeach
                                 @endif
+                                </div>
                             </div>
                         </div>
                         
@@ -500,9 +513,12 @@
                             <div class="file-input-wrapper">
                                 <input type="file" id="size_chart_path_input" name="size_chart_path" accept="image/*">
                             </div>
-                            <div id="size_chart_path_preview" style="margin-top:8px;">
+                            <div id="size_chart_path_preview" style="margin-top:8px;position:relative;display:inline-block;">
                                 @if($product->size_chart_path)
                                     <img src="{{ asset('storage/' . $product->size_chart_path) }}" alt="Size Chart" style="width:120px;height:120px;object-fit:cover;border-radius:8px;border:2px solid #ddd;">
+                                    <button type="button" class="preview-remove-btn" onclick="removeSizeChartImage()" style="position:absolute;top:4px;right:4px;width:24px;height:24px;background:rgba(220,53,69,0.9);color:white;border:none;border-radius:50%;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:12px;z-index:2;">
+                                        <i class="fas fa-times"></i>
+                                    </button>
                                     <a href="{{ asset('storage/' . $product->size_chart_path) }}" target="_blank" style="font-size:12px;color:#490d59;display:block;margin-top:4px;">View current chart</a>
                                 @endif
                             </div>
@@ -512,9 +528,12 @@
                             <div class="file-input-wrapper">
                                 <input type="file" id="size_measurement_image_input" name="size_measurement_image" accept="image/*">
                             </div>
-                            <div id="size_measurement_image_preview" style="margin-top:8px;">
+                            <div id="size_measurement_image_preview" style="margin-top:8px;position:relative;display:inline-block;">
                                 @if($product->size_measurement_image)
                                     <img src="{{ Str::startsWith($product->size_measurement_image, 'http') ? $product->size_measurement_image : asset('storage/' . $product->size_measurement_image) }}" alt="Size Measurement" style="width:120px;height:120px;object-fit:cover;border-radius:8px;border:2px solid #ddd;">
+                                    <button type="button" class="preview-remove-btn" onclick="removeSizeMeasurementImage()" style="position:absolute;top:4px;right:4px;width:24px;height:24px;background:rgba(220,53,69,0.9);color:white;border:none;border-radius:50%;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:12px;z-index:2;">
+                                        <i class="fas fa-times"></i>
+                                    </button>
                                     <a href="{{ Str::startsWith($product->size_measurement_image, 'http') ? $product->size_measurement_image : asset('storage/' . $product->size_measurement_image) }}" target="_blank" style="font-size:12px;color:#490d59;display:block;margin-top:4px;">View current image</a>
                                 @endif
                             </div>
@@ -588,6 +607,29 @@
              transition: background 0.2s;
         }
          .video-thumbnail:hover .video-play-button { background: rgba(255,255,255,0.4); }
+        .preview-remove-btn:hover {
+            background: rgba(220, 53, 69, 1) !important;
+            transform: scale(1.1);
+        }
+        
+        /* Media Navigation Arrows */
+        .media-nav-arrow {
+            transition: all 0.3s ease !important;
+        }
+        
+        .media-nav-arrow:hover {
+            background: rgba(73, 13, 89, 1) !important;
+            transform: translateY(-50%) scale(1.1) !important;
+            box-shadow: 0 4px 12px rgba(73, 13, 89, 0.4) !important;
+        }
+        
+        .media-nav-arrow:active {
+            transform: translateY(-50%) scale(0.95) !important;
+        }
+        
+        .media-nav-arrow[style*="opacity: 0.5"] {
+            cursor: not-allowed !important;
+        }
     </style>
     <script>
         document.addEventListener('DOMContentLoaded', function() {
@@ -776,13 +818,30 @@
                                 // Clear existing content
                                 preview.innerHTML = '';
                                 
+                                // Create wrapper for positioning
+                                const wrapper = document.createElement('div');
+                                wrapper.style.cssText = 'position:relative;display:inline-block;';
+                                
                                 // Create image element
                                 const img = document.createElement('img');
                                 img.src = e.target.result;
                                 img.alt = 'Preview';
                                 img.style.cssText = 'width:120px;height:120px;object-fit:cover;border-radius:8px;border:2px solid #ddd;';
                                 
-                                preview.appendChild(img);
+                                // Create remove button
+                                const removeBtn = document.createElement('button');
+                                removeBtn.type = 'button';
+                                removeBtn.className = 'preview-remove-btn';
+                                removeBtn.innerHTML = '<i class="fas fa-times"></i>';
+                                removeBtn.style.cssText = 'position:absolute;top:4px;right:4px;width:24px;height:24px;background:rgba(220,53,69,0.9);color:white;border:none;border-radius:50%;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:12px;z-index:2;';
+                                removeBtn.onclick = function() {
+                                    preview.innerHTML = '';
+                                    input.value = '';
+                                };
+                                
+                                wrapper.appendChild(img);
+                                wrapper.appendChild(removeBtn);
+                                preview.appendChild(wrapper);
                             };
                             reader.readAsDataURL(file);
                         } else {
@@ -793,10 +852,81 @@
                 }
             }
 
+            // Remove functions for existing images
+            window.removeSizeChartImage = function() {
+                const preview = document.getElementById('size_chart_path_preview');
+                const input = document.getElementById('size_chart_path_input');
+                if (preview) preview.innerHTML = '';
+                if (input) input.value = '';
+            };
+
+            window.removeSizeMeasurementImage = function() {
+                const preview = document.getElementById('size_measurement_image_preview');
+                const input = document.getElementById('size_measurement_image_input');
+                if (preview) preview.innerHTML = '';
+                if (input) input.value = '';
+            };
+
+            window.removeFeaturedImage = function() {
+                const preview = document.getElementById('featured_image_preview');
+                const input = document.getElementById('featured_image_input');
+                if (preview) preview.innerHTML = '';
+                if (input) input.value = '';
+            };
+
             // Setup previews for all three image fields
             setupImagePreview('featured_image_input', 'featured_image_preview');
             setupImagePreview('size_measurement_image_input', 'size_measurement_image_preview');
             setupImagePreview('size_chart_path_input', 'size_chart_path_preview');
+
+            // Media Navigation Arrows
+            const mediaNavLeft = document.getElementById('media-nav-left');
+            const mediaNavRight = document.getElementById('media-nav-right');
+            const mediaPreview = document.getElementById('unifiedMediaPreview');
+            
+            function updateMediaNavArrows() {
+                if (!mediaPreview || !mediaNavLeft || !mediaNavRight) return;
+                
+                const hasOverflow = mediaPreview.scrollWidth > mediaPreview.clientWidth;
+                if (hasOverflow) {
+                    mediaNavLeft.style.display = 'flex';
+                    mediaNavRight.style.display = 'flex';
+                } else {
+                    mediaNavLeft.style.display = 'none';
+                    mediaNavRight.style.display = 'none';
+                }
+                
+                // Update arrow visibility based on scroll position
+                mediaNavLeft.style.opacity = mediaPreview.scrollLeft > 0 ? '1' : '0.5';
+                mediaNavRight.style.opacity = (mediaPreview.scrollLeft + mediaPreview.clientWidth) < mediaPreview.scrollWidth ? '1' : '0.5';
+            }
+            
+            if (mediaNavLeft && mediaNavRight && mediaPreview) {
+                // Left arrow click
+                mediaNavLeft.addEventListener('click', function() {
+                    const scrollAmount = 140; // Width of one media item + gap
+                    mediaPreview.scrollBy({ left: -scrollAmount, behavior: 'smooth' });
+                });
+                
+                // Right arrow click
+                mediaNavRight.addEventListener('click', function() {
+                    const scrollAmount = 140; // Width of one media item + gap
+                    mediaPreview.scrollBy({ left: scrollAmount, behavior: 'smooth' });
+                });
+                
+                // Update arrows on scroll
+                mediaPreview.addEventListener('scroll', updateMediaNavArrows);
+                
+                // Update arrows on resize
+                window.addEventListener('resize', updateMediaNavArrows);
+                
+                // Initial check
+                setTimeout(updateMediaNavArrows, 100);
+                
+                // Update after media items are added
+                const observer = new MutationObserver(updateMediaNavArrows);
+                observer.observe(mediaPreview, { childList: true, subtree: true });
+            }
         });
     </script>
     @endpush
@@ -1670,10 +1800,39 @@
         padding: 24px;
         box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
         transition: box-shadow 0.3s ease;
+        position: relative;
+        z-index: 1;
     }
     
     .card:hover {
         box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    }
+    
+    /* Organization card needs higher z-index for dropdown */
+    .organization-card {
+        z-index: 10 !important;
+        overflow: visible !important;
+    }
+    
+    /* Publish card should be below Organization card */
+    .publish-card {
+        z-index: 1 !important;
+    }
+    
+    /* Fix z-index for category dropdown to appear above other cards */
+    #category-label {
+        position: relative;
+        z-index: 100 !important;
+    }
+    
+    #category-select {
+        position: relative;
+        z-index: 100 !important;
+    }
+    
+    /* Ensure select dropdown options appear above other elements */
+    #category-select:focus {
+        z-index: 1000 !important;
     }
 
     /* Enhanced Input Styling */

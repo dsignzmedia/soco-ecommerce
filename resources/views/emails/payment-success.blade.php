@@ -95,7 +95,9 @@ Payment Confirmed
 <p style="font-size:11px;color:#9a6c4c;font-weight:bold;text-transform:uppercase;">Payment Method</p>
 <p style="margin:0;font-weight:bold;">{{ $order->payment_method ? ucfirst($order->payment_method) : 'Online' }}</p>
 @if(isset($paymentDetails['created_at']))
-<p style="margin:0;">{{ date('M d, Y, h:i A', $paymentDetails['created_at']) }}</p>
+<p style="margin:0;">{{ \Carbon\Carbon::createFromTimestamp($paymentDetails['created_at'])->setTimezone('Asia/Kolkata')->format('M d, Y, h:i A') }}</p>
+@elseif($order->created_at)
+<p style="margin:0;">{{ $order->created_at->setTimezone('Asia/Kolkata')->format('M d, Y, h:i A') }}</p>
 @endif
 </td>
 

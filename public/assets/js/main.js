@@ -355,7 +355,7 @@
   var form = ".ajax-contact";
   var invalidCls = "is-invalid";
   var $email = '[name="email"]';
-  var $validation = '[name="firstname"],[name="lastname"],[name="email"],[name="number"],[name="message"]'; // Must be use (,) without any space
+  var $validation = '[name="firstname"],[name="message"]'; // Required fields only (lastname, email, number are conditionally required)
   var formMessages = $(".form-messages");
 
   function sendContact() {
@@ -363,74 +363,272 @@
     var valid;
     valid = validateContact();
     if (valid) {
+      // Show sending message popup
+      showSendingMessagePopup();
+      
       jQuery
         .ajax({
           url: $(form).attr("action"),
           data: formData,
           type: "POST",
+          headers: {
+            'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+          },
         })
         .done(function (response) {
-          // Make sure that the formMessages div has the 'success' class.
-          formMessages.removeClass("error");
-          formMessages.addClass("success");
-          // Set the message text.
-          formMessages.text(response);
+          // Hide sending message popup
+          hideSendingMessagePopup();
           // Clear the form.
           $(form + ' input:not([type="submit"]),' + form + " textarea").val("");
+          // Remove validation classes
+          $(form + ' input, ' + form + ' textarea').removeClass(invalidCls);
+          $('.error-message').text('');
+          
+          // Show SweetAlert2 success message
+          Swal.fire({
+            icon: 'success',
+            title: 'Message Sent!',
+            text: response || 'Thank you for contacting us! We will get back to you soon.',
+            confirmButtonColor: '#490d59',
+            confirmButtonText: 'OK'
+          });
         })
         .fail(function (data) {
-          // Make sure that the formMessages div has the 'error' class.
-          formMessages.removeClass("success");
-          formMessages.addClass("error");
-          // Set the message text.
+          // Hide sending message popup
+          hideSendingMessagePopup();
+          
+          // Show SweetAlert2 error message
+          var errorMessage = "Oops! An error occurred and your message could not be sent.";
           if (data.responseText !== "") {
-            formMessages.html(data.responseText);
-          } else {
-            formMessages.html(
-              "Oops! An error occured and your message could not be sent."
-            );
+            errorMessage = data.responseText;
           }
+          
+          Swal.fire({
+            icon: 'error',
+            title: 'Error',
+            text: errorMessage,
+            confirmButtonColor: '#dc3545',
+            confirmButtonText: 'OK'
+          });
         });
     }
+  }
+
+  function showSendingMessagePopup() {
+    // Create popup overlay if it doesn't exist
+    if ($('#sending-message-popup').length === 0) {
+      $('body').append(
+        '<div id="sending-message-popup" style="position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.5);z-index:9999;display:flex;align-items:center;justify-content:center;">' +
+        '<div style="background:white;padding:30px 40px;border-radius:10px;text-align:center;box-shadow:0 4px 20px rgba(0,0,0,0.3);">' +
+        '<div style="margin-bottom:15px;"><i class="fas fa-spinner fa-spin" style="font-size:32px;color:#490d59;"></i></div>' +
+        '<p style="margin:0;font-size:16px;color:#1b130d;font-weight:500;">Sending message...</p>' +
+        '</div>' +
+        '</div>'
+      );
+    } else {
+      $('#sending-message-popup').show();
+    }
+  }
+
+  function hideSendingMessagePopup() {
+    $('#sending-message-popup').hide();
   }
 
   function validateContact() {
     var valid = true;
     var formInput;
+    var errorMessages = [];
 
-    function unvalid($validation) {
-      $validation = $validation.split(",");
-      for (var i = 0; i < $validation.length; i++) {
-        formInput = form + " " + $validation[i];
-        if (!$(formInput).val()) {
-          $(formInput).addClass(invalidCls);
-          valid = false;
-        } else {
-          $(formInput).removeClass(invalidCls);
-          valid = true;
-        }
-      }
-    }
-    unvalid($validation);
+    // Clear all previous error states
+    $($validation).removeClass(invalidCls);
+    $($email).removeClass(invalidCls);
+    $('.error-message').text('').hide();
 
-    if (
-      !$($email).val() ||
-      !$($email)
-        .val()
-        .match(/^([\w-\.]+@([\w-]+\.)+[\w-]{2,4})?$/)
-    ) {
-      $($email).addClass(invalidCls);
+    // Validate First Name (Required)
+    var firstName = $('#firstname').val().trim();
+    if (firstName === "" || firstName.length === 0) {
+      $('#firstname').addClass(invalidCls);
+      $('#firstname-error').text('First name is required.').show();
+      valid = false;
+    } else if (firstName.length < 2) {
+      $('#firstname').addClass(invalidCls);
+      $('#firstname-error').text('First name must be at least 2 characters.').show();
+      valid = false;
+    } else if (firstName.length > 50) {
+      $('#firstname').addClass(invalidCls);
+      $('#firstname-error').text('First name must not exceed 50 characters.').show();
+      valid = false;
+    } else if (!/^[a-zA-Z\s'-]+$/.test(firstName)) {
+      $('#firstname').addClass(invalidCls);
+      $('#firstname-error').text('First name can only contain letters, spaces, hyphens, and apostrophes.').show();
       valid = false;
     } else {
-      $($email).removeClass(invalidCls);
-      valid = true;
+      $('#firstname').removeClass(invalidCls);
+      $('#firstname-error').hide();
     }
+
+    // Validate Last Name (Optional - only validate if provided)
+    var lastName = $('#lastname').val().trim();
+    if (lastName.length > 0) {
+      if (lastName.length < 2) {
+        $('#lastname').addClass(invalidCls);
+        $('#lastname-error').text('Last name must be at least 2 characters.').show();
+        valid = false;
+      } else if (lastName.length > 50) {
+        $('#lastname').addClass(invalidCls);
+        $('#lastname-error').text('Last name must not exceed 50 characters.').show();
+        valid = false;
+      } else if (!/^[a-zA-Z\s'-]+$/.test(lastName)) {
+        $('#lastname').addClass(invalidCls);
+        $('#lastname-error').text('Last name can only contain letters, spaces, hyphens, and apostrophes.').show();
+        valid = false;
+      } else {
+        $('#lastname').removeClass(invalidCls);
+        $('#lastname-error').hide();
+      }
+    } else {
+      // Last name is optional, so clear any errors if empty
+      $('#lastname').removeClass(invalidCls);
+      $('#lastname-error').hide();
+    }
+
+    // Validate Email (Optional but must be valid if provided)
+    var emailValue = $($email).val().trim();
+    var emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    var emailValid = true;
+    
+    if (emailValue.length > 0) {
+      if (!emailRegex.test(emailValue)) {
+        $($email).addClass(invalidCls);
+        $('#email-error').text('Please enter a valid email address (e.g., example@domain.com).').show();
+        valid = false;
+        emailValid = false;
+      } else if (emailValue.length > 100) {
+        $($email).addClass(invalidCls);
+        $('#email-error').text('Email address must not exceed 100 characters.').show();
+        valid = false;
+        emailValid = false;
+      } else {
+        $($email).removeClass(invalidCls);
+        $('#email-error').hide();
+      }
+    } else {
+      $($email).removeClass(invalidCls);
+      $('#email-error').hide();
+    }
+
+    // Validate Phone Number (Optional but must be valid if provided)
+    var phoneValue = $('[name="number"]').val().trim();
+    var phoneDigits = phoneValue.replace(/\D/g, '');
+    var phoneValid = true;
+    
+    if (phoneValue.length > 0) {
+      if (phoneDigits.length < 10) {
+        $('[name="number"]').addClass(invalidCls);
+        $('#number-error').text('Phone number must contain at least 10 digits.').show();
+        valid = false;
+        phoneValid = false;
+      } else if (phoneDigits.length > 15) {
+        $('[name="number"]').addClass(invalidCls);
+        $('#number-error').text('Phone number must not exceed 15 digits.').show();
+        valid = false;
+        phoneValid = false;
+      } else {
+        $('[name="number"]').removeClass(invalidCls);
+        $('#number-error').hide();
+      }
+    } else {
+      $('[name="number"]').removeClass(invalidCls);
+      $('#number-error').hide();
+    }
+
+    // Validate that at least Email OR Phone is provided
+    if (emailValue.length === 0 && phoneValue.length === 0) {
+      $($email).addClass(invalidCls);
+      $('[name="number"]').addClass(invalidCls);
+      $('#email-error').text('Either email address or phone number is required.').show();
+      $('#number-error').text('Either email address or phone number is required.').show();
+      valid = false;
+    } else if (emailValue.length === 0 && phoneValue.length > 0 && phoneValid) {
+      // Phone is provided and valid, clear email error
+      $($email).removeClass(invalidCls);
+      $('#email-error').hide();
+    } else if (phoneValue.length === 0 && emailValue.length > 0 && emailValid) {
+      // Email is provided and valid, clear phone error
+      $('[name="number"]').removeClass(invalidCls);
+      $('#number-error').hide();
+    }
+
+    // Validate Message (Required)
+    var messageValue = $('#message').val().trim();
+    if (messageValue === "" || messageValue.length === 0) {
+      $('#message').addClass(invalidCls);
+      $('#message-error').text('Message is required.').show();
+      valid = false;
+    } else if (messageValue.length < 10) {
+      $('#message').addClass(invalidCls);
+      $('#message-error').text('Message must be at least 10 characters long.').show();
+      valid = false;
+    } else if (messageValue.length > 1000) {
+      $('#message').addClass(invalidCls);
+      $('#message-error').text('Message must not exceed 1000 characters.').show();
+      valid = false;
+    } else {
+      $('#message').removeClass(invalidCls);
+      $('#message-error').hide();
+    }
+
+    // Show general error message if validation fails
+    if (!valid) {
+      formMessages.removeClass("success");
+      formMessages.addClass("error");
+      formMessages.text("Please correct the errors below and try again.");
+    } else {
+      formMessages.removeClass("error");
+      formMessages.text("");
+    }
+
     return valid;
   }
 
   $(form).on("submit", function (element) {
     element.preventDefault();
     sendContact();
+  });
+
+  // Real-time validation on input blur
+  $('#firstname, #lastname, #email, #number, #message').on('blur', function() {
+    validateContact();
+  });
+
+  // Clear error state on input (for better UX)
+  $('#firstname, #message').on('input', function() {
+    var $field = $(this);
+    if ($field.val().trim().length > 0) {
+      $field.removeClass(invalidCls);
+      $('#' + $field.attr('id') + '-error').hide();
+    }
+  });
+
+  // For email and phone - clear errors when either is filled (since only one is required)
+  $('#email, #number').on('input', function() {
+    var emailValue = $('#email').val().trim();
+    var phoneValue = $('#number').val().trim();
+    
+    // If at least one is filled, clear the "either/or" error
+    if (emailValue.length > 0 || phoneValue.length > 0) {
+      $('#email-error').text('').hide();
+      $('#number-error').text('').hide();
+      $('#email').removeClass(invalidCls);
+      $('#number').removeClass(invalidCls);
+    }
+  });
+
+  // For lastname - clear errors when typing (optional field)
+  $('#lastname').on('input', function() {
+    var $field = $(this);
+    $field.removeClass(invalidCls);
+    $('#lastname-error').hide();
   });
 
   /*----------- 10. Magnific Popup ----------*/
