@@ -11,7 +11,7 @@
 
         <!-- Slide 1-->
         <div class="ls-slide" data-ls="duration:12000; transition2d:5;">
-            
+
             <!--<ls-layer-->
             <!--    style="font-size:36px; color:#000; stroke:#000; stroke-width:0px; text-align:left; font-style:normal; text-decoration:none; text-transform:none; font-weight:400; letter-spacing:0px; border-style:solid; background-position:0% 0%; background-repeat:no-repeat; background-clip:border-box; overflow:visible; width:255px; height:255px; border-width:60px 60px 60px 60px; border-color:#FFD600; border-radius:50% 50% 50% 50%; top:126px; left:740px; z-index:4; -webkit-background-clip:border-box;"-->
             <!--    class="ls-l ls-hide-tablet ls-hide-phone ls-text-layer" data-ls="static:forever;">-->
@@ -87,9 +87,167 @@ Shop by Category Area
 ==============================-->
 <section>
 
-       
-       
+
+
     <style>
+        .simple-cat {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        /* Desktop and Tablet: enable horizontal scroll when content exceeds */
+        .category-marquee-wrapper {
+            overflow-x: hidden; /* Hide scrollbar but allow JavaScript transform */
+            overflow-y: hidden;
+            -webkit-overflow-scrolling: touch;
+        }
+
+        /* Hide scrollbar completely */
+        .category-marquee-wrapper::-webkit-scrollbar {
+            display: none;
+        }
+
+        .category-marquee-wrapper {
+            scrollbar-width: none; /* Firefox */
+            -ms-overflow-style: none; /* IE and Edge */
+        }
+
+        /* Hide content initially to prevent flash, show after JS determines layout */
+        .category-marquee-wrapper:not(.layout-ready) {
+            opacity: 0;
+            visibility: hidden;
+        }
+
+        .category-marquee-wrapper.layout-ready {
+            opacity: 1;
+            visibility: visible;
+            transition: opacity 0.2s ease-in;
+        }
+
+        /* Default: Center content to prevent flash (JS will change if content overflows) */
+        .category-marquee-wrapper .category_box_row {
+            justify-content: center !important;
+        }
+
+        /* Override when content overflows */
+        .category-marquee-wrapper.content-overflows .category_box_row {
+            justify-content: flex-start !important; /* Align left when content overflows */
+        }
+
+        /* When content fits screen - center it (explicit) */
+        .category-marquee-wrapper.content-fits-screen {
+            overflow-x: visible;
+        }
+
+        .category-marquee-wrapper.content-fits-screen .category_box_row {
+            justify-content: center;
+            transform: none !important;
+            width: 100%;
+            padding-left: 20px;
+            padding-right: 20px;
+        }
+
+        /* When content overflows - enable scrolling and align left */
+        .category-marquee-wrapper.content-overflows {
+            overflow-x: hidden;
+            overflow-y: hidden;
+        }
+
+        .category-marquee-wrapper.content-overflows .category_box_row {
+            justify-content: flex-start; /* Align left when content overflows */
+        }
+
+        .category-marquee-wrapper.content-overflows::-webkit-scrollbar {
+            height: 6px;
+        }
+
+        .category-marquee-wrapper.content-overflows::-webkit-scrollbar-track {
+            background: #f1f1f1;
+            border-radius: 10px;
+        }
+
+        .category-marquee-wrapper.content-overflows::-webkit-scrollbar-thumb {
+            background: #490D59;
+            border-radius: 10px;
+        }
+
+        .category_box_row {
+            display: flex;
+            gap: 30px;
+            justify-content: center; /* Default to center, JS will change if content overflows */
+            padding-top: 60px;
+            padding-left: 20px;
+            padding-right: 20px;
+            flex-wrap: nowrap; /* Keep in single row */
+            width: max-content; /* Allow content to exceed container */
+            /* Ensure row can be scrolled natively when needed */
+            position: relative;
+        }
+
+        /* When content overflows, change to flex-start */
+        .category-marquee-wrapper.content-overflows .category_box_row {
+            justify-content: flex-start;
+        }
+
+        /* Tablet/Medium screens: adjust layout */
+        @media (min-width: 769px) and (max-width: 1116px) {
+            .category_box_row {
+                gap: 20px;
+            }
+        }
+
+        .simple-box {
+            width: 160px;
+            height: 160px;
+            border-radius: 18px;
+            border: 2px solid #ccc;
+            overflow: hidden;
+            margin: 0 auto; /* Center in column */
+        }
+
+        .simple-box img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transition: transform 0.4s ease;
+        }
+
+        .simple-box:hover img {
+            transform: scale(1.15);
+        }
+
+        .simple-title {
+            margin-top: 8px;
+            color: #333;
+        }
+
+        /* Mobile Responsiveness */
+        @media (max-width: 768px) {
+            .category-marquee-wrapper {
+                overflow-x: hidden;
+                width: 100%;
+            }
+
+            .category_box_row {
+                gap: 15px;
+                padding-top: 40px;
+                flex-wrap: nowrap;
+                justify-content: center; /* Default to center on mobile too */
+                padding-left: 0;
+                padding-right: 0;
+                /* animation: scroll 15s linear infinite; REMOVED */
+                width: max-content;
+                will-change: transform;
+                display: flex;
+                align-items: flex-start;
+            }
+
+            /* When content overflows on mobile, change to flex-start */
+            .category-marquee-wrapper.content-overflows .category_box_row {
+                justify-content: flex-start;
+            }
+
+            /* Service Section Marquee */
         /* Service Section Marquee */
             .service-marquee-wrapper {
                 overflow-x: auto;
@@ -107,7 +265,7 @@ Shop by Category Area
                 width: max-content;
                 /* animation: scroll 15s linear infinite; REMOVED */
             }
-            
+
             .service-marquee-row .service-style1 {
                 flex: 0 0 auto;
                 width: 280px; /* Fixed width for service cards */
@@ -115,7 +273,7 @@ Shop by Category Area
                 display: flex; /* Enable flex to stretch children */
                 height: auto; /* Allow it to grow */
             }
-            
+
             .service-marquee-row .service-body {
                 height: 100%; /* Fill the parent height */
                 display: flex;
@@ -123,7 +281,7 @@ Shop by Category Area
                 justify-content: space-between; /* Push content apart if needed */
                 width: 100%;
             }
-            
+
             /* Ensure content takes available space */
             .service-content {
                 flex-grow: 1;
@@ -132,12 +290,12 @@ Shop by Category Area
                 align-items: center; /* Center align items horizontally */
                 text-align: center; /* Center text */
             }
-            
+
             .service-icon {
                 margin: 0 auto 20px auto; /* Ensure icon is centered with margin */
                 display: inline-block;
             }
-            
+
             .service-bottom {
                 margin-top: auto; /* Push button to bottom */
                 width: 100%;
@@ -145,7 +303,7 @@ Shop by Category Area
                 justify-content: center;
                 padding: 0 15px; /* Add padding to container if needed */
             }
-            
+
             .service-btn {
                 width: 100%; /* Full width */
                 display: block;
@@ -230,15 +388,15 @@ Shop by Category Area
         width: 100px !important;
         height: 100px !important;
     }
-    
+
     .category-icon-wrapper i {
         font-size: 40px !important;
     }
-    
+
     .category-col {
         min-width: 100px !important;
     }
-    
+
     /* Resize Menu Toggle Button */
     .vs-menu-toggle {
         transform: scale(0.8);
@@ -274,16 +432,16 @@ Featured Products Area
                 <a href="{{ route('frontend.shop.detail', $product->id) }}" class="fp-card">
                     <div class="simple-box">
                         @if($product->featured_image)
-                            <img 
-                                src="{{ Str::startsWith($product->featured_image, 'http') 
-                                    ? $product->featured_image 
-                                    : asset('storage/' . $product->featured_image) }}" 
+                            <img
+                                src="{{ Str::startsWith($product->featured_image, 'http')
+                                    ? $product->featured_image
+                                    : asset('storage/' . $product->featured_image) }}"
                                 alt="{{ $product->product_name }}"
                                 onerror="this.onerror=null; this.src='{{ asset('assets/img/no image/no_image.png') }}';"
                             >
                         @else
-                            <img 
-                                src="{{ asset('assets/img/no image/no_image.png') }}" 
+                            <img
+                                src="{{ asset('assets/img/no image/no_image.png') }}"
                                 alt="{{ $product->product_name }}"
                             >
                         @endif
@@ -299,16 +457,16 @@ Featured Products Area
                 <a href="{{ route('frontend.shop.detail', $product->id) }}" class="fp-card">
                     <div class="simple-box">
                         @if($product->featured_image)
-                            <img 
-                                src="{{ Str::startsWith($product->featured_image, 'http') 
-                                    ? $product->featured_image 
-                                    : asset('storage/' . $product->featured_image) }}" 
+                            <img
+                                src="{{ Str::startsWith($product->featured_image, 'http')
+                                    ? $product->featured_image
+                                    : asset('storage/' . $product->featured_image) }}"
                                 alt="{{ $product->product_name }}"
                                 onerror="this.onerror=null; this.src='{{ asset('assets/img/no image/no_image.png') }}';"
                             >
                         @else
-                            <img 
-                                src="{{ asset('assets/img/no image/no_image.png') }}" 
+                            <img
+                                src="{{ asset('assets/img/no image/no_image.png') }}"
                                 alt="{{ $product->product_name }}"
                             >
                         @endif
@@ -408,11 +566,11 @@ Featured Products Area
         padding-left: 0;
         padding-right: 0;
     }
-    
+
     .fp-card {
         width: 140px;
     }
-    
+
     .fp-card .simple-box {
         width: 100%;
         height: 140px;
@@ -431,7 +589,7 @@ Featured Products Area
 document.addEventListener("DOMContentLoaded", () => {
     const scroller = document.querySelector(".fp-scroll");
     if (!scroller) return;
-    
+
     let isUserInteracting = false;
     let rafId = null;
     let lastScrollLeft = scroller.scrollLeft;
@@ -443,22 +601,22 @@ document.addEventListener("DOMContentLoaded", () => {
     function autoScroll() {
         if (!isUserInteracting && scroller) {
             const halfWidth = scroller.scrollWidth / 2;
-            
+
             // Mark as auto-scrolling before changing scroll position
             isAutoScrolling = true;
-            
+
             // Increment scroll position
             scroller.scrollLeft += autoScrollSpeed;
-            
-            // Seamless infinite loop: when reaching half of duplicated content, 
+
+            // Seamless infinite loop: when reaching half of duplicated content,
             // subtract half width to continue from the beginning seamlessly
             if (scroller.scrollLeft >= halfWidth) {
                 scroller.scrollLeft = scroller.scrollLeft - halfWidth;
             }
-            
+
             // Update last scroll position for auto-scroll
             lastScrollLeft = scroller.scrollLeft;
-            
+
             // Reset auto-scrolling flag after a short delay
             setTimeout(() => {
                 isAutoScrolling = false;
@@ -473,22 +631,22 @@ document.addEventListener("DOMContentLoaded", () => {
         const currentTime = Date.now();
         const timeDelta = currentTime - lastScrollTime;
         const scrollDelta = Math.abs(currentScrollLeft - lastScrollLeft);
-        
+
         // If scroll position changed significantly and it's not from auto-scroll, it's user scrolling
         if (scrollDelta > 2 && !isAutoScrolling) {
             isUserInteracting = true;
-            
+
             // Clear any existing resume timeout
             if (resumeTimeout) {
                 clearTimeout(resumeTimeout);
             }
-            
+
             // Resume auto-scroll after user stops scrolling
             resumeTimeout = setTimeout(() => {
                 isUserInteracting = false;
             }, 800); // Resume after 800ms of no scrolling
         }
-        
+
         lastScrollLeft = currentScrollLeft;
         lastScrollTime = currentTime;
     }, { passive: true });
@@ -517,25 +675,25 @@ document.addEventListener("DOMContentLoaded", () => {
     scroller.addEventListener('wheel', (e) => {
         // Only handle if not a touch event (touch devices use native scrolling)
         if (e.touches && e.touches.length > 0) return;
-        
+
         // Prevent default vertical scrolling
         e.preventDefault();
-        
+
         // Convert vertical wheel delta to horizontal scroll
         const deltaY = e.deltaY;
         const deltaX = e.deltaX;
-        
+
         // Use deltaX if available (horizontal scroll), otherwise use deltaY (vertical wheel)
         const scrollAmount = deltaX !== 0 ? deltaX : deltaY;
-        
+
         // Scroll horizontally with smooth behavior
         scroller.scrollBy({
             left: scrollAmount,
             behavior: 'auto'
         });
-        
+
         isUserInteracting = true;
-        
+
         // Clear any existing timeouts
         if (resumeTimeout) {
             clearTimeout(resumeTimeout);
@@ -543,7 +701,7 @@ document.addEventListener("DOMContentLoaded", () => {
         if (wheelTimeout) {
             clearTimeout(wheelTimeout);
         }
-        
+
         // Resume auto-scroll after wheel stops
         wheelTimeout = setTimeout(() => {
             resumeTimeout = setTimeout(() => {
@@ -557,24 +715,24 @@ document.addEventListener("DOMContentLoaded", () => {
     let startX = 0;
     let scrollLeftStart = 0;
     let lastMoveTime = 0;
-    
+
     scroller.addEventListener('mousedown', (e) => {
         // Only handle mouse events, not touch
         if (e.touches && e.touches.length > 0) return;
-        
+
         // Prevent default to avoid text selection
         e.preventDefault();
-        
+
         isDragging = true;
         isUserInteracting = true;
         startX = e.clientX; // Use clientX for more accurate position
         scrollLeftStart = scroller.scrollLeft;
         lastMoveTime = Date.now();
-        
+
         scroller.style.cursor = 'grabbing';
         scroller.style.userSelect = 'none';
         scroller.style.scrollBehavior = 'auto'; // Disable smooth scroll during drag for instant response
-        
+
         if (resumeTimeout) {
             clearTimeout(resumeTimeout);
         }
@@ -582,23 +740,23 @@ document.addEventListener("DOMContentLoaded", () => {
 
     document.addEventListener('mousemove', (e) => {
         if (!isDragging) return;
-        
+
         e.preventDefault();
-        
+
         const currentX = e.clientX;
         const diffX = startX - currentX; // Invert so dragging right scrolls right
         const newScrollLeft = scrollLeftStart + diffX;
-        
+
         // Update scroll position immediately for smooth movement
         scroller.scrollLeft = newScrollLeft;
-        
+
         // Update start position for smoother continuous dragging
         startX = currentX;
         scrollLeftStart = scroller.scrollLeft;
-        
+
         isUserInteracting = true;
         lastMoveTime = Date.now();
-        
+
         if (resumeTimeout) {
             clearTimeout(resumeTimeout);
         }
@@ -610,7 +768,7 @@ document.addEventListener("DOMContentLoaded", () => {
             scroller.style.cursor = 'grab';
             scroller.style.userSelect = '';
             scroller.style.scrollBehavior = 'smooth'; // Re-enable smooth scroll
-            
+
             resumeTimeout = setTimeout(() => {
                 isUserInteracting = false;
             }, 500);
@@ -624,7 +782,7 @@ document.addEventListener("DOMContentLoaded", () => {
             scroller.style.cursor = 'grab';
             scroller.style.userSelect = '';
             scroller.style.scrollBehavior = 'smooth';
-            
+
             resumeTimeout = setTimeout(() => {
                 isUserInteracting = false;
             }, 500);
@@ -643,7 +801,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
 <!--==============================
 About Area
-==============================--> 
+==============================-->
 <section class=" space-top space-extra-bottom space-top-mobile" style="background-color: #ffffff;">
     <div class="container">
         <div class="row gx-70 align-items-center">
@@ -809,7 +967,7 @@ Service Area
                 </div>
             </div>
         </div>
-        
+
         <!-- Mobile Horizontal Slider for Services -->
         <div class="service-marquee-wrapper d-md-none">
             <div class="service-marquee-row">
@@ -895,7 +1053,7 @@ Service Area
 Process Area
 ==============================-->
 <section class="space-top space-extra-bottom" style="background-color: #ffffff;">
-   
+
     <div class="container">
         <div class="title-area text-center" data-aos="fade-up" data-aos-delay="300" data-aos-duration="1200">
             <div class="sec-bubble">
@@ -1038,7 +1196,7 @@ Process Area
             line-height: 1.6;
             margin-bottom: 0;
         }
-        
+
         /* Mobile Responsive */
         @media (max-width: 767px) {
             .process-box {
@@ -1174,8 +1332,8 @@ Process Area
 <script>
 document.addEventListener('DOMContentLoaded', function () {
   function setupTransformMarquee(wrapperSelectorOrElement, rowSelectorOrElement, options = {}) {
-    const wrapper = typeof wrapperSelectorOrElement === 'string' 
-      ? document.querySelector(wrapperSelectorOrElement) 
+    const wrapper = typeof wrapperSelectorOrElement === 'string'
+      ? document.querySelector(wrapperSelectorOrElement)
       : wrapperSelectorOrElement;
     const row = typeof rowSelectorOrElement === 'string'
       ? document.querySelector(rowSelectorOrElement)
@@ -1183,12 +1341,12 @@ document.addEventListener('DOMContentLoaded', function () {
     if (!wrapper || !row) return;
 
     const maxWidth = options.maxWidth || 768;
-    
+
     if (!row.dataset.originalContent) {
       row.dataset.originalContent = row.innerHTML;
     }
     const originalContent = row.dataset.originalContent;
-    
+
     function shouldAutoScroll() {
       const contentWidth = row.scrollWidth;
       const screenWidth = wrapper.clientWidth;
@@ -1228,18 +1386,18 @@ document.addEventListener('DOMContentLoaded', function () {
       isAutoScrolling = true;
       let scrollLeft = wrapper.scrollLeft;
       scrollLeft += speedPxPerSec * delta;
-      
+
       if (scrollLeft >= contentWidth) {
         scrollLeft = scrollLeft - contentWidth;
       }
 
       wrapper.scrollLeft = scrollLeft;
       lastScrollLeft = scrollLeft;
-      
+
       setTimeout(() => {
         isAutoScrolling = false;
       }, 10);
-      
+
       rafId = requestAnimationFrame(step);
     }
 
@@ -1259,7 +1417,7 @@ document.addEventListener('DOMContentLoaded', function () {
     function pause() {
       isPaused = true;
     }
-    
+
     function resume() {
       isPaused = false;
       lastTime = null;
@@ -1274,12 +1432,12 @@ document.addEventListener('DOMContentLoaded', function () {
         lastScrollTime = Date.now();
         return;
       }
-      
+
       const currentScrollLeft = wrapper.scrollLeft;
       const currentTime = Date.now();
       const timeDelta = currentTime - lastScrollTime;
       const scrollDelta = Math.abs(currentScrollLeft - lastScrollLeft);
-      
+
       if (scrollDelta > 5 && timeDelta < 100) {
         isUserScrolling = true;
         pause();
@@ -1291,7 +1449,7 @@ document.addEventListener('DOMContentLoaded', function () {
           resume();
         }, 2000);
       }
-      
+
       lastScrollLeft = currentScrollLeft;
       lastScrollTime = currentTime;
     }, { passive: true });
@@ -1310,12 +1468,12 @@ document.addEventListener('DOMContentLoaded', function () {
         wrapper.classList.add('layout-ready');
         return;
       }
-      
+
       wrapper.classList.remove('content-fits-screen');
       wrapper.classList.add('content-overflows');
       row.style.justifyContent = '';
       wrapper.classList.add('layout-ready');
-      
+
       if (row.dataset.duplicated !== 'true') {
         if (originalContent && originalContent.trim() !== '') {
           row.innerHTML = originalContent + originalContent;
@@ -1339,13 +1497,13 @@ document.addEventListener('DOMContentLoaded', function () {
       }
     }
 
-    function onMouseEnter() { 
+    function onMouseEnter() {
       if (shouldAutoScroll() && !isUserScrolling) {
         pause();
       }
     }
-    
-    function onMouseLeave() { 
+
+    function onMouseLeave() {
       if (shouldAutoScroll() && !isUserScrolling) {
         resume();
       }
@@ -1413,7 +1571,7 @@ document.addEventListener('DOMContentLoaded', function () {
   function initializeServiceMarquee() {
     setupTransformMarquee('.service-marquee-wrapper', '.service-marquee-row', { maxWidth: 1116, speed: 18, resumeDelay: 700 });
   }
-  
+
   if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', initializeServiceMarquee);
   } else {
@@ -1426,7 +1584,7 @@ document.addEventListener('DOMContentLoaded', function () {
       e.preventDefault();
       e.stopPropagation();
       e.stopImmediatePropagation();
-      
+
       // Stop carousel autoplay if it exists
       const carousel = document.querySelector('.vs-carousel[data-autoplay="true"]');
       if (carousel) {
@@ -1441,7 +1599,7 @@ document.addEventListener('DOMContentLoaded', function () {
         // Remove autoplay attribute to prevent further transitions
         carousel.removeAttribute('data-autoplay');
       }
-      
+
       // Navigate immediately - don't wait for any transitions
       const href = this.getAttribute('href');
       if (href && href !== '#') {

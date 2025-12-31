@@ -641,7 +641,7 @@
         .breadcumb-wrapper {
             padding-top: 115px !important;
         }
-        
+
         .shop-page-section.space-top {
             padding-top: 24px !important;
         }
@@ -652,7 +652,7 @@
         .shop-page-section.space-top {
             padding-top: 8px !important;
         }
-        
+
         .shop-page-section.space-extra-bottom {
             padding-bottom: 8px !important;
         }
@@ -825,7 +825,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 clearSearchBtnMobile.style.display = searchInputMobile.value.trim() ? 'block' : 'none';
             }
         });
-        
+
         // Also ensure all checkboxes are checked on initial load
         filterModal.addEventListener('shown.bs.modal', function() {
             // Force update visual state of all checkboxes

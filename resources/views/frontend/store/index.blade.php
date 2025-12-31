@@ -37,7 +37,7 @@
 
 <section class="vs-product-wrapper margin-top-2 space-extra-bottom" style="background-color: #ffffff;">
     <div class="container">
-        
+
         <!-- Page Header -->
         <div class="row mb-4 mt-4">
             <div class="col-12">
@@ -72,7 +72,7 @@
                         <i class="fas fa-filter me-2"></i>
                         <h5 class="mb-0">Filters</h5>
                     </div>
-                    
+
                     <!-- Search -->
                     <div class="filter-section">
                         <div class="search-box">
@@ -131,15 +131,15 @@
                 <div class="mb-3">
                     <p class="text-muted mb-0">Now Shopping By :</p>
                 </div>
-                
-                <div class="row justify-content-start align-items-stretch" id="productsContainer">
+
+                <div class="row justify-content-start" id="productsContainer">
                     @foreach($allProducts as $product)
-                        <div class="col-6 col-md-6 col-lg-4 col-xl-4 product-item" 
+                        <div class="col-6 col-md-6 col-lg-4 col-xl-4 product-item"
                              data-product-type="{{ strtolower($product['type'] ?? '') }}"
                              data-product-name="{{ strtolower($product['name']) }}"
                              data-product-category="{{ strtolower($product['category'] ?? 'regular_uniforms') }}"
                              data-product-gender="{{ strtolower($product['gender'] ?? 'unisex') }}">
-                            <div class="vs-product product-style1 product-card-clickable" 
+                            <div class="vs-product product-style1 product-card-clickable"
                                  data-product-url="{{ route('frontend.parent.product-detail', ['productId' => $product['id'], 'profile_id' => $selectedProfile['id']]) }}">
                                 <div class="product-img">
 
@@ -530,11 +530,7 @@
     .product-title a {
         color: #333;
         text-decoration: none;
-        font-size: 16px;
-        display: block;
-        overflow: hidden;
-        text-overflow: ellipsis;
-        white-space: nowrap;
+
     }
 
     .product-title a:hover {
@@ -590,7 +586,7 @@
         overflow: hidden;
         display: none;
     }
-    
+
     .star-rating span {
         display: block;
         position: relative;
@@ -669,7 +665,7 @@
         /* margin-bottom: 30px; */
         height: 100%;
     }
-    
+
     .product-item .vs-product.product-style1 {
         height: 100%;
         display: flex;
@@ -717,7 +713,7 @@
 
         .product-content {
             padding: 8px !important;
-    
+
         }
 
         .actions {
@@ -876,7 +872,7 @@
     .product-tag.optional {
         background-color: #6c757d; /* Grey for optional */
     }
-    
+
     /* Ensure product image container is relative */
     .product-img {
         position: relative;
@@ -892,31 +888,31 @@
         font-weight: 600;
         transition: all 0.3s ease;
     }
-    
+
     #toggleFilters:hover {
         background: #490D59 !important;
         color: white !important;
     }
-    
+
     #toggleFilters.active-filter-btn {
         background: #490D59 !important;
         color: white !important;
     }
-    
+
     .vs-btn.active-filter-btn,
     .vs-btn.active-filter-btn:hover {
         background-color: #490D59 !important;
         color: #ffffff !important;
         border-color: #490D59 !important;
     }
-    
+
     .vs-btn.active-filter-btn span,
     .vs-btn.active-filter-btn i,
     .vs-btn.active-filter-btn:hover span,
     .vs-btn.active-filter-btn:hover i {
         color: #ffffff !important;
     }
-    
+
     .vs-btn.active-filter-btn::before,
     .vs-btn.active-filter-btn::after,
     .vs-btn.active-filter-btn:hover::before,
@@ -949,9 +945,9 @@ document.addEventListener('DOMContentLoaded', function() {
                     if (productItem) {
                         // Check for quantity input or specific class indicating expansion
                         // We check for text input quantity (visible) or specific container classes
-                        if (actions.querySelector('input[name="quantity"][type="text"]') || 
-                            actions.querySelector('input[name="quantity"][type="number"]') || 
-                            actions.querySelector('.quantity') || 
+                        if (actions.querySelector('input[name="quantity"][type="text"]') ||
+                            actions.querySelector('input[name="quantity"][type="number"]') ||
+                            actions.querySelector('.quantity') ||
                             actions.querySelector('.qty-input') ||
                             actions.querySelector('.quantity-plus')) {
                             productItem.classList.add('expanded-actions');
@@ -967,13 +963,13 @@ document.addEventListener('DOMContentLoaded', function() {
     // Observe all .actions containers
     document.querySelectorAll('.actions').forEach(function(actions) {
         observer.observe(actions, { childList: true, subtree: true });
-        
+
         // Initial check
         const productItem = actions.closest('.product-item');
         if (productItem) {
-            if (actions.querySelector('input[name="quantity"][type="text"]') || 
-                actions.querySelector('input[name="quantity"][type="number"]') || 
-                actions.querySelector('.quantity') || 
+            if (actions.querySelector('input[name="quantity"][type="text"]') ||
+                actions.querySelector('input[name="quantity"][type="number"]') ||
+                actions.querySelector('.quantity') ||
                 actions.querySelector('.qty-input') ||
                 actions.querySelector('.quantity-plus')) {
                 productItem.classList.add('expanded-actions');
@@ -1155,7 +1151,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 clearSearchBtnMobile.style.display = searchInputMobile.value.trim() ? 'block' : 'none';
             }
         });
-        
+
         // Also ensure all checkboxes are checked on initial load
         filterModal.addEventListener('shown.bs.modal', function() {
             // Force update visual state of all checkboxes
@@ -1227,7 +1223,7 @@ document.addEventListener('DOMContentLoaded', function() {
             if (e.target.closest('.actions') || e.target.closest('a')) {
                 return;
             }
-            
+
             const productUrl = this.getAttribute('data-product-url');
             if (productUrl) {
                 window.open(productUrl, '_blank');
