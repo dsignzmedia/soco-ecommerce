@@ -175,8 +175,10 @@
                     value="{{ $filters['date_to'] ?? '' }}">
             </div>
 
-            <button type="submit">Apply Filter</button>
-            <a class="reset" href="{{ route('inventory.admin.orders.index') }}">Reset</a>
+            <div style="grid-column: 1 / -1; display: flex; justify-content: flex-end; gap: 10px;">
+                <button type="submit" style="width: auto; min-width: 120px;">Apply Filter</button>
+                <a class="reset" href="{{ route('inventory.admin.orders.index') }}" style="width: auto; min-width: 100px;">Reset</a>
+            </div>
         </form>
     </section>
 
@@ -186,6 +188,7 @@
                 <thead>
                     <tr>
                         <th style="width: 40px;">#</th>
+                        <th style="width: 60px;">Image</th>
                         <th>Order ID</th>
                         <th>Date</th>
                         <th>Customer / Address</th>
@@ -200,6 +203,18 @@
                     @forelse($orders as $order)
                         <tr>
                             <td>{{ $loop->iteration }}</td>
+                            <td>
+                                @if($order->product && $order->product->featured_image)
+                                    <img src="{{ asset('storage/' . $order->product->featured_image) }}" 
+                                         alt="Product" 
+                                         style="width: 40px; height: 40px; object-fit: cover; border-radius: 6px; border: 1px solid #e5e7eb;"
+                                         onerror="this.onerror=null; this.src='{{ asset('assets/img/no image/no_image.png') }}';">
+                                @else
+                                    <img src="{{ asset('assets/img/no image/no_image.png') }}" 
+                                         alt="Default" 
+                                         style="width: 40px; height: 40px; object-fit: cover; border-radius: 6px; border: 1px solid #e5e7eb;">
+                                @endif
+                            </td>
                             <td>
                                 <strong style="color:#490d59;">{{ $order->order_number }}</strong>
                             </td>

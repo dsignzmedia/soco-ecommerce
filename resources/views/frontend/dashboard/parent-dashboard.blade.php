@@ -137,21 +137,21 @@
                                         <a href="{{ route('frontend.shop.detail', $product['id']) }}" class="card shadow-sm border-0 mb-3 position-relative text-decoration-none purchased-product-card" style="border-radius: 12px; transition: all 0.3s; display: block;"
                                             onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 6px 20px rgba(73, 13, 89, 0.15)'"
                                             onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 2px 8px rgba(0,0,0,0.1)'">
-                                            <div class="card-body p-3">
+                                                <div class="card-body p-3">
                                                 <div class="row align-items-center">
                                                     <!-- Product Image -->
                                                     <div class="col-auto">
-                                                        @if(isset($product['image']) && $product['image'])
+                                                            @if(isset($product['image']) && $product['image'])
                                                             <img src="{{ $product['image'] }}" alt="{{ $product['name'] }}" 
                                                                 style="width: 80px; height: 80px; object-fit: cover; border-radius: 8px; border: 1px solid #e0e0e0;"
                                                                 onerror="this.onerror=null; this.src='{{ asset('assets/img/no image/no_image.png') }}';">
-                                                        @else
+                                                            @else
                                                             <div class="bg-light rounded d-flex align-items-center justify-content-center" 
                                                                 style="width: 80px; height: 80px; border: 1px solid #e0e0e0;">
                                                                 <i class="fas fa-image text-muted fa-2x"></i>
-                                                            </div>
-                                                        @endif
-                                                    </div>
+                                                                </div>
+                                                            @endif
+                                                        </div>
 
                                                     <!-- Product Details -->
                                                     <div class="col">
@@ -170,9 +170,9 @@
                                                     <!-- Arrow Icon -->
                                                     <div class="col-auto">
                                                         <i class="fas fa-chevron-right" style="color: #999; font-size: 1.2rem;"></i>
-                                                    </div>
                                                 </div>
                                             </div>
+                                        </div>
                                         </a>
                                     @endforeach
                                 </div>

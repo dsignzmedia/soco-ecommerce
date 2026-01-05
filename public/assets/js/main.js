@@ -481,8 +481,8 @@
       } else if (!/^[a-zA-Z\s'-]+$/.test(lastName)) {
         $('#lastname').addClass(invalidCls);
         $('#lastname-error').text('Last name can only contain letters, spaces, hyphens, and apostrophes.').show();
-        valid = false;
-      } else {
+          valid = false;
+        } else {
         $('#lastname').removeClass(invalidCls);
         $('#lastname-error').hide();
       }

@@ -13,6 +13,171 @@
         .filters button, .filters a.reset { border-radius:9999px;font-weight:600;text-align:center; }
         .filters button { border:none;background:#490d59;color:#fff;padding:6px 14px;font-size:12px; }
         .filters a.reset { border:1.5px solid #d0d5dd;color:#475467;padding:5px 14px;font-size:12px; }
+        
+        /* Custom Pagination Styling (Same as Orders Page) */
+        .pagination-container {
+            padding: 20px;
+            border-top: 1px solid #e5e7eb;
+            background: #fff;
+        }
+        
+        /* Hide the mobile view (the 'Previous' 'Next' text links on the left) */
+        .pagination-container nav > div:first-child {
+            display: none !important;
+        }
+
+        /* Ensure the desktop view takes full width */
+        .pagination-container nav > div:last-child {
+            display: flex !important;
+            justify-content: space-between;
+            width: 100%;
+            align-items: center;
+        }
+
+        /* The "Showing x to y" text */
+        .pagination-container p {
+            font-size: 13px;
+            color: #6b7280;
+            margin: 0;
+        }
+
+        /* Pagination Buttons Container (usually a div with shadow in Tailwind) */
+        /* We reset the shadow and rounded corners of the container to apply them to buttons instead */
+        .pagination-container nav span[class*="shadow-sm"],
+        .pagination-container nav div[class*="shadow-sm"] {
+            box-shadow: none !important;
+            display: inline-flex;
+            gap: 4px; /* Space between buttons */
+        }
+
+        /* Pagination Styling - Enhanced (Same as Orders) */
+        .pagination {
+            display: flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-top: 0;
+            padding: 0;
+            list-style: none;
+            margin-left: 0;
+            margin-right: 0;
+        }
+        
+        .pagination > * {
+            margin: 0 !important;
+        }
+        
+        /* All pagination links and spans */
+        .pagination-container nav a, 
+        .pagination-container nav span[aria-disabled], 
+        .pagination-container nav span[aria-current="page"] > span,
+        .pagination a,
+        .pagination span,
+        .pagination .page-link {
+            display: inline-flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+            min-width: 42px !important;
+            height: 42px !important;
+            padding: 0 14px !important;
+            border-radius: 8px !important;
+            text-decoration: none !important;
+            font-size: 14px !important;
+            font-weight: 500 !important;
+            transition: all 0.2s ease !important;
+            border: 1px solid #e5e7eb !important;
+            background-color: #ffffff !important;
+            color: #6b7280 !important;
+            margin: 0 2px !important;
+            cursor: pointer;
+            box-sizing: border-box !important;
+        }
+        
+        .pagination-container nav a:hover,
+        .pagination a:hover,
+        .pagination .page-link:hover {
+            background-color: #f9fafb !important;
+            border-color: #490d59 !important;
+            color: #490d59 !important;
+            transform: translateY(-1px);
+            box-shadow: 0 2px 4px rgba(73, 13, 89, 0.15) !important;
+        }
+
+        /* Active Page Styles */
+        .pagination-container nav span[aria-current="page"] > span,
+        .pagination span[aria-current="page"],
+        .pagination .active span,
+        .pagination .page-item.active .page-link,
+        .pagination .page-link.active {
+            background-color: #490d59 !important;
+            border-color: #490d59 !important;
+            color: #ffffff !important;
+            font-weight: 600 !important;
+        }
+
+        /* Disabled State (Previous/Next arrows when inactive) */
+        .pagination-container nav span[aria-disabled],
+        .pagination span[aria-disabled="true"],
+        .pagination .page-item.disabled .page-link,
+        .pagination .page-link.disabled {
+            background-color: #f3f4f6 !important;
+            color: #9ca3af !important;
+            cursor: not-allowed !important;
+            opacity: 0.6 !important;
+            pointer-events: none;
+        }
+        
+        /* Previous/Next buttons */
+        .pagination-container nav a[rel="prev"],
+        .pagination-container nav a[rel="next"],
+        .pagination a[rel="prev"],
+        .pagination a[rel="next"],
+        .pagination .page-link[rel="prev"],
+        .pagination .page-link[rel="next"] {
+            background-color: #ffffff !important;
+            border: 1px solid #d1d5db !important;
+            color: #490d59 !important;
+            font-weight: 600 !important;
+            padding: 0 16px !important;
+            min-width: auto !important;
+        }
+        
+        .pagination-container nav a[rel="prev"]:hover,
+        .pagination-container nav a[rel="next"]:hover,
+        .pagination a[rel="prev"]:hover,
+        .pagination a[rel="next"]:hover {
+            background-color: #490d59 !important;
+            color: #ffffff !important;
+            border-color: #490d59 !important;
+        }
+        
+        /* Fix for arrows (SVG alignment) */
+        .pagination-container nav svg,
+        .pagination svg {
+            width: 16px;
+            height: 16px;
+        }
+        
+        /* Responsive pagination */
+        @media (max-width: 768px) {
+            .pagination {
+                flex-direction: column;
+                align-items: center;
+                gap: 12px;
+            }
+            
+            .pagination a,
+            .pagination span,
+            .pagination .page-link,
+            .pagination-container nav a,
+            .pagination-container nav span {
+                min-width: 38px !important;
+                height: 38px !important;
+                font-size: 13px !important;
+                padding: 0 10px !important;
+            }
+        }
     </style>
 @endpush
 
@@ -57,8 +222,10 @@
                 @endforeach
             </select>
             <input type="text" name="q" placeholder="Search product" value="{{ $filters['q'] ?? '' }}">
-            <button type="submit">Filter</button>
-            <button type="button" onclick="window.location.href='{{ route('master.admin.inventory.list') }}'" class="btn-reset">Reset</button>
+            <div style="grid-column: 1 / -1; display: flex; justify-content: flex-end; gap: 10px;">
+                <button type="submit" style="width: auto; min-width: 120px;">Filter</button>
+                <button type="button" onclick="window.location.href='{{ route('master.admin.inventory.list') }}'" class="btn-reset" style="width: auto; min-width: 100px;">Reset</button>
+            </div>
         </form>
     </section>
 
@@ -66,6 +233,7 @@
         <table>
             <thead>
                 <tr>
+                    <th>Image</th>
                     <th>Product</th>
                     <th>School</th>
                     <th>Grade</th>
@@ -79,6 +247,18 @@
             <tbody>
                 @forelse($products as $product)
                     <tr class="product-row">
+                        <td>
+                            @if($product->featured_image)
+                                <img src="{{ asset('storage/' . $product->featured_image) }}" 
+                                     alt="Product" 
+                                     style="width: 40px; height: 40px; object-fit: cover; border-radius: 6px; border: 1px solid #e5e7eb;"
+                                     onerror="this.onerror=null; this.src='{{ asset('assets/img/no image/no_image.png') }}';">
+                            @else
+                                <img src="{{ asset('assets/img/no image/no_image.png') }}" 
+                                     alt="Default" 
+                                     style="width: 40px; height: 40px; object-fit: cover; border-radius: 6px; border: 1px solid #e5e7eb;">
+                            @endif
+                        </td>
                         <td>
                             <div style="display:flex; align-items:center; gap:8px;">
                                 @if($product->variants && $product->variants->count() > 0)
@@ -138,7 +318,7 @@
                 @endforelse
             </tbody>
         </table>
-        <div style="margin-top:16px;">
+        <div class="pagination-container">
             {{ $products->links() }}
         </div>
     </section>

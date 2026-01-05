@@ -130,7 +130,7 @@
 
         .sidebar {
             background: var(--sidebar);
-            padding: 32px 24px;
+            padding: 32px 14px;
             border-right: 1px solid rgba(15, 23, 42, 0.05);
             position: sticky;
             top: 0;
@@ -472,6 +472,67 @@
             color: var(--primary);
             background: var(--primary-light);
         }
+
+        /* Collapsed Sidebar Styles */
+        .layout.collapsed {
+            grid-template-columns: 80px 1fr;
+        }
+        
+        .layout.collapsed .sidebar .brand {
+            align-items: center;
+            padding: 0;
+            margin-bottom: 24px;
+        }
+        
+        .layout.collapsed .sidebar .brand img {
+            width: 40px;
+            height: 40px;
+            object-fit: contain;
+        }
+        
+        .layout.collapsed .sidebar .brand small {
+            display: none;
+        }
+        
+        .layout.collapsed .sidebar .nav__item {
+            justify-content: center;
+            padding: 12px;
+            position: relative;
+        }
+        
+        .layout.collapsed .sidebar .nav__item span, 
+        .layout.collapsed .sidebar .nav__item .nav__chevron {
+            display: none;
+        }
+        
+        .layout.collapsed .sidebar .nav__item i {
+            margin: 0;
+            font-size: 18px;
+        }
+
+        /* Show tooltip/text on hover for collapsed state could be added here, 
+           but for now sticking to the requested "icons alone" */
+        
+        .sidebar-toggle {
+            cursor: pointer;
+            padding: 8px;
+            border-radius: 8px;
+            color: var(--text);
+            transition: background 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .sidebar-toggle:hover {
+            background: rgba(0,0,0,0.05);
+            color: var(--heading);
+        }
+        
+        .layout.collapsed .nav__submenu {
+            display: none !important;
+        }
+
     </style>
     @stack('styles')
 </head>
@@ -521,7 +582,8 @@
                             <div class="nav__item {{ (isset($item['active']) ? request()->routeIs($item['active']) : request()->routeIs($item['route'])) ? 'active' : '' }}" style="display:flex;align-items:center;gap:10px;">
                                 <a href="{{ route($item['route']) }}" style="flex:1;display:flex;align-items:center;gap:10px;text-decoration:none;color:inherit;">
                                     <i class="{{ $item['icon'] }}" style="width: 18px; text-align: center;"></i>
-                                    {{ $item['label'] }}
+                                    <span>{{ $item['label'] }}</span>
+
                                 </a>
                                 <i class="fas fa-chevron-down nav__chevron" onclick="toggleSubmenu(event, this.closest('.nav__item-wrapper'));" style="font-size:11px;transition:transform 0.2s;cursor:pointer;padding:4px;flex-shrink:0;"></i>
                             </div>
@@ -529,7 +591,8 @@
                                 @foreach($item['submenu'] as $subItem)
                                     <a class="nav__item nav__subitem {{ (isset($subItem['active']) ? request()->routeIs($subItem['active']) : request()->routeIs($subItem['route'])) ? 'active' : '' }}" href="{{ route($subItem['route']) }}">
                                         <i class="{{ $subItem['icon'] ?? 'fas fa-circle' }}" style="width: 18px; text-align: center;font-size:13px;"></i>
-                                        {{ $subItem['label'] }}
+                                        <span>{{ $subItem['label'] }}</span>
+
                                     </a>
                                 @endforeach
                             </div>
@@ -537,7 +600,8 @@
                     @else
                         <a class="nav__item {{ (isset($item['active']) ? request()->routeIs($item['active']) : request()->routeIs($item['route'])) ? 'active' : '' }}" href="{{ route($item['route']) }}">
                             <i class="{{ $item['icon'] }}" style="width: 18px; text-align: center;"></i>
-                            {{ $item['label'] }}
+                            <span>{{ $item['label'] }}</span>
+
                         </a>
                     @endif
                 @endforeach
@@ -545,13 +609,18 @@
         </aside>
         <main class="content">
             <div class="topbar">
-                <div class="topbar__title">
-                    <h2 style="margin:0;color:var(--heading);font-size:24px;">
-                        @yield('page_heading', 'Master Admin Portal')
-                    </h2>
-                    <p style="margin:4px 0 0;color:var(--text);">
-                        @yield('page_subheading', 'Full access • Manage. Monitor. Master.')
-                    </p>
+                <div style="display:flex;align-items:center;gap:16px;">
+                    <div class="sidebar-toggle" onclick="toggleSidebar()" style="font-size:20px;cursor:pointer;color:var(--text);border-right:1px solid var(--border);">
+                        <i class="fas fa-bars"></i>
+                    </div>
+                    <div class="topbar__title">
+                        <h2 style="margin:0;color:var(--heading);font-size:24px;">
+                            @yield('page_heading', 'Master Admin Portal')
+                        </h2>
+                        <p style="margin:4px 0 0;color:var(--text);">
+                            @yield('page_subheading', 'Full access • Manage. Monitor. Master.')
+                        </p>
+                    </div>
                 </div>
                 @php
                     $unreadNotifications = collect();
@@ -796,6 +865,19 @@
                 cancelLogoutBtn.addEventListener('click', function() {
                     logoutModal.style.display = 'none';
                 });
+            }
+
+            // Restore sidebar state
+            const isCollapsed = localStorage.getItem('sidebar-collapsed') === 'true';
+            if (isCollapsed) {
+                document.querySelector('.layout').classList.add('collapsed');
+            }
+        
+            window.toggleSidebar = function() {
+                const layout = document.querySelector('.layout');
+                layout.classList.toggle('collapsed');
+                const isCollapsed = layout.classList.contains('collapsed');
+                localStorage.setItem('sidebar-collapsed', isCollapsed);
             }
             
             // Confirm logout - submit the logout form

@@ -23,7 +23,7 @@ class OrderController extends Controller
             'order_number',
         ]);
 
-        $orders = Order::with('school')
+        $orders = Order::with(['school', 'product'])
             ->when($filters['school_id'] ?? null, fn($query, $school) => $query->where('school_id', $school))
             ->when($filters['order_status'] ?? null, fn($query, $status) => $query->where('order_status', $status))
             ->when($filters['order_number'] ?? null, fn($query, $number) => $query->where('order_number', 'like', '%' . $number . '%'))

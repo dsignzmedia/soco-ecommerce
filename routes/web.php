@@ -78,6 +78,7 @@ Route::middleware(['auth', 'prevent-back-history', 'parent'])->group(function ()
     Route::post('/parent/buy-now', [AuthController::class, 'buyNow'])->name('frontend.parent.buy-now');
     Route::get('/parent/cart', [AuthController::class, 'cart'])->name('frontend.parent.cart');
     Route::post('/parent/remove-from-cart', [AuthController::class, 'removeFromCart'])->name('frontend.parent.remove-from-cart');
+    Route::post('/parent/update-cart-quantity', [AuthController::class, 'updateCartQuantity'])->name('frontend.parent.update-cart-quantity');
     Route::get('/parent/checkout', [AuthController::class, 'checkoutPage'])->name('frontend.parent.checkout');
     Route::post('/parent/checkout', [AuthController::class, 'processCheckout'])->name('frontend.parent.process-checkout');
     Route::post('/parent/save-address', [AuthController::class, 'saveAddress'])->name('frontend.parent.save-address');

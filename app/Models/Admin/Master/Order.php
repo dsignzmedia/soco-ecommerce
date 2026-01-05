@@ -51,6 +51,11 @@ class Order extends Model
         return $this->belongsTo(School::class);
     }
 
+    public function product()
+    {
+        return $this->hasOne(ProductMapping::class, 'product_name', 'item_name');
+    }
+
     public function payments()
     {
         return $this->hasMany(\App\Models\Payment::class);

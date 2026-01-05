@@ -34,7 +34,32 @@ class ReturnExchangeController extends Controller
             ->paginate(20)
             ->withQueryString();
 
-        return view('admin.merchandise.returns.index', compact('requests', 'filters'));
+        // Fetch product images for the list
+        $productImages = [];
+        $orders = $requests->pluck('order')->filter();
+        
+        if ($orders->isNotEmpty()) {
+            $productNames = $orders->pluck('item_name')->unique();
+            $schoolIds = $orders->pluck('school_id')->unique();
+            
+            $products = ProductMapping::whereIn('product_name', $productNames)
+                ->whereIn('school_id', $schoolIds)
+                ->select('product_name', 'school_id', 'featured_image')
+                ->get();
+                
+            foreach ($orders as $order) {
+                // Find matching product
+                $match = $products->first(function($p) use ($order) {
+                    return $p->product_name === $order->item_name && $p->school_id === $order->school_id;
+                });
+                
+                if ($match && $match->featured_image) {
+                    $productImages[$order->id] = $match->featured_image;
+                }
+            }
+        }
+
+        return view('admin.merchandise.returns.index', compact('requests', 'filters', 'productImages'));
     }
 
     public function show(ReturnExchangeRequest $returnRequest): View
@@ -153,6 +178,9 @@ class ReturnExchangeController extends Controller
         ]);
 
         if ($data['action'] === 'restock' && $order) {
+            // Use requested_quantity for partial returns, not full order quantity
+            $restockQty = $returnRequest->requested_quantity ?? $order->quantity;
+            
             $product = ProductMapping::where('product_name', $order->item_name)
                 ->where('school_id', $order->school_id)
                 ->where('product_type', 'merchandised')
@@ -163,47 +191,54 @@ class ReturnExchangeController extends Controller
                     $variant = $product->variants()->where('option', $order->size)->first();
                     if ($variant) {
                         $before = $variant->stock;
-                        $after = $before + (int)($order->quantity ?? 0);
+                        $after = $before + $restockQty;
                         $variant->update(['stock' => $after]);
                         $product->updateTotalStock();
                         
                         InventoryAdjustment::create([
                             'product_mapping_id' => $product->id,
-                            'quantity_change' => (int)($order->quantity ?? 0),
+                            'quantity_change' => $restockQty,
                             'reason' => 'return_restock',
-                            'comment' => 'Restock from return for order '.$order->order_number . ' (Variant: '.$order->size.')',
+                            'comment' => "Restock {$restockQty} unit(s) from return for order {$order->order_number} (Variant: {$order->size})",
                             'stock_before' => $before,
                             'stock_after' => $after,
                         ]);
                     } else {
                         $before = $product->inventory_stock;
-                        $after = $before + (int)($order->quantity ?? 0);
+                        $after = $before + $restockQty;
                         $product->update(['inventory_stock' => $after]);
 
                         InventoryAdjustment::create([
                             'product_mapping_id' => $product->id,
-                            'quantity_change' => (int)($order->quantity ?? 0),
+                            'quantity_change' => $restockQty,
                             'reason' => 'return_restock',
-                            'comment' => 'Restock from return for order '.$order->order_number,
+                            'comment' => "Restock {$restockQty} unit(s) from return for order {$order->order_number}",
                             'stock_before' => $before,
                             'stock_after' => $after,
                         ]);
                     }
                 } else {
                     $before = $product->inventory_stock;
-                    $after = $before + (int)($order->quantity ?? 0);
+                    $after = $before + $restockQty;
                     $product->update(['inventory_stock' => $after]);
 
                     InventoryAdjustment::create([
                         'product_mapping_id' => $product->id,
-                        'quantity_change' => (int)($order->quantity ?? 0),
+                        'quantity_change' => $restockQty,
                         'reason' => 'return_restock',
-                        'comment' => 'Restock from return for order '.$order->order_number,
+                        'comment' => "Restock {$restockQty} unit(s) from return for order {$order->order_number}",
                         'stock_before' => $before,
                         'stock_after' => $after,
                     ]);
                 }
+                
+                // Update returned_quantity
+                $returnRequest->update(['returned_quantity' => $restockQty]);
             }
+        } else if ($data['action'] === 'discard' && $order) {
+            // Update returned_quantity even for discarded items
+            $discardQty = $returnRequest->requested_quantity ?? $order->quantity;
+            $returnRequest->update(['returned_quantity' => $discardQty]);
         }
 
         AuditLogger::record('return_exchange_receive', $returnRequest, [
@@ -242,7 +277,15 @@ class ReturnExchangeController extends Controller
             ->where('product_type', 'merchandised')
             ->first();
 
-        $price = $order->total_amount; 
+        // Use requested_quantity for partial exchanges
+        $exchangeQty = $returnRequest->requested_quantity ?? $order->quantity;
+        
+        // Calculate proportional price based on requested quantity
+        $unitPrice = $order->quantity > 0 ? ($order->total_amount / $order->quantity) : $order->total_amount;
+        $unitTax = $order->quantity > 0 ? ($order->tax_amount / $order->quantity) : $order->tax_amount;
+        
+        $exchangeAmount = $unitPrice * $exchangeQty;
+        $exchangeTax = $unitTax * $exchangeQty;
 
         $newOrder = Order::create([
             'order_number' => $exchangeNumber,
@@ -254,18 +297,18 @@ class ReturnExchangeController extends Controller
             'product_type' => 'merchandised',
             'item_name' => $data['exchange_product_name'],
             'size' => $data['exchange_size'],
-            'quantity' => $order->quantity ?? 1,
+            'quantity' => $exchangeQty,
             'customer_name' => $order->customer_name,
             'customer_address' => $order->customer_address,
             'customer_phone' => $order->customer_phone,
             'customer_email' => $order->customer_email,
-            'total_amount' => $price,
-            'tax_amount' => $order->tax_amount,
+            'total_amount' => $exchangeAmount,
+            'tax_amount' => $exchangeTax,
             'shipping_cost' => 0,
             'payment_status' => 'paid',
             'order_status' => 'processing',
             'return_exchange_status' => 'exchange_created',
-            'notes' => 'Exchange for order '.$order->order_number,
+            'notes' => "Exchange for {$exchangeQty} unit(s) from order {$order->order_number}",
         ]);
 
         $returnRequest->update([
@@ -281,20 +324,20 @@ class ReturnExchangeController extends Controller
             
             if ($variant) {
                 $before = $variant->stock;
-                $after = $before - (int)($order->quantity ?? 1);
+                $after = $before - $exchangeQty;
                 $variant->update(['stock' => $after]);
                 $product->updateTotalStock();
             } else {
                 $before = $product->inventory_stock;
-                $after = $before - (int)($order->quantity ?? 1);
+                $after = $before - $exchangeQty;
                 $product->update(['inventory_stock' => $after]);
             }
 
             InventoryAdjustment::create([
                 'product_mapping_id' => $product->id,
-                'quantity_change' => - (int)($order->quantity ?? 1),
+                'quantity_change' => -$exchangeQty,
                 'reason' => 'exchange_replace',
-                'comment' => 'Replacement sent for exchange '.$exchangeNumber . ($variant ? " (Variant: {$variant->option})" : ''),
+                'comment' => "Replacement sent for {$exchangeQty} unit(s) from exchange {$exchangeNumber}" . ($variant ? " (Variant: {$variant->option})" : ''),
                 'stock_before' => $before,
                 'stock_after' => $after,
             ]);
@@ -349,7 +392,19 @@ class ReturnExchangeController extends Controller
             return back()->with('error', 'Original successful payment not found for this order.');
         }
 
-        $refundAmount = $originalPayment->amount_paid;
+        // Calculate refund amount proportionally based on requested_quantity
+        $unitPrice = $order->quantity > 0 ? ($order->total_amount / $order->quantity) : $order->total_amount;
+        $requestedQty = $returnRequest->requested_quantity ?? $order->quantity;
+        
+        $refundAmount = $unitPrice * $requestedQty;
+        
+        // If payment amount doesn't match order amount, calculate proportionally
+        if ($originalPayment->amount_paid != $order->total_amount && $order->total_amount > 0) {
+            $paymentRatio = $originalPayment->amount_paid / $order->total_amount;
+            $refundAmount = $refundAmount * $paymentRatio;
+        }
+        
+        $refundAmount = round($refundAmount, 2);
 
         $existingRefund = \App\Models\Payment::where('order_id', $order->id)
             ->where('payment_for', 'refund')

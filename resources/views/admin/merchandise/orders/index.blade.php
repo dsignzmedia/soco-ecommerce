@@ -136,8 +136,10 @@
                     value="{{ $filters['date_to'] ?? '' }}">
             </div>
 
-            <button type="submit">Apply Filter</button>
-            <a href="{{ route('admin.merchandise.orders.index') }}" class="reset">Reset</a>
+            <div style="grid-column: 1 / -1; display: flex; justify-content: flex-end; gap: 10px;">
+                <button type="submit" style="width: auto; min-width: 120px;">Apply Filter</button>
+                <a href="{{ route('admin.merchandise.orders.index') }}" class="reset" style="width: auto; min-width: 100px;">Reset</a>
+            </div>
         </form>
     </section>
 
@@ -147,6 +149,7 @@
                 <thead>
                     <tr>
                         <th style="width: 40px;">#</th>
+                        <th style="width: 60px;">Image</th>
                         <th>Order Details</th>
                         <th>School / Student</th>
                         <th>Item Details</th>
@@ -162,6 +165,18 @@
                     @forelse($orders as $order)
                         <tr>
                             <td>{{ $loop->iteration }}</td>
+                            <td>
+                                @if($order->product && $order->product->featured_image)
+                                    <img src="{{ asset('storage/' . $order->product->featured_image) }}" 
+                                         alt="Product" 
+                                         style="width: 40px; height: 40px; object-fit: cover; border-radius: 6px; border: 1px solid #e5e7eb;"
+                                         onerror="this.onerror=null; this.src='{{ asset('assets/img/no image/no_image.png') }}';">
+                                @else
+                                    <img src="{{ asset('assets/img/no image/no_image.png') }}" 
+                                         alt="Default" 
+                                         style="width: 40px; height: 40px; object-fit: cover; border-radius: 6px; border: 1px solid #e5e7eb;">
+                                @endif
+                            </td>
                             <td>
                                 <a href="{{ route('admin.merchandise.orders.show', $order) }}" style="color:#490d59; font-weight:600; text-decoration:none;">{{ $order->order_number }}</a>
                                 <small>{{ optional($order->order_date)->format('d M Y') }}</small>

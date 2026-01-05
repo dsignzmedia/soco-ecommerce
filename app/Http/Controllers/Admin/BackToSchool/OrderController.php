@@ -12,7 +12,7 @@ class OrderController extends Controller
 {
     public function index(Request $request): View
     {
-        $query = Order::with(['school'])->latest();
+        $query = Order::with(['school', 'product'])->latest();
 
         if ($request->has('order_number')) {
             $query->where('order_number', 'like', '%' . $request->order_number . '%');
