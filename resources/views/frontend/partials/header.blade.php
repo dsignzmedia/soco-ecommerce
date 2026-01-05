@@ -496,7 +496,7 @@
                 margin: 0 auto -40.5px auto !important;
             }
         }
-
+      
         /* Remove all arrows from mobile menu items */
         .vs-mobile-menu ul li a:before,
         .vs-mobile-menu ul li a:after,

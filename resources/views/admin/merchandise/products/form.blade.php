@@ -44,22 +44,15 @@
 
                 </div>
 
-                <!-- Pricing & Product Variants -->
+                <!-- Pricing -->
                 <div class="card">
-                    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;">
-                        <h3 style="margin:0;color:#111827;display:flex;align-items:center;gap:10px;">
+                    <h3 style="margin:0 0 20px;color:#111827;display:flex;align-items:center;gap:10px;">
                             <i class="fas fa-tag" style="color:#490d59;background:#f7f2fb;padding:8px;border-radius:8px;"></i>
-                            Pricing & Product Variants
+                        Pricing
                         </h3>
-                        {{--<label style="display:flex;align-items:center;gap:8px;margin:0;cursor:pointer;">
-                            <input type="checkbox" id="variant-pricing-toggle" name="variant_based_pricing" value="1" @checked(old('variant_based_pricing', $product->category === 'fabrics' || $product->category === 'Fabrics')) style="width:auto;">
-                            <span style="font-size:13px;color:#475467;">Variant-based pricing (Fabric)</span>
-                        </label>--}}
-                    </div>
                     
                     <!-- Pricing Section -->
-                    <div id="main-pricing-section" style="margin-bottom:24px;padding-bottom:24px;border-bottom:1px solid #e5e7eb;">
-                        <h4 style="margin:0 0 16px;color:#374151;font-size:14px;font-weight:600;">Pricing</h4>
+                    <div id="main-pricing-section">
                         <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:16px;">
                             <label class="main-price-field">
                                 <span>Price *</span>
@@ -84,20 +77,25 @@
                             </label>
                             {{-- Weight field removed - now using variant-wise weight --}}
                         </div>
+                        </div>
                     </div>
 
-                    <!-- Metadata Hidden Inputs -->
-                    <input type="hidden" name="inventory_stock" value="{{ old('inventory_stock', $product->inventory_stock ?? 0) }}">
-                    <input type="hidden" name="low_stock_threshold" value="{{ old('low_stock_threshold', $product->low_stock_threshold ?? 5) }}">
-
-                    <!-- Product Variants Section -->
-                    <div>
-                        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
-                            <h4 style="margin:0;color:#374151;font-size:14px;font-weight:600;">Product Variants</h4>
+                <!-- Product Variants -->
+                <div class="card">
+                    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;">
+                        <h3 style="margin:0;color:#111827;display:flex;align-items:center;gap:10px;">
+                            <i class="fas fa-list" style="color:#490d59;background:#f7f2fb;padding:8px;border-radius:8px;"></i>
+                            Product Variants
+                        </h3>
                             <button type="button" id="apply-weight-all-btn" style="display:none;padding:6px 12px;background:#490d59;color:white;border:none;border-radius:6px;font-size:12px;cursor:pointer;">
                                 <i class="fas fa-copy"></i> Apply Weight to All Sizes
                             </button>
                         </div>
+                    
+                    <!-- Metadata Hidden Inputs -->
+                    <input type="hidden" name="inventory_stock" value="{{ old('inventory_stock', $product->inventory_stock ?? 0) }}">
+                    <input type="hidden" name="low_stock_threshold" value="{{ old('low_stock_threshold', $product->low_stock_threshold ?? 5) }}">
+
                     <div id="variants-container">
                         @if(old('variants'))
                             @foreach(old('variants') as $index => $variant)
@@ -195,7 +193,6 @@
                     <button type="button" id="add-variant-btn" style="margin-top:10px;background:#f9fafb;border:1px dashed #d0d5dd;border-radius:8px;width:100%;padding:10px;color:#475467;font-size:13px;cursor:pointer;">
                         + Add another size/variant
                     </button>
-                    </div>
                 </div>
             </div>
 
@@ -337,8 +334,8 @@
                         <button type="button" id="media-nav-right" class="media-nav-arrow" style="position: absolute; right: 8px; top: 50%; transform: translateY(-50%); z-index: 10; background: rgba(73, 13, 89, 0.9); color: white; border: none; border-radius: 50%; width: 36px; height: 36px; cursor: pointer; display: none; align-items: center; justify-content: center; font-size: 14px; box-shadow: 0 2px 8px rgba(0,0,0,0.2); transition: all 0.3s ease;">
                             <i class="fas fa-chevron-right"></i>
                         </button>
-                        
-                        <!-- Unified Media Grid -->
+                    
+                    <!-- Unified Media Grid -->
                         <div id="unifiedMediaPreview" style="display: flex; flex-wrap: nowrap; gap: 12px; overflow-x: auto; overflow-y: hidden; padding-bottom: 8px; -webkit-overflow-scrolling: touch; align-items: flex-start; scroll-behavior: smooth;">
                         <!-- Existing images and videos rendered as media items -->
                         <?php 

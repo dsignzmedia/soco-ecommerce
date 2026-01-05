@@ -46,22 +46,15 @@
 
                 </div>
 
-                <!-- Pricing & Product Variants -->
+                <!-- Pricing -->
                 <div class="card">
-                    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;">
-                        <h3 style="margin:0;color:#111827;display:flex;align-items:center;gap:10px;">
+                    <h3 style="margin:0 0 20px;color:#111827;display:flex;align-items:center;gap:10px;">
                         <i class="fas fa-tag" style="color:#490d59;background:#f7f2fb;padding:8px;border-radius:8px;"></i>
-                            Pricing & Product Variants
+                        Pricing
                     </h3>
-                        {{--<label style="display:flex;align-items:center;gap:8px;margin:0;cursor:pointer;">
-                            <input type="checkbox" id="variant-pricing-toggle" name="variant_based_pricing" value="1" @checked(old('variant_based_pricing', $product->category === 'fabrics' || $product->category === 'Fabrics')) style="width:auto;">
-                            <span style="font-size:13px;color:#475467;">Variant-based pricing (Fabric)</span>
-                        </label>--}}
-                    </div>
                     
                     <!-- Pricing Section -->
-                    <div id="main-pricing-section" style="margin-bottom:24px;padding-bottom:24px;border-bottom:1px solid #e5e7eb;">
-                        <h4 style="margin:0 0 16px;color:#374151;font-size:14px;font-weight:600;">Pricing</h4>
+                    <div id="main-pricing-section">
                         <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:16px;">
                             <label class="main-price-field">
                                 <span>Price <span id="price-required-indicator">*</span></span>
@@ -85,6 +78,7 @@
                                 <span>Inclusive of all tax</span>
                             </label>
                             {{-- Weight field removed - now using variant-wise weight --}}
+                        </div>
                         </div>
                 </div>
 
@@ -219,18 +213,22 @@
                     </div>
                 </div>
 
-                <!-- Metadata Hidden Inputs -->
-                <input type="hidden" name="inventory_stock" value="{{ old('inventory_stock', $product->inventory_stock ?? 0) }}">
-                <input type="hidden" name="low_stock_threshold" value="{{ old('low_stock_threshold', $product->low_stock_threshold ?? 5) }}">
-
-                    <!-- Product Variants Section -->
-                    <div>
-                        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
-                            <h4 style="margin:0;color:#374151;font-size:14px;font-weight:600;">Product Variants</h4>
+                <!-- Product Variants -->
+                <div class="card">
+                    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;">
+                        <h3 style="margin:0;color:#111827;display:flex;align-items:center;gap:10px;">
+                            <i class="fas fa-list" style="color:#490d59;background:#f7f2fb;padding:8px;border-radius:8px;"></i>
+                            Product Variants
+                        </h3>
                             <button type="button" id="apply-weight-all-btn" style="display:none;padding:6px 12px;background:#490d59;color:white;border:none;border-radius:6px;font-size:12px;cursor:pointer;">
                                 <i class="fas fa-copy"></i> Apply Weight to All Sizes
                             </button>
                         </div>
+                    
+                    <!-- Metadata Hidden Inputs -->
+                    <input type="hidden" name="inventory_stock" value="{{ old('inventory_stock', $product->inventory_stock ?? 0) }}">
+                    <input type="hidden" name="low_stock_threshold" value="{{ old('low_stock_threshold', $product->low_stock_threshold ?? 5) }}">
+
                     <div id="variants-container">
                         @if(old('variants'))
                             @foreach(old('variants') as $index => $variant)
@@ -329,7 +327,6 @@
                     <button type="button" id="add-variant-btn" style="margin-top:10px;background:#f9fafb;border:1px dashed #d0d5dd;border-radius:8px;width:100%;padding:10px;color:#475467;font-size:13px;cursor:pointer;">
                         + Add another size/variant
                     </button>
-                    </div>
                 </div>
             </div>
 
@@ -470,8 +467,8 @@
                                 <button type="button" id="media-nav-right" class="media-nav-arrow" style="position: absolute; right: 8px; top: 50%; transform: translateY(-50%); z-index: 10; background: rgba(73, 13, 89, 0.9); color: white; border: none; border-radius: 50%; width: 36px; height: 36px; cursor: pointer; display: none; align-items: center; justify-content: center; font-size: 14px; box-shadow: 0 2px 8px rgba(0,0,0,0.2); transition: all 0.3s ease;">
                                     <i class="fas fa-chevron-right"></i>
                                 </button>
-                                
-                                <!-- Unified Media Grid -->
+                            
+                            <!-- Unified Media Grid -->
                                 <div id="unifiedMediaPreview" style="display: flex; flex-wrap: nowrap; gap: 12px; overflow-x: auto; overflow-y: hidden; padding-bottom: 8px; -webkit-overflow-scrolling: touch; align-items: flex-start; scroll-behavior: smooth;">
                                 <!-- Existing images and videos rendered as media items -->
                                 @if($product->media_images)
@@ -1271,6 +1268,16 @@
                         {key: '11', label: 'Class 11', order: 13},
                         {key: '12', label: 'Class 12', order: 14}
                     ];
+                    
+                    // Ensure options are always in correct order - prevent browser sorting
+                    function ensureCorrectOrder(select) {
+                        if (!select || select.tagName !== 'SELECT') return;
+                        const currentValue = select.value;
+                        enforceGradeOrder(select);
+                        if (currentValue) {
+                            select.value = currentValue;
+                        }
+                    }
                     // Build options HTML in correct order using createElement to ensure proper DOM order
                     function buildGradeOptionsHtml(includeEmpty = true, emptyText = 'Select') {
                         const fragment = document.createDocumentFragment();
@@ -1370,11 +1377,13 @@
                     
                     gradePricingRangesContainer.appendChild(newRow);
                     
-                    // Enforce order immediately after adding (though DOM order should be correct now)
+                    // Enforce order immediately after adding
+                    enforceGradeOrder(fromSelect);
+                    enforceGradeOrder(toSelect);
+                    
+                    // Update options to prevent overlaps
                     setTimeout(() => {
-                        // enforceGradeOrder(fromSelect);
-                        // enforceGradeOrder(toSelect);
-                        updateGradeRangeOptions(); // Update options to prevent overlaps
+                        updateGradeRangeOptions();
                     }, 0);
                 });
             }
@@ -1523,10 +1532,16 @@
 
             }
             
-            // Initialize options on page load
+            // Initialize options on page load and enforce order
+            // Enforce order immediately on all existing selects
+            document.querySelectorAll('.grade-from-select, .grade-to-select').forEach(enforceGradeOrder);
+            
             setTimeout(() => {
+                // Enforce order again to ensure it's correct
+                document.querySelectorAll('.grade-from-select, .grade-to-select').forEach(enforceGradeOrder);
+                // Then update options to prevent overlaps
                 updateGradeRangeOptions();
-            }, 500);
+            }, 100);
 
             // Ensure grade dropdowns maintain correct order (prevent browser sorting)
             function enforceGradeOrder(selectElement) {
@@ -1567,27 +1582,27 @@
             }
 
             // Apply to all existing grade selects immediately and on page load
-            // function initGradeOrder() {
-            //     // Run immediately
-            //     document.querySelectorAll('.grade-from-select, .grade-to-select').forEach(enforceGradeOrder);
+            function initGradeOrder() {
+                // Run immediately
+                document.querySelectorAll('.grade-from-select, .grade-to-select').forEach(enforceGradeOrder);
                 
-            //     // Run again after a short delay to catch any late-rendered elements
-            //     setTimeout(() => {
-            //         document.querySelectorAll('.grade-from-select, .grade-to-select').forEach(enforceGradeOrder);
-            //     }, 100);
+                // Run again after a short delay to catch any late-rendered elements
+                setTimeout(() => {
+                    document.querySelectorAll('.grade-from-select, .grade-to-select').forEach(enforceGradeOrder);
+                }, 100);
                 
-            //     // Run again after DOM is fully ready
-            //     setTimeout(() => {
-            //         document.querySelectorAll('.grade-from-select, .grade-to-select').forEach(enforceGradeOrder);
-            //     }, 500);
-            // }
+                // Run again after DOM is fully ready
+                setTimeout(() => {
+                    document.querySelectorAll('.grade-from-select, .grade-to-select').forEach(enforceGradeOrder);
+                }, 500);
+            }
             
             // Run immediately if DOM is ready
-            // if (document.readyState === 'loading') {
-            //     document.addEventListener('DOMContentLoaded', initGradeOrder);
-            // } else {
-            //     initGradeOrder();
-            // }
+            if (document.readyState === 'loading') {
+                document.addEventListener('DOMContentLoaded', initGradeOrder);
+            } else {
+                initGradeOrder();
+            }
             
             // Also run when page is fully loaded
             window.addEventListener('load', function() {
@@ -1608,8 +1623,22 @@
                 }, true);
             }
             
-            // Also enforce order when dropdowns are opened (focus event)
+            // Also enforce order when dropdowns are opened (focus and click events)
             document.addEventListener('focus', function(e) {
+                if (e.target && (e.target.classList.contains('grade-from-select') || e.target.classList.contains('grade-to-select'))) {
+                    enforceGradeOrder(e.target);
+                }
+            }, true);
+            
+            // Enforce order on click (when dropdown opens)
+            document.addEventListener('click', function(e) {
+                if (e.target && (e.target.classList.contains('grade-from-select') || e.target.classList.contains('grade-to-select'))) {
+                    enforceGradeOrder(e.target);
+                }
+            }, true);
+            
+            // Enforce order on mousedown (before dropdown opens)
+            document.addEventListener('mousedown', function(e) {
                 if (e.target && (e.target.classList.contains('grade-from-select') || e.target.classList.contains('grade-to-select'))) {
                     enforceGradeOrder(e.target);
                 }

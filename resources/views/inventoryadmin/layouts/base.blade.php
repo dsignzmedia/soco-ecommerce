@@ -146,7 +146,7 @@
         .sidebar {
             background: #fff;
             border-right: 1px solid var(--border);
-            padding: 28px 24px;
+            padding: 32px 14px;
             display: flex;
             flex-direction: column;
             gap: 32px;
@@ -312,7 +312,60 @@
                 border-bottom: 1px solid var(--border);
             }
         }
+
+        /* Collapsed Sidebar Styles */
+        .layout.collapsed {
+            grid-template-columns: 80px 1fr;
+        }
+        
+        .layout.collapsed .sidebar .brand {
+            align-items: center;
+            padding: 0;
+            margin-bottom: 24px;
+        }
+        
+        .layout.collapsed .sidebar .brand img {
+            width: 40px;
+            height: 40px;
+            object-fit: contain;
+        }
+        
+        .layout.collapsed .sidebar .brand small {
+            display: none;
+        }
+        
+        .layout.collapsed .sidebar .nav__item {
+            justify-content: center;
+            padding: 12px;
+        }
+        
+        .layout.collapsed .sidebar .nav__item span {
+            display: none;
+        }
+
+        /* Hide content if flex is used, but icon persists */
+        .layout.collapsed .sidebar .nav__item {
+             /* font-size: 0 !important; */ 
+             /* Easier to span wrap */
+        }
+        
+        .sidebar-toggle {
+            cursor: pointer;
+            padding: 8px;
+            border-radius: 8px;
+            color: var(--text);
+            transition: background 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .sidebar-toggle:hover {
+            background: rgba(0,0,0,0.05);
+            color: var(--heading);
+        }
     </style>
+    @stack('head')
     @stack('styles')
 </head>
 <body>
@@ -324,39 +377,63 @@
             </div>
             <nav class="nav">
                 <a class="nav__item {{ request()->routeIs('inventory.admin.dashboard') ? 'active' : '' }}" href="{{ route('inventory.admin.dashboard') }}">
-                    Dashboard
+                    <div style="display: flex; align-items: center; gap: 10px;">
+                        <i class="fas fa-th-large" style="width: 18px; text-align: center;"></i>
+                        <span>Dashboard</span>
+                    </div>
                 </a>
                 <a class="nav__item {{ request()->routeIs('inventory.admin.orders.*') && !request()->routeIs('inventory.admin.orders.shipping') ? 'active' : '' }}" href="{{ route('inventory.admin.orders.index') }}">
-                    Orders
+                    <div style="display: flex; align-items: center; gap: 10px;">
+                        <i class="fas fa-shopping-bag" style="width: 18px; text-align: center;"></i>
+                        <span>Orders</span>
+                    </div>
                 </a>
                 <a class="nav__item {{ request()->routeIs('inventory.admin.orders.shipping') ? 'active' : '' }}" href="{{ route('inventory.admin.orders.shipping') }}">
-                    Shipping
+                     <div style="display: flex; align-items: center; gap: 10px;">
+                        <i class="fas fa-shipping-fast" style="width: 18px; text-align: center;"></i>
+                        <span>Shipping</span>
+                    </div>
                 </a>
                 <a class="nav__item {{ request()->routeIs('inventory.admin.inventory.*') ? 'active' : '' }}" href="{{ route('inventory.admin.inventory.index') }}">
-                    Inventory
+                    <div style="display: flex; align-items: center; gap: 10px;">
+                        <i class="fas fa-warehouse" style="width: 18px; text-align: center;"></i>
+                        <span>Inventory</span>
+                    </div>
                 </a>
                 <a class="nav__item {{ request()->routeIs('inventory.admin.returns-exchange.index') ? 'active' : '' }}" href="{{ route('inventory.admin.returns-exchange.index') }}">
-                    Returns & Exchanges
+                    <div style="display: flex; align-items: center; gap: 10px;">
+                        <i class="fas fa-exchange-alt" style="width: 18px; text-align: center;"></i>
+                        <span>Returns & Exchanges</span>
+                    </div>
                 </a>
                 <a class="nav__item {{ request()->routeIs('inventory.admin.reports.*') ? 'active' : '' }}" href="{{ route('inventory.admin.reports.index') }}">
-                    Reports
+                     <div style="display: flex; align-items: center; gap: 10px;">
+                        <i class="fas fa-chart-bar" style="width: 18px; text-align: center;"></i>
+                        <span>Reports</span>
+                    </div>
                 </a>
             </nav>
         </aside>
         <main class="content">
             <div class="topbar">
-                <div>
-                    <h1 style="margin:0;font-size:24px;color:var(--heading);">
-                        @yield('page_heading', 'Inventory Admin Portal')
-                    </h1>
-                    <p style="margin:4px 0 0;color:#94a3b8;">
-                        @yield('page_subheading', 'Focused tools for stock teams')
-                    </p>
+                <div style="display:flex;align-items:center;gap:16px;">
+                    <div class="sidebar-toggle" onclick="toggleSidebar()" style="font-size:20px;cursor:pointer;color:var(--text);border-right:1px solid var(--border);">
+                        <i class="fas fa-bars"></i>
+                    </div>
+                    <div>
+                        <h1 style="margin:0;font-size:24px;color:var(--heading);">
+                            @yield('page_heading', 'Inventory Admin Portal')
+                        </h1>
+                        <p style="margin:4px 0 0;color:#94a3b8;">
+                            @yield('page_subheading', 'Focused tools for stock teams')
+                        </p>
+                    </div>
                 </div>
                 @php
                     $unreadNotifications = collect();
                     $unreadCount = 0;
                     try {
+                        // Fetch DB notifications
                         $unreadNotifications = \App\Models\Notification::whereNull('read_at')
                                                 ->where(function($q) {
                                                     $q->where('target_role', 'inventory')
@@ -371,6 +448,22 @@
                                               ->orWhereNull('target_role');
                                         })
                                         ->count();
+                        
+                        // NEW: Dynamic Low Stock Check
+                        $lowStockCount = \App\Models\Admin\Master\ProductMapping::where('inventory_stock', '<=', 5)->count();
+                        if ($lowStockCount > 0) {
+                            $lowStockNotif = new \stdClass();
+                            $lowStockNotif->id = 'low-stock';
+                            $lowStockNotif->title = 'Low Stock Alert';
+                            $lowStockNotif->message = number_format($lowStockCount) . " products are near out of stock (<= 5).";
+                            $lowStockNotif->created_at = now();
+                            $lowStockNotif->type = 'low_stock_fake';
+                            
+                            // Prepend to list and increment count
+                            $unreadNotifications->prepend($lowStockNotif);
+                            $unreadCount++;
+                        }
+
                     } catch (\Exception $e) {
                          \Illuminate\Support\Facades\Log::error('Notification fetch failed: ' . $e->getMessage());
                     }
@@ -389,14 +482,22 @@
                             </div>
                             <div style="max-height:300px;overflow-y:auto;">
                                 @forelse($unreadNotifications ?? [] as $notif)
-                                    <a href="{{ route('inventory.admin.notifications.read', $notif->id) }}" style="display:flex;text-decoration:none;color:inherit;padding:12px 16px;border-bottom:1px solid #f3f4f6;align-items:start;gap:12px;transition:background 0.2s;" onmouseover="this.style.background='#f9fafb'" onmouseout="this.style.background='transparent'">
+                                    @php
+                                        $notifLink = (isset($notif->type) && $notif->type === 'low_stock_fake') 
+                                            ? route('inventory.admin.reports.index') 
+                                            : route('inventory.admin.notifications.read', $notif->id);
+                                        
+                                        $iconColor = (isset($notif->type) && $notif->type === 'low_stock_fake') ? '#dc2626' : '#10b981';
+                                        $iconClass = (isset($notif->type) && $notif->type === 'low_stock_fake') ? 'fa-exclamation-triangle' : 'fa-chevron-right';
+                                    @endphp
+                                    <a href="{{ $notifLink }}" style="display:flex;text-decoration:none;color:inherit;padding:12px 16px;border-bottom:1px solid #f3f4f6;align-items:start;gap:12px;transition:background 0.2s;" onmouseover="this.style.background='#f9fafb'" onmouseout="this.style.background='transparent'">
                                         <div style="flex:1;">
                                             <p style="margin:0 0 4px;font-weight:600;font-size:13px;color:#374151;">{{ $notif->title }}</p>
                                             <p style="margin:0;font-size:12px;color:#6b7280;line-height:1.4;">{{ Str::limit($notif->message, 60) }}</p>
                                             <small style="margin-top:4px;display:block;font-size:11px;color:#9ca3af;">{{ $notif->created_at->diffForHumans() }}</small>
                                         </div>
-                                        <div style="color:#10b981;font-size:12px;padding-top:2px;">
-                                            <i class="fas fa-chevron-right"></i>
+                                        <div style="color:{{ $iconColor }};font-size:12px;padding-top:2px;">
+                                            <i class="fas {{ $iconClass }}"></i>
                                         </div>
                                     </a>
                                 @empty
@@ -469,6 +570,13 @@
     </div>
 
     <script>
+        window.toggleSidebar = function() {
+            const layout = document.querySelector('.layout');
+            layout.classList.toggle('collapsed');
+            const isCollapsed = layout.classList.contains('collapsed');
+            localStorage.setItem('sidebar-collapsed', isCollapsed);
+        };
+
         document.addEventListener('DOMContentLoaded', function() {
             // Initialize Tom Select
             document.querySelectorAll('select').forEach((el) => {
@@ -617,6 +725,12 @@
                     logoutModal.style.display = 'none';
                 }
             });
+
+            // Restore sidebar state
+            const isCollapsed = localStorage.getItem('sidebar-collapsed') === 'true';
+            if (isCollapsed) {
+                document.querySelector('.layout').classList.add('collapsed');
+            }
         });
     </script>
 </body>

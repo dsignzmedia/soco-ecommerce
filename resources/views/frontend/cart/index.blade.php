@@ -88,11 +88,38 @@
                                                 <span style="color: #dc3545; font-weight: 600;">₹{{ number_format($item['price']) }}</span>
                                             </td>
                                             <td style="padding: 15px; vertical-align: middle; text-align: center;" data-title="Quantity">
-                                                <span style="font-weight: 500;">{{ str_pad($item['quantity'], 2, '0', STR_PAD_LEFT) }}</span>
+                                                <div class="quantity-controls" style="display: inline-flex; align-items: center; gap: 8px; border: 1px solid #e0d5f0; border-radius: 8px; padding: 4px; background-color: #f8f5ff;">
+                                                    <button type="button" 
+                                                            class="quantity-btn decrease-btn" 
+                                                            data-item-id="{{ $item['id'] }}"
+                                                            data-current-qty="{{ $item['quantity'] }}"
+                                                            style="background: #ffffff; border: none; color: #490D59; width: 28px; height: 28px; border-radius: 6px; cursor: pointer; font-weight: 600; font-size: 16px; display: flex; align-items: center; justify-content: center; transition: all 0.2s;"
+                                                            onmouseover="this.style.backgroundColor='#490D59'; this.style.color='#ffffff';"
+                                                            onmouseout="this.style.backgroundColor='#ffffff'; this.style.color='#490D59';">
+                                                        <i class="fas fa-minus"></i>
+                                                    </button>
+                                                    <span class="quantity-display" 
+                                                          data-item-id="{{ $item['id'] }}"
+                                                          style="min-width: 30px; text-align: center; font-weight: 600; color: #333; font-size: 14px;">
+                                                        {{ $item['quantity'] }}
+                                                    </span>
+                                                    <button type="button" 
+                                                            class="quantity-btn increase-btn" 
+                                                            data-item-id="{{ $item['id'] }}"
+                                                            data-current-qty="{{ $item['quantity'] }}"
+                                                            style="background: #ffffff; border: none; color: #490D59; width: 28px; height: 28px; border-radius: 6px; cursor: pointer; font-weight: 600; font-size: 16px; display: flex; align-items: center; justify-content: center; transition: all 0.2s;"
+                                                            onmouseover="this.style.backgroundColor='#490D59'; this.style.color='#ffffff';"
+                                                            onmouseout="this.style.backgroundColor='#ffffff'; this.style.color='#490D59';">
+                                                        <i class="fas fa-plus"></i>
+                                                    </button>
+                                                </div>
                                             </td>
                                             <td style="padding: 15px; vertical-align: middle; text-align: right;" data-title="Total">
                                                 <div class="d-flex align-items-center justify-content-end gap-3 mobile-actions">
-                                                    <span style="color: #dc3545; font-weight: 600;">₹{{ number_format($item['item_total']) }}</span>
+                                                    <span class="item-total-display" 
+                                                          data-item-id="{{ $item['id'] }}"
+                                                          data-item-price="{{ $item['price'] }}"
+                                                          style="color: #dc3545; font-weight: 600;">₹{{ number_format($item['item_total']) }}</span>
                                                     <form action="{{ route('frontend.parent.remove-from-cart') }}" method="POST" class="d-inline">
                                                         @csrf
                                                         <input type="hidden" name="id" value="{{ $item['id'] }}">
@@ -318,6 +345,31 @@
         /* The total price text */
         display: inline-block;
     }
+    
+    /* Quantity Controls Styling */
+    .quantity-controls {
+        justify-content: center;
+    }
+    
+    .quantity-btn:disabled {
+        opacity: 0.5 !important;
+        cursor: not-allowed !important;
+    }
+    
+    /* Mobile Quantity Controls */
+    .table-responsive td[data-title="Quantity"] {
+        margin-bottom: 10px;
+    }
+    
+    .quantity-controls {
+        width: 100%;
+        justify-content: center;
+        margin: 5px 0;
+    }
+    
+    .quantity-display {
+        font-size: 16px !important;
+    }
 }
 </style>
 
@@ -451,7 +503,92 @@ function validateCheckout() {
 // Initialize on page load
 document.addEventListener('DOMContentLoaded', function() {
     updateOrderSummary();
+    
+    // Add event listeners for quantity controls
+    document.querySelectorAll('.quantity-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+            const itemId = this.getAttribute('data-item-id');
+            const currentQty = parseInt(this.closest('.quantity-controls').querySelector('.quantity-display').textContent);
+            const isIncrease = this.classList.contains('increase-btn');
+            const newQty = isIncrease ? currentQty + 1 : Math.max(1, currentQty - 1);
+            
+            updateCartQuantity(itemId, newQty);
+        });
+    });
 });
+
+function updateCartQuantity(itemId, newQuantity) {
+    const quantityDisplay = document.querySelector(`.quantity-display[data-item-id="${itemId}"]`);
+    const itemTotalDisplay = document.querySelector(`.item-total-display[data-item-id="${itemId}"]`);
+    const itemPrice = parseFloat(itemTotalDisplay.getAttribute('data-item-price'));
+    const quantityControls = quantityDisplay.closest('.quantity-controls');
+    const decreaseBtn = quantityControls.querySelector('.decrease-btn');
+    const increaseBtn = quantityControls.querySelector('.increase-btn');
+    
+    // Disable buttons during update
+    decreaseBtn.disabled = true;
+    increaseBtn.disabled = true;
+    decreaseBtn.style.opacity = '0.5';
+    increaseBtn.style.opacity = '0.5';
+    decreaseBtn.style.cursor = 'not-allowed';
+    increaseBtn.style.cursor = 'not-allowed';
+    
+    // Show loading state
+    const originalQtyText = quantityDisplay.textContent;
+    quantityDisplay.textContent = '...';
+    
+    fetch('{{ route("frontend.parent.update-cart-quantity") }}', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRF-TOKEN': '{{ csrf_token() }}'
+        },
+        body: JSON.stringify({
+            id: itemId,
+            quantity: newQuantity
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            // Update quantity display
+            quantityDisplay.textContent = data.quantity;
+            
+            // Update item total
+            const formattedTotal = '₹' + data.item_total.toLocaleString('en-IN');
+            itemTotalDisplay.textContent = formattedTotal;
+            
+            // Update cartItems array
+            const itemIndex = cartItems.findIndex(item => item.id == itemId);
+            if (itemIndex !== -1) {
+                cartItems[itemIndex].quantity = data.quantity;
+                cartItems[itemIndex].item_total = data.item_total;
+                cartItems[itemIndex].price = data.item_price;
+            }
+            
+            // Update order summary
+            updateOrderSummary();
+        } else {
+            // Revert on error
+            quantityDisplay.textContent = originalQtyText;
+            alert(data.message || 'Failed to update quantity. Please try again.');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        quantityDisplay.textContent = originalQtyText;
+        alert('An error occurred. Please try again.');
+    })
+    .finally(() => {
+        // Re-enable buttons
+        decreaseBtn.disabled = false;
+        increaseBtn.disabled = false;
+        decreaseBtn.style.opacity = '1';
+        increaseBtn.style.opacity = '1';
+        decreaseBtn.style.cursor = 'pointer';
+        increaseBtn.style.cursor = 'pointer';
+    });
+}
 </script>
 @endsection
 

@@ -100,7 +100,9 @@
         
         .table-wrap {
             border: 1px solid #e5e7eb;
-            border-radius: 12px;
+            border-top-left-radius: 12px;
+            border-top-right-radius: 12px;
+            border-bottom: none;
             overflow-x: auto;
             background: #fff;
             box-shadow: 0 1px 2px rgba(0,0,0,0.05);
@@ -113,6 +115,65 @@
         th:first-child, td:first-child {
             padding-left: 32px;
         }
+
+        /* Pagination Containers and Buttons */
+        .pagination-container {
+            padding: 12px 20px;
+            border-top: 1px solid #e5e7eb;
+            background: #fff;
+            border-bottom-left-radius: 12px;
+            border-bottom-right-radius: 12px;
+        }
+        .pagination-container nav > div:first-child { display: none !important; } /* Hide mobile text */
+        .pagination-container nav > div:last-child {
+            display: flex !important;
+            justify-content: space-between;
+            width: 100%;
+            align-items: center;
+        }
+        .pagination-container p { font-size: 13px; color: #6b7280; margin: 0; }
+        .pagination-container nav span[class*="shadow-sm"],
+        .pagination-container nav div[class*="shadow-sm"] {
+            box-shadow: none !important;
+            display: inline-flex;
+            gap: 4px;
+        }
+        .pagination-container nav a, 
+        .pagination-container nav span[aria-disabled], 
+        .pagination-container nav span[aria-current="page"] > span {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            padding: 0 !important;
+            border: 1px solid #e5e7eb !important;
+            border-radius: 8px !important;
+            background: #fff;
+            color: #374151;
+            font-size: 13px;
+            font-weight: 500;
+            text-decoration: none;
+            width: 36px !important;
+            height: 36px !important;
+            margin: 0 !important;
+            cursor: pointer;
+            box-sizing: border-box !important;
+        }
+        .pagination-container nav span[aria-current="page"] > span {
+            background-color: #490d59 !important;
+            border-color: #490d59 !important;
+            color: white !important;
+        }
+        .pagination-container nav span[aria-disabled] {
+            opacity: 0.6;
+            cursor: not-allowed;
+            background: #f9fafb;
+        }
+        .pagination-container nav a:hover {
+            background-color: #f3e8f5;
+            border-color: #490d59 !important;
+            color: #490d59;
+        }
+        .pagination-container nav svg { width: 16px; height: 16px; }
     </style>
 
     <div class="filters-card">
@@ -136,8 +197,10 @@
                 <input type="text" name="q" value="{{ $filters['q'] ?? '' }}" placeholder="Search order# or item" class="filter-input-rounded" style="width:100%;">
             </div>
             
-            <button type="submit" class="btn-filter">Filter</button>
-            <a href="{{ route('inventory.admin.returns-exchange.index') }}" class="btn-reset">Reset</a>
+            <div style="width: 100%; display: flex; justify-content: flex-end; gap: 10px; margin-top: 10px;">
+                <button type="submit" class="btn-filter" style="width: auto; min-width: 120px;">Filter</button>
+                <a href="{{ route('inventory.admin.returns-exchange.index') }}" class="btn-reset" style="width: auto; min-width: 100px;">Reset</a>
+            </div>
         </form>
     </div>
 
@@ -145,7 +208,8 @@
         <table>
             <thead>
                 <tr>
-                    <th style="width: 60px;">S.No</th>
+                    <th style="width: 40px;">#</th>
+                    <th style="width: 60px;">Image</th>
                     <th>Order Details</th>
                     <th>Item</th>
                     <th>Qty</th>
@@ -161,8 +225,20 @@
                     <tr>
                         <td>{{ $loop->iteration }}</td>
                         <td>
+                            @if(isset($productImages[$req->order_id]))
+                                <img src="{{ asset('storage/' . $productImages[$req->order_id]) }}" 
+                                     alt="Product" 
+                                     style="width: 40px; height: 40px; object-fit: cover; border-radius: 6px; border: 1px solid #e5e7eb;"
+                                     onerror="this.onerror=null; this.src='{{ asset('assets/img/no image/no_image.png') }}';">
+                            @else
+                                <img src="{{ asset('assets/img/no image/no_image.png') }}" 
+                                     alt="Default" 
+                                     style="width: 40px; height: 40px; object-fit: cover; border-radius: 6px; border: 1px solid #e5e7eb;">
+                            @endif
+                        </td>
+                        <td>
                             <div style="display:flex;flex-direction:column;gap:4px;">
-                                <a href="{{ route('inventory.admin.orders.show', $req->order) }}" style="color:#490d59;font-weight:700;text-decoration:none;">{{ $req->order->order_number ?? '—' }}</a>
+                                <a href="{{ route('inventory.admin.orders.show', $req->order) }}" style="color:#490d59;font-weight:700;text-decoration:none;">{{ $req->order->order_number ?? '—' }}</a> [NEW_LINE]
                                 <span style="display:inline-block;width:fit-content;padding:2px 8px;border-radius:12px;font-size:11px;font-weight:600;background:{{ $req->type === 'return' ? '#fef3c7' : '#e0e7ff' }};color:{{ $req->type === 'return' ? '#92400e' : '#3730a3' }};text-transform:capitalize;">
                                     {{ $req->type }}
                                 </span>
@@ -240,7 +316,7 @@
         </table>
     </div>
 
-    <div style="margin-top:20px;">
+    <div class="pagination-container">
         {{ $requests->links() }}
     </div>
 @endsection

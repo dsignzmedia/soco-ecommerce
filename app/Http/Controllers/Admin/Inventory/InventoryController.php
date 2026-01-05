@@ -158,21 +158,159 @@ class InventoryController extends Controller
         }
     }
 
-    public function reports(): View
+    public function reports(Request $request)
     {
-        $lowStock = ProductMapping::with('school')->whereColumn('inventory_stock', '<=', 'low_stock_threshold')->get();
-        $outOfStock = ProductMapping::with('school')->where('inventory_stock', '<=', 0)->get();
+        $filters = $request->only(['school_id', 'grade_id', 'category', 'stock_status', 'date_from', 'date_to', 'q']);
 
-        $stockBySchool = ProductMapping::selectRaw('school_id, SUM(inventory_stock) as total')
+        // Build base query with filters
+        $baseQuery = ProductMapping::with(['school', 'grade'])
+            ->when($filters['school_id'] ?? null, fn($q, $school) => $q->where('school_id', $school))
+            ->when($filters['grade_id'] ?? null, fn($q, $grade) => $q->where('grade_id', $grade))
+            ->when($filters['category'] ?? null, fn($q, $category) => $q->where('category', $category))
+            ->when($filters['q'] ?? null, fn($q, $term) => $q->where('product_name', 'like', '%'.$term.'%'))
+            ->when($filters['date_from'] ?? null, fn($q, $from) => $q->whereDate('updated_at', '>=', $from))
+            ->when($filters['date_to'] ?? null, fn($q, $to) => $q->whereDate('updated_at', '<=', $to));
+
+        // Apply stock status filter
+        if (isset($filters['stock_status'])) {
+            match($filters['stock_status']) {
+                'in_stock' => $baseQuery->where('inventory_stock', '>', 0),
+                'low_stock' => $baseQuery->whereColumn('inventory_stock', '<=', 'low_stock_threshold')->where('inventory_stock', '>', 0),
+                'out_of_stock' => $baseQuery->where('inventory_stock', '<=', 0),
+                'critical' => $baseQuery->whereRaw('inventory_stock <= (low_stock_threshold / 2)')->where('inventory_stock', '>', 0),
+                default => null
+            };
+        }
+
+        // Handle Export Request
+        if ($request->has('export')) {
+            $exportProducts = (clone $baseQuery)->get();
+            $filename = 'inventory_report_' . date('Y-m-d_H-i');
+
+            if ($request->export === 'csv') {
+                $headers = [
+                    "Content-type" => "text/csv",
+                    "Content-Disposition" => "attachment; filename=$filename.csv",
+                    "Pragma" => "no-cache",
+                    "Cache-Control" => "must-revalidate, post-check=0, pre-check=0",
+                    "Expires" => "0"
+                ];
+
+                $columns = ['Product Name', 'School', 'Grade', 'Category', 'Stock', 'Threshold', 'Last Updated', 'Status'];
+
+                $callback = function() use ($exportProducts, $columns) {
+                    $file = fopen('php://output', 'w');
+                    fputcsv($file, $columns);
+                    
+                    foreach ($exportProducts as $product) {
+                        $status = 'In Stock';
+                        if ($product->inventory_stock <= 0) $status = 'Out of Stock';
+                        elseif ($product->inventory_stock <= $product->low_stock_threshold) $status = 'Low Stock';
+
+                        fputcsv($file, [
+                            $product->product_name,
+                            $product->school?->name ?? '—',
+                            $product->grade?->name ?? '—',
+                            $product->category ?? '—',
+                            $product->inventory_stock,
+                            $product->low_stock_threshold,
+                            $product->updated_at->format('d M Y'),
+                            $status
+                        ]);
+                    }
+                    fclose($file);
+                };
+                return response()->stream($callback, 200, $headers);
+            }
+
+            if ($request->export === 'pdf') {
+                $pdf = \PDF::loadView('inventoryadmin.reports.pdf', compact('exportProducts', 'filters'));
+                return $pdf->download("$filename.pdf");
+            }
+        }
+
+        // Calculate comprehensive metrics
+        $totalStock = (clone $baseQuery)->sum('inventory_stock');
+        $totalProducts = (clone $baseQuery)->count();
+        $totalValue = 0; // Price column not available in product_mappings
+        $avgStock = $totalProducts > 0 ? round($totalStock / $totalProducts, 2) : 0;
+
+        // Stock status counts
+        $inStockCount = (clone $baseQuery)->where('inventory_stock', '>', 0)->count();
+        $lowStock = (clone $baseQuery)->with('school')->whereColumn('inventory_stock', '<=', 'low_stock_threshold')->where('inventory_stock', '>', 0)->get();
+        $outOfStock = (clone $baseQuery)->with('school')->where('inventory_stock', '<=', 0)->get();
+        $criticalStock = (clone $baseQuery)->whereRaw('inventory_stock <= (low_stock_threshold / 2)')->where('inventory_stock', '>', 0)->count();
+
+        // Stock by School
+        $stockBySchool = (clone $baseQuery)
+            ->selectRaw('school_id, SUM(inventory_stock) as total, COUNT(*) as product_count')
             ->groupBy('school_id')
             ->with('school')
             ->get();
 
-        $stockByGrade = ProductMapping::selectRaw('grade_id, SUM(inventory_stock) as total')
+        // Stock by Category
+        $stockByCategory = (clone $baseQuery)
+            ->selectRaw('category, SUM(inventory_stock) as total, COUNT(*) as product_count')
+            ->whereNotNull('category')
+            ->groupBy('category')
+            ->get();
+
+        // Stock by Grade
+        $stockByGrade = (clone $baseQuery)
+            ->selectRaw('grade_id, SUM(inventory_stock) as total, COUNT(*) as product_count')
             ->groupBy('grade_id')
             ->with('grade')
             ->get();
 
-        return view('inventoryadmin.reports.index', compact('lowStock', 'outOfStock', 'stockBySchool', 'stockByGrade'));
+        // Stock Aging Analysis (products not updated in 30+ days)
+        $stockAging = (clone $baseQuery)
+            ->select('product_name', 'inventory_stock', 'updated_at', 'category', 'school_id')
+            ->with('school')
+            ->whereDate('updated_at', '<=', now()->subDays(30))
+            ->orderBy('updated_at', 'asc')
+            ->limit(20)
+            ->get()
+            ->map(function($product) {
+                return [
+                    'name' => $product->product_name,
+                    'stock' => $product->inventory_stock,
+                    'days_old' => $product->updated_at ? floor($product->updated_at->diffInDays(now())) : 0,
+                    'category' => $product->category,
+                    'school' => $product->school?->name ?? 'Unknown'
+                ];
+            });
+
+        // Detailed product list with pagination
+        $products = (clone $baseQuery)
+            ->select('id', 'product_name', 'school_id', 'grade_id', 'category', 'inventory_stock', 'low_stock_threshold', 'updated_at', 'featured_image')
+            ->with('variants')
+            ->latest('updated_at')
+            ->paginate(20)
+            ->withQueryString();
+
+        // Get filter dropdown data
+        $schools = School::orderBy('name')->get();
+        $categories = ProductMapping::select('category')->whereNotNull('category')->distinct()->orderBy('category')->pluck('category');
+        $grades = \App\Models\Admin\Master\Grade::orderBy('name')->get();
+
+        return view('inventoryadmin.reports.index', compact(
+            'filters',
+            'totalStock',
+            'totalProducts',
+            'totalValue',
+            'avgStock',
+            'inStockCount',
+            'lowStock',
+            'outOfStock',
+            'criticalStock',
+            'stockBySchool',
+            'stockByCategory',
+            'stockByGrade',
+            'stockAging',
+            'products',
+            'schools',
+            'categories',
+            'grades'
+        ));
     }
 }

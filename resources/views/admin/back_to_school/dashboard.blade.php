@@ -55,6 +55,7 @@
         .kpi-purple .kpi-icon-wrapper { background: #8b5cf6; }
         .kpi-yellow .kpi-icon-wrapper { background: #f59e0b; }
         .kpi-blue .kpi-icon-wrapper { background: #0ea5e9; }
+        .kpi-red .kpi-icon-wrapper { background: #ef4444; }
         
         .kpi-label {
             font-size: 11px;
@@ -393,7 +394,13 @@
     <!-- KPI Grid -->
     <div class="kpi-grid">
         @php
-            function getKpiStyleV2($label) {
+            function getKpiStyleV2($label, $kpi = []) {
+                // Use color from KPI array if provided
+                if (!empty($kpi['color'])) {
+                    $icon = stripos($label, 'refund') !== false ? 'fa-arrow-trend-down' : (stripos($label, 'revenue') !== false ? 'fa-indian-rupee-sign' : 'fa-chart-pie');
+                    return ['icon' => $icon, 'color' => $kpi['color']];
+                }
+                if (stripos($label, 'refund') !== false) return ['icon' => 'fa-arrow-trend-down', 'color' => 'kpi-red'];
                 if (stripos($label, 'sales') !== false || stripos($label, 'revenue') !== false) return ['icon' => 'fa-indian-rupee-sign', 'color' => 'kpi-green'];
                 if (stripos($label, 'order') !== false) return ['icon' => 'fa-shopping-bag', 'color' => 'kpi-purple'];
                 if (stripos($label, 'product') !== false || stripos($label, 'sku') !== false) return ['icon' => 'fa-box', 'color' => 'kpi-blue']; 
@@ -403,7 +410,7 @@
         @endphp
 
         @foreach($kpis as $kpi)
-            @php $style = getKpiStyleV2($kpi['label']); @endphp
+            @php $style = getKpiStyleV2($kpi['label'], $kpi); @endphp
             <div class="kpi-card {{ $style['color'] }}">
                 <div style="display:flex; justify-content:space-between; align-items:flex-start;">
                     <div class="kpi-icon-wrapper">

@@ -211,7 +211,7 @@
                                             <img src="{{ asset('assets/img/no image/no_image.png') }}" alt="{{ $relatedProduct['name'] }}" class="w-100">
                                         @endif
                                     </a>
-                                </div>
+                            </div>
                                 <div class="product-content">
                                     <span class="product-price">
                                         ₹{{ number_format($relatedProduct['price'] ?? 0) }}
@@ -234,9 +234,9 @@
                             </div>
                         </div>
                     @endforeach
+                    </div>
                 </div>
             </div>
-        </div>
         @endif
     </div>
 </section>
@@ -497,7 +497,7 @@
         border-radius: 30px 30px 0 0;
         background-color: #ffffff;
     }
-
+    
     .product-badge {
         position: absolute;
         top: 10px;
@@ -562,7 +562,8 @@
         line-height: 1;
     }
 
-    .product-title {
+    /* Product title in product cards (related products) - keep truncation */
+    .vs-product .product-title {
         font-size: 16px;
         margin-bottom: 12px;
         text-transform: capitalize;
@@ -573,14 +574,27 @@
         white-space: nowrap;
         max-width: 100%;
     }
-
-    .product-title a {
+    
+    .vs-product .product-title a {
         color: #333;
         text-decoration: none;
         display: block;
         overflow: hidden;
         text-overflow: ellipsis;
         white-space: nowrap;
+    }
+    
+    /* Product title in product detail page - show full name */
+    .product-about .product-title {
+        font-size: 28px;
+        font-weight: 600;
+        color: #333;
+        margin-bottom: 15px;
+        overflow: visible;
+        text-overflow: clip;
+        white-space: normal;
+        word-wrap: break-word;
+        line-height: 1.4;
     }
 
     .product-title a:hover {
@@ -660,11 +674,17 @@
         outline: none;
     }
 
-    .product-title {
+    /* Product title in product detail page - show full name */
+    .product-about .product-title {
         font-size: 28px;
         font-weight: 600;
         color: #333;
         margin-bottom: 15px;
+        overflow: visible !important;
+        text-overflow: clip !important;
+        white-space: normal !important;
+        word-wrap: break-word;
+        line-height: 1.4;
     }
 
     .product-price {
@@ -927,8 +947,13 @@
             margin-top: 20px;
         }
 
-        .product-title {
+        /* Product title in product detail page - show full name on tablet */
+        .product-about .product-title {
             font-size: 22px;
+            overflow: visible !important;
+            text-overflow: clip !important;
+            white-space: normal !important;
+            word-wrap: break-word;
         }
 
         .product-price {
@@ -1001,7 +1026,8 @@
             padding: 8px;
         }
 
-        .product-title {
+        /* Product title in product cards (related products) - keep truncation on mobile */
+        .vs-product .product-title {
             font-size: 14px;
             min-height: auto;
             height: auto;
@@ -1009,6 +1035,15 @@
             overflow: hidden;
             text-overflow: ellipsis;
             white-space: nowrap;
+        }
+        
+        /* Product title in product detail page - show full name on mobile */
+        .product-about .product-title {
+            font-size: 22px;
+            overflow: visible !important;
+            text-overflow: clip !important;
+            white-space: normal !important;
+            word-wrap: break-word;
         }
 
         .product-price {

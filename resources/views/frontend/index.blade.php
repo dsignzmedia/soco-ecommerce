@@ -11,7 +11,7 @@
 
         <!-- Slide 1-->
         <div class="ls-slide" data-ls="duration:12000; transition2d:5;">
-
+            
             <!--<ls-layer-->
             <!--    style="font-size:36px; color:#000; stroke:#000; stroke-width:0px; text-align:left; font-style:normal; text-decoration:none; text-transform:none; font-weight:400; letter-spacing:0px; border-style:solid; background-position:0% 0%; background-repeat:no-repeat; background-clip:border-box; overflow:visible; width:255px; height:255px; border-width:60px 60px 60px 60px; border-color:#FFD600; border-radius:50% 50% 50% 50%; top:126px; left:740px; z-index:4; -webkit-background-clip:border-box;"-->
             <!--    class="ls-l ls-hide-tablet ls-hide-phone ls-text-layer" data-ls="static:forever;">-->
@@ -87,8 +87,8 @@ Shop by Category Area
 ==============================-->
 <section>
 
-
-
+       
+       
     <style>
         .simple-cat {
             text-align: center;
@@ -101,12 +101,12 @@ Shop by Category Area
             overflow-y: hidden;
             -webkit-overflow-scrolling: touch;
         }
-
+        
         /* Hide scrollbar completely */
         .category-marquee-wrapper::-webkit-scrollbar {
             display: none;
         }
-
+        
         .category-marquee-wrapper {
             scrollbar-width: none; /* Firefox */
             -ms-overflow-style: none; /* IE and Edge */
@@ -117,28 +117,28 @@ Shop by Category Area
             opacity: 0;
             visibility: hidden;
         }
-
+        
         .category-marquee-wrapper.layout-ready {
             opacity: 1;
             visibility: visible;
             transition: opacity 0.2s ease-in;
         }
-
+        
         /* Default: Center content to prevent flash (JS will change if content overflows) */
         .category-marquee-wrapper .category_box_row {
             justify-content: center !important;
         }
-
+        
         /* Override when content overflows */
         .category-marquee-wrapper.content-overflows .category_box_row {
             justify-content: flex-start !important; /* Align left when content overflows */
         }
-
+        
         /* When content fits screen - center it (explicit) */
         .category-marquee-wrapper.content-fits-screen {
             overflow-x: visible;
         }
-
+        
         .category-marquee-wrapper.content-fits-screen .category_box_row {
             justify-content: center;
             transform: none !important;
@@ -152,7 +152,7 @@ Shop by Category Area
             overflow-x: hidden;
             overflow-y: hidden;
         }
-
+        
         .category-marquee-wrapper.content-overflows .category_box_row {
             justify-content: flex-start; /* Align left when content overflows */
         }
@@ -183,7 +183,7 @@ Shop by Category Area
             /* Ensure row can be scrolled natively when needed */
             position: relative;
         }
-
+        
         /* When content overflows, change to flex-start */
         .category-marquee-wrapper.content-overflows .category_box_row {
             justify-content: flex-start;
@@ -241,14 +241,14 @@ Shop by Category Area
                 display: flex;
                 align-items: flex-start;
             }
-
+            
             /* When content overflows on mobile, change to flex-start */
             .category-marquee-wrapper.content-overflows .category_box_row {
                 justify-content: flex-start;
             }
-
+            
             /* Service Section Marquee */
-        /* Service Section Marquee */
+            /* Service Section Marquee */
             .service-marquee-wrapper {
                 overflow-x: auto;
                 width: 100%;
@@ -265,7 +265,7 @@ Shop by Category Area
                 width: max-content;
                 /* animation: scroll 15s linear infinite; REMOVED */
             }
-
+            
             .service-marquee-row .service-style1 {
                 flex: 0 0 auto;
                 width: 280px; /* Fixed width for service cards */
@@ -273,7 +273,7 @@ Shop by Category Area
                 display: flex; /* Enable flex to stretch children */
                 height: auto; /* Allow it to grow */
             }
-
+            
             .service-marquee-row .service-body {
                 height: 100%; /* Fill the parent height */
                 display: flex;
@@ -281,7 +281,7 @@ Shop by Category Area
                 justify-content: space-between; /* Push content apart if needed */
                 width: 100%;
             }
-
+            
             /* Ensure content takes available space */
             .service-content {
                 flex-grow: 1;
@@ -290,12 +290,12 @@ Shop by Category Area
                 align-items: center; /* Center align items horizontally */
                 text-align: center; /* Center text */
             }
-
+            
             .service-icon {
                 margin: 0 auto 20px auto; /* Ensure icon is centered with margin */
                 display: inline-block;
             }
-
+            
             .service-bottom {
                 margin-top: auto; /* Push button to bottom */
                 width: 100%;
@@ -303,7 +303,7 @@ Shop by Category Area
                 justify-content: center;
                 padding: 0 15px; /* Add padding to container if needed */
             }
-
+            
             .service-btn {
                 width: 100%; /* Full width */
                 display: block;
@@ -388,15 +388,15 @@ Shop by Category Area
         width: 100px !important;
         height: 100px !important;
     }
-
+    
     .category-icon-wrapper i {
         font-size: 40px !important;
     }
-
+    
     .category-col {
         min-width: 100px !important;
     }
-
+    
     /* Resize Menu Toggle Button */
     .vs-menu-toggle {
         transform: scale(0.8);
@@ -425,23 +425,30 @@ Shop by Category Area
 Featured Products Area
 ==============================-->
 @if(isset($publicProducts) && $publicProducts->count() > 0)
-<section class="featured-products" style="background-color:#ffffff;">
-    <div class="fp-scroll">
-        <div class="fp-track">
+@php
+    $productCount = $publicProducts->count();
+    $shouldCenterDesktop = $productCount < 4;
+    $shouldCenterTablet = $productCount <= 3; // Center on tablet if 3 or fewer products
+    $shouldCenterMobile = $productCount <= 2; // Center on mobile if 2 or fewer products
+    $shouldDuplicate = $productCount >= 4; // Only duplicate if 4 or more products (for desktop scrolling)
+@endphp
+<section class="featured-products" style="background-color:#ffffff;" data-product-count="{{ $productCount }}">
+    <div class="fp-scroll {{ $shouldCenterMobile ? 'centered-mobile' : '' }} {{ $shouldCenterTablet ? 'centered-tablet' : '' }} {{ $shouldCenterDesktop ? 'centered' : '' }}">
+        <div class="fp-track {{ $shouldCenterMobile ? 'centered-mobile' : '' }} {{ $shouldCenterTablet ? 'centered-tablet' : '' }} {{ $shouldCenterDesktop ? 'centered' : '' }}" data-product-count="{{ $productCount }}">
             @foreach($publicProducts as $product)
                 <a href="{{ route('frontend.shop.detail', $product->id) }}" class="fp-card">
                     <div class="simple-box">
                         @if($product->featured_image)
-                            <img
-                                src="{{ Str::startsWith($product->featured_image, 'http')
-                                    ? $product->featured_image
-                                    : asset('storage/' . $product->featured_image) }}"
+                            <img 
+                                src="{{ Str::startsWith($product->featured_image, 'http') 
+                                    ? $product->featured_image 
+                                    : asset('storage/' . $product->featured_image) }}" 
                                 alt="{{ $product->product_name }}"
                                 onerror="this.onerror=null; this.src='{{ asset('assets/img/no image/no_image.png') }}';"
                             >
                         @else
-                            <img
-                                src="{{ asset('assets/img/no image/no_image.png') }}"
+                            <img 
+                                src="{{ asset('assets/img/no image/no_image.png') }}" 
                                 alt="{{ $product->product_name }}"
                             >
                         @endif
@@ -452,30 +459,32 @@ Featured Products Area
                 </a>
             @endforeach
 
-            {{-- Duplicate once for seamless loop --}}
-            @foreach($publicProducts as $product)
-                <a href="{{ route('frontend.shop.detail', $product->id) }}" class="fp-card">
-                    <div class="simple-box">
-                        @if($product->featured_image)
-                            <img
-                                src="{{ Str::startsWith($product->featured_image, 'http')
-                                    ? $product->featured_image
-                                    : asset('storage/' . $product->featured_image) }}"
-                                alt="{{ $product->product_name }}"
-                                onerror="this.onerror=null; this.src='{{ asset('assets/img/no image/no_image.png') }}';"
-                            >
-                        @else
-                            <img
-                                src="{{ asset('assets/img/no image/no_image.png') }}"
-                                alt="{{ $product->product_name }}"
-                            >
-                        @endif
-                    </div>
-                    <p class="sec-text simple-title">
-                        {{ $product->product_name }}
-                    </p>
-                </a>
-            @endforeach
+            {{-- Duplicate only if 4 or more products (for seamless infinite scroll) --}}
+            @if($shouldDuplicate)
+                @foreach($publicProducts as $product)
+                    <a href="{{ route('frontend.shop.detail', $product->id) }}" class="fp-card">
+                        <div class="simple-box">
+                            @if($product->featured_image)
+                                <img
+                                    src="{{ Str::startsWith($product->featured_image, 'http')
+                                        ? $product->featured_image
+                                        : asset('storage/' . $product->featured_image) }}"
+                                    alt="{{ $product->product_name }}"
+                                    onerror="this.onerror=null; this.src='{{ asset('assets/img/no image/no_image.png') }}';"
+                                >
+                            @else
+                                <img
+                                    src="{{ asset('assets/img/no image/no_image.png') }}"
+                                    alt="{{ $product->product_name }}"
+                                >
+                            @endif
+                        </div>
+                        <p class="sec-text simple-title">
+                            {{ $product->product_name }}
+                        </p>
+                    </a>
+                @endforeach
+            @endif
         </div>
     </div>
 </section>
@@ -516,12 +525,81 @@ Featured Products Area
 /* Moving track */
 .fp-track {
     display: flex;
+    flex-direction: row;
     gap: 30px;
     width: max-content;
     padding-top: 60px;
     padding-left: 20px;
     padding-right: 20px;
     flex-wrap: nowrap;
+}
+
+/* Center products when count is less than display limit - Desktop */
+@media (min-width: 1117px) {
+    .fp-scroll.centered {
+        overflow-x: visible !important;
+        display: flex;
+        justify-content: center;
+        cursor: default;
+    }
+
+    .fp-track.centered {
+        margin: 0;
+        justify-content: center;
+        width: auto !important;
+        padding-left: 0 !important;
+        padding-right: 0 !important;
+    }
+}
+
+/* Center products when count is less than display limit - Tablet */
+/* Extended to cover wider mobile screens (576px+) for better centering */
+@media (min-width: 576px) and (max-width: 1116px) {
+    .fp-scroll.centered-tablet {
+        overflow-x: visible !important;
+        display: flex !important;
+        justify-content: center !important;
+        align-items: center !important;
+        cursor: default !important;
+        width: 100% !important;
+    }
+
+    .fp-track.centered-tablet {
+        margin: 0 auto !important;
+        justify-content: center !important;
+        align-items: center !important;
+        width: auto !important;
+        max-width: 100% !important;
+        padding-left: 0 !important;
+        padding-right: 0 !important;
+        padding-top: 60px !important;
+        display: flex !important;
+        flex-direction: row !important;
+        flex-wrap: nowrap !important;
+        gap: 30px !important;
+    }
+    
+    /* Override desktop centering on tablet */
+    .fp-scroll.centered:not(.centered-tablet) {
+        display: block !important;
+        overflow-x: auto !important;
+    }
+    
+    .fp-track.centered:not(.centered-tablet) {
+        justify-content: flex-start !important;
+        width: max-content !important;
+    }
+    
+    /* Override mobile centering on tablet */
+    .fp-scroll.centered-mobile:not(.centered-tablet) {
+        display: block !important;
+        overflow-x: auto !important;
+    }
+    
+    .fp-track.centered-mobile:not(.centered-tablet) {
+        justify-content: flex-start !important;
+        width: max-content !important;
+    }
 }
 
 /* Cards */
@@ -531,6 +609,9 @@ Featured Products Area
     text-align: center;
     text-decoration: none;
     color: inherit;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
 }
 
 .fp-card .simple-box {
@@ -540,6 +621,7 @@ Featured Products Area
     border: 2px solid #ccc;
     overflow: hidden;
     margin: 0 auto;
+    flex-shrink: 0; /* Prevent image box from shrinking */
 }
 
 .fp-card .simple-box img {
@@ -547,6 +629,7 @@ Featured Products Area
     height: 100%;
     object-fit: cover;
     transition: transform 0.4s ease;
+    display: block; /* Remove inline spacing */
 }
 
 .fp-card:hover .simple-box img {
@@ -556,29 +639,110 @@ Featured Products Area
 .fp-card .simple-title {
     margin-top: 8px;
     color: #333;
+    width: 100%; /* Ensure title takes full width for proper wrapping */
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+    line-height: 1.4;
+    min-height: auto; /* Allow title to grow as needed */
 }
 
 /* Mobile Responsiveness */
-@media (max-width: 768px) {
+@media (max-width: 767px) {
+    .fp-scroll {
+        overflow-x: auto !important;
+        overflow-y: hidden !important;
+        display: block !important;
+    }
+    
+    .fp-scroll.centered-mobile {
+        display: flex !important;
+        justify-content: center !important;
+        overflow-x: visible !important;
+    }
+    
     .fp-track {
         gap: 15px;
         padding-top: 40px;
         padding-left: 0;
         padding-right: 0;
+        display: flex !important;
+        flex-direction: row !important;
+        flex-wrap: nowrap !important;
+        width: max-content !important;
     }
-
+    
     .fp-card {
         width: 140px;
+        min-width: 140px;
+        flex: 0 0 140px !important;
+        flex-shrink: 0 !important;
+        display: flex !important;
+        flex-direction: column !important;
+        align-items: center !important;
     }
-
+    
     .fp-card .simple-box {
-        width: 100%;
+        width: 140px;
+        min-width: 140px;
         height: 140px;
+        flex-shrink: 0 !important; /* Prevent image box from shrinking */
+    }
+    
+    .fp-card .simple-title {
+        width: 100% !important;
+        word-wrap: break-word !important;
+        overflow-wrap: break-word !important;
+        line-height: 1.4 !important;
+    }
+    
+    /* Center on mobile when 2 or fewer products */
+    .fp-scroll.centered-mobile {
+        overflow-x: visible !important;
+        display: flex !important;
+        justify-content: center !important;
+        align-items: center !important;
+        cursor: default !important;
+        width: 100% !important;
+    }
+    
+    .fp-track.centered-mobile {
+        margin: 0 auto !important;
+        justify-content: center !important;
+        align-items: center !important;
+        width: auto !important;
+        max-width: 100% !important;
+        padding-left: 0 !important;
+        padding-right: 0 !important;
+        display: flex !important;
+        flex-direction: row !important;
+        flex-wrap: nowrap !important;
+    }
+    
+    /* Hide desktop centering on mobile */
+    @media (max-width: 768px) {
+        .fp-scroll.centered:not(.centered-mobile) {
+            display: block !important;
+            overflow-x: auto !important;
+        }
+        
+        .fp-track.centered:not(.centered-mobile) {
+            justify-content: flex-start !important;
+            width: max-content !important;
+            padding-left: 0 !important;
+            padding-right: 0 !important;
+        }
+    }
+    
+    /* Hide desktop centering on mobile */
+    .fp-scroll.centered:not(.centered-mobile),
+    .fp-track.centered:not(.centered-mobile) {
+        display: block;
+        overflow-x: auto;
     }
 }
 
 /* Tablet/Medium screens */
-@media (min-width: 769px) and (max-width: 1116px) {
+@media (min-width: 576px) and (max-width: 1116px) {
     .fp-track {
         gap: 20px;
     }
@@ -588,8 +752,83 @@ Featured Products Area
 <script>
 document.addEventListener("DOMContentLoaded", () => {
     const scroller = document.querySelector(".fp-scroll");
-    if (!scroller) return;
-
+    const track = document.querySelector(".fp-track");
+    if (!scroller || !track) return;
+    
+    // Get product count (classes already applied in Blade template)
+    const productCount = parseInt(track.getAttribute('data-product-count')) || 0;
+    
+    // Function to check and apply centering (only for resize handling)
+    function checkAndCenterProducts() {
+        const width = window.innerWidth;
+        const currentIsMobile = width < 576;
+        const currentIsTablet = width >= 576 && width <= 1116;
+        const currentIsDesktop = width > 1116;
+        
+        let shouldCenter = false;
+        if (currentIsMobile) {
+            shouldCenter = productCount <= 2; // Center if 2 or fewer products on mobile
+        } else if (currentIsTablet) {
+            shouldCenter = productCount <= 3; // Center if 3 or fewer products on tablet
+        } else {
+            shouldCenter = productCount < 4; // Center if less than 4 products on desktop
+        }
+        
+        if (shouldCenter) {
+            if (currentIsMobile) {
+                // Mobile: ensure mobile centering classes
+                track.classList.add('centered-mobile');
+                scroller.classList.add('centered-mobile');
+                track.classList.remove('centered', 'centered-tablet');
+                scroller.classList.remove('centered', 'centered-tablet');
+            } else if (currentIsTablet) {
+                // Tablet: ensure tablet centering classes
+                track.classList.add('centered-tablet');
+                scroller.classList.add('centered-tablet');
+                track.classList.remove('centered', 'centered-mobile');
+                scroller.classList.remove('centered', 'centered-mobile');
+            } else {
+                // Desktop: ensure desktop centering classes
+                track.classList.add('centered');
+                scroller.classList.add('centered');
+                track.classList.remove('centered-mobile', 'centered-tablet');
+                scroller.classList.remove('centered-mobile', 'centered-tablet');
+            }
+            return true;
+        } else {
+            // Remove centering if not needed
+            track.classList.remove('centered', 'centered-mobile', 'centered-tablet');
+            scroller.classList.remove('centered', 'centered-mobile', 'centered-tablet');
+            return false;
+        }
+    }
+    
+    // Check if already centered (classes should already be set from Blade template)
+    // Only verify, don't remove classes that are already there
+    const isMobile = window.innerWidth <= 768;
+    const isCentered = isMobile ? productCount < 2 : productCount < 4;
+    
+    // If centered, don't run auto-scroll
+    if (isCentered) {
+        return;
+    }
+    
+    // Handle window resize
+    let resizeTimeout;
+    window.addEventListener('resize', () => {
+        clearTimeout(resizeTimeout);
+        resizeTimeout = setTimeout(() => {
+            const wasCentered = checkAndCenterProducts();
+            if (wasCentered) {
+                // Stop auto-scroll if now centered
+                if (rafId) {
+                    cancelAnimationFrame(rafId);
+                    rafId = null;
+                }
+            }
+        }, 100);
+    });
+    
     let isUserInteracting = false;
     let rafId = null;
     let lastScrollLeft = scroller.scrollLeft;
@@ -600,23 +839,30 @@ document.addEventListener("DOMContentLoaded", () => {
 
     function autoScroll() {
         if (!isUserInteracting && scroller) {
-            const halfWidth = scroller.scrollWidth / 2;
-
+            // Check if products are duplicated (only when count >= 4)
+            const hasDuplication = productCount >= 4;
+            const scrollWidth = scroller.scrollWidth;
+            const halfWidth = hasDuplication ? scrollWidth / 2 : scrollWidth;
+            
             // Mark as auto-scrolling before changing scroll position
             isAutoScrolling = true;
-
+            
             // Increment scroll position
             scroller.scrollLeft += autoScrollSpeed;
-
-            // Seamless infinite loop: when reaching half of duplicated content,
+            
+            // Seamless infinite loop: when reaching half of duplicated content, 
             // subtract half width to continue from the beginning seamlessly
-            if (scroller.scrollLeft >= halfWidth) {
+            // Only do this if products are duplicated
+            if (hasDuplication && scroller.scrollLeft >= halfWidth) {
                 scroller.scrollLeft = scroller.scrollLeft - halfWidth;
+            } else if (!hasDuplication && scroller.scrollLeft >= scrollWidth) {
+                // If not duplicated, reset to start
+                scroller.scrollLeft = 0;
             }
-
+            
             // Update last scroll position for auto-scroll
             lastScrollLeft = scroller.scrollLeft;
-
+            
             // Reset auto-scrolling flag after a short delay
             setTimeout(() => {
                 isAutoScrolling = false;
@@ -670,45 +916,19 @@ document.addEventListener("DOMContentLoaded", () => {
         }, { passive: true });
     });
 
-    // Handle mouse wheel scrolling (desktop) - convert vertical wheel to horizontal scroll
-    let wheelTimeout = null;
-    scroller.addEventListener('wheel', (e) => {
-        // Only handle if not a touch event (touch devices use native scrolling)
-        if (e.touches && e.touches.length > 0) return;
-
-        // Prevent default vertical scrolling
-        e.preventDefault();
-
-        // Convert vertical wheel delta to horizontal scroll
-        const deltaY = e.deltaY;
-        const deltaX = e.deltaX;
-
-        // Use deltaX if available (horizontal scroll), otherwise use deltaY (vertical wheel)
-        const scrollAmount = deltaX !== 0 ? deltaX : deltaY;
-
-        // Scroll horizontally with smooth behavior
-        scroller.scrollBy({
-            left: scrollAmount,
-            behavior: 'auto'
-        });
-
+    // Handle mouse wheel - allow normal page scrolling (removed horizontal scroll conversion)
+    // Only pause auto-scroll when user hovers over the featured products section
+    scroller.addEventListener('mouseenter', () => {
+        // Pause auto-scroll when mouse enters
         isUserInteracting = true;
-
-        // Clear any existing timeouts
-        if (resumeTimeout) {
-            clearTimeout(resumeTimeout);
-        }
-        if (wheelTimeout) {
-            clearTimeout(wheelTimeout);
-        }
-
-        // Resume auto-scroll after wheel stops
-        wheelTimeout = setTimeout(() => {
-            resumeTimeout = setTimeout(() => {
-                isUserInteracting = false;
-            }, 500);
-        }, 100);
-    }, { passive: false });
+    });
+    
+    scroller.addEventListener('mouseleave', () => {
+        // Resume auto-scroll after a delay when mouse leaves
+        resumeTimeout = setTimeout(() => {
+            isUserInteracting = false;
+        }, 500);
+    });
 
     // Handle mouse drag scrolling (desktop) - enable click and drag to scroll
     let isDragging = false;
@@ -801,7 +1021,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
 <!--==============================
 About Area
-==============================-->
+==============================--> 
 <section class=" space-top space-extra-bottom space-top-mobile" style="background-color: #ffffff;">
     <div class="container">
         <div class="row gx-70 align-items-center">
@@ -967,7 +1187,7 @@ Service Area
                 </div>
             </div>
         </div>
-
+        
         <!-- Mobile Horizontal Slider for Services -->
         <div class="service-marquee-wrapper d-md-none">
             <div class="service-marquee-row">
@@ -1053,7 +1273,7 @@ Service Area
 Process Area
 ==============================-->
 <section class="space-top space-extra-bottom" style="background-color: #ffffff;">
-
+   
     <div class="container">
         <div class="title-area text-center" data-aos="fade-up" data-aos-delay="300" data-aos-duration="1200">
             <div class="sec-bubble">
@@ -1196,7 +1416,7 @@ Process Area
             line-height: 1.6;
             margin-bottom: 0;
         }
-
+        
         /* Mobile Responsive */
         @media (max-width: 767px) {
             .process-box {
@@ -1332,8 +1552,8 @@ Process Area
 <script>
 document.addEventListener('DOMContentLoaded', function () {
   function setupTransformMarquee(wrapperSelectorOrElement, rowSelectorOrElement, options = {}) {
-    const wrapper = typeof wrapperSelectorOrElement === 'string'
-      ? document.querySelector(wrapperSelectorOrElement)
+    const wrapper = typeof wrapperSelectorOrElement === 'string' 
+      ? document.querySelector(wrapperSelectorOrElement) 
       : wrapperSelectorOrElement;
     const row = typeof rowSelectorOrElement === 'string'
       ? document.querySelector(rowSelectorOrElement)
@@ -1341,12 +1561,12 @@ document.addEventListener('DOMContentLoaded', function () {
     if (!wrapper || !row) return;
 
     const maxWidth = options.maxWidth || 768;
-
+    
     if (!row.dataset.originalContent) {
       row.dataset.originalContent = row.innerHTML;
     }
     const originalContent = row.dataset.originalContent;
-
+    
     function shouldAutoScroll() {
       const contentWidth = row.scrollWidth;
       const screenWidth = wrapper.clientWidth;
@@ -1386,7 +1606,7 @@ document.addEventListener('DOMContentLoaded', function () {
       isAutoScrolling = true;
       let scrollLeft = wrapper.scrollLeft;
       scrollLeft += speedPxPerSec * delta;
-
+      
       if (scrollLeft >= contentWidth) {
         scrollLeft = scrollLeft - contentWidth;
       }
@@ -1417,7 +1637,7 @@ document.addEventListener('DOMContentLoaded', function () {
     function pause() {
       isPaused = true;
     }
-
+    
     function resume() {
       isPaused = false;
       lastTime = null;
@@ -1443,12 +1663,12 @@ document.addEventListener('DOMContentLoaded', function () {
         pause();
         if (resumeTimeout) clearTimeout(resumeTimeout);
         resumeTimeout = setTimeout(function() {
-          isUserScrolling = false;
+        isUserScrolling = false;
           lastScrollLeft = wrapper.scrollLeft;
           lastScrollTime = Date.now();
-          resume();
-        }, 2000);
-      }
+        resume();
+      }, 2000);
+    }
 
       lastScrollLeft = currentScrollLeft;
       lastScrollTime = currentTime;
@@ -1468,12 +1688,12 @@ document.addEventListener('DOMContentLoaded', function () {
         wrapper.classList.add('layout-ready');
         return;
       }
-
+      
       wrapper.classList.remove('content-fits-screen');
       wrapper.classList.add('content-overflows');
       row.style.justifyContent = '';
       wrapper.classList.add('layout-ready');
-
+      
       if (row.dataset.duplicated !== 'true') {
         if (originalContent && originalContent.trim() !== '') {
           row.innerHTML = originalContent + originalContent;
@@ -1497,13 +1717,13 @@ document.addEventListener('DOMContentLoaded', function () {
       }
     }
 
-    function onMouseEnter() {
+    function onMouseEnter() { 
       if (shouldAutoScroll() && !isUserScrolling) {
         pause();
       }
     }
-
-    function onMouseLeave() {
+    
+    function onMouseLeave() { 
       if (shouldAutoScroll() && !isUserScrolling) {
         resume();
       }
@@ -1571,7 +1791,7 @@ document.addEventListener('DOMContentLoaded', function () {
   function initializeServiceMarquee() {
     setupTransformMarquee('.service-marquee-wrapper', '.service-marquee-row', { maxWidth: 1116, speed: 18, resumeDelay: 700 });
   }
-
+  
   if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', initializeServiceMarquee);
   } else {
@@ -1591,7 +1811,7 @@ document.addEventListener('DOMContentLoaded', function () {
         // Try to access the carousel instance and stop it
         if (window.Swiper && carousel.swiper) {
           carousel.swiper.autoplay.stop();
-        }
+  }
         // Also try to stop any jQuery carousel
         if (window.$ && $(carousel).data('owlCarousel')) {
           $(carousel).data('owlCarousel').stop();

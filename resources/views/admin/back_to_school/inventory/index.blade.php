@@ -39,8 +39,10 @@
             @endforeach
         </select>
         <input type="text" name="q" placeholder="Search product" value="{{ $filters['q'] ?? '' }}">
-        <button type="submit">Filter</button>
-        <button type="button" onclick="window.location.href='{{ route('admin.back_to_school.inventory.index') }}'" class="btn-reset">Reset</button>
+        <div style="grid-column: 1 / -1; display: flex; justify-content: flex-end; gap: 10px;">
+            <button type="submit" style="width: auto; min-width: 120px;">Filter</button>
+            <button type="button" onclick="window.location.href='{{ route('admin.back_to_school.inventory.index') }}'" class="btn-reset" style="width: auto; min-width: 100px;">Reset</button>
+        </div>
     </form>
 </section>
 
@@ -49,6 +51,7 @@
         <table style="width: 100%; border-collapse: collapse;">
             <thead>
                 <tr>
+                    <th style="padding: 12px 14px; border-bottom: 1px solid #e5e7eb; text-align:left; font-size: 12px; background-color: #f9fafb; font-weight: 600; text-transform: uppercase;">Image</th>
                     <th style="padding: 12px 14px; border-bottom: 1px solid #e5e7eb; text-align:left; font-size: 12px; background-color: #f9fafb; font-weight: 600; text-transform: uppercase;">Product Name</th>
                     <th style="padding: 12px 14px; border-bottom: 1px solid #e5e7eb; text-align:left; font-size: 12px; background-color: #f9fafb; font-weight: 600; text-transform: uppercase;">Category</th>
                     <th style="padding: 12px 14px; border-bottom: 1px solid #e5e7eb; text-align:left; font-size: 12px; background-color: #f9fafb; font-weight: 600; text-transform: uppercase;">School</th>
@@ -59,6 +62,18 @@
             <tbody>
                 @forelse($products as $product)
                 <tr style="border-bottom: 1px solid #e5e7eb;" class="product-row" data-product-id="{{ $product->id }}">
+                    <td style="padding: 12px 14px; vertical-align: middle;">
+                        @if($product->featured_image)
+                            <img src="{{ asset('storage/' . $product->featured_image) }}" 
+                                 alt="Img" 
+                                 style="width: 40px; height: 40px; object-fit: cover; border-radius: 6px; border: 1px solid #e5e7eb;"
+                                 onerror="this.onerror=null; this.src='{{ asset('assets/img/no image/no_image.png') }}';">
+                        @else
+                            <img src="{{ asset('assets/img/no image/no_image.png') }}" 
+                                 alt="Default" 
+                                 style="width: 40px; height: 40px; object-fit: cover; border-radius: 6px; border: 1px solid #e5e7eb;">
+                        @endif
+                    </td>
                     <td style="padding: 12px 14px; vertical-align: middle;">
                         <div style="display:flex; align-items:center; gap:8px;">
                             @if($product->variants && $product->variants->count() > 0)

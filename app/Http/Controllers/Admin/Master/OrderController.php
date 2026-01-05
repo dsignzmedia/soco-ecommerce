@@ -29,7 +29,7 @@ class OrderController extends Controller
             'order_number',
         ]);
 
-        $orders = Order::with('school')
+        $orders = Order::with(['school', 'product'])
             ->when($filters['school_id'] ?? null, fn($query, $school) => $query->where('school_id', $school))
             ->when($filters['grade'] ?? null, fn($query, $grade) => $query->where('grade', $grade))
             ->when($filters['category'] ?? null, fn($query, $category) => $query->where('category', $category))

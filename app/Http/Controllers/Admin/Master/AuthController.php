@@ -181,10 +181,45 @@ class AuthController extends Controller
             'failed' => (clone $ordersQuery)->whereIn('order_status', ['failed', 'cancelled'])->count(),
         ];
 
+        // Calculate refunds from Payment table
+        // Master admin handles catalog products, so filter by catalog product_type or null (for legacy)
+        $refundsQuery = \App\Models\Payment::where('payment_for', 'refund')
+            ->where('payment_status', 'refunded')
+            ->where(function($q) {
+                $q->where('product_type', 'catalog')
+                  ->orWhereNull('product_type'); // Include legacy records without product_type
+            });
+        
+        // Apply date filters to refunds if set
+        if (!empty($filters['start_date'])) {
+            $refundsQuery->whereDate('created_at', '>=', $filters['start_date']);
+        }
+        if (!empty($filters['end_date'])) {
+            $refundsQuery->whereDate('created_at', '<=', $filters['end_date']);
+        }
+        
+        // Apply school filter to refunds (through order relationship)
+        if (!empty($filters['school_id'])) {
+            $refundsQuery->whereHas('order', function($q) use ($filters) {
+                $q->where('school_id', $filters['school_id']);
+            });
+        }
+        
+        // Apply category filter to refunds (through order relationship)
+        if (!empty($filters['category'])) {
+            $refundsQuery->whereHas('order', function($q) use ($filters) {
+                $q->where('category', $filters['category']);
+            });
+        }
+        
+        $totalRefunds = $refundsQuery->sum('amount_paid') ?? 0;
+        
         $financialKpi = [
             'total_sales' => (clone $ordersQuery)->sum('total_amount'),
             'total_tax' => (clone $ordersQuery)->sum('tax_amount'),
             'total_shipping' => (clone $ordersQuery)->sum('shipping_cost'),
+            'total_refunds' => $totalRefunds,
+            'net_revenue' => ((clone $ordersQuery)->sum('total_amount') ?? 0) - $totalRefunds,
         ];
 
         // Stock KPIs (based on Products, not Orders)
@@ -202,6 +237,8 @@ class AuthController extends Controller
             ['label' => 'Delivered', 'value' => $ordersKpi['delivered']],
             ['label' => 'Failed / Cancelled', 'value' => $ordersKpi['failed']],
             ['label' => 'Total Sales', 'prefix' => '₹', 'value' => number_format($financialKpi['total_sales'])],
+            ['label' => 'Total Refunds', 'prefix' => '₹', 'value' => number_format($financialKpi['total_refunds']), 'color' => 'kpi-red'],
+            ['label' => 'Net Revenue', 'prefix' => '₹', 'value' => number_format($financialKpi['net_revenue']), 'color' => 'kpi-green'],
             ['label' => 'Total Tax', 'prefix' => '₹', 'value' => number_format($financialKpi['total_tax'])],
             ['label' => 'Total Shipping', 'prefix' => '₹', 'value' => number_format($financialKpi['total_shipping'])],
             ['label' => 'In-stock SKUs', 'value' => $stockKpi['in_stock']],

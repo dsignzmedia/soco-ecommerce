@@ -145,7 +145,8 @@
         <table>
             <thead>
                 <tr>
-                    <th style="width: 60px;">S.No</th>
+                    <th style="width: 40px;">#</th>
+                    <th style="width: 60px;">Image</th>
                     <th>Order Details</th>
                     <th>Item</th>
                     <th>Qty</th>
@@ -161,8 +162,19 @@
                     <tr>
                         <td>{{ $loop->iteration }}</td>
                         <td>
+                            @if(isset($productImages[$req->order_id]))
+                                <img src="{{ asset('storage/' . $productImages[$req->order_id]) }}" 
+                                     alt="Product" 
+                                     style="width: 40px; height: 40px; object-fit: cover; border-radius: 6px; border: 1px solid #e5e7eb;">
+                            @else
+                                <div style="width: 40px; height: 40px; background: #f3f4f6; border-radius: 6px; display: flex; align-items: center; justify-content: center; color: #9ca3af; font-size: 10px; border: 1px solid #e5e7eb;">
+                                    <i class="fas fa-image"></i>
+                                </div>
+                            @endif
+                        </td>
+                        <td>
                             <div style="display:flex;flex-direction:column;gap:4px;">
-                                <a href="{{ route('admin.back_to_school.orders.show', $req->order) }}" style="color:#490d59;font-weight:700;text-decoration:none;">{{ $req->order->order_number ?? '—' }}</a>
+                                <a href="{{ route('admin.back_to_school.orders.show', $req->order) }}" style="color:#490d59;font-weight:700;text-decoration:none;">{{ $req->order->order_number ?? '—' }}</a> [NEW_LINE]
                                 <span style="display:inline-block;width:fit-content;padding:2px 8px;border-radius:12px;font-size:11px;font-weight:600;background:{{ $req->type === 'return' ? '#fef3c7' : '#e0e7ff' }};color:{{ $req->type === 'return' ? '#92400e' : '#3730a3' }};text-transform:capitalize;">
                                     {{ $req->type }}
                                 </span>

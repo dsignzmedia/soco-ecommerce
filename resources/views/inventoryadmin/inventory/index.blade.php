@@ -53,8 +53,10 @@
                 <option value="inactive" @selected(($filters['status'] ?? '') === 'inactive')>Inactive</option>
             </select>
             <input type="text" name="q" placeholder="Search Product..." value="{{ $filters['q'] ?? '' }}" style="padding:8px;border:1px solid #d0d5dd;border-radius:8px;">
-            <button type="submit">Filter</button>
-            <a class="reset" href="{{ route('inventory.admin.inventory.index') }}">Reset</a>
+            <div style="grid-column: 1 / -1; display: flex; justify-content: flex-end; gap: 10px;">
+                <button type="submit" style="width: auto; min-width: 120px;">Filter</button>
+                <a class="reset" href="{{ route('inventory.admin.inventory.index') }}" style="width: auto; min-width: 100px;">Reset</a>
+            </div>
         </form>
     </div>
 
@@ -62,6 +64,7 @@
         <table>
             <thead>
                 <tr>
+                    <th>Image</th>
                     <th>Product</th>
                     <th>Stock</th>
                     <th>School</th>
@@ -75,6 +78,18 @@
             <tbody>
                 @forelse($products as $product)
                     <tr class="product-row" data-product-id="{{ $product->id }}">
+                        <td>
+                            @if($product->featured_image)
+                                <img src="{{ asset('storage/' . $product->featured_image) }}" 
+                                     alt="Img" 
+                                     style="width: 40px; height: 40px; object-fit: cover; border-radius: 6px; border: 1px solid #e5e7eb;"
+                                     onerror="this.onerror=null; this.src='{{ asset('assets/img/no image/no_image.png') }}';">
+                            @else
+                                <img src="{{ asset('assets/img/no image/no_image.png') }}" 
+                                     alt="Default" 
+                                     style="width: 40px; height: 40px; object-fit: cover; border-radius: 6px; border: 1px solid #e5e7eb;">
+                            @endif
+                        </td>
                         <td>
                             <div style="display:flex; align-items:center; gap:8px;">
                                 @if($product->variants && $product->variants->count() > 0)
@@ -121,24 +136,45 @@
                     <tr id="variants-{{ $product->id }}" style="display:none; background-color: #f9fafb;">
                         <td colspan="8" style="padding: 0;">
                             <div style="padding: 16px; border-top: 1px solid #e5e7eb;">
-                                <h4 style="margin: 0 0 12px; font-size: 14px; font-weight: 600; color: #111827;">Variants Stock</h4>
+                                <h4 style="margin: 0 0 12px; font-size: 13px; font-weight: 700; color: #4b5563; text-transform: uppercase; letter-spacing: 0.05em;">Variant Stock Levels</h4>
                                 <div style="display: grid; gap: 12px;">
-                                    @foreach($product->variants as $variant)
-                                    <div style="display: flex; align-items: center; gap: 12px; padding: 10px; background: white; border: 1px solid #e5e7eb; border-radius: 8px;">
-                                        <div style="flex: 1;">
-                                            <div style="font-weight: 500; color: #111827; margin-bottom: 4px;">Size: {{ $variant->option }}</div>
-                                            <div style="font-size: 12px; color: #6b7280;">
-                                                Current: <strong style="color: {{ $variant->stock <= 0 ? '#ef4444' : ($variant->stock <= 5 ? '#f59e0b' : '#10b981') }};" id="current-stock-{{ $variant->id }}">{{ $variant->stock }}</strong>
-                                            </div>
-                                        </div>
-                                        <form action="{{ route('inventory.admin.inventory.variant-stock.update', $product) }}" method="POST" style="display: flex; gap: 8px; align-items: center;" onsubmit="return updateVariantStock(event, {{ $variant->id }})">
-                                            @csrf
-                                            <input type="hidden" name="variant_id" value="{{ $variant->id }}">
-                                            <input type="number" name="stock" value="{{ $variant->stock }}" min="0" required style="width: 100px; padding: 6px 10px; border: 1px solid #d1d5db; border-radius: 6px; font-size: 14px;" id="stock-input-{{ $variant->id }}">
-                                            <button type="submit" class="btn-vs-sm" style="margin:0; height: 34px; padding: 0 12px; cursor: pointer;">Update</button>
-                                        </form>
-                                    </div>
-                                    @endforeach
+                                    <table style="width: 100%; background: #fff; border-radius: 8px; overflow: hidden; border: 1px solid #e5e7eb;">
+                                        <thead>
+                                            <tr style="background: #f9fafb; border-bottom: 1px solid #e5e7eb;">
+                                                <th style="padding: 10px 16px; font-size: 11px; font-weight: 600; color: #6b7280; text-transform: uppercase;">Variant</th>
+                                                <th style="padding: 10px 16px; font-size: 11px; font-weight: 600; color: #6b7280; text-transform: uppercase;">Current Stock</th>
+                                                <th style="padding: 10px 16px; font-size: 11px; font-weight: 600; color: #6b7280; text-transform: uppercase;">Update Stock</th>
+                                                <th style="padding: 10px 16px; text-align: right;"></th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            @foreach($product->variants as $variant)
+                                            <tr style="border-bottom: 1px solid #f3f4f6;">
+                                                <td style="padding: 10px 16px; font-size: 13px; font-weight: 500; color: #111827;">
+                                                    {{ $variant->option }}
+                                                </td>
+                                                <td style="padding: 10px 16px;">
+                                                    <span style="display: inline-flex; align-items: center; padding: 2px 8px; border-radius: 999px; font-size: 12px; font-weight: 600; 
+                                                        background-color: {{ $variant->stock <= 0 ? '#fef2f2' : ($variant->stock <= 5 ? '#fffbeb' : '#ecfdf5') }}; 
+                                                        color: {{ $variant->stock <= 0 ? '#b91c1c' : ($variant->stock <= 5 ? '#b45309' : '#047857') }};">
+                                                        <span id="current-stock-{{ $variant->id }}">{{ $variant->stock }}</span> Units
+                                                    </span>
+                                                </td>
+                                                <td style="padding: 10px 16px;" colspan="2">
+                                                    <form action="{{ route('inventory.admin.inventory.variant-stock.update', $product) }}" method="POST" style="display: flex; gap: 8px; align-items: center; justify-content: flex-end;" onsubmit="return updateVariantStock(event, {{ $variant->id }})">
+                                                        @csrf
+                                                        <input type="hidden" name="variant_id" value="{{ $variant->id }}">
+                                                        <input type="number" name="stock" value="{{ $variant->stock }}" min="0" required 
+                                                            style="width: 80px; padding: 6px 10px; border: 1px solid #d1d5db; border-radius: 6px; font-size: 13px; outline: none; transition: border-color 0.2s;" 
+                                                            id="stock-input-{{ $variant->id }}"
+                                                            onfocus="this.style.borderColor='#490d59'" onblur="this.style.borderColor='#d1d5db'">
+                                                        <button type="submit" class="btn-vs-sm" style="margin:0; height: 32px; font-size: 11px; text-transform:uppercase; letter-spacing:0.5px;">Update</button>
+                                                    </form>
+                                                </td>
+                                            </tr>
+                                            @endforeach
+                                        </tbody>
+                                    </table>
                                 </div>
                             </div>
                         </td>

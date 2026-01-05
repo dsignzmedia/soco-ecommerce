@@ -72,6 +72,9 @@ class AuthController extends Controller
             Log::info('Razorpay Init - Response', ['status' => $response->status(), 'body' => $order]);
 
             if (isset($order['id'])) {
+                // Sanitize name for Razorpay - only allow letters, spaces, hyphens, apostrophes, and periods
+                $sanitizedName = $this->sanitizeNameForRazorpay($user->name ?? 'Customer');
+                
                 return response()->json([
                     'success' => true,
                     'order_id' => $order['id'],
@@ -80,9 +83,8 @@ class AuthController extends Controller
                     'name' => 'The Skool Store',
                     'description' => 'Order Payment',
                     'prefill' => [
-                        'name' => $user->name,
-                        'email' => $user->email,
-                        'email' => $user->email,
+                        'name' => $sanitizedName,
+                        'email' => $user->email ?? '',
                         'contact' => (function($phone) {
                             $p = preg_replace('/[^0-9]/', '', $phone);
                             if (strlen($p) > 10 && substr($p, 0, 2) === '91') {
@@ -100,6 +102,39 @@ class AuthController extends Controller
             Log::error('Razorpay Exception', ['error' => $e->getMessage()]);
             return response()->json(['success' => false, 'message' => 'Payment initialization error.']);
         }
+    }
+
+    /**
+     * Sanitize name for Razorpay payment gateway
+     * Razorpay requires names to contain only letters, spaces, hyphens, apostrophes, and periods
+     */
+    private function sanitizeNameForRazorpay($name)
+    {
+        if (empty($name) || is_null($name)) {
+            return 'Customer';
+        }
+        
+        // Remove numbers and special characters except spaces, hyphens, apostrophes, and periods
+        $sanitized = preg_replace('/[^a-zA-Z\s\-\'\.]/', '', $name);
+        
+        // Trim whitespace
+        $sanitized = trim($sanitized);
+        
+        // Remove multiple consecutive spaces
+        $sanitized = preg_replace('/\s+/', ' ', $sanitized);
+        
+        // If after sanitization the name is empty or too short, use default
+        if (empty($sanitized) || strlen($sanitized) < 2) {
+            return 'Customer';
+        }
+        
+        // Limit to 100 characters (Razorpay's max length)
+        if (strlen($sanitized) > 100) {
+            $sanitized = substr($sanitized, 0, 100);
+            $sanitized = rtrim($sanitized);
+        }
+        
+        return $sanitized;
     }
 
     /**
@@ -1245,10 +1280,10 @@ class AuthController extends Controller
                         $productMap[$productKey]['quantity'] += $order->quantity;
                         if ($order->created_at > \Carbon\Carbon::parse($productMap[$productKey]['purchased_date'])) {
                             $productMap[$productKey]['purchased_date'] = $order->created_at->format('M d, Y');
+                            }
                         }
                     }
                 }
-            }
 
             // Convert map to array
             $purchasedProducts = array_values($productMap);
@@ -2804,6 +2839,75 @@ class AuthController extends Controller
         return view('frontend.cart.index', compact('cartItems', 'total', 'profiles', 'selectedProfile', 'hasInclusiveTax'));
     }
 
+    public function updateCartQuantity(Request $request)
+    {
+        $request->validate([
+            'id' => 'required|integer|exists:carts,id',
+            'quantity' => 'required|integer|min:1|max:100',
+        ]);
+
+        $user = Auth::user();
+        $cartItem = \App\Models\Cart::where('id', $request->id)
+            ->where('user_id', $user->id)
+            ->first();
+
+        if (!$cartItem) {
+            return response()->json(['success' => false, 'message' => 'Cart item not found.'], 404);
+        }
+
+        // Get product to check stock
+        $product = \App\Models\Admin\Master\ProductMapping::find($cartItem->product_id);
+        if (!$product) {
+            return response()->json(['success' => false, 'message' => 'Product not found.'], 404);
+        }
+
+        // Check stock availability
+        if ($product->variant_based_pricing && $product->variants->count() > 0) {
+            $variant = $product->variants->where('option', $cartItem->size)->first();
+            if ($variant && $variant->stock < $request->quantity) {
+                return response()->json([
+                    'success' => false, 
+                    'message' => 'Insufficient stock. Available: ' . $variant->stock
+                ], 400);
+            }
+        } else {
+            if ($product->inventory_stock < $request->quantity) {
+                return response()->json([
+                    'success' => false, 
+                    'message' => 'Insufficient stock. Available: ' . $product->inventory_stock
+                ], 400);
+            }
+        }
+
+        // Update quantity
+        $cartItem->quantity = $request->quantity;
+        $cartItem->save();
+
+        // Recalculate item total for response
+        $profiles = $user->studentProfiles;
+        $profile = $profiles->firstWhere('id', (int)$cartItem->profile_id);
+        $studentGrade = $profile ? $profile->grade : null;
+        $itemPrice = $this->getProductPriceForGrade($product, $studentGrade);
+        
+        // If variant-based pricing, get variant price
+        if ($product->variant_based_pricing && $product->variants->count() > 0) {
+            $variant = $product->variants->where('option', $cartItem->size)->first();
+            if ($variant && $variant->price) {
+                $itemPrice = $variant->price;
+            }
+        }
+        
+        $itemTotal = $itemPrice * $request->quantity;
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Quantity updated successfully.',
+            'quantity' => $request->quantity,
+            'item_total' => $itemTotal,
+            'item_price' => $itemPrice,
+        ]);
+    }
+
     public function removeFromCart(Request $request)
     {
         $cartItemId = $request->get('id') ?? $request->get('index');
@@ -3237,7 +3341,7 @@ class AuthController extends Controller
 
                 // Track processed cart item IDs
                 $processedCartIds[] = $item->id;
-
+                
                 // Send Order Confirmation Email
                 if (!empty($order->customer_email)) {
                     try {
@@ -3247,7 +3351,7 @@ class AuthController extends Controller
                         \Illuminate\Support\Facades\Log::error("Failed to send order confirmation email: " . $e->getMessage());
                     }
                 }
-
+                
                 // Send Payment Success Email if payment was successful
                 if (session('payment_method') === 'razorpay' && session('payment_id') && !empty($order->customer_email)) {
                     try {
@@ -3548,6 +3652,13 @@ class AuthController extends Controller
             'created_at' => $firstOrder->created_at,
             'total' => $orders->sum('total_amount'),
             'items' => $orders->map(function ($item) {
+                // Calculate already returned quantity
+                $alreadyReturned = \App\Models\Admin\Master\ReturnExchangeRequest::where('order_id', $item->id)
+                    ->whereIn('status', ['pending', 'approved', 'received_restocked', 'received_discarded', 'completed'])
+                    ->sum('requested_quantity');
+                
+                $availableForReturn = max(0, $item->quantity - $alreadyReturned);
+                
                 // Try to get product image from ProductMapping
                 $product = \App\Models\Admin\Master\ProductMapping::where('product_name', $item->item_name)
                     ->where('school_id', $item->school_id)
@@ -3574,6 +3685,8 @@ class AuthController extends Controller
                     'name' => $item->item_name,
                     'price' => $item->total_amount / $item->quantity,
                     'quantity' => $item->quantity,
+                    'already_returned' => $alreadyReturned,
+                    'available_for_return' => $availableForReturn,
                     'size' => $item->size,
                     'image' => $image ? asset('storage/'.$image) : null,
                     'product_type' => $product ? $product->product_type : null,
@@ -3589,16 +3702,25 @@ class AuthController extends Controller
         $request->validate([
             'selected_items' => 'required|array|min:1',
             'selected_items.*' => 'integer|exists:orders,id',
+            'quantities' => 'required|array',
+            'quantities.*' => 'required|integer|min:1',
             'reason' => 'required|string',
             'action' => 'required|in:return,exchange',
-            'photo' => 'nullable|image|max:2048',
+            'photos' => 'nullable|array',
+            'photos.*' => 'image|max:2048',
         ]);
 
-        // Handle photo upload once
-        $photoPath = null;
-        if ($request->hasFile('photo')) {
-            $photoPath = $request->file('photo')->store('return-exchange', 'public');
+        // Handle multiple photo uploads
+        $photoPaths = [];
+        if ($request->hasFile('photos')) {
+            foreach ($request->file('photos') as $photo) {
+                $path = $photo->store('return-exchange', 'public');
+                $photoPaths[] = $path;
+            }
         }
+        
+        // Store as JSON array in photo_path field
+        $photoPath = !empty($photoPaths) ? json_encode($photoPaths) : null;
 
         // Get authenticated student names for security check
         $user = Auth::user();
@@ -3633,24 +3755,51 @@ class AuthController extends Controller
 
         // Create return/exchange request for each selected item
         foreach ($orders as $order) {
-            // Check if request already exists for this item to prevent duplicates
+            // Get requested quantity (default to 1 if not provided)
+            $requestedQty = isset($request->quantities[$order->id]) 
+                ? (int)$request->quantities[$order->id] 
+                : 1;
+            
+            // Calculate already returned quantity
+            $alreadyReturned = \App\Models\Admin\Master\ReturnExchangeRequest::where('order_id', $order->id)
+                ->whereIn('status', ['pending', 'approved', 'received_restocked', 'received_discarded', 'completed'])
+                ->sum('requested_quantity');
+            
+            $availableQty = $order->quantity - $alreadyReturned;
+            
+            // Validate requested quantity doesn't exceed available
+            if ($requestedQty > $availableQty) {
+                return redirect()->back()
+                    ->withInput()
+                    ->with('error', "Cannot return/exchange {$requestedQty} units for {$order->item_name}. Only {$availableQty} unit(s) available for return/exchange.");
+            }
+            
+            // Validate requested quantity doesn't exceed order quantity
+            if ($requestedQty > $order->quantity) {
+                return redirect()->back()
+                    ->withInput()
+                    ->with('error', "Cannot return/exchange {$requestedQty} units. Order quantity is only {$order->quantity}.");
+            }
+            
+            // Check if request already exists for this item to prevent duplicates (only for pending/approved)
             $exists = \App\Models\Admin\Master\ReturnExchangeRequest::where('order_id', $order->id)
-                ->whereIn('status', ['pending', 'approved', 'received'])
+                ->whereIn('status', ['pending', 'approved'])
                 ->exists();
 
             if ($exists) {
-                continue;
+                continue; // Skip if there's already a pending/approved request
             }
 
             $returnRequest = \App\Models\Admin\Master\ReturnExchangeRequest::create([
                 'order_id' => $order->id,
+                'requested_quantity' => $requestedQty,
                 'type' => $request->action,
                 'reason' => $request->reason,
                 'photo_path' => $photoPath,
                 'status' => 'pending',
                 'customer_notes' => $request->reason,
             ]);
-
+            
             // Send Return/Exchange Request Submitted Email
             if (!empty($order->customer_email)) {
                 try {

@@ -153,8 +153,10 @@
              <!-- Date To -->
              <input type="date" name="date_to" placeholder="To Date" onclick="this.showPicker()" value="{{ request('date_to') }}">
 
-             <button type="submit">Apply Filter</button>
-             <a href="{{ route($routePrefix . '.payments.index') }}" class="reset">Reset</a>
+             <div style="grid-column: 1 / -1; display: flex; justify-content: flex-end; gap: 10px;">
+                 <button type="submit" style="width: auto; min-width: 120px;">Apply Filter</button>
+                 <a href="{{ route($routePrefix . '.payments.index') }}" class="reset" style="width: auto; min-width: 100px;">Reset</a>
+             </div>
         </form>
     </section>
 

@@ -46,8 +46,32 @@ class DashboardController extends Controller
             'delivered' => (clone $ordersQuery)->where('order_status', 'delivered')->count(),
         ];
 
+        // Calculate refunds from Payment table for back to school
+        $refundsQuery = \App\Models\Payment::where('payment_for', 'refund')
+            ->where('payment_status', 'refunded')
+            ->where('product_type', 'back_to_school');
+        
+        // Apply date filters to refunds if set
+        if (!empty($filters['start_date'])) {
+            $refundsQuery->whereDate('created_at', '>=', $filters['start_date']);
+        }
+        if (!empty($filters['end_date'])) {
+            $refundsQuery->whereDate('created_at', '<=', $filters['end_date']);
+        }
+        
+        // Apply category filter to refunds (through order relationship)
+        if (!empty($filters['category'])) {
+            $refundsQuery->whereHas('order', function($q) use ($filters) {
+                $q->where('category', $filters['category']);
+            });
+        }
+        
+        $totalRefunds = $refundsQuery->sum('amount_paid') ?? 0;
+        
         $financialKpi = [
             'total_sales' => (clone $ordersQuery)->sum('total_amount'),
+            'total_refunds' => $totalRefunds,
+            'net_revenue' => ((clone $ordersQuery)->sum('total_amount') ?? 0) - $totalRefunds,
         ];
 
         // Stock KPIs
@@ -66,6 +90,8 @@ class DashboardController extends Controller
             ['label' => 'Shipped', 'value' => $ordersKpi['shipped']],
             ['label' => 'Delivered', 'value' => $ordersKpi['delivered']],
             ['label' => 'Total Sales', 'prefix' => '₹', 'value' => number_format($financialKpi['total_sales'])],
+            ['label' => 'Total Refunds', 'prefix' => '₹', 'value' => number_format($financialKpi['total_refunds']), 'color' => 'kpi-red'],
+            ['label' => 'Net Revenue', 'prefix' => '₹', 'value' => number_format($financialKpi['net_revenue']), 'color' => 'kpi-green'],
             ['label' => 'In-stock SKUs', 'value' => $stockKpi['in_stock']],
             ['label' => 'Out-of-stock SKUs', 'value' => $stockKpi['out_of_stock']],
             ['label' => 'Low Stock Products', 'value' => $stockKpi['low_stock']],
