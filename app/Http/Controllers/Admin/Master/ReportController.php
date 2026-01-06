@@ -12,6 +12,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\View\View;
+use Barryvdh\DomPDF\Facade\Pdf;
 
 class ReportController extends Controller
 {
@@ -488,65 +489,8 @@ class ReportController extends Controller
 
     protected function downloadPdf(Collection $orders)
     {
-        $lines = [
-            'Reports export',
-            str_repeat('-', 40),
-        ];
-
-        foreach ($orders as $order) {
-            $lines[] = $order->order_number . ' • ' . optional($order->order_date)->format('d M Y');
-            $lines[] = 'School: ' . optional($order->school)->name . ' • Grade ' . ($order->grade ?? 'n/a');
-            $lines[] = 'Item: ' . $order->item_name . ' x' . $order->quantity . ' • Rs. ' . number_format($order->total_amount, 2);
-            $lines[] = 'Status: ' . ucfirst($order->order_status);
-            $lines[] = '';
-        }
-
-        $pdf = $this->buildSimplePdf($lines);
-
-        return response()->streamDownload(fn () => print($pdf), 'reports.pdf', [
-            'Content-Type' => 'application/pdf',
-        ]);
-    }
-
-    protected function buildSimplePdf(array $lines): string
-    {
-        $escaped = array_map(fn ($line) => str_replace(['\\', '(', ')'], ['\\\\', '\\(', '\\)'], $line), $lines);
-        $contentBody = "BT\n/F1 11 Tf\n72 720 Td\n";
-        foreach ($escaped as $index => $line) {
-            $contentBody .= '(' . $line . ") Tj\n";
-            if ($index !== array_key_last($escaped)) {
-                $contentBody .= "T*\n";
-            }
-        }
-        $contentBody .= "ET";
-        $length = strlen($contentBody);
-
-        $pdf = "%PDF-1.4\n";
-        $objects = [
-            '<< /Type /Catalog /Pages 2 0 R >>',
-            '<< /Type /Pages /MediaBox [0 0 612 792] /Count 1 /Kids [3 0 R] >>',
-            '<< /Type /Page /Parent 2 0 R /Contents 4 0 R /Resources << /Font << /F1 5 0 R >> >> >>',
-            "<< /Length $length >>\nstream\n$contentBody\nendstream",
-            '<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>',
-        ];
-
-        $offsets = [];
-        foreach ($objects as $index => $object) {
-            $offsets[] = strlen($pdf);
-            $pdf .= ($index + 1) . " 0 obj\n" . $object . "\nendobj\n";
-        }
-
-        $xrefPosition = strlen($pdf);
-        $pdf .= "xref\n0 " . (count($objects) + 1) . "\n";
-        $pdf .= "0000000000 65535 f \n";
-        foreach ($offsets as $offset) {
-            $pdf .= sprintf("%010d 00000 n \n", $offset);
-        }
-
-        $pdf .= "trailer << /Size " . (count($objects) + 1) . " /Root 1 0 R >>\n";
-        $pdf .= "startxref\n$xrefPosition\n%%EOF";
-
-        return $pdf;
+        $pdf = Pdf::loadView('admin.reports.pdf', compact('orders'));
+        return $pdf->download('reports.pdf');
     }
 }
 

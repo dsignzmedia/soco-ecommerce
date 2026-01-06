@@ -5,6 +5,8 @@ namespace App\Models\Admin\Master;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Builder;
 
 class Order extends Model
 {
@@ -45,6 +47,19 @@ class Order extends Model
         'order_date' => 'date',
         'payment_details' => 'array',
     ];
+
+    /**
+     * The "booted" method of the model.
+     * Add global scope to hide orders from deleted schools
+     */
+    protected static function booted(): void
+    {
+        static::addGlobalScope('activeSchool', function (Builder $builder) {
+            $builder->whereHas('school', function ($query) {
+                // School model's global scope will automatically filter has_deleted = 0
+            });
+        });
+    }
 
     public function school(): BelongsTo
     {

@@ -41,6 +41,14 @@
                     <option value="{{ $school->id }}" @selected(($filters['school_id'] ?? '') == $school->id)>{{ $school->name }}</option>
                 @endforeach
             </select>
+            <select name="product_type" style="padding:8px;border:1px solid #d0d5dd;border-radius:8px;">
+                <option value="">Product Type (All)</option>
+                @foreach($productTypes as $type)
+                    <option value="{{ $type }}" {{ ($filters['product_type'] ?? '') == $type ? 'selected' : '' }}>
+                        {{ ucwords(str_replace('_', ' ', $type)) }}
+                    </option>
+                @endforeach
+            </select>
             <select name="category" style="padding:8px;border:1px solid #d0d5dd;border-radius:8px;">
                 <option value="">All Categories</option>
                 @foreach($categories as $category)

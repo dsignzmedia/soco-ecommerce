@@ -523,6 +523,16 @@ class AuthController extends Controller
             $request->session()->regenerate();
 
             $user = Auth::user();
+            
+            // Check if user account has been deleted (school deleted)
+            if ($user->has_deleted == 1) {
+                Auth::logout();
+                $request->session()->invalidate();
+                $request->session()->regenerateToken();
+                
+                // Redirect to dedicated account deleted page
+                return redirect()->route('account.deleted');
+            }
 
             Log::info('Login successful', [
                 'user_id' => $user->id,
@@ -638,6 +648,12 @@ class AuthController extends Controller
 
         if (!$user) {
              return redirect()->route('login');
+        }
+        
+        // Check if user account has been deleted (school deleted)
+        if ($user->has_deleted == 1) {
+            Auth::logout();
+            return redirect()->route('account.deleted');
         }
 
         // Get school data from database
@@ -1310,8 +1326,11 @@ class AuthController extends Controller
 
         // Get parent phone number from session (in production, from database)
         $parentPhone = session('parent_phone', $user->phone ?? '+91 9159413234');
+        
+        // Get selected profile ID for product links
+        $selectedProfileId = $selectedProfile['id'] ?? null;
 
-        return view('frontend.dashboard.parent-dashboard', compact('profiles', 'selectedProfile', 'purchasedProducts', 'schoolLogo', 'schoolAddress', 'parentPhone', 'schools'));
+        return view('frontend.dashboard.parent-dashboard', compact('profiles', 'selectedProfile', 'purchasedProducts', 'schoolLogo', 'schoolAddress', 'parentPhone', 'schools', 'selectedProfileId'));
     }
 
     public function accountDetails()
@@ -2730,91 +2749,107 @@ class AuthController extends Controller
         $productIds = $cartDbItems->pluck('product_id')->unique()->toArray();
 
         // Fetch products from DB with variants and grade pricing
+        // This will automatically filter out products from deleted schools via global scope
         $products = \App\Models\Admin\Master\ProductMapping::with(['variants', 'gradePricing'])
             ->whereIn('id', $productIds)
             ->get()
             ->keyBy('id');
 
+        // Identify cart items with deleted/missing products
+        $orphanedCartItemIds = [];
+        
         $cartItems = [];
         $total = 0;
         $hasInclusiveTax = false; // Track if any product has inclusive tax
 
         foreach ($cartDbItems as $item) {
-            if (isset($products[$item->product_id])) {
-                $product = $products[$item->product_id];
-
-                // Check if this product has inclusive tax
-                if ($product->price_inclusive_tax) {
-                    $hasInclusiveTax = true;
-                }
-
-                // Get student grade for grade-based pricing
-                $studentGrade = null;
-                $profile = $profiles->firstWhere('id', (int)$item->profile_id);
-                if ($profile) {
-                    $studentGrade = $profile->grade;
-                    $studentName = $profile->student_name;
-                } else {
-                    $studentName = 'Unknown Student';
-                }
-
-                // Determine price based on variant-based pricing or grade-based pricing
-                // For fabric products: If grade pricing exists, use it (all sizes same price by grade)
-                // Otherwise, use variant pricing if available
-                $itemPrice = 0;
-
-                // Check if product has grade pricing (for fabric products with grade-wise pricing)
-                $hasGradePricing = false;
-                if ($product->relationLoaded('gradePricing')) {
-                    $hasGradePricing = $product->gradePricing && $product->gradePricing->count() > 0;
-                } else {
-                    $product->load('gradePricing');
-                    $hasGradePricing = $product->gradePricing && $product->gradePricing->count() > 0;
-                }
-
-                if ($product->variant_based_pricing && $hasGradePricing) {
-                    // Fabric product with grade-wise pricing: Use grade price (same for all sizes)
-                    $itemPrice = $this->getProductPriceForGrade($product, $studentGrade);
-                } elseif ($product->variant_based_pricing && $product->variants->count() > 0) {
-                    // Fabric product with variant pricing only: Get variant price for the selected size
-                    $variant = $product->variants->where('option', $item->size)->first();
-                    if ($variant && $variant->price) {
-                        $itemPrice = $variant->price;
-                    } else {
-                        // Fallback to grade-based price or regular price
-                        $itemPrice = $this->getProductPriceForGrade($product, $studentGrade);
-                    }
-                } else {
-                    // Regular product: Use grade-based price if available, otherwise regular price
-                    $itemPrice = $this->getProductPriceForGrade($product, $studentGrade);
-                }
-
-                $itemTotal = $itemPrice * $item->quantity;
-                $total += $itemTotal;
-
-                // Get product image - try multiple fields
-                $productImage = null;
-                if ($product->featured_image) {
-                    $productImage = $product->featured_image;
-                } elseif ($product->media_images && is_array($product->media_images) && !empty($product->media_images)) {
-                    $productImage = $product->media_images[0];
-                } elseif ($product->media_gallery && is_array($product->media_gallery) && !empty($product->media_gallery)) {
-                    $productImage = $product->media_gallery[0];
-                }
-
-                $cartItems[] = [
-                    'id' => $item->id, // Cart item ID for removal
-                    'product_id' => $item->product_id,
-                    'profile_id' => $item->profile_id,
-                    'size' => $item->size,
-                    'quantity' => $item->quantity,
-                    'name' => $product->product_name,
-                    'price' => $itemPrice,
-                    'image' => $productImage ? asset('storage/' . $productImage) : null,
-                    'item_total' => $itemTotal,
-                    'student_name' => $studentName,
-                ];
+            // Check if product still exists (not from deleted school)
+            if (!isset($products[$item->product_id])) {
+                // Product no longer exists or belongs to a deleted school
+                $orphanedCartItemIds[] = $item->id;
+                continue; // Skip this item
             }
+            
+            $product = $products[$item->product_id];
+
+            // Check if this product has inclusive tax
+            if ($product->price_inclusive_tax) {
+                $hasInclusiveTax = true;
+            }
+
+            // Get student grade for grade-based pricing
+            $studentGrade = null;
+            $profile = $profiles->firstWhere('id', (int)$item->profile_id);
+            if ($profile) {
+                $studentGrade = $profile->grade;
+                $studentName = $profile->student_name;
+            } else {
+                $studentName = 'Unknown Student';
+            }
+
+            // Determine price based on variant-based pricing or grade-based pricing
+            // For fabric products: If grade pricing exists, use it (all sizes same price by grade)
+            // Otherwise, use variant pricing if available
+            $itemPrice = 0;
+
+            // Check if product has grade pricing (for fabric products with grade-wise pricing)
+            $hasGradePricing = false;
+            if ($product->relationLoaded('gradePricing')) {
+                $hasGradePricing = $product->gradePricing && $product->gradePricing->count() > 0;
+            } else {
+                $product->load('gradePricing');
+                $hasGradePricing = $product->gradePricing && $product->gradePricing->count() > 0;
+            }
+
+            if ($product->variant_based_pricing && $hasGradePricing) {
+                // Fabric product with grade-wise pricing: Use grade price (same for all sizes)
+                $itemPrice = $this->getProductPriceForGrade($product, $studentGrade);
+            } elseif ($product->variant_based_pricing && $product->variants->count() > 0) {
+                // Fabric product with variant pricing only: Get variant price for the selected size
+                $variant = $product->variants->where('option', $item->size)->first();
+                if ($variant && $variant->price) {
+                    $itemPrice = $variant->price;
+                } else {
+                    // Fallback to grade-based price or regular price
+                    $itemPrice = $this->getProductPriceForGrade($product, $studentGrade);
+                }
+            } else {
+                // Regular product: Use grade-based price if available, otherwise regular price
+                $itemPrice = $this->getProductPriceForGrade($product, $studentGrade);
+            }
+
+            $itemTotal = $itemPrice * $item->quantity;
+            $total += $itemTotal;
+
+            // Get product image - try multiple fields
+            $productImage = null;
+            if ($product->featured_image) {
+                $productImage = $product->featured_image;
+            } elseif ($product->media_images && is_array($product->media_images) && !empty($product->media_images)) {
+                $productImage = $product->media_images[0];
+            } elseif ($product->media_gallery && is_array($product->media_gallery) && !empty($product->media_gallery)) {
+                $productImage = $product->media_gallery[0];
+            }
+
+            $cartItems[] = [
+                'id' => $item->id, // Cart item ID for removal
+                'product_id' => $item->product_id,
+                'profile_id' => $item->profile_id,
+                'size' => $item->size,
+                'quantity' => $item->quantity,
+                'name' => $product->product_name,
+                'price' => $itemPrice,
+                'image' => $productImage ? asset('storage/' . $productImage) : null,
+                'item_total' => $itemTotal,
+                'student_name' => $studentName,
+            ];
+        }
+        
+        // Clean up orphaned cart items (products from deleted schools)
+        if (!empty($orphanedCartItemIds)) {
+            \App\Models\Cart::whereIn('id', $orphanedCartItemIds)
+                ->where('user_id', $user->id)
+                ->delete();
         }
 
         // For the view's "Buy More" link
@@ -3173,11 +3208,10 @@ class AuthController extends Controller
 
             // Allow multiple students in one order
 
-            // Create order with unique ID
-            // Get the last order id to increment
-            $lastOrder = \App\Models\Admin\Master\Order::latest('id')->first();
-            $nextId = $lastOrder ? $lastOrder->id + 1 : 1;
-            $orderNumber = 'SOCO-' . $nextId;
+            // Create order with unique ID based on timestamp
+            // Format: SOCO-[UserID]-[Timestamp]
+            $timestamp = now()->format('ymdHis'); // YYMMDDHHmmss
+            $orderNumber = 'SOCO-' . $user->id . '-' . $timestamp;
 
             // Get profiles from database
             $profiles = $user->studentProfiles;

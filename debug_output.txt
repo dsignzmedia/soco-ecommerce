@@ -1,0 +1,5 @@
+DEBUG_OUTPUT_START
+ID: 161 | Name: A BTS Product | Type: back_to_school | SchoolID: null | Status: "live" | Gender: "unisex" | Stock: 1000
+ID: 162 | Name: MerchProduct | Type: back_to_school | SchoolID: null | Status: "live" | Gender: "unisex" | Stock: 100
+ID: 163 | Name: MerchProduct1 | Type: merchandised | SchoolID: null | Status: "live" | Gender: null | Stock: 122
+DEBUG_OUTPUT_END

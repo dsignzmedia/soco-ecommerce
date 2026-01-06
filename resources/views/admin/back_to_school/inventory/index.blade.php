@@ -32,6 +32,12 @@
                 <option value="{{ $category }}" @selected(($filters['category'] ?? '') === $category)>{{ $category }}</option>
             @endforeach
         </select>
+        <select name="product_type">
+            <option value="">Product Type (All)</option>
+            @foreach($productTypes as $type)
+                <option value="{{ $type }}" @selected(($filters['product_type'] ?? '') === $type)>{{ ucwords(str_replace('_', ' ', $type)) }}</option>
+            @endforeach
+        </select>
         <select name="status">
             <option value="">Status</option>
             @foreach(['live','draft','archived'] as $status)

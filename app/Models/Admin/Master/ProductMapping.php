@@ -6,6 +6,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Builder;
 
 class ProductMapping extends Model
 {
@@ -49,6 +50,24 @@ class ProductMapping extends Model
         'media_images' => 'array',
         'media_gallery' => 'array',
     ];
+
+    /**
+     * The "booted" method of the model.
+     * Add global scope to hide products from deleted schools
+     */
+    protected static function booted(): void
+    {
+        static::addGlobalScope('activeSchool', function (Builder $builder) {
+            $builder->where(function($q) {
+                // Allow products that are not linked to any school (Global/Merchandise)
+                $q->whereNull('school_id')
+                  // OR products linked to an active school
+                  ->orWhereHas('school', function ($query) {
+                      // School model's global scope will automatically filter has_deleted = 0
+                  });
+            });
+        });
+    }
 
     public function school(): BelongsTo
     {
