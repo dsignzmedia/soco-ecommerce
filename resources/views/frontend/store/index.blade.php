@@ -198,11 +198,13 @@
 <div class="modal fade d-lg-none" id="filterModal" tabindex="-1" aria-labelledby="filterModalLabel" aria-hidden="true" style="z-index: 9999;">
     <div class="modal-dialog modal-fullscreen">
         <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title" id="filterModalLabel">
+            <div class="modal-header" style="position: relative;">
+                <button type="button" class="btn-close position-absolute" data-bs-dismiss="modal" aria-label="Close" style="left: 15px; top: 50%; transform: translateY(-50%); opacity: 1;">
+                    <i class="fas fa-arrow-left" style="font-size: 20px; color: #333;"></i>
+                </button>
+                <h5 class="modal-title ms-auto" id="filterModalLabel" style="margin-right: 15px;">
                     <i class="fas fa-filter me-2"></i>Filters
                 </h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body">
                 <!-- Search -->

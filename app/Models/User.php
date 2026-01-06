@@ -33,6 +33,7 @@ class User extends Authenticatable
         'password',
         'role',
         'school_id',
+        'has_deleted',
         'otp',
         'otp_expires_at',
         'otp_verified',

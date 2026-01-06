@@ -287,6 +287,9 @@ class ProductController extends Controller
             $data['size_measurement_image'] = $request->file('size_measurement_image')->store('size_charts', 'public');
         }
 
+        // Auto-set product_type for Merchandise products
+        $data['product_type'] = 'merchandised';
+
         $product = Product::create($data);
 
         if ($request->has('variants')) {

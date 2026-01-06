@@ -238,7 +238,11 @@
                         </td>
                         <td>
                             <div style="display:flex;flex-direction:column;gap:4px;">
-                                <a href="{{ route('inventory.admin.orders.show', $req->order) }}" style="color:#490d59;font-weight:700;text-decoration:none;">{{ $req->order->order_number ?? '—' }}</a> [NEW_LINE]
+                                @if($req->order)
+                                    <a href="{{ route('inventory.admin.orders.show', $req->order) }}" style="color:#490d59;font-weight:700;text-decoration:none;">{{ $req->order->order_number ?? '—' }}</a>
+                                @else
+                                    <span style="color:#6b7280;">—</span>
+                                @endif
                                 <span style="display:inline-block;width:fit-content;padding:2px 8px;border-radius:12px;font-size:11px;font-weight:600;background:{{ $req->type === 'return' ? '#fef3c7' : '#e0e7ff' }};color:{{ $req->type === 'return' ? '#92400e' : '#3730a3' }};text-transform:capitalize;">
                                     {{ $req->type }}
                                 </span>

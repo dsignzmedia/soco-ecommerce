@@ -134,7 +134,7 @@
                             @if(isset($purchasedProducts) && count($purchasedProducts) > 0)
                                 <div class="purchased-products-list">
                                     @foreach($purchasedProducts as $product)
-                                        <a href="{{ route('frontend.shop.detail', $product['id']) }}" class="card shadow-sm border-0 mb-3 position-relative text-decoration-none purchased-product-card" style="border-radius: 12px; transition: all 0.3s; display: block;"
+                                        <a href="{{ route('frontend.parent.product-detail', ['productId' => $product['id'], 'profile_id' => $selectedProfileId]) }}" class="card shadow-sm border-0 mb-3 position-relative text-decoration-none purchased-product-card" style="border-radius: 12px; transition: all 0.3s; display: block;"
                                             onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 6px 20px rgba(73, 13, 89, 0.15)'"
                                             onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 2px 8px rgba(0,0,0,0.1)'">
                                                 <div class="card-body p-3">

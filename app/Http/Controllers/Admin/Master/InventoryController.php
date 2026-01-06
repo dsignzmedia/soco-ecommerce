@@ -37,9 +37,10 @@ class InventoryController extends Controller
 
     public function index(Request $request): View
     {
-        $filters = $request->only(['school_id', 'category', 'status', 'q']);
+        $filters = $request->only(['school_id', 'category', 'status', 'q', 'product_type']);
 
         $products = ProductMapping::with(['school', 'variants'])
+            ->when($filters['product_type'] ?? null, fn($q, $type) => $q->where('product_type', $type))
             ->when($filters['school_id'] ?? null, fn($q, $school) => $q->where('school_id', $school))
             ->when($filters['category'] ?? null, fn($q, $category) => $q->where('category', $category))
             ->when($filters['status'] ?? null, fn($q, $status) => $q->where('status', $status))
@@ -50,8 +51,20 @@ class InventoryController extends Controller
 
         $schools = School::orderBy('name')->get();
         $categories = ProductMapping::select('category')->whereNotNull('category')->distinct()->orderBy('category')->pluck('category');
+        
+        // Get distinct product types
+        $dbTypes = ProductMapping::select('product_type')
+            ->whereNotNull('product_type')
+            ->distinct()
+            ->orderBy('product_type')
+            ->pluck('product_type')
+            ->toArray();
+            
+        // Ensure standard types are present
+        $productTypes = array_unique(array_merge($dbTypes, ['back_to_school', 'merchandised']));
+        sort($productTypes);
 
-        return view('admin.inventory.list', compact('products', 'schools', 'categories', 'filters'));
+        return view('admin.inventory.list', compact('products', 'schools', 'categories', 'filters', 'productTypes'));
     }
 
     public function adjust(ProductMapping $product): View

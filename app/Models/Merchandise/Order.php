@@ -8,7 +8,7 @@ class Order extends \App\Models\Admin\Master\Order
 {
     protected $table = 'orders';
 
-    protected static function booted()
+    protected static function booted(): void
     {
         static::addGlobalScope('merchandise_orders', function (Builder $builder) {
             $builder->where('product_type', 'merchandised');

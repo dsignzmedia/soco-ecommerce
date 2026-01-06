@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Admin\BackToSchool;
 
 use App\Http\Controllers\Controller;
+use App\Models\BackToSchool\Product;
 use App\Models\Admin\Master\ProductMapping;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
@@ -11,27 +12,35 @@ class InventoryController extends Controller
 {
     public function index(Request $request): View
     {
-        $filters = $request->only(['category', 'status', 'q']);
+        $filters = $request->only(['category', 'status', 'q', 'product_type']);
 
-        $query = ProductMapping::query()
-            ->where(function($q) {
-                // strict scope: explicit type only
-                $q->where('product_type', 'back_to_school');
-            })
+        $query = Product::query()
+            ->when($filters['product_type'] ?? null, fn($q, $type) => $q->where('product_type', $type))
             ->when($filters['category'] ?? null, fn($q, $category) => $q->where('category', $category))
             ->when($filters['status'] ?? null, fn($q, $status) => $q->where('status', $status))
             ->when($filters['q'] ?? null, fn($q, $term) => $q->where('product_name', 'like', '%'.$term.'%'));
 
         $products = $query->with('variants')->orderBy('product_name')->paginate(20)->withQueryString();
 
-        $categories = ProductMapping::where('product_type', 'back_to_school')
-            ->select('category')
+        $categories = ProductMapping::select('category')
             ->whereNotNull('category')
             ->distinct()
             ->orderBy('category')
             ->pluck('category');
+        
+        // Get distinct product types from DB, but indicate we want specific ones if missing
+        $dbTypes = ProductMapping::select('product_type')
+            ->whereNotNull('product_type')
+            ->distinct()
+            ->orderBy('product_type')
+            ->pluck('product_type')
+            ->toArray();
+            
+        // Ensure standard types are present
+        $productTypes = array_unique(array_merge($dbTypes, ['back_to_school', 'merchandised']));
+        sort($productTypes);
 
-        return view('admin.back_to_school.inventory.index', compact('products', 'categories', 'filters'));
+        return view('admin.back_to_school.inventory.index', compact('products', 'categories', 'filters', 'productTypes'));
     }
 
     public function update(Request $request, ProductMapping $product)

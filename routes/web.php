@@ -40,6 +40,9 @@ Route::post('/shop/add-to-cart', [App\Http\Controllers\Front\ShopController::cla
 
 // Unified Login Route (for both parents and schools)
 Route::get('/login', [AuthController::class, 'showLogin'])->name('login')->middleware('guest');
+Route::get('/account-deleted', function() {
+    return view('frontend.auth.account-deleted');
+})->name('account.deleted');
 
 Route::get('/clear-all', function () {
 
@@ -54,11 +57,8 @@ Route::get('/clear-all', function () {
 
 
 Route::get('/fix-storage', function () {
-
-
-
     Artisan::call('storage:link');
-Artisan::call('config:clear');
+    Artisan::call('config:clear');
     Artisan::call('cache:clear');
 });
 
@@ -178,7 +178,9 @@ Route::prefix('MasterAdmin')->name('master.admin.')->group(function () {
         Route::get('/payments', [App\Http\Controllers\Admin\Master\PaymentController::class, 'index'])->name('payments.index');
         Route::get('/payments/{payment}', [App\Http\Controllers\Admin\Master\PaymentController::class, 'show'])->name('payments.show');
 
+
         Route::resource('schools', SchoolController::class)->except('show');
+        Route::get('schools/{school}/deletion-stats', [SchoolController::class, 'getDeletionStats'])->name('schools.deletion-stats');
         Route::get('schools/{school}/grades', [GradeController::class, 'index'])->name('schools.grades.index');
         Route::post('schools/{school}/grades', [GradeController::class, 'store'])->name('schools.grades.store');
         Route::put('schools/{school}/grades/{grade}', [GradeController::class, 'update'])->name('schools.grades.update');
