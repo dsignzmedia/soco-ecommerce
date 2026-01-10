@@ -45,7 +45,7 @@
                 </label>
                 <label>
                     <span>Sort Order</span>
-                    <input type="number" name="sort_order" value="{{ old('sort_order', $category->sort_order ?? 0) }}" min="0" placeholder="0">
+                    <input type="number" name="sort_order" value="{{ old('sort_order', $category->sort_order ?? ($nextSortOrder ?? 0)) }}" min="0" placeholder="0">
                     <small style="color:#6b7280;font-size:12px;margin-top:4px;display:block;">Lower numbers appear first</small>
                 </label>
             </div>

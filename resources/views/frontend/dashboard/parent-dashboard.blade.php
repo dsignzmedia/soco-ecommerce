@@ -278,11 +278,7 @@
         const isWelcomeSeen = @json((bool) Auth::user()->is_welcome_modal_seen);
         const sessionGuestMode = @json(session('guest_mode_active', false));
 
-        console.log('Welcome Modal Debug:', {
-            hasProfiles: hasProfiles,
-            isWelcomeSeen: isWelcomeSeen,
-            sessionGuestMode: sessionGuestMode
-        });
+
 
         var welcomeModalEl = document.getElementById('welcomeModal');
         if (welcomeModalEl) {
@@ -294,14 +290,14 @@
         // SHOW CONDITION: No profiles AND Not seen in DB
         // We removed session check because DB flag is the new robust source of truth.
         if (!hasProfiles && !isWelcomeSeen) {
-            console.log('Showing Welcome Modal (Condition Met)');
+
             try {
                 welcomeModal.show();
             } catch (e) {
                 console.error('Bootstrap Modal Show Action Failed:', e);
             }
         } else {
-            console.log('Welcome Modal condition not met. hasProfiles:', hasProfiles, 'isWelcomeSeen:', isWelcomeSeen);
+
         }
 
             // Handle Add Student Modal close - show welcome modal again if no profile was created
@@ -354,20 +350,21 @@
 
                         <input type="hidden" id="modalProfileId" name="profile_id" value="">
                         <div class="mb-3">
-                            <label for="modalSchoolName" class="form-label" style="font-weight: 500; color: #333; margin-bottom: 8px;">School Name</label>
+                            <label for="modalSchoolName" class="form-label" style="font-weight: 500; color: #333; margin-bottom: 8px;">School Name <span style="color: red;">*</span></label>
                             <div class="autocomplete-wrapper-modal" style="position: relative;">
                                 <input type="text" id="modalSchoolName" name="school_name" class="form-control" placeholder="Start typing school name" autocomplete="off" required style="border: 1px solid #ddd; border-radius: 6px; padding: 10px 12px;">
                                 <div class="suggestion-list-modal" id="modalSchoolSuggestions" style="position: absolute; top: 100%; left: 0; right: 0; background: white; border: 1px solid #ddd; border-radius: 6px; max-height: 200px; overflow-y: auto; z-index: 10002 !important; display: none; margin-top: 4px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);"></div>
+                                <div id="schoolNameError" class="invalid-feedback">Please click to select a valid school from the list.</div>
                             </div>
                         </div>
                         <!-- other form fields remain unchanged -->
 
                     <div class="mb-3">
-                        <label for="modalStudentName" class="form-label" style="font-weight: 500; color: #333; margin-bottom: 8px;">Student Name</label>
+                        <label for="modalStudentName" class="form-label" style="font-weight: 500; color: #333; margin-bottom: 8px;">Student Name <span style="color: red;">*</span></label>
                         <input type="text" id="modalStudentName" name="student_name" class="form-control" placeholder="Enter student name" required style="border: 1px solid #ddd; border-radius: 6px; padding: 10px 12px;">
                     </div>
                     <div class="mb-3">
-                        <label for="modalGrade" class="form-label" style="font-weight: 500; color: #333; margin-bottom: 8px;">Grade</label>
+                        <label for="modalGrade" class="form-label" style="font-weight: 500; color: #333; margin-bottom: 8px;">Grade <span style="color: red;">*</span></label>
                         <select id="modalGrade" name="grade" class="form-select" required style="border: 1px solid #ddd; border-radius: 6px; padding: 10px 12px;">
                             <option value="">Select Grade</option>
                             <option value="PKG">Pre-KG</option>
@@ -392,7 +389,7 @@
                         <input type="text" id="modalSection" name="section" class="form-control" placeholder="Enter section (e.g., A, B, C)" required style="border: 1px solid #ddd; border-radius: 6px; padding: 10px 12px;">
                     </div>
                     <div class="mb-3">
-                        <label class="form-label" style="font-weight: 500; color: #333; margin-bottom: 8px;">Gender</label>
+                        <label class="form-label" style="font-weight: 500; color: #333; margin-bottom: 8px;">Gender <span style="color: red;">*</span></label>
                         <div class="gender-radio-group" style="display: flex; gap: 20px;">
                             <label class="gender-radio-label">
                                 <input type="radio" name="gender" value="male" required class="gender-radio-input">
@@ -445,6 +442,7 @@ document.addEventListener('DOMContentLoaded', function() {
     // Welcome modal JS removed as per user request
 
 
+
     const schools = @json($schools);
 
     const renderModalSuggestions = (value) => {
@@ -469,7 +467,7 @@ document.addEventListener('DOMContentLoaded', function() {
         modalSuggestionBox.innerHTML = matches.map(school => 
             `<div class="suggestion-item-modal" data-value="${school.name}" style="padding: 10px 12px; cursor: pointer; border-bottom: 1px solid #f0f0f0; display: flex; align-items: center; gap: 10px;">
                 <div style="width: 30px; height: 30px; display: flex; align-items: center; justify-content: center;">
-                    ${school.logo ? `<img src="${school.logo}" alt="${school.name}" style="width: 30px; height: 30px; object-fit: contain; border-radius: 4px;">` : '<div style="width: 30px; height: 30px; background: #f0f0f0; border-radius: 4px;"></div>'}
+                    ${school.logo ? `<img src="${school.logo}" alt="${school.name}" style="width: 30px; height: 30px; object-fit: contain; border-radius: 4px;" onerror="this.parentNode.innerHTML='<div style=\'width: 30px; height: 30px; background: #f0f0f0; border-radius: 4px;\'></div>'">` : '<div style="width: 30px; height: 30px; background: #f0f0f0; border-radius: 4px;"></div>'}
                 </div>
                 <div>
                     <div style="font-weight: 500; color: #333;">${school.name}</div>
@@ -481,8 +479,25 @@ document.addEventListener('DOMContentLoaded', function() {
     };
 
     if (modalSchoolInput) {
-        modalSchoolInput.addEventListener('input', (e) => {
-            renderModalSuggestions(e.target.value);
+        // Strict Validation: On blur, check if the value matches a school name exactly
+        modalSchoolInput.addEventListener('blur', function() {
+            // Delay slightly to allow click event on suggestion to fire first
+            setTimeout(() => {
+                const currentVal = this.value.trim();
+                const isValid = schools.some(s => s.name === currentVal);
+                
+                if (currentVal && !isValid) {
+                    this.classList.add('is-invalid');
+                    this.value = ''; // Clear invalid input
+                } else {
+                    this.classList.remove('is-invalid');
+                }
+            }, 200);
+        });
+
+        modalSchoolInput.addEventListener('input', function() {
+            this.classList.remove('is-invalid');
+            renderModalSuggestions(this.value);
         });
     }
 
@@ -504,7 +519,6 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         }
     });
-
     function setSelection(buttons, value) {
         buttons.forEach(btn => {
             if (value && btn.dataset.value === value) {
@@ -532,6 +546,8 @@ document.addEventListener('DOMContentLoaded', function() {
     function resetStudentModal() {
         if (!addStudentForm) return;
         addStudentForm.reset();
+        const schoolInput = document.getElementById('modalSchoolName');
+        if(schoolInput) schoolInput.classList.remove('is-invalid');
         const gradeSelect = document.getElementById('modalGrade');
         if(gradeSelect) gradeSelect.value = '';
         
@@ -544,6 +560,7 @@ document.addEventListener('DOMContentLoaded', function() {
             modalSuggestionBox.style.display = 'none';
             modalSuggestionBox.innerHTML = '';
         }
+
         if (modalTitle) modalTitle.textContent = 'Add Student';
         if (modalSubmitBtn) modalSubmitBtn.textContent = 'Submit';
     }
@@ -567,6 +584,16 @@ document.addEventListener('DOMContentLoaded', function() {
             if (!grade || !gender || !schoolName || !studentName || !section) {
                 alert('Please fill in all required fields');
                 return;
+            }
+
+            // Double check school validity on submit
+            const isSchoolValid = schools.some(s => s.name === schoolName);
+            if (!isSchoolValid) {
+                 const schoolInput = document.getElementById('modalSchoolName');
+                 schoolInput.classList.add('is-invalid');
+                 // Focus back on school input
+                 schoolInput.focus();
+                 return;
             }
 
             const formData = new FormData();
@@ -639,6 +666,7 @@ document.addEventListener('DOMContentLoaded', function() {
         if (profileIdField) profileIdField.value = profile.id || '';
 
         document.getElementById('modalSchoolName').value = profile.school_name || '';
+        document.getElementById('modalSchoolName').classList.remove('is-invalid');
         document.getElementById('modalStudentName').value = profile.student_name || '';
         document.getElementById('modalSection').value = profile.section || '';
 
@@ -651,7 +679,10 @@ document.addEventListener('DOMContentLoaded', function() {
         }
         setSelection(gradeButtons, profile.grade || null);
 
-        const modalInstance = bootstrap.Modal.getOrCreateInstance(addStudentModalEl);
+        let modalInstance = bootstrap.Modal.getInstance(addStudentModalEl);
+        if (!modalInstance) {
+            modalInstance = new bootstrap.Modal(addStudentModalEl);
+        }
         modalInstance.show();
     };
 

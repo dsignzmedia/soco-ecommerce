@@ -150,6 +150,10 @@ class CatalogController extends Controller
             ];
         }
 
+        // Hide specific types in Master Admin
+        unset($productTypes['merchandised']);
+        unset($productTypes['back_to_school']);
+
         // Load grade pricing if editing
         if ($mode === 'edit') {
             $product->load('gradePricing');
@@ -374,7 +378,7 @@ class CatalogController extends Controller
     {
         $filters = $request->only(['school_id', 'grade_id', 'status', 'gender', 'category', 'product_type', 'stock_status', 'q']);
 
-        $query = ProductMapping::with(['school']);
+        $query = ProductMapping::with(['school', 'gradePricing', 'variants']);
         $this->applyFilters($query, $filters);
 
         if (! empty($filters['q'])) {

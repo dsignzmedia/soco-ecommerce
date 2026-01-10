@@ -192,7 +192,8 @@ function saveNewAddress() {
     let url;
     if (isEditing) {
         // Build the update URL with the address index
-        url = '/parent/update-address/' + editingIndex;
+        url = '{{ route("frontend.parent.update-address", ":id") }}';
+        url = url.replace(':id', editingIndex);
     } else {
         url = '{{ route("frontend.parent.save-address") }}';
     }
@@ -224,7 +225,11 @@ function saveNewAddress() {
     })
     .then(response => {
         if (!response.ok) {
-            throw new Error('Network response was not ok');
+            return response.json().then(errorData => {
+                throw new Error(errorData.message || 'Server error occurred');
+            }).catch(() => {
+                throw new Error('Network response was not ok: ' + response.statusText);
+            });
         }
         return response.json();
     })
@@ -245,7 +250,7 @@ function saveNewAddress() {
     })
     .catch(error => {
         console.error('Fetch error:', error);
-        alert('Error saving address. Please try again.');
+        alert(error.message || 'Error saving address. Please try again.');
         btn.disabled = false;
         btn.innerText = originalText;
     });

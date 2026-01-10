@@ -26,7 +26,6 @@
         .header { margin-bottom: 30px; }
         .school-group { 
             margin-top: 30px; 
-            page-break-inside: avoid;
         }
         h2 { margin: 0; font-size: 18px; }
         h3 { margin: 15px 0 10px; font-size: 14px; color: #490d59; border-bottom: 1px solid #490d59; padding-bottom: 5px; }

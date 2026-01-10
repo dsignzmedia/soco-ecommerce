@@ -28,10 +28,17 @@
             <div class="col-lg-9">
                 <!-- Personal Information Card -->
                 <div class="card shadow-sm border-0 mb-4" style="background-color: #ffffff; border-radius: 16px; overflow: hidden;">
-                    <div class="card-header" style="background: linear-gradient(135deg, #490D59 0%, #6B1B7F 100%); padding: 24px; border: none;">
-                        <h4 class="mb-0" style="font-weight: 600; color: #ffffff; font-size: 1.5rem;">
-                            <i class="fas fa-user-circle me-2"></i> Personal Information
-                        </h4>
+                    <div class="card-header" style="background: linear-gradient(135deg, #490D59 0%, #6B1B7F 100%); padding: 20px 24px; border: none;">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <h4 class="mb-0" style="font-weight: 600; color: #ffffff; font-size: 1.25rem;">
+                                <i class="fas fa-user-circle me-2"></i> Personal Information
+                            </h4>
+                            <button type="button" class="btn btn-light btn-sm" 
+                                style="color: #490D59; font-weight: 600; border-radius: 8px; padding: 8px 16px; box-shadow: 0 2px 6px rgba(0,0,0,0.1);" 
+                                data-bs-toggle="modal" data-bs-target="#editProfileModal">
+                                <i class="fas fa-edit me-2"></i> Edit Profile
+                            </button>
+                        </div>
                     </div>
                     <div class="card-body p-4">
                         @if (session('success'))
@@ -48,100 +55,60 @@
                             </div>
                         @endif
 
-                        <form action="{{ route('frontend.parent.update-profile-details') }}" method="POST">
-                            @csrf
-                            <div class="row g-4">
-                                <div class="col-md-6">
-                                    <label for="name" class="form-label" style="font-weight: 600; color: #333; margin-bottom: 8px;">
-                                        <i class="fas fa-user me-2 text-muted"></i>Full Name
-                                    </label>
-                                    <div class="input-group">
-                                        <input type="text" class="form-control @error('name') is-invalid @enderror" id="name" name="name" 
-                                            value="{{ old('name', $user->name) }}" required
-                                            style="border-radius: 10px 0 0 10px; padding: 12px 16px; border: 2px solid #e0e0e0; transition: all 0.3s;"
-                                            onfocus="this.style.borderColor='#490D59'"
-                                            onblur="this.style.borderColor='#e0e0e0'"
-                                            {{ $user->name ? 'readonly' : '' }}>
-                                        <button type="button" class="btn" id="editNameBtn"
-                                            style="background-color: #490D59; color: #ffffff; border: none; border-radius: 0 10px 10px 0; padding: 12px 16px;"
-                                            onclick="toggleNameEdit()">
-                                            <i class="fas fa-edit"></i>
-                                        </button>
-                                        @error('name')
-                                            <div class="invalid-feedback">
-                                                {{ $message }}
+                        <div class="row">
+                            <div class="col-12">
+                                <div class="p-3 rounded-3" style="background-color: #f8f9fa; border: 1px solid #e9ecef;">
+                                    <div class="d-flex flex-column">
+                                        <!-- Full Name -->
+                                        <div class="d-flex align-items-center py-2">
+                                            <div class="rounded-circle d-flex align-items-center justify-content-center me-3 flex-shrink-0" style="width: 40px; height: 40px; background-color: #eaddf5; color: #490D59;">
+                                                <i class="fas fa-user"></i>
                                             </div>
-                                        @enderror
-                                    </div>
-                                </div>
-                                <div class="col-md-6">
-                                    <label for="email" class="form-label" style="font-weight: 600; color: #333; margin-bottom: 8px;">
-                                        <i class="fas fa-envelope me-2 text-muted"></i>Email Address
-                                    </label>
-                                    <div class="input-group">
-                                        <input type="email" class="form-control @error('email') is-invalid @enderror" id="email" name="email" 
-                                            value="{{ $user->email }}" 
-                                            placeholder="{{ !$user->email ? 'Enter your email address' : '' }}"
-                                            style="border-radius: 10px 0 0 10px; padding: 12px 16px; border: 2px solid #e0e0e0; transition: all 0.3s;"
-                                            onfocus="this.style.borderColor='#490D59'"
-                                            onblur="this.style.borderColor='#e0e0e0'"
-                                            readonly>
+                                            <div class="flex-grow-1">
+                                                <label class="form-label text-muted mb-0 fw-bold small text-uppercase">Full Name</label>
+                                                <h5 class="mb-0 text-dark fw-bold" style="font-size: 14px;">{{ $user->name ?: 'Not Provided' }}</h5>
+                                            </div>
+                                        </div>
                                         
-                                        <button type="button" class="btn" id="editEmailBtn"
-                                            style="background-color: {{ $user->email ? '#490D59' : '#28a745' }}; color: #ffffff; border: none; border-radius: 0 10px 10px 0; padding: 12px 16px;"
-                                            onclick="toggleEmailEdit()">
-                                            <i class="fas {{ $user->email ? 'fa-edit' : 'fa-plus' }}"></i>
-                                        </button>
-                                        @error('email')
-                                            <div class="invalid-feedback">
-                                                {{ $message }}
-                                            </div>
-                                        @enderror
-                                    </div>
-                                    @if(!$user->email)
-                                        <div class="form-text text-warning" style="margin-top: 6px; font-size: 0.875rem;">
-                                            <i class="fas fa-exclamation-circle me-1"></i>Please update your email address.
-                                        </div>
-                                    @endif
-                                </div>
-                                <div class="col-md-6">
-                                    <label for="phone" class="form-label" style="font-weight: 600; color: #333; margin-bottom: 8px;">
-                                        <i class="fas fa-phone me-2 text-muted"></i>Phone Number
-                                    </label>
-                                    <div class="input-group">
-                                        <input type="text" class="form-control @error('phone') is-invalid @enderror" id="phone" name="phone" 
-                                            value="{{ old('phone', $user->phone) }}" placeholder="Enter phone number"
-                                            style="border-radius: 10px 0 0 10px; padding: 12px 16px; border: 2px solid #e0e0e0; transition: all 0.3s;"
-                                            onfocus="this.style.borderColor='#490D59'"
-                                            onblur="this.style.borderColor='#e0e0e0'"
-                                            {{ $user->phone ? 'readonly' : '' }}>
-                                        <button type="button" class="btn" id="editPhoneBtn"
-                                            style="background-color: {{ $user->phone ? '#490D59' : '#28a745' }}; color: #ffffff; border: none; border-radius: 0 10px 10px 0; padding: 12px 16px;"
-                                            onclick="togglePhoneEdit()">
-                                            <i class="fas {{ $user->phone ? 'fa-edit' : 'fa-plus' }}"></i>
-                                        </button>
-                                        @error('phone')
-                                            <div class="invalid-feedback">
-                                                {{ $message }}
-                                            </div>
-                                        @enderror
-                                    </div>
-                                    @if($user->phone)
-                                        <div class="form-text" style="margin-top: 6px; font-size: 0.875rem;">
-                                            <i class="fas fa-info-circle me-1"></i>You can also use this mobile number to log in if you lost your email address.
-                                        </div>
-                                    @endif
-                                </div>
-                            </div>
+                                        <hr class="my-0" style="color: #e0e0e0;">
 
-                            <div class="mt-4 pt-3" style="border-top: 1px solid #f0f0f0;">
-                                <button type="submit" class="btn btn-lg" style="background: linear-gradient(135deg, #490D59 0%, #6B1B7F 100%); color: #ffffff; border: none; border-radius: 12px; padding: 14px 36px; font-weight: 600; box-shadow: 0 4px 12px rgba(73, 13, 89, 0.3); transition: all 0.3s;"
-                                    onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 6px 16px rgba(73, 13, 89, 0.4)'"
-                                    onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 4px 12px rgba(73, 13, 89, 0.3)'">
-                                    <i class="fas fa-save me-2"></i> Update Profile
-                                </button>
+                                        <!-- Email Address -->
+                                        <div class="d-flex align-items-center py-2">
+                                            <div class="rounded-circle d-flex align-items-center justify-content-center me-3 flex-shrink-0" style="width: 40px; height: 40px; background-color: #eaddf5; color: #490D59;">
+                                                <i class="fas fa-envelope"></i>
+                                            </div>
+                                            <div class="flex-grow-1">
+                                                <label class="form-label text-muted mb-0 fw-bold small text-uppercase">Email Address</label>
+                                                <h5 class="mb-0 text-dark fw-bold" style="font-size: 14px;">{{ $user->email ?: 'Not Provided' }}</h5>
+                                                @if(!$user->email)
+                                                    <div class="text-warning mt-1 small">
+                                                        <i class="fas fa-exclamation-circle me-1"></i>Please update your email address.
+                                                    </div>
+                                                @endif
+                                            </div>
+                                        </div>
+
+                                        <hr class="my-0" style="color: #e0e0e0;">
+
+                                        <!-- Phone Number -->
+                                        <div class="d-flex align-items-center py-2">
+                                            <div class="rounded-circle d-flex align-items-center justify-content-center me-3 flex-shrink-0" style="width: 40px; height: 40px; background-color: #eaddf5; color: #490D59;">
+                                                <i class="fas fa-phone"></i>
+                                            </div>
+                                            <div class="flex-grow-1">
+                                                <label class="form-label text-muted mb-0 fw-bold small text-uppercase">Phone Number</label>
+                                                <h5 class="mb-0 text-dark fw-bold" style="font-size: 14px;">{{ $user->phone ?: 'Not Provided' }}</h5>
+                                                @if($user->phone)
+                                                    <div class="text-muted mt-1 small" style="font-size: 0.75rem;">
+                                                        <i class="fas fa-info-circle me-1"></i>Used for login recovery.
+                                                    </div>
+                                                @endif
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
                             </div>
-                        </form>
+                        </div>
                     </div>
                 </div>
 
@@ -253,58 +220,42 @@
     </div>
 </section>
 
-<script>
-// Toggle phone number edit
-function togglePhoneEdit() {
-    const phoneInput = document.getElementById('phone');
-    const editBtn = document.getElementById('editPhoneBtn');
-    
-    if (phoneInput.hasAttribute('readonly')) {
-        phoneInput.removeAttribute('readonly');
-        phoneInput.focus();
-        editBtn.innerHTML = '<i class="fas fa-check"></i>';
-        editBtn.style.backgroundColor = '#28a745';
-    } else {
-        phoneInput.setAttribute('readonly', 'readonly');
-        editBtn.innerHTML = '<i class="fas fa-edit"></i>';
-        editBtn.style.backgroundColor = '#490D59';
-    }
-}
-
-// Toggle name edit
-function toggleNameEdit() {
-    const nameInput = document.getElementById('name');
-    const editBtn = document.getElementById('editNameBtn');
-    
-    if (nameInput.hasAttribute('readonly')) {
-        nameInput.removeAttribute('readonly');
-        nameInput.focus();
-        editBtn.innerHTML = '<i class="fas fa-check"></i>';
-        editBtn.style.backgroundColor = '#28a745';
-    } else {
-        nameInput.setAttribute('readonly', 'readonly');
-        editBtn.innerHTML = '<i class="fas fa-edit"></i>';
-        editBtn.style.backgroundColor = '#490D59';
-    }
-}
-
-// Toggle email edit
-function toggleEmailEdit() {
-    const emailInput = document.getElementById('email');
-    const editBtn = document.getElementById('editEmailBtn');
-    
-    if (emailInput.hasAttribute('readonly')) {
-        emailInput.removeAttribute('readonly');
-        emailInput.focus();
-        editBtn.innerHTML = '<i class="fas fa-check"></i>';
-        editBtn.style.backgroundColor = '#28a745';
-    } else {
-        emailInput.setAttribute('readonly', 'readonly');
-        editBtn.innerHTML = '<i class="fas fa-edit"></i>';
-        editBtn.style.backgroundColor = '#490D59';
-    }
-}
-</script>
+<!-- Edit Profile Modal -->
+<div class="modal fade" id="editProfileModal" tabindex="-1" aria-labelledby="editProfileModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content" style="border-radius: 16px; border: none; overflow: hidden;">
+            <div class="modal-header" style="background: linear-gradient(135deg, #490D59 0%, #6B1B7F 100%); padding: 20px 24px; border: none;">
+                <h5 class="modal-title text-white fw-bold" id="editProfileModalLabel">
+                    <i class="fas fa-user-edit me-2"></i>Edit Personal Information
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form action="{{ route('frontend.parent.update-profile-details') }}" method="POST">
+                @csrf
+                <div class="modal-body p-4">
+                    <div class="mb-3">
+                        <label for="modal_profile_name" class="form-label fw-bold small text-uppercase text-muted">Full Name</label>
+                        <input type="text" class="form-control" id="modal_profile_name" name="name" value="{{ old('name', $user->name) }}" required placeholder="Enter your full name">
+                    </div>
+                    <div class="mb-3">
+                        <label for="modal_profile_email" class="form-label fw-bold small text-uppercase text-muted">Email Address</label>
+                        <input type="email" class="form-control" id="modal_profile_email" name="email" value="{{ $user->email }}" placeholder="Enter your email address">
+                        <div class="form-text small">We'll use this for order updates.</div>
+                    </div>
+                    <div class="mb-3">
+                        <label for="modal_profile_phone" class="form-label fw-bold small text-uppercase text-muted">Phone Number</label>
+                        <input type="text" class="form-control" id="modal_profile_phone" name="phone" value="{{ old('phone', $user->phone) }}" placeholder="Enter your phone number">
+                        <div class="form-text small">Used for account recovery.</div>
+                    </div>
+                </div>
+                <div class="modal-footer p-3 bg-light border-0">
+                    <button type="button" class="btn btn-light text-muted fw-bold" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn" style="background-color: #490D59; color: white; font-weight: 600;">Save Changes</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
 
 <!-- Include Address Modal -->
 @include('frontend.checkout.add-address-modal')
@@ -313,137 +264,6 @@ function toggleEmailEdit() {
 // Store addresses data for editing
 const addressesData = @json($savedAddresses);
 
-let selectedAddressType = 'home';
-
-function selectModalAddressType(type) {
-    selectedAddressType = type;
-    document.getElementById('modal_address_type').value = type;
-    document.querySelectorAll('#addAddressModal .address-type-btn').forEach(btn => {
-        if (btn.dataset.type === type) {
-            btn.style.backgroundColor = '#28a745';
-            btn.style.color = '#ffffff';
-            btn.style.borderColor = '#28a745';
-        } else {
-            btn.style.backgroundColor = '#ffffff';
-            btn.style.color = '#28a745';
-            btn.style.borderColor = '#28a745';
-        }
-    });
-    
-    // Show/hide custom address type input
-    const customContainer = document.getElementById('customAddressTypeContainer');
-    const customInput = document.getElementById('modal_custom_address_type');
-    if (type === 'others') {
-        customContainer.style.display = 'block';
-        customInput.required = true;
-    } else {
-        customContainer.style.display = 'none';
-        customInput.required = false;
-        customInput.value = '';
-    }
-}
-
-function resetAddressModal() {
-    // Reset form
-    document.getElementById('newAddressForm').reset();
-    
-    // Reset address type to home
-    selectedAddressType = 'home';
-    document.getElementById('modal_address_type').value = 'home';
-    document.getElementById('editingAddressIndex').value = '';
-    
-    // Reset modal title and button
-    document.getElementById('addAddressModalLabel').textContent = 'Add New Address';
-    document.getElementById('saveAddressBtn').textContent = 'Add Address';
-    
-    // Reset button styles
-    document.querySelectorAll('#addAddressModal .address-type-btn').forEach(btn => {
-        if (btn.dataset.type === 'home') {
-            btn.style.backgroundColor = '#28a745';
-            btn.style.color = '#ffffff';
-            btn.style.borderColor = '#28a745';
-        } else {
-            btn.style.backgroundColor = '#ffffff';
-            btn.style.color = '#28a745';
-            btn.style.borderColor = '#28a745';
-        }
-    });
-    
-    // Hide custom address type input
-    document.getElementById('customAddressTypeContainer').style.display = 'none';
-    document.getElementById('modal_custom_address_type').required = false;
-    document.getElementById('modal_custom_address_type').value = '';
-}
-
-function saveNewAddress() {
-    const form = document.getElementById('newAddressForm');
-    if (!form.checkValidity()) {
-        form.reportValidity();
-        return;
-    }
-    
-    // Validate custom address type if "others" is selected
-    const customAddressType = selectedAddressType === 'others' ? document.getElementById('modal_custom_address_type').value.trim() : null;
-    if (selectedAddressType === 'others' && !customAddressType) {
-        alert('Please enter a custom address type name.');
-        document.getElementById('modal_custom_address_type').focus();
-        return;
-    }
-    
-    // Check if editing or adding
-    const editingIndex = document.getElementById('editingAddressIndex').value;
-    const isEditing = editingIndex !== '';
-    
-    // Determine the URL
-    let url = '{{ route("frontend.parent.save-address") }}';
-    
-    // Submit via AJAX to save/update address
-    fetch(url, {
-        method: 'POST',
-        headers: {
-            'X-CSRF-TOKEN': '{{ csrf_token() }}',
-            'Content-Type': 'application/json',
-            'Accept': 'application/json',
-        },
-        body: JSON.stringify({
-            name: document.getElementById('modal_name').value,
-            phone: document.getElementById('modal_phone').value,
-            email: document.getElementById('modal_email').value,
-            alternative_number: document.getElementById('modal_alternative_number').value,
-            block_name: document.getElementById('modal_block_name').value,
-            address: document.getElementById('modal_address').value,
-            city: document.getElementById('modal_city').value,
-            state: document.getElementById('modal_state').value,
-            pincode: document.getElementById('modal_pincode').value,
-            landmark: document.getElementById('modal_landmark').value,
-            address_type: selectedAddressType,
-            custom_address_type: customAddressType,
-            editing_address_index: editingIndex || null,
-        })
-    })
-    .then(response => {
-        console.log('Response status:', response.status);
-        return response.json();
-    })
-    .then(data => {
-        console.log('Response data:', data);
-        if (data.success) {
-            // Close modal
-            const modal = bootstrap.Modal.getInstance(document.getElementById('addAddressModal'));
-            modal.hide();
-            
-            // Reload page to show updated address
-            location.reload();
-        } else {
-            console.error('Save failed:', data.message);
-            alert(data.message || 'Error saving address. Please try again.');
-        }
-    })
-    .catch(error => {
-        console.error('Fetch error:', error);
-        alert('Error saving address. Please try again.');
-    });
-}
 
 function editAddress(addressId) {
     const address = addressesData.find(addr => addr.id === addressId);

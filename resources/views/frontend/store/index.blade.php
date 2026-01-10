@@ -195,7 +195,7 @@
 </section>
 
 <!-- Mobile Filter Modal -->
-<div class="modal fade d-lg-none" id="filterModal" tabindex="-1" aria-labelledby="filterModalLabel" aria-hidden="true" style="z-index: 9999;">
+<div class="modal fade d-lg-none" id="filterModal" tabindex="-1" aria-labelledby="filterModalLabel" style="z-index: 9999;">
     <div class="modal-dialog modal-fullscreen">
         <div class="modal-content">
             <div class="modal-header" style="position: relative;">

@@ -87,10 +87,7 @@
                             <i class="fas fa-list" style="color:#490d59;background:#f7f2fb;padding:8px;border-radius:8px;"></i>
                             Product Variants
                         </h3>
-                            <button type="button" id="apply-weight-all-btn" style="display:none;padding:6px 12px;background:#490d59;color:white;border:none;border-radius:6px;font-size:12px;cursor:pointer;">
-                                <i class="fas fa-copy"></i> Apply Weight to All Sizes
-                            </button>
-                        </div>
+                    </div>
                     
                     <!-- Metadata Hidden Inputs -->
                     <input type="hidden" name="inventory_stock" value="{{ old('inventory_stock', $product->inventory_stock ?? 0) }}">
@@ -111,15 +108,36 @@
                                     </label>
                                     <label class="variant-weight-label" style="display:block;">
                                         <span class="variant-weight-label-text" style="font-size:12px;">Weight (kg)</span>
-                                        <input type="number" name="variants[{{$index}}][weight]" min="0" step="0.01" value="{{ $variant['weight'] ?? '' }}" placeholder="0.00" class="variant-weight-input">
+                                        <div style="display:flex; gap:5px;">
+                                            <input type="number" name="variants[{{$index}}][weight]" min="0" step="0.01" value="{{ $variant['weight'] ?? '' }}" placeholder="0.00" class="variant-weight-input">
+                                            @if($index == 0)
+                                            <button type="button" class="apply-all-btn" data-field="weight" title="Apply to all variants" style="background:#f3f4f6; border:1px solid #d1d5db; border-radius:4px; padding:0 8px; cursor:pointer;">
+                                                <i class="fas fa-angle-double-down" style="color:#4b5563; font-size:12px;"></i>
+                                            </button>
+                                            @endif
+                                        </div>
                                     </label>
                                     <label>
                                         <span class="variant-stock-label-text" style="font-size:12px;">Stock</span>
-                                        <input type="number" name="variants[{{$index}}][stock]" value="{{ $variant['stock'] }}" placeholder="Qty" min="0" class="variant-stock">
+                                        <div style="display:flex; gap:5px;">
+                                            <input type="number" name="variants[{{$index}}][stock]" value="{{ $variant['stock'] }}" placeholder="Qty" min="0" class="variant-stock">
+                                            @if($index == 0)
+                                            <button type="button" class="apply-all-btn" data-field="stock" title="Apply to all variants" style="background:#f3f4f6; border:1px solid #d1d5db; border-radius:4px; padding:0 8px; cursor:pointer;">
+                                                <i class="fas fa-angle-double-down" style="color:#4b5563; font-size:12px;"></i>
+                                            </button>
+                                            @endif
+                                        </div>
                                     </label>
                                     <label>
                                         <span class="variant-low-stock-label-text" style="font-size:12px;">Low Stock Alert</span>
-                                        <input type="number" name="variants[{{$index}}][low_stock_threshold]" value="{{ $variant['low_stock_threshold'] ?? 5 }}" placeholder="Alert Qty" min="0">
+                                        <div style="display:flex; gap:5px;">
+                                            <input type="number" name="variants[{{$index}}][low_stock_threshold]" value="{{ $variant['low_stock_threshold'] ?? 5 }}" placeholder="Alert Qty" min="0" class="variant-low-stock">
+                                            @if($index == 0)
+                                            <button type="button" class="apply-all-btn" data-field="low_stock" title="Apply to all variants" style="background:#f3f4f6; border:1px solid #d1d5db; border-radius:4px; padding:0 8px; cursor:pointer;">
+                                                <i class="fas fa-angle-double-down" style="color:#4b5563; font-size:12px;"></i>
+                                            </button>
+                                            @endif
+                                        </div>
                                     </label>
                                     <div style="display:flex;align-items:end;padding-bottom:10px;">
                                         <button type="button" class="btn-remove-variant" style="color:#b42318;background:none;border:none;cursor:pointer;">
@@ -142,15 +160,36 @@
                                     </label>
                                     <label class="variant-weight-label" style="display:block;">
                                         <span class="variant-weight-label-text" style="font-size:12px;">Weight (kg)</span>
-                                        <input type="number" name="variants[{{$index}}][weight]" min="0" step="0.01" value="{{ $variant->weight ?? '' }}" placeholder="0.00" class="variant-weight-input">
+                                        <div style="display:flex; gap:5px;">
+                                            <input type="number" name="variants[{{$index}}][weight]" min="0" step="0.01" value="{{ $variant->weight ?? '' }}" placeholder="0.00" class="variant-weight-input">
+                                            @if($index === 0)
+                                            <button type="button" class="apply-all-btn" data-field="weight" title="Apply to all variants" style="background:#f3f4f6; border:1px solid #d1d5db; border-radius:4px; padding:0 8px; cursor:pointer;">
+                                                <i class="fas fa-angle-double-down" style="color:#4b5563; font-size:12px;"></i>
+                                            </button>
+                                            @endif
+                                        </div>
                                     </label>
                                     <label>
                                         <span class="variant-stock-label-text" style="font-size:12px;">Stock</span>
-                                        <input type="number" name="variants[{{$index}}][stock]" value="{{ $variant->stock }}" placeholder="Qty" min="0" class="variant-stock">
+                                        <div style="display:flex; gap:5px;">
+                                            <input type="number" name="variants[{{$index}}][stock]" value="{{ $variant->stock }}" placeholder="Qty" min="0" class="variant-stock" @if($product->exists) readonly style="background-color:#f3f4f6;cursor:not-allowed;" @endif>
+                                            @if($index === 0)
+                                            <button type="button" class="apply-all-btn" data-field="stock" title="Apply to all variants" style="background:#f3f4f6; border:1px solid #d1d5db; border-radius:4px; padding:0 8px; cursor:pointer;">
+                                                <i class="fas fa-angle-double-down" style="color:#4b5563; font-size:12px;"></i>
+                                            </button>
+                                            @endif
+                                        </div>
                                     </label>
                                     <label>
                                         <span class="variant-low-stock-label-text" style="font-size:12px;">Low Stock Alert</span>
-                                        <input type="number" name="variants[{{$index}}][low_stock_threshold]" value="{{ $variant->low_stock_threshold }}" placeholder="Alert Qty" min="0">
+                                        <div style="display:flex; gap:5px;">
+                                            <input type="number" name="variants[{{$index}}][low_stock_threshold]" value="{{ $variant->low_stock_threshold }}" placeholder="Alert Qty" min="0" class="variant-low-stock">
+                                            @if($index === 0)
+                                            <button type="button" class="apply-all-btn" data-field="low_stock" title="Apply to all variants" style="background:#f3f4f6; border:1px solid #d1d5db; border-radius:4px; padding:0 8px; cursor:pointer;">
+                                                <i class="fas fa-angle-double-down" style="color:#4b5563; font-size:12px;"></i>
+                                            </button>
+                                            @endif
+                                        </div>
                                     </label>
                                     <div style="display:flex;align-items:end;padding-bottom:10px;">
                                         <button type="button" class="btn-remove-variant" style="color:#b42318;background:none;border:none;cursor:pointer;">
@@ -172,15 +211,30 @@
                                 </label>
                                 <label class="variant-weight-label" style="display:block;">
                                     <span class="variant-weight-label-text" style="font-size:12px;">Weight (kg)</span>
-                                    <input type="number" name="variants[0][weight]" min="0" step="0.01" placeholder="0.00" class="variant-weight-input">
+                                    <div style="display:flex; gap:5px;">
+                                        <input type="number" name="variants[0][weight]" min="0" step="0.01" placeholder="0.00" class="variant-weight-input">
+                                        <button type="button" class="apply-all-btn" data-field="weight" title="Apply to all variants" style="background:#f3f4f6; border:1px solid #d1d5db; border-radius:4px; padding:0 8px; cursor:pointer;">
+                                            <i class="fas fa-angle-double-down" style="color:#4b5563; font-size:12px;"></i>
+                                        </button>
+                                    </div>
                                 </label>
                                 <label>
                                     <span class="variant-stock-label-text" style="font-size:12px;">Stock</span>
-                                    <input type="number" name="variants[0][stock]" placeholder="Qty" min="0" class="variant-stock">
+                                    <div style="display:flex; gap:5px;">
+                                        <input type="number" name="variants[0][stock]" placeholder="Qty" min="0" class="variant-stock" @if($product->exists) readonly style="background-color:#f3f4f6;cursor:not-allowed;" @endif>
+                                        <button type="button" class="apply-all-btn" data-field="stock" title="Apply to all variants" style="background:#f3f4f6; border:1px solid #d1d5db; border-radius:4px; padding:0 8px; cursor:pointer;">
+                                            <i class="fas fa-angle-double-down" style="color:#4b5563; font-size:12px;"></i>
+                                        </button>
+                                    </div>
                                 </label>
                                 <label>
                                     <span class="variant-low-stock-label-text" style="font-size:12px;">Low Stock Alert</span>
-                                    <input type="number" name="variants[0][low_stock_threshold]" placeholder="Alert Qty" min="0" value="5">
+                                    <div style="display:flex; gap:5px;">
+                                        <input type="number" name="variants[0][low_stock_threshold]" placeholder="Alert Qty" min="0" value="5" class="variant-low-stock">
+                                        <button type="button" class="apply-all-btn" data-field="low_stock" title="Apply to all variants" style="background:#f3f4f6; border:1px solid #d1d5db; border-radius:4px; padding:0 8px; cursor:pointer;">
+                                            <i class="fas fa-angle-double-down" style="color:#4b5563; font-size:12px;"></i>
+                                        </button>
+                                    </div>
                                 </label>
                                 <div style="display:flex;align-items:end;padding-bottom:10px;">
                                     <button type="button" class="btn-remove-variant" style="color:#b42318;background:none;border:none;cursor:pointer;">
@@ -190,9 +244,12 @@
                             </div>
                         @endif
                     </div>
-                    <button type="button" id="add-variant-btn" style="margin-top:10px;background:#f9fafb;border:1px dashed #d0d5dd;border-radius:8px;width:100%;padding:10px;color:#475467;font-size:13px;cursor:pointer;">
-                        + Add another size/variant
-                    </button>
+                    <div style="margin-top:10px; display: flex; gap: 10px; align-items: center;">
+                        <input type="number" id="add-variant-count" value="1" min="1" style="width: 80px; padding: 10px; border: 1px solid #d1d5db; border-radius: 8px;" placeholder="Qty">
+                        <button type="button" id="add-variant-btn" style="flex-grow: 1; background:#f9fafb; border:1px dashed #d0d5dd; border-radius:8px; padding:10px; color:#475467; font-size:13px; cursor:pointer;">
+                            + Add size/variant(s)
+                        </button>
+                    </div>
                 </div>
             </div>
 
@@ -256,10 +313,7 @@
                                 @endforeach
                             </select>
                         </label>
-                        <label>
-                            <span>Tag name</span>
-                            <input type="text" name="tag_name" value="{{ old('tag_name', $product->tag_name) }}" placeholder="Eg: Bestseller">
-                        </label> --}}
+                         --}}
                     </div>
                 </div>
 
@@ -827,51 +881,133 @@
 
             if(addBtn) {
                 addBtn.addEventListener('click', function() {
-                    const index = new Date().getTime(); // Unique ID to avoid collisions
-                    const isVariantPricing = variantPricingToggle ? variantPricingToggle.checked : false;
-                    const row = document.createElement('div');
-                    row.className = 'variant-row';
-                    // Always show weight field for variants
-                    row.style.cssText = 'display:grid;grid-template-columns:1fr 1fr 1fr 1fr auto;gap:12px;margin-bottom:12px;align-items:end;';
-                    row.innerHTML = `
-                        <label>
-                            <span style="font-size:12px;">Size / Option</span>
-                            <input type="text" name="variants[${index}][option]" placeholder="e.g. S, M, 10" required>
-                        </label>
-                        ${isVariantPricing ? `
-                        <label class="variant-price-label" style="display:block;">
-                            <span class="variant-price-label-text" style="font-size:12px;">Price of Fabric</span>
-                            <input type="number" name="variants[${index}][price]" min="0" step="0.01" placeholder="0.00" class="variant-price-input" required>
-                        </label>
-                        ` : ''}
-                        <label class="variant-weight-label" style="display:block;">
-                            <span class="variant-weight-label-text" style="font-size:12px;">Weight (kg)</span>
-                            <input type="number" name="variants[${index}][weight]" min="0" step="0.01" placeholder="0.00" class="variant-weight-input">
-                        </label>
-                        <label>
-                            <span class="variant-stock-label-text" style="font-size:12px;">${isVariantPricing ? 'Stock of Fabric' : 'Stock'}</span>
-                            <input type="number" name="variants[${index}][stock]" placeholder="Qty" min="0" class="variant-stock">
-                        </label>
-                        <label>
-                            <span class="variant-low-stock-label-text" style="font-size:12px;">${isVariantPricing ? 'Qty of Fabric' : 'Low Stock Alert'}</span>
-                            <input type="number" name="variants[${index}][low_stock_threshold]" placeholder="Alert Qty" min="0" value="5">
-                        </label>
-                        <div style="display:flex;align-items:end;padding-bottom:10px;">
-                            <button type="button" class="btn-remove-variant" style="color:#b42318;background:none;border:none;cursor:pointer;">
-                                <i class="fas fa-trash"></i>
-                            </button>
-                        </div>
-                    `;
-                    container.appendChild(row);
-                    updateMainStock();
+                    const countInput = document.getElementById('add-variant-count');
+                    const count = countInput ? parseInt(countInput.value) || 1 : 1;
+                    
+                    for (let i = 0; i < count; i++) {
+                        createVariant();
+                    }
+                    
+                    // Reset count to 1 after adding
+                    if (countInput) countInput.value = 1;
                 });
             }
 
+            function createVariant() {
+                const index = new Date().getTime() + Math.floor(Math.random() * 1000); // Unique ID
+                const isVariantPricing = variantPricingToggle ? variantPricingToggle.checked : false;
+                
+                const row = document.createElement('div');
+                row.className = 'variant-row';
+                // Always show weight field for variants
+                row.style.cssText = 'display:grid;grid-template-columns:1fr 1fr 1fr 1fr auto;gap:12px;margin-bottom:12px;align-items:end;';
+                
+                // Auto-increment size, copy weight and stock logic
+                let newSize = '';
+                let lastWeight = '';
+                let lastStock = '';
+                
+                const lastRow = container.querySelector('.variant-row:last-child');
+                if (lastRow) {
+                    const lastSizeInput = lastRow.querySelector('input[name*="[option]"]');
+                    if (lastSizeInput && lastSizeInput.value) {
+                        const sizeNum = parseFloat(lastSizeInput.value);
+                        // Check if it's a valid number
+                        if (!isNaN(sizeNum)) {
+                             newSize = sizeNum + 2;
+                        }
+                    }
+                    
+                    // Get weight
+                    const lastWeightInput = lastRow.querySelector('input[name*="[weight]"]');
+                    if (lastWeightInput) {
+                        lastWeight = lastWeightInput.value;
+                    }
+                    
+                    // Get stock
+                    const lastStockInput = lastRow.querySelector('input[name*="[stock]"]');
+                    if (lastStockInput) {
+                        lastStock = lastStockInput.value;
+                    }
+                }
+
+                row.innerHTML = `
+                    <label>
+                        <span style="font-size:12px;">Size / Option</span>
+                        <input type="text" name="variants[${index}][option]" value="${newSize}" placeholder="e.g. S, M, 10" required>
+                    </label>
+                    ${isVariantPricing ? `
+                    <label class="variant-price-label" style="display:block;">
+                        <span class="variant-price-label-text" style="font-size:12px;">Price of Fabric</span>
+                        <input type="number" name="variants[${index}][price]" min="0" step="0.01" placeholder="0.00" class="variant-price-input" required>
+                    </label>
+                    ` : ''}
+                    <label class="variant-weight-label" style="display:block;">
+                        <span class="variant-weight-label-text" style="font-size:12px;">Weight (kg)</span>
+                        <input type="number" name="variants[${index}][weight]" value="${lastWeight}" min="0" step="0.01" placeholder="0.00" class="variant-weight-input">
+                    </label>
+                    <label>
+                        <span class="variant-stock-label-text" style="font-size:12px;">${isVariantPricing ? 'Stock of Fabric' : 'Stock'}</span>
+                        <input type="number" name="variants[${index}][stock]" value="${lastStock}" placeholder="Qty" min="0" class="variant-stock">
+                    </label>
+                    <label>
+                        <span class="variant-low-stock-label-text" style="font-size:12px;">${isVariantPricing ? 'Qty of Fabric' : 'Low Stock Alert'}</span>
+                        <div style="display:flex; gap:5px;">
+                            <input type="number" name="variants[${index}][low_stock_threshold]" placeholder="Alert Qty" min="0" value="5" class="variant-low-stock">
+                        </div>
+                    </label>
+                    <div style="display:flex;align-items:end;padding-bottom:10px;">
+                        <button type="button" class="btn-remove-variant" style="color:#b42318;background:none;border:none;cursor:pointer;">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </div>
+                `;
+                container.appendChild(row);
+                updateMainStock();
+            }
             if(container) {
                 container.addEventListener('click', function(e) {
                     if (e.target.closest('.btn-remove-variant')) {
                         e.target.closest('.variant-row').remove();
                         updateMainStock();
+                    }
+                    
+                    // Handle Apply to All button click
+                    const applyBtn = e.target.closest('.apply-all-btn');
+                    if (applyBtn) {
+                        const fieldType = applyBtn.dataset.field; // 'weight', 'stock', or 'low_stock'
+                        const variantRow = applyBtn.closest('.variant-row');
+                        let selector = '';
+                        if (fieldType === 'weight') selector = '.variant-weight-input';
+                        else if (fieldType === 'stock') selector = '.variant-stock';
+                        else if (fieldType === 'low_stock') selector = '.variant-low-stock';
+
+                        const input = variantRow.querySelector(selector);
+                        
+                        if (input && input.value) {
+                            const value = input.value;
+                            const allRows = container.querySelectorAll('.variant-row');
+                            
+                            allRows.forEach(row => {
+                                if (row === variantRow) return; // Skip source row
+                                
+                                const targetInput = row.querySelector(selector);
+                                if (targetInput) {
+                                    targetInput.value = value;
+                                }
+                            });
+                            
+                            // Update main stock if stock was changed
+                            if (fieldType === 'stock') {
+                                updateMainStock();
+                            }
+                            
+                            // Visual feedback (optional)
+                            applyBtn.innerHTML = '<i class="fas fa-check" style="color:#059669; font-size:12px;"></i>';
+                            setTimeout(() => {
+                                applyBtn.innerHTML = '<i class="fas fa-angle-double-down" style="color:#4b5563; font-size:12px;"></i>';
+                            }, 1000);
+                        }
                     }
                 });
 
@@ -881,47 +1017,6 @@
                     }
                 });
                 
-                // Apply Weight to All Sizes functionality
-                const applyWeightAllBtn = document.getElementById('apply-weight-all-btn');
-                if (applyWeightAllBtn) {
-                    // Show button when there are variants
-                    function toggleApplyWeightButton() {
-                        const variantRows = container.querySelectorAll('.variant-row');
-                        applyWeightAllBtn.style.display = variantRows.length > 0 ? 'block' : 'none';
-                    }
-                    
-                    applyWeightAllBtn.addEventListener('click', function() {
-                        const variantRows = container.querySelectorAll('.variant-row');
-                        if (variantRows.length === 0) {
-                            alert('No variants to apply weight to.');
-                            return;
-                        }
-                        
-                        // Get weight from first variant row
-                        const firstWeightInput = container.querySelector('.variant-weight-input');
-                        if (!firstWeightInput) {
-                            alert('Please add at least one variant first.');
-                            return;
-                        }
-                        
-                        // Get the weight value from the first variant
-                        const weightValue = firstWeightInput.value;
-                        
-                        // Apply first variant's weight to all other variants
-                        const allWeightInputs = container.querySelectorAll('.variant-weight-input');
-                        allWeightInputs.forEach(input => {
-                            // Skip the first input (it already has the value)
-                            if (input !== firstWeightInput) {
-                                input.value = weightValue;
-                            }
-                        });
-                    });
-                    
-                    // Toggle button visibility on page load and when variants change
-                    toggleApplyWeightButton();
-                    const observer = new MutationObserver(toggleApplyWeightButton);
-                    observer.observe(container, { childList: true, subtree: true });
-                }
             }
         });
     </script>
