@@ -10,7 +10,7 @@ class PaymentController extends Controller
 {
     public function index(Request $request)
     {
-        $query = Payment::with('order');
+        $query = Payment::with(['order' => fn($q) => $q->withoutGlobalScopes()]);
 
         // Search (Order Number or Payment ID)
         if ($request->filled('search')) {
@@ -18,7 +18,7 @@ class PaymentController extends Controller
             $query->where(function($q) use ($search) {
                 $q->where('payment_id', 'like', "%{$search}%")
                   ->orWhereHas('order', function($subQ) use ($search) {
-                      $subQ->where('order_number', 'like', "%{$search}%");
+                      $subQ->withoutGlobalScopes()->where('order_number', 'like', "%{$search}%");
                   });
             });
         }
@@ -51,7 +51,7 @@ class PaymentController extends Controller
 
     public function show(Payment $payment)
     {
-        $payment->load('order'); // Ensure order is loaded
+        $payment->load(['order' => fn($q) => $q->withoutGlobalScopes()]); // Ensure order is loaded
         $routePrefix = 'master.admin';
         return view('admin.master.payments.show', compact('payment', 'routePrefix'));
     }

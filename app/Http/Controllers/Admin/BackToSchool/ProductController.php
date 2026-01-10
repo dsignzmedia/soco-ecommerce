@@ -248,7 +248,6 @@ class ProductController extends Controller
             $data['featured_image'] = $request->file('featured_image')->store('products', 'public');
         }
 
-        // Handle media gallery
         if ($request->hasFile('media_images')) {
             $galleryPaths = [];
             foreach($request->file('media_images') as $image) {
@@ -263,6 +262,11 @@ class ProductController extends Controller
             $data['media_gallery'] = $galleryPaths;
         }
         
+        // Remove media_images from data to prevent saving UploadedFile objects
+        if (isset($data['media_images'])) {
+            unset($data['media_images']);
+        }
+        
         $data['stock_status'] = $data['inventory_stock'] > 0 ? 'in_stock' : 'out_of_stock';
 
         $product = Product::create($data);
@@ -272,6 +276,12 @@ class ProductController extends Controller
         }
 
         return redirect()->route('admin.back_to_school.products.index')->with('success', 'Product created successfully.');
+    }
+
+    public function show($id): View
+    {
+        $product = Product::with(['school', 'variants'])->findOrFail($id);
+        return view('admin.back_to_school.products.show', compact('product'));
     }
 
     public function edit($id): View
@@ -427,6 +437,11 @@ class ProductController extends Controller
             if (empty($data['featured_image']) && empty($product->featured_image) && !empty($galleryPaths)) {
                 $data['featured_image'] = $galleryPaths[0];
             }
+        }
+        
+        // Remove media_images from data to prevent saving UploadedFile objects
+        if (isset($data['media_images'])) {
+            unset($data['media_images']);
         }
         
         // Handle specific featured image upload (overrides gallery logic if present)

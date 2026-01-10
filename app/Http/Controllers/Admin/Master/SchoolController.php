@@ -89,6 +89,22 @@ class SchoolController extends Controller
 
         $school->update($data);
 
+        // Sync changes to the associated User account (School Admin)
+        if (!empty($data['contact_email'])) {
+             $user = \App\Models\User::where('school_id', $school->id)
+                ->where('role', \App\Models\User::ROLE_SCHOOL)
+                ->first();
+             
+             if ($user) {
+                 // Update user details to match school details
+                 $user->update([
+                     'name' => $data['name'],
+                     'email' => $data['contact_email'],
+                     'phone' => $data['contact_phone'] ?? $user->phone,
+                 ]);
+             }
+        }
+
         return redirect()->route('master.admin.schools.index')
             ->with('status', 'School updated successfully.');
     }

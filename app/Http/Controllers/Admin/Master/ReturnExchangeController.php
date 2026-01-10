@@ -18,13 +18,16 @@ class ReturnExchangeController extends Controller
     {
         $filters = $request->only(['type', 'status', 'q']);
 
-        $requests = ReturnExchangeRequest::with('order')
+        $requests = ReturnExchangeRequest::with(['order' => fn($q) => $q->withoutGlobalScopes()])
             ->when($filters['type'] ?? null, fn($q, $type) => $q->where('type', $type))
             ->when($filters['status'] ?? null, fn($q, $status) => $q->where('status', $status))
             ->when($filters['q'] ?? null, function ($q, $term) {
                 $q->whereHas('order', function ($oq) use ($term) {
-                    $oq->where('order_number', 'like', '%'.$term.'%')
-                        ->orWhere('item_name', 'like', '%'.$term.'%');
+                    $oq->withoutGlobalScopes()
+                        ->where(function($sub) use ($term) {
+                            $sub->where('order_number', 'like', '%'.$term.'%')
+                                ->orWhere('item_name', 'like', '%'.$term.'%');
+                        });
                 });
             })
             ->latest()
@@ -61,7 +64,7 @@ class ReturnExchangeController extends Controller
 
     public function show(ReturnExchangeRequest $returnRequest): View
     {
-        $returnRequest->load('order');
+        $returnRequest->load(['order' => fn($q) => $q->withoutGlobalScopes()]);
         
         // Fetch product and variants for size dropdown
         $product = null;

@@ -97,6 +97,37 @@
             --heading: #111827;
         }
 
+        /* User request: "after selecting an option no cursor should come" */
+        /* Completely hide input cursor and text when an item is selected */
+        .ts-wrapper.has-items .ts-control input {
+            opacity: 0 !important;
+            position: absolute !important;
+            z-index: -1 !important;
+            width: 1px !important;
+            padding: 0 !important;
+            margin: 0 !important;
+            border: none !important;
+            caret-color: transparent !important; /* Key to hiding blinking cursor */
+            color: transparent !important;
+            pointer-events: none !important;
+            left: -10000px !important;
+        }
+
+        /* Ensure the selected item takes full layout width */
+        .ts-wrapper.single.has-items .ts-control .item {
+            width: 100%;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            padding-right: 20px; /* Space for the 'x' remove button if present */
+        }
+        
+        /* If user clicks to focus, we still keep it visually hidden but functional for blind typing (standard select behavior) */
+        .ts-wrapper.has-items.focus .ts-control input {
+            /* Still keep it hidden visually */
+            opacity: 0 !important;
+        }
+
         * {
             box-sizing: border-box;
         }
@@ -750,9 +781,59 @@
             document.querySelectorAll('select:not(.no-tom)').forEach((el) => {
                 new TomSelect(el, {
                     plugins: [],
-                    controlInput: null,
+                    // controlInput: null, // Removed to enable search
                     allowEmptyOption: true,
                     create: false,
+                    sortField: {
+                        field: "text",
+                        direction: "asc"
+                    },
+                    onItemAdd: function() {
+                        this.blur(); // Fix blinky cursor on selection
+                    },
+                    onDropdownOpen: function() {
+                        // 1. Move dropdown to body
+                        if (this.dropdown.parentNode !== document.body) {
+                            document.body.appendChild(this.dropdown);
+                        }
+
+                        // 2. Smart Positioning
+                        const rect = this.control.getBoundingClientRect();
+                        const spaceBelow = window.innerHeight - rect.bottom;
+                        
+                        // Basic positioning
+                        this.dropdown.style.position = "absolute";
+                        this.dropdown.style.width = rect.width + "px";
+                        this.dropdown.style.left = (rect.left + window.scrollX) + "px";
+                        this.dropdown.style.zIndex = "99999";
+
+                        // If limited space below (< 220px) and more space above, flip UP
+                        if (spaceBelow < 220 && rect.top > spaceBelow) {
+                            this.dropdown.style.top = (rect.top + window.scrollY) + "px";
+                            this.dropdown.style.transform = "translateY(-100%)";
+                            this.dropdown.style.marginTop = "-8px"; // Add space between control and menu
+                            this.dropdown.classList.add('dropdown-flipped'); // Helper for CSS if needed
+                        } else {
+                            this.dropdown.style.top = (rect.bottom + window.scrollY) + "px";
+                            this.dropdown.style.transform = "none";
+                            this.dropdown.style.marginTop = "8px"; // Default space
+                            this.dropdown.classList.remove('dropdown-flipped');
+                        }
+
+                        // 3. Auto-close on scroll
+                        this.scrollListener = (e) => {
+                            // Close if scrolling something other than the dropdown content
+                            if (!this.dropdown.contains(e.target)) {
+                                this.close();
+                            }
+                        };
+                        window.addEventListener('scroll', this.scrollListener, { capture: true, passive: true });
+                    },
+                    onDropdownClose: function() {
+                        if (this.scrollListener) {
+                            window.removeEventListener('scroll', this.scrollListener, { capture: true });
+                        }
+                    }
                 });
             });
         });

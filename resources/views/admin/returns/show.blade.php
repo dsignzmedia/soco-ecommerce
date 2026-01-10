@@ -17,11 +17,11 @@
                 <p><strong>Type:</strong> <span style="text-transform:capitalize;">{{ $returnRequest->type }}</span></p>
                 <p><strong>Status:</strong> <span style="text-transform:capitalize;">{{ str_replace('_',' ', $returnRequest->status) }}</span></p>
                 <p><strong>Quantity:</strong> 
-                    <span style="color: #490D59; font-weight: 600;">{{ $returnRequest->requested_quantity ?? $returnRequest->order->quantity }}</span>
-                    @if($returnRequest->order && ($returnRequest->requested_quantity ?? $returnRequest->order->quantity) < $returnRequest->order->quantity)
+                    <span style="color: #490D59; font-weight: 600;">{{ $returnRequest->requested_quantity ?? $returnRequest->order?->quantity }}</span>
+                    @if($returnRequest->order && ($returnRequest->requested_quantity ?? $returnRequest->order?->quantity) < $returnRequest->order?->quantity)
                         <span class="badge bg-warning text-dark ms-2">Partial Return</span>
                     @endif
-                    of {{ $returnRequest->order->quantity ?? 'N/A' }} ordered
+                    of {{ $returnRequest->order?->quantity ?? 'N/A' }} ordered
                 </p>
                 @if($returnRequest->returned_quantity)
                     <p><strong>Returned Quantity:</strong> <span style="color: #28a745; font-weight: 600;">{{ $returnRequest->returned_quantity }}</span></p>
@@ -52,16 +52,17 @@
             </div>
             <div style="border:1px solid #e5e7eb;border-radius:12px;padding:16px;">
                 <h4 style="margin:0 0 8px;color:#111827;">Original Order</h4>
-                <p><strong>Order #:</strong> {{ $returnRequest->order->order_number ?? '—' }}</p>
-                <p><strong>School:</strong> {{ $returnRequest->order->school->name ?? '—' }}</p>
-                <p><strong>Item:</strong> {{ $returnRequest->order->item_name ?? '—' }}</p>
-                <p><strong>Size:</strong> {{ $returnRequest->order->size ?? '—' }}</p>
-                <p><strong>Ordered Qty:</strong> {{ $returnRequest->order->quantity ?? 1 }}</p>
+                <p><strong>Order #:</strong> {{ $returnRequest->order?->order_number ?? '—' }}</p>
+                <p><strong>School:</strong> {{ $returnRequest->order?->school?->name ?? '—' }}</p>
+                <p><strong>Item:</strong> {{ $returnRequest->order?->item_name ?? '—' }}</p>
+                <p><strong>Size:</strong> {{ $returnRequest->order?->size ?? '—' }}</p>
+                <p><strong>Ordered Qty:</strong> {{ $returnRequest->order?->quantity ?? 1 }}</p>
                 @php
                     $totalReturned = \App\Models\Admin\Master\ReturnExchangeRequest::where('order_id', $returnRequest->order_id)
                         ->whereIn('status', ['pending', 'approved', 'received_restocked', 'received_discarded', 'completed'])
                         ->sum('requested_quantity');
-                    $remainingQty = ($returnRequest->order->quantity ?? 1) - $totalReturned;
+                    $orderQty = $returnRequest->order?->quantity ?? 1;
+                    $remainingQty = $orderQty - $totalReturned;
                 @endphp
                 <p><strong>Returned Qty:</strong> 
                     <span style="color: #dc3545;">{{ $totalReturned }}</span>
@@ -69,7 +70,11 @@
                 <p><strong>Remaining Qty:</strong> 
                     <span style="color: #28a745; font-weight: 600;">{{ $remainingQty }}</span>
                 </p>
-                <p><a href="{{ route('master.admin.orders.show', $returnRequest->order) }}" style="color:#490d59;text-decoration:none;">View order details →</a></p>
+                @if($returnRequest->order)
+                    <p><a href="{{ route('master.admin.orders.show', $returnRequest->order) }}" style="color:#490d59;text-decoration:none;">View order details →</a></p>
+                @else
+                    <p><span style="color:#6b7280;font-style:italic;">Order details unavailable (Deleted)</span></p>
+                @endif
             </div>
         </div>
 

@@ -1457,12 +1457,17 @@ class AuthController extends Controller
             }
             return redirect()->back()->with('success', $message);
         } catch (\Exception $e) {
-            Log::error('Error saving address: ' . $e->getMessage());
             if ($request->expectsJson()) {
                 return response()->json(['success' => false, 'message' => 'Error: ' . $e->getMessage()]);
             }
             return redirect()->back()->with('error', 'Error saving address: ' . $e->getMessage());
         }
+    }
+
+    public function updateAddress(Request $request, $addressId)
+    {
+        $request->merge(['editing_address_index' => $addressId]);
+        return $this->saveAddress($request);
     }
 
     public function deleteAddress($addressId)

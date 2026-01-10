@@ -41,12 +41,17 @@ class CategoryController extends Controller
             default => 'master.admin.categories.store',
         };
 
+        // Calculate next sort order
+        $maxSortOrder = Category::max('sort_order');
+        $nextSortOrder = ($maxSortOrder !== null) ? $maxSortOrder + 1 : 0;
+
         return view('admin.categories.form', [
             'category' => new Category(),
             'mode' => 'create',
             'layout' => $layout,
             'redirectRoute' => $redirectRoute,
             'storeRoute' => $storeRoute,
+            'nextSortOrder' => $nextSortOrder,
         ]);
     }
 

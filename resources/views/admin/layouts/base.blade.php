@@ -82,6 +82,36 @@
             background-color: var(--primary) !important;
             color: #fff !important;
         }
+        /* User request: "after selecting an option no cursor should come" */
+        /* Completely hide input cursor and text when an item is selected */
+        .ts-wrapper.has-items .ts-control input {
+            opacity: 0 !important;
+            position: absolute !important;
+            z-index: -1 !important;
+            width: 1px !important;
+            padding: 0 !important;
+            margin: 0 !important;
+            border: none !important;
+            caret-color: transparent !important; /* Key to hiding blinking cursor */
+            color: transparent !important;
+            pointer-events: none !important;
+            left: -10000px !important;
+        }
+
+        /* Ensure the selected item takes full layout width */
+        .ts-wrapper.single.has-items .ts-control .item {
+            width: 100%;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            padding-right: 20px; /* Space for the 'x' remove button if present */
+        }
+        
+        /* If user clicks to focus, we still keep it visually hidden but functional for blind typing (standard select behavior) */
+        .ts-wrapper.has-items.focus .ts-control input {
+            /* Still keep it hidden visually */
+            opacity: 0 !important;
+        }
     </style>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
@@ -914,12 +944,15 @@
             document.querySelectorAll('select:not(.no-tom)').forEach((el) => {
                 const ts = new TomSelect(el, {
                     plugins: [],
-                    controlInput: null, // Disable search input
+                    // controlInput: null, // REMOVED to enable search
                     allowEmptyOption: true,
                     create: false,
                     sortField: {
                         field: "text",
                         direction: "asc"
+                    },
+                    onItemAdd: function() {
+                        this.blur(); // Fix blinky cursor on selection
                     },
                     onDropdownOpen: function() {
                         // 1. Move dropdown to body
