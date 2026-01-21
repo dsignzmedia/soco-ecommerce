@@ -16,11 +16,21 @@ class ReturnExchangeController extends Controller
 {
     public function index(Request $request): View
     {
-        $filters = $request->only(['type', 'status', 'q']);
+        $filters = $request->only(['type', 'status', 'q', 'school_id', 'grade']);
 
-        $requests = ReturnExchangeRequest::with(['order' => fn($q) => $q->withoutGlobalScopes()])
+        $requests = ReturnExchangeRequest::with(['order' => fn($q) => $q->withoutGlobalScopes()->with(['school' => fn($sq) => $sq->withoutGlobalScopes()])])
             ->when($filters['type'] ?? null, fn($q, $type) => $q->where('type', $type))
             ->when($filters['status'] ?? null, fn($q, $status) => $q->where('status', $status))
+            ->when($filters['school_id'] ?? null, function ($q, $schoolId) {
+                $q->whereHas('order', function ($oq) use ($schoolId) {
+                    $oq->withoutGlobalScopes()->where('school_id', $schoolId);
+                });
+            })
+            ->when($filters['grade'] ?? null, function ($q, $grade) {
+                $q->whereHas('order', function ($oq) use ($grade) {
+                    $oq->withoutGlobalScopes()->where('grade', $grade);
+                });
+            })
             ->when($filters['q'] ?? null, function ($q, $term) {
                 $q->whereHas('order', function ($oq) use ($term) {
                     $oq->withoutGlobalScopes()
@@ -59,7 +69,11 @@ class ReturnExchangeController extends Controller
             }
         }
 
-        return view('admin.returns.index', compact('requests', 'filters', 'productImages'));
+        // Fetch schools and grades for filters (similar to orders page)
+        $schools = \App\Models\Admin\Master\School::orderBy('name')->get();
+        $grades = Order::select('grade')->whereNotNull('grade')->distinct()->orderBy('grade')->pluck('grade');
+
+        return view('admin.returns.index', compact('requests', 'filters', 'productImages', 'schools', 'grades'));
     }
 
     public function show(ReturnExchangeRequest $returnRequest): View

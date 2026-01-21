@@ -42,8 +42,15 @@
 
             <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:24px;margin-bottom:24px;">
                 <label>
-                    <span>City</span>
-                    <input type="text" name="city" value="{{ old('city', $school->city) }}">
+                    <span>Shipping Zone</span>
+                    <select name="shipping_zone_id">
+                        <option value="">-- Select Zone --</option>
+                        @foreach($zones as $zone)
+                            <option value="{{ $zone->id }}" @selected(old('shipping_zone_id', $school->shipping_zone_id) == $zone->id)>
+                                {{ $zone->name }} @if($zone->cost) - ₹{{ number_format($zone->cost, 2) }}@endif
+                            </option>
+                        @endforeach
+                    </select>
                 </label>
                 <label>
                     <span>State</span>

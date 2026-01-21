@@ -1,7 +1,7 @@
 @extends('admin.layouts.back_to_school')
 
-@section('title', 'Returns & Exchanges | The Skool Store')
-@section('page_heading', 'Returns & Exchanges')
+@section('title', 'Exchanges | The Skool Store')
+@section('page_heading', 'Exchanges')
 @section('page_subheading', 'Review and approve requests; process received items')
 
 @section('content')
@@ -246,7 +246,7 @@
                         </td>
                     </tr>
                 @empty
-                    <tr><td colspan="9" style="padding:40px;text-align:center;color:#6b7280;">No return/exchange requests found.</td></tr>
+                    <tr><td colspan="9" style="padding:40px;text-align:center;color:#6b7280;">No exchange requests found.</td></tr>
                 @endforelse
             </tbody>
         </table>

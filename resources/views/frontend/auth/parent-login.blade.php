@@ -55,11 +55,6 @@
 
         <!-- OTP Input (shown after Send OTP) -->
         <form id="otpForm" style="display: none;">
-            <div class="mb-3 text-center">
-                <p class="text-muted mb-2" style="font-size: 14px;">
-                    OTP sent to: <span id="otpSentTo" class="fw-bold text-dark"></span>
-                </p>
-            </div>
             <div class="mb-3">
                 <label for="otp" class="form-label mb-2">Enter OTP</label>
                 <input type="text" class="form-control text-center" id="otp" name="otp" 
@@ -324,9 +319,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 loginForm.style.display = 'none';
                 otpForm.style.display = 'block';
                 
-                // Display the phone/email where OTP was sent
-                document.getElementById('otpSentTo').textContent = emailPhone;
-                
                 // Start resend timer
                 startResendTimer(resendOtp);
                 
@@ -437,7 +429,7 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 
     function startResendTimer(btn) {
-        let timeLeft = 60; // OTP expires in 60 seconds
+        let timeLeft = 30;
         btn.disabled = true;
         btn.innerText = `Resend OTP in ${timeLeft}s`;
         

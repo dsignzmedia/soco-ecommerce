@@ -122,7 +122,7 @@
                 </tr>
                 @if($product->variants && $product->variants->count() > 0)
                 <tr id="variants-{{ $product->id }}" style="display:none; background-color: #f9fafb;">
-                    <td colspan="5" style="padding: 0;">
+                    <td colspan="6" style="padding: 0;">
                         <div style="padding: 16px; border-top: 1px solid #e5e7eb;">
                             <h4 style="margin: 0 0 12px; font-size: 14px; font-weight: 600; color: #111827;">Variants Stock</h4>
                             <div style="display: grid; gap: 12px;">

@@ -42,6 +42,46 @@
         .status-active { background: #ecfdf3; color: #027a48; }
         .status-pending { background: #fff4e6; color: #b54708; }
         .status-inactive { background: #fef3f2; color: #912018; }
+        
+        /* Tablet Responsive Styles (768px - 1024px) */
+        @media (min-width: 768px) and (max-width: 1024px) {
+            table {
+                font-size: 12px;
+            }
+            
+            th, td {
+                padding: 10px 8px;
+                font-size: 12px;
+            }
+            
+            th {
+                font-size: 11px;
+            }
+            
+            .card {
+                padding: 18px;
+            }
+            
+            /* Hide less important columns on tablet */
+            th:nth-child(3), /* City */
+            td:nth-child(3),
+            th:nth-child(5), /* Grades */
+            td:nth-child(5) {
+                display: none;
+            }
+        }
+        
+        /* Mobile Responsive Styles */
+        @media (max-width: 767px) {
+            table {
+                display: block;
+                overflow-x: auto;
+            }
+            
+            .card {
+                padding: 16px;
+            }
+        }
     </style>
 @endpush
 

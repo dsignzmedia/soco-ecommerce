@@ -177,7 +177,7 @@
         }
 
         .brand img {
-            width: 140px;
+            width: 160px;
         }
 
         .brand small {
@@ -387,7 +387,56 @@
             box-shadow: 0 12px 30px rgba(15, 23, 42, 0.05);
         }
 
-        @media (max-width: 960px) {
+        /* Tablet Responsive Styles (768px - 1024px) */
+        @media (min-width: 768px) and (max-width: 1024px) {
+            .layout {
+                grid-template-columns: 220px 1fr;
+            }
+
+            .sidebar {
+                padding: 24px 12px;
+            }
+
+            .brand img {
+                width: 120px;
+            }
+
+            .brand small {
+                font-size: 10px;
+            }
+
+            .nav__item {
+                padding: 10px 12px;
+                font-size: 13px !important;
+            }
+
+            .nav__item i {
+                font-size: 16px;
+            }
+
+            .content-body {
+                padding: 24px 28px;
+            }
+
+            .topbar {
+                padding: 20px 28px;
+            }
+
+            .topbar__title h2 {
+                font-size: 20px !important;
+            }
+
+            .topbar__title p {
+                font-size: 13px;
+            }
+
+            .card {
+                padding: 20px;
+            }
+        }
+
+        /* Mobile Responsive Styles */
+        @media (max-width: 767px) {
             .layout {
                 grid-template-columns: 1fr;
             }
@@ -398,19 +447,27 @@
             }
 
             .content-body {
-                padding: 24px;
+                padding: 20px 16px;
             }
 
             .topbar {
                 flex-direction: column;
                 align-items: flex-start;
                 gap: 16px;
-                padding: 20px 24px;
+                padding: 16px 20px;
                 margin: 0;
                 position: sticky;
                 top: 0;
                 z-index: 999;
                 border-bottom: 1px solid rgba(15, 23, 42, 0.05);
+            }
+
+            .topbar__title h2 {
+                font-size: 18px !important;
+            }
+
+            .card {
+                padding: 16px;
             }
         }
 
@@ -591,7 +648,7 @@
                         ],
                         ['label' => 'Payments', 'route' => 'master.admin.payments.index', 'active' => 'master.admin.payments.*', 'icon' => 'fas fa-credit-card'],
                         ['label' => 'Inventory', 'route' => 'master.admin.inventory.dashboard', 'active' => 'master.admin.inventory.*', 'icon' => 'fas fa-warehouse'],
-                        ['label' => 'Returns & Exchanges', 'route' => 'master.admin.returns-exchange.index', 'active' => 'master.admin.returns-exchange.*', 'icon' => 'fas fa-exchange-alt'],
+                        ['label' => 'Exchanges', 'route' => 'master.admin.returns-exchange.index', 'active' => 'master.admin.returns-exchange.*', 'icon' => 'fas fa-exchange-alt'],
                         ['label' => 'Shipping', 'route' => 'master.admin.shipping.edit', 'active' => 'master.admin.shipping.*', 'icon' => 'fas fa-shipping-fast'],
                         ['label' => 'Reports', 'route' => 'master.admin.reports.index', 'active' => 'master.admin.reports.*', 'icon' => 'fas fa-chart-bar'],
                         ['label' => 'System Settings', 'route' => 'master.admin.settings.index', 'active' => [
@@ -600,6 +657,7 @@
                             'master.admin.settings.invoice-templates*',
                             'master.admin.settings.email-templates*',
                             'master.admin.settings.sms-templates*',
+                            'master.admin.settings.exchange-template*',
                             'master.admin.settings.app-branding*',
                             'master.admin.settings.backups*'
                         ], 'icon' => 'fas fa-cog'],

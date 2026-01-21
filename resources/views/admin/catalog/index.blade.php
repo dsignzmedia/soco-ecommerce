@@ -76,6 +76,59 @@
         .btn-vs-sm { padding: 6px 12px; font-size: 12px; border-radius: 6px; text-decoration: none; border: 1px solid #d0d5dd; background: white; color: #490d59; font-weight: 500; display: inline-flex; align-items: center; gap: 4px; }
         .btn-vs-sm:hover { background-color: #f3e8f5; border-color: #490d59; text-decoration: none; color: #490d59; }
         
+        /* Tablet Responsive Styles (768px - 1024px) */
+        @media (min-width: 768px) and (max-width: 1024px) {
+            .filters {
+                grid-template-columns: repeat(2, 1fr);
+                gap: 12px;
+            }
+            
+            .filters input,
+            .filters select,
+            .filters button,
+            .filters a.reset {
+                height: 42px !important;
+                font-size: 13px;
+            }
+            
+            table {
+                font-size: 12px;
+            }
+            
+            th, td {
+                padding: 10px 8px;
+                font-size: 12px;
+            }
+            
+            th {
+                font-size: 11px;
+            }
+            
+            .card {
+                padding: 18px;
+            }
+            
+            /* Hide less important columns on tablet */
+            th:nth-child(4), /* School */
+            td:nth-child(4),
+            th:nth-child(5), /* Grade */
+            td:nth-child(5) {
+                display: none;
+            }
+        }
+        
+        /* Mobile Responsive Styles */
+        @media (max-width: 767px) {
+            .filters {
+                grid-template-columns: 1fr;
+            }
+            
+            table {
+                display: block;
+                overflow-x: auto;
+            }
+        }
+        
         .status-pill {
             padding: 4px 10px;
             border-radius: 999px;

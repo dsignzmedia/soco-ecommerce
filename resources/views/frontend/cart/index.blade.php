@@ -26,6 +26,12 @@
             @php
                 $cartIsEmpty = count($cartItems) === 0;
                 $contentClass = $cartIsEmpty ? 'col-lg-9' : 'col-lg-6';
+                $hasItemTotals = collect($cartItems)->contains(function ($i) {
+                    return ($i['quantity'] ?? 1) > 1;
+                });
+                $hasItemTotals = collect($cartItems)->contains(function ($i) {
+                    return ($i['quantity'] ?? 1) > 1;
+                });
             @endphp
 
             <div class="{{ $contentClass }}">
@@ -55,7 +61,7 @@
                                         <th style="padding: 15px; font-weight: 600; border: none;">Product Name</th>
                                         <th style="padding: 15px; font-weight: 600; border: none; text-align: center;">Price</th>
                                         <th style="padding: 15px; font-weight: 600; border: none; text-align: center;">Quantity</th>
-                                        <th style="padding: 15px; font-weight: 600; border: none; text-align: right;">Total</th>
+                                        <th style="padding: 15px; font-weight: 600; border: none; text-align: right; {{ $hasItemTotals ? '' : 'display:none;' }}" data-role="total-header">Total</th>
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -83,6 +89,14 @@
                                                 <h6 class="mb-1" style="font-weight: 600; color: #333; margin: 0;">{{ $item['name'] }}</h6>
                                                 <p class="text-muted small mb-0" style="font-size: 0.875rem; margin: 0;">Size: {{ $item['size'] }}</p>
                                                 <p class="text-primary small mb-0" style="font-size: 0.8rem; margin: 0;">Student: {{ $item['student_name'] }}</p>
+                                                <!-- Mobile delete button near product name -->
+                                                <form action="{{ route('frontend.parent.remove-from-cart') }}" method="POST" class="mobile-delete-btn d-md-none">
+                                                    @csrf
+                                                    <input type="hidden" name="id" value="{{ $item['id'] }}">
+                                                    <button type="submit" class="btn btn-sm" style="background-color: #f8f5ff; color: #dc3545; border: 1px solid #e0d5f0; border-radius: 6px; padding: 6px 10px; transition: all 0.3s ease;" title="Remove item" onmouseover="this.style.backgroundColor='#dc3545'; this.style.color='#ffffff'; this.style.borderColor='#dc3545';" onmouseout="this.style.backgroundColor='#f8f5ff'; this.style.color='#dc3545'; this.style.borderColor='#e0d5f0';">
+                                                        <i class="fas fa-trash-alt"></i>
+                                                    </button>
+                                                </form>
                                             </td>
                                             <td style="padding: 15px; vertical-align: middle; text-align: center;" data-title="Price">
                                                 <span style="color: #dc3545; font-weight: 600;">₹{{ number_format($item['price']) }}</span>
@@ -114,13 +128,14 @@
                                                     </button>
                                                 </div>
                                             </td>
-                                            <td style="padding: 15px; vertical-align: middle; text-align: right;" data-title="Total">
+                                            @php $showItemTotal = ($item['quantity'] ?? 1) > 1; @endphp
+                                            <td style="padding: 15px; vertical-align: middle; text-align: right; {{ $showItemTotal ? '' : 'display:none;' }}" data-title="Total">
                                                 <div class="d-flex align-items-center justify-content-end gap-3 mobile-actions">
                                                     <span class="item-total-display" 
                                                           data-item-id="{{ $item['id'] }}"
                                                           data-item-price="{{ $item['price'] }}"
                                                           style="color: #dc3545; font-weight: 600;">₹{{ number_format($item['item_total']) }}</span>
-                                                    <form action="{{ route('frontend.parent.remove-from-cart') }}" method="POST" class="d-inline">
+                                                    <form action="{{ route('frontend.parent.remove-from-cart') }}" method="POST" class="d-none d-md-inline">
                                                         @csrf
                                                         <input type="hidden" name="id" value="{{ $item['id'] }}">
                                                         <button type="submit" class="btn btn-sm" style="background-color: #f8f5ff; color: #dc3545; border: 1px solid #e0d5f0; border-radius: 6px; padding: 6px 12px; transition: all 0.3s ease;" title="Remove item" onmouseover="this.style.backgroundColor='#dc3545'; this.style.color='#ffffff'; this.style.borderColor='#dc3545';" onmouseout="this.style.backgroundColor='#f8f5ff'; this.style.color='#dc3545'; this.style.borderColor='#e0d5f0';">
@@ -246,14 +261,18 @@
         display: none;
     }
 
+    .table-responsive {
+        overflow-x: hidden !important;
+    }
+
     .table-responsive tr {
         display: grid;
-        grid-template-columns: 50px 80px 1fr;
-        column-gap: 15px;
+        grid-template-columns: 45px 70px 1fr;
+        column-gap: 10px;
         row-gap: 0;
         background: #fff;
-        margin: 0 5px 15px 5px; /* Added side margins */
-        padding: 15px;
+        margin: 0 4px 12px 4px; /* tighter margins */
+        padding: 12px;
         border-radius: 12px;
         box-shadow: 0 2px 8px rgba(0,0,0,0.05);
         position: relative;
@@ -264,6 +283,9 @@
         display: block;
         padding: 0 !important;
         border: none !important;
+        font-size: 0.9rem;
+        line-height: 1.3;
+        overflow: hidden;
     }
 
     /* Checkbox Column */
@@ -307,8 +329,9 @@
 
     /* Product Details */
     .table-responsive td[data-title="Product"] {
-        margin-bottom: 5px;
-        padding-right: 30px !important; /* Space for delete button */
+        margin-bottom: 4px;
+        padding-right: 28px !important; /* Space for delete button */
+        position: relative;
     }
 
     /* Price, Quantity, Total Styling */
@@ -324,26 +347,92 @@
     .table-responsive td[data-title="Price"],
     .table-responsive td[data-title="Quantity"],
     .table-responsive td[data-title="Total"] {
-        font-size: 0.9rem;
+        font-size: 0.88rem;
         margin-bottom: 2px;
-        text-align: left !important;
-        line-height: 1.4;
+        line-height: 1.35;
     }
 
-    /* Delete Button Positioning */
+    /* Price row: label left, value right */
+    .table-responsive td[data-title="Price"] {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 6px;
+    }
+    .table-responsive td[data-title="Price"]::before {
+        flex-shrink: 0;
+        margin-right: 6px;
+    }
+
+    /* Quantity row: label left, controls right */
+    .table-responsive td[data-title="Quantity"] {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 6px;
+    }
+    .table-responsive td[data-title="Quantity"]::before {
+        flex-shrink: 0;
+        margin-right: 6px;
+    }
+    .table-responsive td[data-title="Quantity"] .quantity-controls {
+        margin: 0;
+        padding: 2px 6px;
+        gap: 4px;
+        width: auto;
+        border: 1px solid #e0d5f0;
+        border-radius: 8px;
+        background-color: #f8f5ff;
+    }
+    .table-responsive td[data-title="Quantity"] .quantity-controls .quantity-btn {
+        width: 24px;
+        height: 24px;
+    }
+    .table-responsive td[data-title="Quantity"] .quantity-controls .quantity-display {
+        min-width: 18px;
+        font-size: 13px;
+    }
+
+    /* Total Column - Keep label and price on same line */
+    .table-responsive td[data-title="Total"] {
+        position: relative;
+        /* padding-right: 50px !important; */
+        display: flex;
+        align-items: center;
+        flex-wrap: nowrap;
+        gap: 8px;
+        justify-content: space-between;
+    }
+    
+    .table-responsive td[data-title="Total"]::before {
+        white-space: nowrap;
+        flex-shrink: 0;
+    }
+    
     .table-responsive td[data-title="Total"] .mobile-actions {
-        display: inline;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        flex-shrink: 0;
     }
     
     .table-responsive td[data-title="Total"] .mobile-actions form {
         position: absolute;
-        top: 10px;
-        right: 10px;
+        top: 8px;
+        right: 8px;
+        z-index: 2;
     }
-
+    
     .table-responsive td[data-title="Total"] .mobile-actions span {
-        /* The total price text */
-        display: inline-block;
+        white-space: nowrap;
+    }
+    
+    /* Mobile delete button near product name */
+    .mobile-delete-btn {
+        position: absolute;
+        top: 8px;
+        right: 0;
+        z-index: 3;
     }
     
     /* Quantity Controls Styling */
@@ -520,7 +609,7 @@ document.addEventListener('DOMContentLoaded', function() {
 function updateCartQuantity(itemId, newQuantity) {
     const quantityDisplay = document.querySelector(`.quantity-display[data-item-id="${itemId}"]`);
     const itemTotalDisplay = document.querySelector(`.item-total-display[data-item-id="${itemId}"]`);
-    const itemPrice = parseFloat(itemTotalDisplay.getAttribute('data-item-price'));
+    const itemPrice = itemTotalDisplay ? parseFloat(itemTotalDisplay.getAttribute('data-item-price')) : 0;
     const quantityControls = quantityDisplay.closest('.quantity-controls');
     const decreaseBtn = quantityControls.querySelector('.decrease-btn');
     const increaseBtn = quantityControls.querySelector('.increase-btn');
@@ -554,9 +643,16 @@ function updateCartQuantity(itemId, newQuantity) {
             // Update quantity display
             quantityDisplay.textContent = data.quantity;
             
-            // Update item total
-            const formattedTotal = '₹' + data.item_total.toLocaleString('en-IN');
-            itemTotalDisplay.textContent = formattedTotal;
+            // Update item total (if display element exists)
+            if (itemTotalDisplay) {
+                const formattedTotal = '₹' + data.item_total.toLocaleString('en-IN');
+                itemTotalDisplay.textContent = formattedTotal;
+                // Show or hide total cell based on quantity
+                const totalCell = itemTotalDisplay.closest('td[data-title="Total"]');
+                if (totalCell) {
+                    totalCell.style.display = data.quantity > 1 ? '' : 'none';
+                }
+            }
             
             // Update cartItems array
             const itemIndex = cartItems.findIndex(item => item.id == itemId);
@@ -564,6 +660,13 @@ function updateCartQuantity(itemId, newQuantity) {
                 cartItems[itemIndex].quantity = data.quantity;
                 cartItems[itemIndex].item_total = data.item_total;
                 cartItems[itemIndex].price = data.item_price;
+            }
+
+            // Toggle total header based on any qty > 1
+            const totalHeader = document.querySelector('[data-role="total-header"]');
+            const anyTotals = cartItems.some(i => (i.quantity || 1) > 1);
+            if (totalHeader) {
+                totalHeader.style.display = anyTotals ? '' : 'none';
             }
             
             // Update order summary

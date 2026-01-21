@@ -44,9 +44,9 @@
                     <p>We use reliable courier services to ensure timely and safe delivery.</p>
                     <p>In case of delays, we will keep you informed and assist with updates.</p>
 
-                    <h3>6. Order Issues & Returns</h3>
+                    <h3>6. Order Issues</h3>
                     <p>If you receive a damaged or incorrect item, please contact us at <a href="tel:+919600833114">+91 9600833114</a> within 2 days of delivery.</p>
-                    <p>For return and exchange policies, please refer to our Return & Exchange Policy.</p>
+                    <p>For exchange policies, please refer to our Exchange Policy.</p>
 
                     <h3>7. Address & Delivery Changes</h3>
                     <p>Ensure your shipping address is correct at checkout. We are unable to change the address once the order is shipped.</p>

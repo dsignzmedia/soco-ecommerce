@@ -388,6 +388,50 @@
             height: 30px;
         }
 
+        /* Logo sizing - responsive */
+        .header-layout6 .header-logo {
+            max-width: 120px;
+        }
+        
+        .header-layout6 .header-logo img {
+            width: 100%;
+            height: auto;
+            max-width: 120px;
+        }
+        
+        /* Larger logo for desktop */
+        @media (min-width: 1223px) {
+            .header-layout6 .header-logo {
+                max-width: 140px;
+            }
+            
+            .header-layout6 .header-logo img {
+                max-width: 140px;
+            }
+        }
+        
+        /* Medium screens - slightly smaller */
+        @media (min-width: 992px) and (max-width: 1222px) {
+            .header-layout6 .header-logo {
+                max-width: 100px;
+            }
+            
+            .header-layout6 .header-logo img {
+                max-width: 100px;
+            }
+        }
+        
+        /* Mobile screens */
+        @media (max-width: 991px) {
+            .header-layout6 .header-logo {
+                max-width: 90px;
+            }
+            
+            .header-layout6 .header-logo img {
+                max-width: 90px;
+            }
+        }
+
         .main-menu ul li a.active,
         .vs-mobile-menu ul li a.active,
         .menu-style5 ul li a.active,
@@ -494,6 +538,72 @@
             .header-layout6 .menu-area {
                 border-radius: 9999px !important;
                 margin: 0 auto -40.5px auto !important;
+            }
+        }
+
+        /* Reduce side padding inside header menu area (default 30px -> 10px) */
+        .header-layout6 .menu-area .col,
+        .header-layout6 .menu-area .col-auto,
+        .header-layout6 .menu-area .col-lg-auto {
+            padding-left: 10px !important;
+            padding-right: 10px !important;
+        }
+
+        /* Fix header navigation wrapping between 992px and 1222px */
+        @media (min-width: 992px) and (max-width: 1222px) {
+            .header-layout6 .menu-area .main-menu ul li {
+                margin: 0 8px !important;
+            }
+            
+            .header-layout6 .menu-area .main-menu a {
+                font-size: 14px !important;
+            }
+            
+            .header-layout6 .menu-area .main-menu ul li:first-child {
+                margin-left: 0 !important;
+            }
+            
+            .header-layout6 .menu-area .main-menu ul li:last-child {
+                margin-right: 0 !important;
+            }
+            
+            .header-layout6 .menu-area .row {
+                flex-wrap: nowrap !important;
+            }
+            
+            .header-layout6 .menu-area .col-auto.col-lg {
+                flex: 1 1 auto !important;
+                min-width: 0 !important;
+                max-width: none !important;
+            }
+            
+            .header-layout6 .menu-area .main-menu {
+                white-space: nowrap !important;
+                overflow: visible !important;
+            }
+            
+            .header-layout6 .menu-area .main-menu ul {
+                display: flex !important;
+                flex-wrap: nowrap !important;
+                justify-content: center !important;
+                align-items: center !important;
+            }
+            
+            .header-layout6 .menu-area .col-auto:last-child {
+                flex: 0 0 auto !important;
+                padding-left: 10px !important;
+                padding-right: 10px !important;
+            }
+            
+            .header-layout6 .menu-area .col-auto:last-child .vs-btn {
+                padding: 12px 20px !important;
+                font-size: 14px !important;
+            }
+            
+            .header-layout6 .menu-area .col.col-lg-auto {
+                flex: 0 0 auto !important;
+                padding-left: 10px !important;
+                padding-right: 10px !important;
             }
         }
       

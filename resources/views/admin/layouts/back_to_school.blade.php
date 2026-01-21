@@ -583,7 +583,7 @@
                         ['label' => 'Inventory', 'route' => 'admin.back_to_school.inventory.index', 'active' => 'admin.back_to_school.inventory.*', 'icon' => 'fas fa-cubes'],
                         ['label' => 'Orders', 'route' => 'admin.back_to_school.orders.index', 'active' => 'admin.back_to_school.orders.*', 'icon' => 'fas fa-shopping-bag'],
                         ['label' => 'Payments', 'route' => 'admin.back_to_school.payments.index', 'active' => 'admin.back_to_school.payments.*', 'icon' => 'fas fa-credit-card'],
-                        ['label' => 'Returns & Exchanges', 'route' => 'admin.back_to_school.returns-exchange.index', 'active' => 'admin.back_to_school.returns-exchange.*', 'icon' => 'fas fa-exchange-alt'],
+                        ['label' => 'Exchanges', 'route' => 'admin.back_to_school.returns-exchange.index', 'active' => 'admin.back_to_school.returns-exchange.*', 'icon' => 'fas fa-exchange-alt'],
                         ['label' => 'Reports', 'route' => 'admin.back_to_school.reports.index', 'active' => 'admin.back_to_school.reports.*', 'icon' => 'fas fa-chart-line'],
                         ['label' => 'Category Settings', 'route' => 'admin.back_to_school.product-settings.index', 'active' => 'admin.back_to_school.product-settings.*', 'icon' => 'fas fa-cog'],
                     ];
