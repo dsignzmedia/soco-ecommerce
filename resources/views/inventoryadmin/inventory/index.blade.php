@@ -137,12 +137,16 @@
                             <small>{{ optional($product->updated_at)->format('h:i A') }}</small>
                         </td>
                         <td>
-                            <a href="{{ route('inventory.admin.inventory.adjust', $product) }}" class="btn-vs-sm">Adjust Stock</a>
+                            @if(!$product->variants || $product->variants->count() == 0)
+                                <a href="{{ route('inventory.admin.inventory.adjust', $product) }}" class="btn-vs-sm">Adjust Stock</a>
+                            @else
+                                <span style="color: #9ca3af; font-size: 12px;">—</span>
+                            @endif
                         </td>
                     </tr>
                     @if($product->variants && $product->variants->count() > 0)
                     <tr id="variants-{{ $product->id }}" style="display:none; background-color: #f9fafb;">
-                        <td colspan="8" style="padding: 0;">
+                        <td colspan="9" style="padding: 0;">
                             <div style="padding: 16px; border-top: 1px solid #e5e7eb;">
                                 <h4 style="margin: 0 0 12px; font-size: 13px; font-weight: 700; color: #4b5563; text-transform: uppercase; letter-spacing: 0.05em;">Variant Stock Levels</h4>
                                 <div style="display: grid; gap: 12px;">

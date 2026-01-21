@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Admin\Master;
 
 use App\Http\Controllers\Controller;
 use App\Models\Admin\Master\School;
+use App\Models\Admin\Master\ShippingZone;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
@@ -26,9 +27,12 @@ class SchoolController extends Controller
 
     public function create(): View
     {
+        $zones = ShippingZone::orderBy('name')->get();
+        
         return view('admin.schools.form', [
             'school' => new School(),
             'mode' => 'create',
+            'zones' => $zones,
         ]);
     }
 
@@ -72,9 +76,12 @@ class SchoolController extends Controller
 
     public function edit(School $school): View
     {
+        $zones = ShippingZone::orderBy('name')->get();
+        
         return view('admin.schools.form', [
             'school' => $school,
             'mode' => 'edit',
+            'zones' => $zones,
         ]);
     }
 
@@ -122,6 +129,7 @@ class SchoolController extends Controller
             'contact_email' => ['nullable', 'email'],
             'contact_phone' => ['nullable', 'string', 'max:50'],
             'notes' => ['nullable', 'string'],
+            'shipping_zone_id' => ['nullable', 'exists:shipping_zones,id'],
         ]);
     }
 

@@ -3096,6 +3096,17 @@ class AuthController extends Controller
 
         $total = $subtotal + $totalTax;
 
+        // Shipping cost (based on school shipping zone, fallback to default)
+        $shippingCost = 0.0;
+        $selectedSchool = null;
+        if ($selectedProfile && !empty($selectedProfile->school_name)) {
+            $selectedSchool = \App\Models\Admin\Master\School::with('shippingZone')
+                ->where('name', $selectedProfile->school_name)
+                ->first();
+        }
+        $shippingCost = $this->calculateShippingCostForCheckout($selectedSchool, $subtotal);
+        $totalWithShipping = $total + $shippingCost;
+
         // Get saved addresses from database instead of session
         $savedAddresses = $user->addresses;
 
@@ -3110,7 +3121,7 @@ class AuthController extends Controller
         // Enable if in DB OR if env has key (fallback)
         $razorpayEnabled = $razorpayGateway ? true : (!empty(env('RAZORPAY_KEY')));
 
-        return view('frontend.checkout.index', compact('cartItems', 'total', 'subtotal', 'totalTax', 'profiles', 'selectedProfile', 'savedAddresses', 'razorpayEnabled', 'hasInclusiveTax'));
+        return view('frontend.checkout.index', compact('cartItems', 'total', 'totalWithShipping', 'shippingCost', 'subtotal', 'totalTax', 'profiles', 'selectedProfile', 'savedAddresses', 'razorpayEnabled', 'hasInclusiveTax'));
     }
 
     public function processCheckout(Request $request)
@@ -3221,6 +3232,33 @@ class AuthController extends Controller
             // Get profiles from database
             $profiles = $user->studentProfiles;
 
+            // Calculate checkout subtotal (for zone free-shipping threshold logic)
+            $checkoutSubtotal = 0.0;
+            foreach ($filteredCartItems as $item) {
+                $product = \App\Models\Admin\Master\ProductMapping::with(['variants', 'gradePricing'])->find($item->product_id);
+                if (! $product) {
+                    continue;
+                }
+                $studentProfile = $profiles->firstWhere('id', (int) $item->profile_id);
+                $studentGrade = $studentProfile ? $studentProfile->grade : null;
+                $itemPrice = $this->calculateItemPriceForCheckout($product, $item, $studentGrade);
+                $checkoutSubtotal += ((float) $itemPrice) * ((int) $item->quantity);
+            }
+
+            // Determine shipping cost once for this checkout (apply to first order row only)
+            $firstItem = $filteredCartItems->first();
+            $shippingCost = 0.0;
+            if ($firstItem) {
+                $profile = $profiles->firstWhere('id', (int) $firstItem->profile_id);
+                $school = null;
+                if ($profile && !empty($profile->school_name)) {
+                    $school = \App\Models\Admin\Master\School::with('shippingZone')
+                        ->where('name', $profile->school_name)
+                        ->first();
+                }
+                $shippingCost = $this->calculateShippingCostForCheckout($school, $checkoutSubtotal);
+            }
+
             // DB Transaction to ensure data consistency
             \Illuminate\Support\Facades\DB::beginTransaction();
 
@@ -3295,6 +3333,9 @@ class AuthController extends Controller
                 $itemTax = ($itemSubtotal * $taxPercentage) / 100;
                 $itemTotal = $itemSubtotal + $itemTax;
 
+                $rowShipping = ($index === 0) ? $shippingCost : 0;
+                $rowTotalWithShipping = $itemTotal + $rowShipping;
+
                 $order = \App\Models\Admin\Master\Order::create([
                     'order_number' => $uniqueOrderNumber,
                     'user_id' => $user->id,
@@ -3311,14 +3352,14 @@ class AuthController extends Controller
                     'customer_address' => $shippingAddress['address'] . ', ' . $shippingAddress['city'] . ', ' . $shippingAddress['state'] . ' - ' . $shippingAddress['pincode'],
                     'customer_phone' => $shippingAddress['phone'],
                     'customer_email' => $shippingAddress['email'] ?? Auth::user()->email ?? '',
-                    'total_amount' => $itemTotal,
+                    'total_amount' => $rowTotalWithShipping,
                     'tax_amount' => $itemTax,
-                    'shipping_cost' => 0,
+                    'shipping_cost' => $rowShipping,
                     'payment_status' => session('payment_method') === 'razorpay' ? 'paid' : 'pending',
                     'order_status' => 'processing',
                     'payment_method' => session('payment_method'),
                     'payment_id' => session('payment_id'),
-                    'amount_paid' => session('payment_method') === 'razorpay' ? $itemTotal : 0,
+                    'amount_paid' => session('payment_method') === 'razorpay' ? $rowTotalWithShipping : 0,
                     'payment_details' => session('payment_details'),
                 ]);
 
@@ -3328,10 +3369,10 @@ class AuthController extends Controller
                         'order_id' => $order->id,
                         'product_type' => $product->product_type,
                         'payment_id' => session('payment_id'),
-                        'total_amount' => $itemTotal,
+                        'total_amount' => $rowTotalWithShipping,
                         'tax_amount' => $itemTax,
-                        'shipping_cost' => 0,
-                        'amount_paid' => $itemTotal,
+                        'shipping_cost' => $rowShipping,
+                        'amount_paid' => $rowTotalWithShipping,
                         'payment_status' => 'paid',
                         'payment_method' => session('payment_method'),
                         'payment_type' => 'online', // Or derive from razorpay method if available
@@ -3434,6 +3475,59 @@ class AuthController extends Controller
         }
     }
 
+    /**
+     * Calculate shipping cost for checkout based on school's shipping zone.
+     * Fallback: ShippingSetting default_cost.
+     */
+    protected function calculateShippingCostForCheckout(?\App\Models\Admin\Master\School $school, float $orderSubtotal): float
+    {
+        $settings = \App\Models\Admin\Master\ShippingSetting::current();
+
+        if ($school && $school->shippingZone) {
+            $zone = $school->shippingZone;
+
+            // Free shipping rule (threshold)
+            if ($zone->free_shipping) {
+                $threshold = (float) ($zone->free_threshold ?? 0);
+                if ($threshold <= 0 || $orderSubtotal >= $threshold) {
+                    return 0.0;
+                }
+            }
+
+            return (float) ($zone->cost ?? 0);
+        }
+
+        return (float) ($settings->default_cost ?? 0);
+    }
+
+    /**
+     * Determine item unit price for checkout/order creation (variant + grade aware).
+     */
+    protected function calculateItemPriceForCheckout(\App\Models\Admin\Master\ProductMapping $product, $cartItem, $studentGrade): float
+    {
+        // Determine price: For fabric with grade pricing > grade-based > variant-based > regular
+        $itemPrice = $product->price_regular ?? 0;
+
+        $hasGradePricing = $product->relationLoaded('gradePricing')
+            ? ($product->gradePricing && $product->gradePricing->count() > 0)
+            : ($product->gradePricing()->exists());
+
+        if ($product->variant_based_pricing && $hasGradePricing) {
+            $itemPrice = $this->getProductPriceForGrade($product, $studentGrade);
+        } elseif ($product->variant_based_pricing) {
+            $variant = $product->variants()->where('option', $cartItem->size)->first();
+            if ($variant && $variant->price !== null) {
+                $itemPrice = $variant->price;
+            } else {
+                $itemPrice = $this->getProductPriceForGrade($product, $studentGrade);
+            }
+        } else {
+            $itemPrice = $this->getProductPriceForGrade($product, $studentGrade);
+        }
+
+        return (float) ($itemPrice ?? 0);
+    }
+
 
     public function orders()
     {
@@ -3525,7 +3619,7 @@ class AuthController extends Controller
             return view('frontend.orders.index', ['orders' => $formattedOrders, 'profiles' => $profiles]);
         }
 
-        public function trackOrder($orderId)
+        public function trackOrder($orderId, $itemId = null)
         {
             // Get orders from database based on the base order number
             $user = Auth::user();
@@ -3535,20 +3629,32 @@ class AuthController extends Controller
                 ->where(function($q) use ($orderId) {
                     $q->where('order_number', 'like', 'SOCO-' . $orderId . '-%')
                       ->orWhere('order_number', 'like', 'SOCO-' . $orderId);
-                })
-                ->get();
+                });
+            
+            // If itemId is provided, filter to show only that specific item
+            if ($itemId) {
+                $orders->where('id', $itemId);
+            }
+            
+            $orders = $orders->get();
 
             if ($orders->isEmpty()) {
                 $profiles = $user->studentProfiles;
                 $studentNames = $profiles->pluck('student_name')->toArray();
 
                 if (!empty($studentNames)) {
-                    $orders = \App\Models\Admin\Master\Order::whereIn('student_name', $studentNames)
+                    $fallbackOrders = \App\Models\Admin\Master\Order::whereIn('student_name', $studentNames)
                         ->where(function($q) use ($orderId) {
                             $q->where('order_number', 'like', 'SOCO-' . $orderId . '-%')
                             ->orWhere('order_number', 'like', 'SOCO-' . $orderId);
-                        })
-                        ->get();
+                        });
+                    
+                    // If itemId is provided, filter to show only that specific item
+                    if ($itemId) {
+                        $fallbackOrders->where('id', $itemId);
+                    }
+                    
+                    $orders = $fallbackOrders->get();
                 }
             }
 
@@ -3568,20 +3674,21 @@ class AuthController extends Controller
                 ['key' => 'delivered', 'label' => 'Delivered', 'icon' => 'check-circle'],
         ];
 
-        // Find current status index
-        $currentStatus = strtolower($firstOrder->order_status);
-        $currentStatusIndex = 0;
-        foreach ($statuses as $index => $status) {
-            if ($status['key'] === $currentStatus) {
-                $currentStatusIndex = $index;
-                break;
+        // Helper function to get status index for an order
+        $getStatusIndex = function($orderStatus) use ($statuses) {
+            $currentStatus = strtolower($orderStatus);
+            foreach ($statuses as $index => $status) {
+                if ($status['key'] === $currentStatus) {
+                    return $index;
+                }
             }
-        }
+            return 0;
+        };
 
-        // Format order data
+        // Format order data with individual status for each item
         $order = [
             'id' => $orderId,
-            'status' => $firstOrder->order_status,
+            'status' => $firstOrder->order_status, // Overall order status (for backward compatibility)
             'created_at' => $firstOrder->created_at,
             'updated_at' => $firstOrder->updated_at,
             'total' => $orders->sum('total_amount'),
@@ -3590,7 +3697,7 @@ class AuthController extends Controller
             'customer_name' => $firstOrder->customer_name,
             'customer_address' => $firstOrder->customer_address,
             'customer_phone' => $firstOrder->customer_phone,
-            'items' => $orders->map(function ($item) {
+            'items' => $orders->map(function ($item) use ($statuses, $getStatusIndex) {
                 // Get product image
                 $product = \App\Models\Admin\Master\ProductMapping::where('product_name', $item->item_name)
                     ->where('school_id', $item->school_id)
@@ -3611,6 +3718,9 @@ class AuthController extends Controller
                     }
                 }
 
+                // Get status index for this specific item
+                $itemStatusIndex = $getStatusIndex($item->order_status);
+
                 return [
                     'id' => $item->id,
                     'name' => $item->item_name,
@@ -3618,18 +3728,29 @@ class AuthController extends Controller
                     'size' => $item->size,
                     'price' => $item->total_amount,
                     'image' => $productImage ? asset('storage/' . $productImage) : null,
+                    'status' => $item->order_status, // Individual item status
+                    'status_index' => $itemStatusIndex, // Status index for this item
+                    'updated_at' => $item->updated_at, // Last update time for this item
                 ];
             })->toArray(),
         ];
 
-        // Fetch the latest return/exchange request for this order grouping
+        // Fetch return/exchange requests for all items
         $itemIds = $orders->pluck('id');
-        $returnRequest = \App\Models\Admin\Master\ReturnExchangeRequest::whereIn('order_id', $itemIds)->latest()->first();
+        $returnRequests = \App\Models\Admin\Master\ReturnExchangeRequest::whereIn('order_id', $itemIds)
+            ->get()
+            ->keyBy('order_id');
 
-        return view('frontend.orders.track', compact('order', 'statuses', 'currentStatusIndex', 'returnRequest'));
+        // Calculate overall status index (for backward compatibility - use minimum status if items have different statuses)
+        $currentStatusIndex = $getStatusIndex($firstOrder->order_status);
+
+        // Get the latest return request for backward compatibility
+        $returnRequest = $returnRequests->sortByDesc('created_at')->first();
+
+        return view('frontend.orders.track', compact('order', 'statuses', 'currentStatusIndex', 'returnRequest', 'returnRequests'));
     }
 
-    public function returnExchange($orderId, Request $request)
+    public function returnExchange($orderId, Request $request, $itemId = null)
     {
         // Fetch orders from database based on the base order number
         $user = Auth::user();
@@ -3639,19 +3760,31 @@ class AuthController extends Controller
             ->where(function($q) use ($orderId) {
                 $q->where('order_number', 'like', 'SOCO-' . $orderId . '-%')
                   ->orWhere('order_number', 'like', $orderId . '%');
-            })
-            ->get();
+            });
+        
+        // If itemId is provided, filter to show only that specific item
+        if ($itemId) {
+            $orders->where('id', $itemId);
+        }
+        
+        $orders = $orders->get();
 
         if ($orders->isEmpty()) {
             $profiles = $user->studentProfiles;
             $studentNames = $profiles->pluck('student_name')->toArray();
             if (!empty($studentNames)) {
-                $orders = \App\Models\Admin\Master\Order::whereIn('student_name', $studentNames)
+                $fallbackOrders = \App\Models\Admin\Master\Order::whereIn('student_name', $studentNames)
                     ->where(function($q) use ($orderId) {
                         $q->where('order_number', 'like', 'SOCO-' . $orderId . '-%')
                           ->orWhere('order_number', 'like', $orderId . '%');
-                    })
-                    ->get();
+                    });
+                
+                // If itemId is provided, filter to show only that specific item
+                if ($itemId) {
+                    $fallbackOrders->where('id', $itemId);
+                }
+                
+                $orders = $fallbackOrders->get();
             }
         }
 
@@ -3665,6 +3798,11 @@ class AuthController extends Controller
 
         // Get pre-selected items from query string
         $selectedItems = $request->query('selected_items', []);
+        
+        // If itemId is provided, automatically select that item
+        if ($itemId) {
+            $selectedItems = [$itemId];
+        }
         
         // Ensure selectedItems is an array (handle single value query param case)
         if (!is_array($selectedItems)) {
@@ -3705,6 +3843,17 @@ class AuthController extends Controller
                     }
                 }
 
+                $availableSizes = [];
+                if ($product) {
+                    $availableSizes = $product->variants()
+                        ->where('stock', '>', 0)
+                        ->pluck('option')
+                        ->filter()
+                        ->unique()
+                        ->values()
+                        ->toArray();
+                }
+
                 return [
                     'id' => $item->id,
                     'order_number' => $item->order_number,
@@ -3716,6 +3865,7 @@ class AuthController extends Controller
                     'size' => $item->size,
                     'image' => $image ? asset('storage/'.$image) : null,
                     'product_type' => $product ? $product->product_type : null,
+                    'available_sizes' => $availableSizes,
                 ];
             })->toArray(),
         ];
@@ -3725,13 +3875,20 @@ class AuthController extends Controller
 
     public function requestReturnExchange(Request $request)
     {
+        // Exchange-only: force exchange and ignore any return selection from UI
+        $request->merge(['action' => 'exchange']);
+
         $request->validate([
             'selected_items' => 'required|array|min:1',
             'selected_items.*' => 'integer|exists:orders,id',
             'quantities' => 'required|array',
             'quantities.*' => 'required|integer|min:1',
             'reason' => 'required|string',
-            'action' => 'required|in:return,exchange',
+            'action' => 'required|in:exchange',
+            'accept_terms' => 'accepted',
+            'accept_size_change' => 'accepted',
+            'exchange_sizes' => 'nullable|array',
+            'exchange_sizes.*' => 'nullable|string|max:50',
             'photos' => 'nullable|array',
             'photos.*' => 'image|max:2048',
         ]);
@@ -3762,23 +3919,9 @@ class AuthController extends Controller
             return redirect()->back()->with('error', 'Invalid items selected.');
         }
 
-        // Validate Return Policy (No returns for BTS/Merchandise)
-        if ($request->action === 'return') {
-            foreach ($orders as $orderItem) {
-                $product = \App\Models\Admin\Master\ProductMapping::where('product_name', $orderItem->item_name)
-                    ->where('school_id', $orderItem->school_id)
-                    ->first();
-                if (!$product) {
-                     $product = \App\Models\Admin\Master\ProductMapping::where('product_name', $orderItem->item_name)->first();
-                }
+        // Exchange-only: returns are disabled (kept for backwards compatibility)
 
-                if ($product && in_array($product->product_type, ['back_to_school', 'merchandised'])) {
-                    return redirect()->back()->with('error', 'Returns are not allowed for Back to School or Merchandise items. Please select Exchange.');
-                }
-            }
-        }
-
-        // Create return/exchange request for each selected item
+        // Create exchange request for each selected item
         foreach ($orders as $order) {
             // Get requested quantity (default to 1 if not provided)
             $requestedQty = isset($request->quantities[$order->id]) 
@@ -3796,14 +3939,14 @@ class AuthController extends Controller
             if ($requestedQty > $availableQty) {
                 return redirect()->back()
                     ->withInput()
-                    ->with('error', "Cannot return/exchange {$requestedQty} units for {$order->item_name}. Only {$availableQty} unit(s) available for return/exchange.");
+                    ->with('error', "Cannot exchange {$requestedQty} units for {$order->item_name}. Only {$availableQty} unit(s) available for exchange.");
             }
             
             // Validate requested quantity doesn't exceed order quantity
             if ($requestedQty > $order->quantity) {
                 return redirect()->back()
                     ->withInput()
-                    ->with('error', "Cannot return/exchange {$requestedQty} units. Order quantity is only {$order->quantity}.");
+                    ->with('error', "Cannot exchange {$requestedQty} units. Order quantity is only {$order->quantity}.");
             }
             
             // Check if request already exists for this item to prevent duplicates (only for pending/approved)
@@ -3823,15 +3966,16 @@ class AuthController extends Controller
                 'photo_path' => $photoPath,
                 'status' => 'pending',
                 'customer_notes' => $request->reason,
+                'exchange_size' => $request->exchange_sizes[$order->id] ?? null,
             ]);
             
-            // Send Return/Exchange Request Submitted Email
+            // Send Exchange Request Submitted Email
             if (!empty($order->customer_email)) {
                 try {
                     \Illuminate\Support\Facades\Mail::to($order->customer_email)->send(new \App\Mail\ReturnExchangeRequestMail($returnRequest, 'submitted'));
-                    \Illuminate\Support\Facades\Log::info("Return/Exchange request email sent to {$order->customer_email} for order {$order->order_number}");
+                    \Illuminate\Support\Facades\Log::info("Exchange request email sent to {$order->customer_email} for order {$order->order_number}");
                 } catch (\Exception $e) {
-                    \Illuminate\Support\Facades\Log::error("Failed to send return/exchange request email: " . $e->getMessage());
+                    \Illuminate\Support\Facades\Log::error("Failed to send exchange request email: " . $e->getMessage());
                 }
             }
         }
@@ -3852,7 +3996,7 @@ class AuthController extends Controller
         }
 
         return redirect()->route('frontend.parent.orders')
-            ->with('success', 'Return/Exchange request submitted successfully for selected items!');
+            ->with('success', 'Exchange request submitted successfully for selected items!');
     }
 
     /**

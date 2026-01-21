@@ -463,7 +463,7 @@
         <div class="login-card">
             <div class="login-card__brand">
                 <div class="brand-content">
-                    <img class="brand-logo" src="{{ asset('assets/img/new logo/new_logo.png') }}" alt="The Skool Store logo">
+                    <img class="brand-logo" src="{{ asset('assets/img/new logo/new_logo-invent.png') }}" alt="The Skool Store logo">
                     <h1 class="brand-name">The Skool Store</h1>
                     <p class="brand-tagline">Streamlined inventory management for warehouse operations</p>
                     <div class="brand-badge">

@@ -5,6 +5,7 @@ namespace App\Models\Admin\Master;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Builder;
 
 class School extends Model
@@ -24,6 +25,7 @@ class School extends Model
         'contact_email',
         'contact_phone',
         'notes',
+        'shipping_zone_id',
     ];
 
     /**
@@ -45,6 +47,11 @@ class School extends Model
     public function productMappings(): HasMany
     {
         return $this->hasMany(ProductMapping::class);
+    }
+
+    public function shippingZone(): BelongsTo
+    {
+        return $this->belongsTo(ShippingZone::class);
     }
 }
 

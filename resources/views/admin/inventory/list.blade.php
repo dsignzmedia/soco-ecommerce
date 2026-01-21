@@ -11,7 +11,7 @@
         th { text-transform:uppercase;letter-spacing:.05em;color:#111827;font-size:12px; }
         .filters { display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px; }
         .filters button, .filters a.reset { border-radius:9999px;font-weight:600;text-align:center; }
-        .filters button { border:none;background:#490d59;color:#fff;padding:6px 14px;font-size:12px; }
+        .filters button { border:none;background:#490d59;color:#fff;padding:16px;font-size:12px; }
         .filters a.reset { border:1.5px solid #d0d5dd;color:#475467;padding:5px 14px;font-size:12px; }
         
         /* Custom Pagination Styling (Same as Orders Page) */
@@ -159,8 +159,47 @@
             height: 16px;
         }
         
-        /* Responsive pagination */
-        @media (max-width: 768px) {
+        /* Tablet Responsive Styles (768px - 1024px) */
+        @media (min-width: 768px) and (max-width: 1024px) {
+            .filters {
+                grid-template-columns: repeat(2, 1fr);
+                gap: 10px;
+            }
+            
+            .filters button,
+            .filters a.reset {
+                padding: 12px 14px;
+                font-size: 11px;
+            }
+            
+            table {
+                font-size: 12px;
+            }
+            
+            th, td {
+                padding: 10px 8px;
+                font-size: 12px;
+            }
+            
+            th {
+                font-size: 11px;
+            }
+            
+            .card {
+                padding: 20px;
+            }
+            
+            /* Hide less important columns on tablet */
+            th:nth-child(4), /* Grade */
+            td:nth-child(4),
+            th:nth-child(8), /* Last updated */
+            td:nth-child(8) {
+                display: none;
+            }
+        }
+        
+        /* Mobile Responsive Styles */
+        @media (max-width: 767px) {
             .pagination {
                 flex-direction: column;
                 align-items: center;
@@ -289,12 +328,16 @@
                         <td>{{ ucfirst($product->status) }}</td>
                         <td>{{ optional($product->updated_at)->diffForHumans() }}</td>
                         <td>
-                            <a href="{{ route('master.admin.inventory.adjust', $product) }}" class="btn-vs-sm">Adjust stock</a>
+                            @if(!$product->variants || $product->variants->count() == 0)
+                                <a href="{{ route('master.admin.inventory.adjust', $product) }}" class="btn-vs-sm">Adjust stock</a>
+                            @else
+                                <span style="color: #9ca3af; font-size: 12px;">—</span>
+                            @endif
                         </td>
                     </tr>
                     @if($product->variants && $product->variants->count() > 0)
                     <tr id="variants-{{ $product->id }}" style="display:none; background-color: #f9fafb;">
-                        <td colspan="8" style="padding: 0;">
+                        <td colspan="9" style="padding: 0;">
                             <div style="padding: 16px; border-top: 1px solid #e5e7eb;">
                                 <h4 style="margin: 0 0 12px; font-size: 14px; font-weight: 600; color: #111827;">Variants Stock</h4>
                                 <div style="display: grid; gap: 12px;">

@@ -422,607 +422,378 @@ Shop by Category Area
 </style>
 
 <!--==============================
-Featured Products Area
+Product Category Boxes Area
 ==============================-->
-@if(isset($publicProducts) && $publicProducts->count() > 0)
-@php
-    $productCount = $publicProducts->count();
-    $shouldCenterDesktop = $productCount < 4;
-    $shouldCenterTablet = $productCount <= 3; // Center on tablet if 3 or fewer products
-    $shouldCenterMobile = $productCount <= 2; // Center on mobile if 2 or fewer products
-    $shouldDuplicate = $productCount >= 4; // Only duplicate if 4 or more products (for desktop scrolling)
-@endphp
-<section class="featured-products" style="background-color:#ffffff;" data-product-count="{{ $productCount }}">
-    <div class="fp-scroll {{ $shouldCenterMobile ? 'centered-mobile' : '' }} {{ $shouldCenterTablet ? 'centered-tablet' : '' }} {{ $shouldCenterDesktop ? 'centered' : '' }}">
-        <div class="fp-track {{ $shouldCenterMobile ? 'centered-mobile' : '' }} {{ $shouldCenterTablet ? 'centered-tablet' : '' }} {{ $shouldCenterDesktop ? 'centered' : '' }}" data-product-count="{{ $productCount }}">
-            @foreach($publicProducts as $product)
-                <a href="{{ route('frontend.shop.detail', $product->id) }}" class="fp-card">
-                    <div class="simple-box">
-                        @if($product->featured_image)
-                            <img 
-                                src="{{ Str::startsWith($product->featured_image, 'http') 
-                                    ? $product->featured_image 
-                                    : asset('storage/' . $product->featured_image) }}" 
-                                alt="{{ $product->product_name }}"
-                                onerror="this.onerror=null; this.src='{{ asset('assets/img/no image/no_image.png') }}';"
-                            >
-                        @else
-                            <img 
-                                src="{{ asset('assets/img/no image/no_image.png') }}" 
-                                alt="{{ $product->product_name }}"
-                            >
-                        @endif
-                    </div>
-                    <p class="sec-text simple-title">
-                        {{ $product->product_name }}
-                    </p>
-                </a>
-            @endforeach
+<section class="product-category-boxes" style="background-color:#ffffff;">
+    <div class="container">
+        <div class="category-boxes-row">
+            <!-- Back to School Products Box -->
+            <a href="{{ route('frontend.shop.index', ['product_type' => 'back_to_school']) }}" class="category-box-link">
+                <!-- Desktop: Show image -->
+                <img src="{{ asset('assets/img/others/bts_product.png') }}" alt="Back to School Products" class="category-box-image desktop-only">
+                <!-- Tablet/Mobile: Show card -->
+                <div class="category-box-content category-box-content--bg category-box-content--bts mobile-tablet-only">
+                    <h3 class="category-box-title">BACK TO SCHOOL PRODUCTS</h3>
+                    <p class="category-box-tagline">School essentials, beyond the ordinary.</p>
+                </div>
+            </a>
 
-            {{-- Duplicate only if 4 or more products (for seamless infinite scroll) --}}
-            @if($shouldDuplicate)
-                @foreach($publicProducts as $product)
-                    <a href="{{ route('frontend.shop.detail', $product->id) }}" class="fp-card">
-                        <div class="simple-box">
-                            @if($product->featured_image)
-                                <img
-                                    src="{{ Str::startsWith($product->featured_image, 'http')
-                                        ? $product->featured_image
-                                        : asset('storage/' . $product->featured_image) }}"
-                                    alt="{{ $product->product_name }}"
-                                    onerror="this.onerror=null; this.src='{{ asset('assets/img/no image/no_image.png') }}';"
-                                >
-                            @else
-                                <img
-                                    src="{{ asset('assets/img/no image/no_image.png') }}"
-                                    alt="{{ $product->product_name }}"
-                                >
-                            @endif
-                        </div>
-                        <p class="sec-text simple-title">
-                            {{ $product->product_name }}
-                        </p>
-                    </a>
-                @endforeach
-            @endif
+            <!-- Merchandised Products Box -->
+            <a href="{{ route('frontend.shop.index', ['product_type' => 'merchandised']) }}" class="category-box-link">
+                <!-- Desktop: Show image -->
+                <img src="{{ asset('assets/img/others/merch_product.png') }}" alt="Custom Campus Merchandise" class="category-box-image desktop-only">
+                <!-- Tablet/Mobile: Show card -->
+                <div class="category-box-content category-box-content--bg category-box-content--merch mobile-tablet-only">
+                    <h3 class="category-box-title">CUSTOM CAMPUS MERCHANDISE</h3>
+                    <p class="category-box-tagline">We print exactly what you want — made to match your style.</p>
+                </div>
+            </a>
         </div>
     </div>
 </section>
 
 <style>
-/* Featured Products - Fresh Implementation */
-.featured-products {
+/* Product Category Boxes */
+.product-category-boxes {
     background: #fff;
-    padding: 20px 0;
+    padding: 40px 0;
 }
 
-/* Scroll container */
-.fp-scroll {
-    overflow-x: auto;
-    overflow-y: hidden;
-    -webkit-overflow-scrolling: touch;
-    scroll-behavior: smooth;
+/* Category box link styling */
+.category-box-link {
+    display: block;
+    text-decoration: none;
+    color: inherit;
+    flex: 1;
+    transition: transform 0.3s ease;
+}
+
+.category-box-link:hover {
+    transform: translateY(-5px);
+}
+
+/* Category box image styling */
+.category-box-image {
     width: 100%;
-    cursor: grab;
+    height: auto;
+    display: block;
+    border-radius: 20px;
+    object-fit: cover;
 }
 
-.fp-scroll:active {
-    cursor: grabbing;
+/* Desktop only - show images, hide cards */
+@media (min-width: 992px) {
+    .product-category-boxes {
+        padding-top: 50px;
+        padding-bottom: 50px;
+    }
+    
+    .desktop-only {
+        display: block !important;
+    }
+    
+    .mobile-tablet-only {
+        display: none !important;
+    }
 }
 
-/* Hide scrollbar */
-.fp-scroll::-webkit-scrollbar {
-    display: none;
-    width: 0;
-    height: 0;
+/* Tablet and Mobile - show cards, hide images */
+@media (max-width: 991px) {
+    .desktop-only {
+        display: none !important;
+    }
+    
+    .mobile-tablet-only {
+        display: block !important;
+    }
 }
 
-.fp-scroll {
-    scrollbar-width: none; /* Firefox */
-    -ms-overflow-style: none; /* IE and Edge */
-}
-
-/* Moving track */
-.fp-track {
+.category-boxes-row {
     display: flex;
-    flex-direction: row;
-    gap: 30px;
-    width: max-content;
-    padding-top: 60px;
-    padding-left: 20px;
-    padding-right: 20px;
+    justify-content: center;
+    align-items: stretch;
+    gap: 15px;
     flex-wrap: nowrap;
 }
 
-/* Center products when count is less than display limit - Desktop */
-@media (min-width: 1117px) {
-    .fp-scroll.centered {
-        overflow-x: visible !important;
-        display: flex;
-        justify-content: center;
-        cursor: default;
-    }
-
-    .fp-track.centered {
-        margin: 0;
-        justify-content: center;
-        width: auto !important;
-        padding-left: 0 !important;
-        padding-right: 0 !important;
-    }
-}
-
-/* Center products when count is less than display limit - Tablet */
-/* Extended to cover wider mobile screens (576px+) for better centering */
-@media (min-width: 576px) and (max-width: 1116px) {
-    .fp-scroll.centered-tablet {
-        overflow-x: visible !important;
-        display: flex !important;
-        justify-content: center !important;
-        align-items: center !important;
-        cursor: default !important;
-        width: 100% !important;
-    }
-
-    .fp-track.centered-tablet {
-        margin: 0 auto !important;
-        justify-content: center !important;
-        align-items: center !important;
-        width: auto !important;
-        max-width: 100% !important;
-        padding-left: 0 !important;
-        padding-right: 0 !important;
-        padding-top: 60px !important;
-        display: flex !important;
-        flex-direction: row !important;
-        flex-wrap: nowrap !important;
-        gap: 30px !important;
-    }
-    
-    /* Override desktop centering on tablet */
-    .fp-scroll.centered:not(.centered-tablet) {
-        display: block !important;
-        overflow-x: auto !important;
-    }
-    
-    .fp-track.centered:not(.centered-tablet) {
-        justify-content: flex-start !important;
-        width: max-content !important;
-    }
-    
-    /* Override mobile centering on tablet */
-    .fp-scroll.centered-mobile:not(.centered-tablet) {
-        display: block !important;
-        overflow-x: auto !important;
-    }
-    
-    .fp-track.centered-mobile:not(.centered-tablet) {
-        justify-content: flex-start !important;
-        width: max-content !important;
-    }
-}
-
-/* Cards */
-.fp-card {
-    flex: 0 0 auto;
-    width: 160px;
-    text-align: center;
+.category-box {
+    flex: 1;
+    min-width: 0;
+    max-width: none;
     text-decoration: none;
     color: inherit;
+    display: block;
+    transition: all 0.3s ease;
+    width: 100%;
+}
+
+.category-box-content {
+    background: #ffffff;
+    border: 3px solid #e0d5f0;
+    border-radius: 20px;
+    padding: 24px 15px 20px;
+    text-align: center;
     display: flex;
     flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    transition: all 0.4s ease;
+    min-height: 180px;
+    width: 100%;
+    box-sizing: border-box;
+    overflow: visible;
+}
+
+.category-box-content--bg {
+    position: relative;
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+    min-height: 200px;
+    padding: 24px 18px;
+    color: #fff;
+    /* Ensure text is perfectly centered vertically */
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
     align-items: center;
 }
 
-.fp-card .simple-box {
-    width: 160px;
-    height: 160px;
-    border-radius: 18px;
-    border: 2px solid #ccc;
-    overflow: hidden;
-    margin: 0 auto;
-    flex-shrink: 0; /* Prevent image box from shrinking */
+.category-box-content--bg::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    border-radius: 14px;
+    /* soft overlay to keep text readable */
+    background: linear-gradient(135deg, rgba(89, 13, 13, 0.55) 0%, rgba(100, 55, 103, 0.25) 55%, rgba(0, 0, 0, 0.15) 100%);
+    z-index: 0;
 }
 
-.fp-card .simple-box img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-    transition: transform 0.4s ease;
-    display: block; /* Remove inline spacing */
+.category-box-content--bg > * {
+    position: relative;
+    z-index: 1;
 }
 
-.fp-card:hover .simple-box img {
-    transform: scale(1.15);
+.category-box-content--bts {
+    background-image: url("{{ asset('assets/img/others/BTS_Card.png') }}");
 }
 
-.fp-card .simple-title {
-    margin-top: 8px;
-    color: #333;
-    width: 100%; /* Ensure title takes full width for proper wrapping */
+.category-box-content--merch {
+    background-image: url("{{ asset('assets/img/others/Merchandised_Card.png') }}");
+}
+
+.category-box-content--bg .category-box-title {
+    margin-top: 15px;
+    color: #ffffff !important;
+    text-shadow: 0 6px 16px rgb(0, 0, 0);
+}
+
+.category-box-content--bg .category-box-tagline {
+    color: rgba(255,255,255,0.92) !important;
+    text-shadow: 0 6px 16px rgba(0,0,0,0.18);
+}
+
+.category-box-icon {
+    width: 80px;
+    height: 80px;
+    object-fit: contain;
+    margin-bottom: 16px;
+    transition: transform 0.3s ease;
+}
+
+.category-box:hover .category-box-icon {
+    transform: scale(1.1);
+}
+
+.category-box:hover .category-box-content {
+    border-color: #490D59;
+    transform: translateY(-5px);
+    box-shadow: 0 10px 30px rgba(73, 13, 89, 0.15);
+}
+
+.category-box-title {
+    font-size: 16px;
+    font-weight: 700;
+    color: #222;
+    margin-bottom: 0;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    font-family: 'Poppins', sans-serif;
+    line-height: 1.3;
     word-wrap: break-word;
     overflow-wrap: break-word;
-    line-height: 1.4;
-    min-height: auto; /* Allow title to grow as needed */
+    width: 100%;
+    padding: 0;
+    box-sizing: border-box;
+    overflow: visible;
+}
+
+.category-box-title-red {
+    color: #dc3545 !important;
+}
+
+.category-box-title-violet {
+    color: #490D59 !important;
+}
+
+.category-box-tagline {
+    font-size: 15px;
+    color: #444;
+    margin: 0;
+    font-family: 'Roboto', sans-serif;
+    line-height: 1.5;
+    font-weight: 400;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+    width: 100%;
+    padding: 0;
+    box-sizing: border-box;
+    overflow: visible;
+}
+
+/* Hide taglines on tablet and mobile */
+@media (max-width: 991px) {
+    .category-box-tagline {
+        display: none !important;
+    }
+    .category-box-content--bg .category-box-title {
+        margin-top: 25px;
+    }
+    
+}
+
+/* Desktop - show taglines with proper spacing */
+@media (min-width: 992px) {
+    .category-box-content {
+        padding: 30px 20px;
+        min-height: 180px;
+    }
+    
+    .category-box-title {
+        font-size: 20px;
+        margin-bottom: 12px;
+    }
+    
+    .category-box-tagline {
+        display: block;
+        margin-top: 8px;
+        font-size: 14px;
+    }
+}
+
+.category-box:hover .category-box-title-red {
+    color: #c82333 !important;
+}
+
+.category-box:hover .category-box-title-violet {
+    color: #3a0a47 !important;
+}
+
+.category-box:hover .category-box-tagline {
+    color: #490D59;
+}
+
+/* Hide taglines on tablet and mobile */
+@media (max-width: 991px) {
+    .category-box-tagline {
+        display: none !important;
+    }
+}
+
+/* Desktop - show taglines with proper spacing */
+@media (min-width: 992px) {
+    .category-box-content {
+        padding: 30px 20px;
+        min-height: 180px;
+    }
+    
+    .category-box-title {
+        font-size: 20px;
+        margin-bottom: 12px;
+    }
+    
+    .category-box-tagline {
+        display: block;
+        margin-top: 8px;
+        font-size: 14px;
+    }
 }
 
 /* Mobile Responsiveness */
-@media (max-width: 767px) {
-    .fp-scroll {
-        overflow-x: auto !important;
-        overflow-y: hidden !important;
-        display: block !important;
+@media (max-width: 768px) {
+    .product-category-boxes {
+        padding: 30px 0;
+    }
+
+    .category-boxes-row {
+        gap: 10px;
+        flex-wrap: nowrap;
+    }
+
+    .category-box-content {
+        padding: 15px 10px;
+        min-height: 100px;
+        border-radius: 15px;
+    }
+
+    .category-box-title {
+        font-size: 12px;
+        letter-spacing: 0.3px;
+        line-height: 1.2;
+        margin-bottom: 0;
     }
     
-    .fp-scroll.centered-mobile {
-        display: flex !important;
-        justify-content: center !important;
-        overflow-x: visible !important;
-    }
-    
-    .fp-track {
-        gap: 15px;
-        padding-top: 40px;
-        padding-left: 0;
-        padding-right: 0;
-        display: flex !important;
-        flex-direction: row !important;
-        flex-wrap: nowrap !important;
-        width: max-content !important;
-    }
-    
-    .fp-card {
-        width: 140px;
-        min-width: 140px;
-        flex: 0 0 140px !important;
-        flex-shrink: 0 !important;
-        display: flex !important;
-        flex-direction: column !important;
-        align-items: center !important;
-    }
-    
-    .fp-card .simple-box {
-        width: 140px;
-        min-width: 140px;
-        height: 140px;
-        flex-shrink: 0 !important; /* Prevent image box from shrinking */
-    }
-    
-    .fp-card .simple-title {
-        width: 100% !important;
-        word-wrap: break-word !important;
-        overflow-wrap: break-word !important;
-        line-height: 1.4 !important;
-    }
-    
-    /* Center on mobile when 2 or fewer products */
-    .fp-scroll.centered-mobile {
-        overflow-x: visible !important;
-        display: flex !important;
-        justify-content: center !important;
-        align-items: center !important;
-        cursor: default !important;
-        width: 100% !important;
-    }
-    
-    .fp-track.centered-mobile {
-        margin: 0 auto !important;
-        justify-content: center !important;
-        align-items: center !important;
-        width: auto !important;
-        max-width: 100% !important;
-        padding-left: 0 !important;
-        padding-right: 0 !important;
-        display: flex !important;
-        flex-direction: row !important;
-        flex-wrap: nowrap !important;
-    }
-    
-    /* Hide desktop centering on mobile */
-    @media (max-width: 768px) {
-        .fp-scroll.centered:not(.centered-mobile) {
-            display: block !important;
-            overflow-x: auto !important;
-        }
-        
-        .fp-track.centered:not(.centered-mobile) {
-            justify-content: flex-start !important;
-            width: max-content !important;
-            padding-left: 0 !important;
-            padding-right: 0 !important;
-        }
-    }
-    
-    /* Hide desktop centering on mobile */
-    .fp-scroll.centered:not(.centered-mobile),
-    .fp-track.centered:not(.centered-mobile) {
-        display: block;
-        overflow-x: auto;
+    .category-box-tagline {
+        display: none !important;
     }
 }
 
-/* Tablet/Medium screens */
-@media (min-width: 576px) and (max-width: 1116px) {
-    .fp-track {
+/* Tablet screens */
+@media (min-width: 769px) and (max-width: 991px) {
+    .category-boxes-row {
+        gap: 15px;
+    }
+
+    .category-box-content {
+        padding: 18px 12px;
+        min-height: 110px;
+    }
+
+    .category-box-title {
+        font-size: 14px;
+        letter-spacing: 0.4px;
+        margin-bottom: 0;
+    }
+    
+    .category-box-tagline {
+        display: none !important;
+    }
+}
+
+/* Laptop screens */
+@media (min-width: 992px) and (max-width: 1440px) {
+    .category-boxes-row {
         gap: 20px;
+    }
+}
+
+/* Large desktop screens */
+@media (min-width: 1441px) {
+    .category-box-content {
+        padding: 25px 20px;
+        min-height: 140px;
+    }
+
+    .category-box-title {
+        font-size: 18px;
     }
 }
 </style>
 
-<script>
-document.addEventListener("DOMContentLoaded", () => {
-    const scroller = document.querySelector(".fp-scroll");
-    const track = document.querySelector(".fp-track");
-    if (!scroller || !track) return;
-    
-    // Get product count (classes already applied in Blade template)
-    const productCount = parseInt(track.getAttribute('data-product-count')) || 0;
-    
-    // Function to check and apply centering (only for resize handling)
-    function checkAndCenterProducts() {
-        const width = window.innerWidth;
-        const currentIsMobile = width < 576;
-        const currentIsTablet = width >= 576 && width <= 1116;
-        const currentIsDesktop = width > 1116;
-        
-        let shouldCenter = false;
-        if (currentIsMobile) {
-            shouldCenter = productCount <= 2; // Center if 2 or fewer products on mobile
-        } else if (currentIsTablet) {
-            shouldCenter = productCount <= 3; // Center if 3 or fewer products on tablet
-        } else {
-            shouldCenter = productCount < 4; // Center if less than 4 products on desktop
-        }
-        
-        if (shouldCenter) {
-            if (currentIsMobile) {
-                // Mobile: ensure mobile centering classes
-                track.classList.add('centered-mobile');
-                scroller.classList.add('centered-mobile');
-                track.classList.remove('centered', 'centered-tablet');
-                scroller.classList.remove('centered', 'centered-tablet');
-            } else if (currentIsTablet) {
-                // Tablet: ensure tablet centering classes
-                track.classList.add('centered-tablet');
-                scroller.classList.add('centered-tablet');
-                track.classList.remove('centered', 'centered-mobile');
-                scroller.classList.remove('centered', 'centered-mobile');
-            } else {
-                // Desktop: ensure desktop centering classes
-                track.classList.add('centered');
-                scroller.classList.add('centered');
-                track.classList.remove('centered-mobile', 'centered-tablet');
-                scroller.classList.remove('centered-mobile', 'centered-tablet');
-            }
-            return true;
-        } else {
-            // Remove centering if not needed
-            track.classList.remove('centered', 'centered-mobile', 'centered-tablet');
-            scroller.classList.remove('centered', 'centered-mobile', 'centered-tablet');
-            return false;
-        }
-    }
-    
-    // Check if already centered (classes should already be set from Blade template)
-    // Only verify, don't remove classes that are already there
-    const isMobile = window.innerWidth <= 768;
-    const isCentered = isMobile ? productCount < 2 : productCount < 4;
-    
-    // If centered, don't run auto-scroll
-    if (isCentered) {
-        return;
-    }
-    
-    // Handle window resize
-    let resizeTimeout;
-    window.addEventListener('resize', () => {
-        clearTimeout(resizeTimeout);
-        resizeTimeout = setTimeout(() => {
-            const wasCentered = checkAndCenterProducts();
-            if (wasCentered) {
-                // Stop auto-scroll if now centered
-                if (rafId) {
-                    cancelAnimationFrame(rafId);
-                    rafId = null;
-                }
-            }
-        }, 100);
-    });
-    
-    let isUserInteracting = false;
-    let rafId = null;
-    let lastScrollLeft = scroller.scrollLeft;
-    let lastScrollTime = Date.now();
-    let isAutoScrolling = false;
-    let resumeTimeout = null;
-    let autoScrollSpeed = 0.5;
-
-    function autoScroll() {
-        if (!isUserInteracting && scroller) {
-            // Check if products are duplicated (only when count >= 4)
-            const hasDuplication = productCount >= 4;
-            const scrollWidth = scroller.scrollWidth;
-            const halfWidth = hasDuplication ? scrollWidth / 2 : scrollWidth;
-            
-            // Mark as auto-scrolling before changing scroll position
-            isAutoScrolling = true;
-            
-            // Increment scroll position
-            scroller.scrollLeft += autoScrollSpeed;
-            
-            // Seamless infinite loop: when reaching half of duplicated content, 
-            // subtract half width to continue from the beginning seamlessly
-            // Only do this if products are duplicated
-            if (hasDuplication && scroller.scrollLeft >= halfWidth) {
-                scroller.scrollLeft = scroller.scrollLeft - halfWidth;
-            } else if (!hasDuplication && scroller.scrollLeft >= scrollWidth) {
-                // If not duplicated, reset to start
-                scroller.scrollLeft = 0;
-            }
-            
-            // Update last scroll position for auto-scroll
-            lastScrollLeft = scroller.scrollLeft;
-            
-            // Reset auto-scrolling flag after a short delay
-            setTimeout(() => {
-                isAutoScrolling = false;
-            }, 100);
-        }
-        rafId = requestAnimationFrame(autoScroll);
-    }
-
-    // Detect manual scrolling by tracking scroll position changes
-    scroller.addEventListener('scroll', () => {
-        const currentScrollLeft = scroller.scrollLeft;
-        const currentTime = Date.now();
-        const timeDelta = currentTime - lastScrollTime;
-        const scrollDelta = Math.abs(currentScrollLeft - lastScrollLeft);
-
-        // If scroll position changed significantly and it's not from auto-scroll, it's user scrolling
-        if (scrollDelta > 2 && !isAutoScrolling) {
-            isUserInteracting = true;
-
-            // Clear any existing resume timeout
-            if (resumeTimeout) {
-                clearTimeout(resumeTimeout);
-            }
-
-            // Resume auto-scroll after user stops scrolling
-            resumeTimeout = setTimeout(() => {
-                isUserInteracting = false;
-            }, 800); // Resume after 800ms of no scrolling
-        }
-
-        lastScrollLeft = currentScrollLeft;
-        lastScrollTime = currentTime;
-    }, { passive: true });
-
-    // Pause on direct interaction (touch/mouse drag)
-    ["touchstart", "mousedown"].forEach(evt => {
-        scroller.addEventListener(evt, () => {
-            isUserInteracting = true;
-            if (resumeTimeout) {
-                clearTimeout(resumeTimeout);
-            }
-        }, { passive: true });
-    });
-
-    // Resume after direct interaction ends
-    ["touchend", "mouseup"].forEach(evt => {
-        scroller.addEventListener(evt, () => {
-            resumeTimeout = setTimeout(() => {
-                isUserInteracting = false;
-            }, 300);
-        }, { passive: true });
-    });
-
-    // Handle mouse wheel - allow normal page scrolling (removed horizontal scroll conversion)
-    // Only pause auto-scroll when user hovers over the featured products section
-    scroller.addEventListener('mouseenter', () => {
-        // Pause auto-scroll when mouse enters
-        isUserInteracting = true;
-    });
-    
-    scroller.addEventListener('mouseleave', () => {
-        // Resume auto-scroll after a delay when mouse leaves
-        resumeTimeout = setTimeout(() => {
-            isUserInteracting = false;
-        }, 500);
-    });
-
-    // Handle mouse drag scrolling (desktop) - enable click and drag to scroll
-    let isDragging = false;
-    let startX = 0;
-    let scrollLeftStart = 0;
-    let lastMoveTime = 0;
-
-    scroller.addEventListener('mousedown', (e) => {
-        // Only handle mouse events, not touch
-        if (e.touches && e.touches.length > 0) return;
-
-        // Prevent default to avoid text selection
-        e.preventDefault();
-
-        isDragging = true;
-        isUserInteracting = true;
-        startX = e.clientX; // Use clientX for more accurate position
-        scrollLeftStart = scroller.scrollLeft;
-        lastMoveTime = Date.now();
-
-        scroller.style.cursor = 'grabbing';
-        scroller.style.userSelect = 'none';
-        scroller.style.scrollBehavior = 'auto'; // Disable smooth scroll during drag for instant response
-
-        if (resumeTimeout) {
-            clearTimeout(resumeTimeout);
-        }
-    });
-
-    document.addEventListener('mousemove', (e) => {
-        if (!isDragging) return;
-
-        e.preventDefault();
-
-        const currentX = e.clientX;
-        const diffX = startX - currentX; // Invert so dragging right scrolls right
-        const newScrollLeft = scrollLeftStart + diffX;
-
-        // Update scroll position immediately for smooth movement
-        scroller.scrollLeft = newScrollLeft;
-
-        // Update start position for smoother continuous dragging
-        startX = currentX;
-        scrollLeftStart = scroller.scrollLeft;
-
-        isUserInteracting = true;
-        lastMoveTime = Date.now();
-
-        if (resumeTimeout) {
-            clearTimeout(resumeTimeout);
-        }
-    });
-
-    document.addEventListener('mouseup', (e) => {
-        if (isDragging) {
-            isDragging = false;
-            scroller.style.cursor = 'grab';
-            scroller.style.userSelect = '';
-            scroller.style.scrollBehavior = 'smooth'; // Re-enable smooth scroll
-
-            resumeTimeout = setTimeout(() => {
-                isUserInteracting = false;
-            }, 500);
-        }
-    });
-
-    // Also handle mouse leave to stop dragging if cursor leaves the area
-    scroller.addEventListener('mouseleave', () => {
-        if (isDragging) {
-            isDragging = false;
-            scroller.style.cursor = 'grab';
-            scroller.style.userSelect = '';
-            scroller.style.scrollBehavior = 'smooth';
-
-            resumeTimeout = setTimeout(() => {
-                isUserInteracting = false;
-            }, 500);
-        }
-    });
-
-    // Set initial cursor style
-    scroller.style.cursor = 'grab';
-
-    // Start auto-scroll immediately
-    autoScroll();
-});
-</script>
-@endif
-
-
 <!--==============================
 About Area
 ==============================--> 
-<section class=" space-top space-extra-bottom space-top-mobile" style="background-color: #ffffff;">
+<section class=" space-extra-bottom space-top-mobile" style="background-color: #ffffff;">
     <div class="container">
         <div class="row gx-70 align-items-center">
 

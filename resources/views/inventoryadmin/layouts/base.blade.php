@@ -403,7 +403,7 @@
                 <a class="nav__item {{ request()->routeIs('inventory.admin.returns-exchange.index') ? 'active' : '' }}" href="{{ route('inventory.admin.returns-exchange.index') }}">
                     <div style="display: flex; align-items: center; gap: 10px;">
                         <i class="fas fa-exchange-alt" style="width: 18px; text-align: center;"></i>
-                        <span>Returns & Exchanges</span>
+                        <span>Exchanges</span>
                     </div>
                 </a>
                 <a class="nav__item {{ request()->routeIs('inventory.admin.reports.*') ? 'active' : '' }}" href="{{ route('inventory.admin.reports.index') }}">

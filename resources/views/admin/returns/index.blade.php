@@ -1,7 +1,7 @@
 @extends('admin.layouts.base')
 
-@section('title', 'Returns & Exchanges | The Skool Store')
-@section('page_heading', 'Returns & Exchanges')
+@section('title', 'Exchanges | The Skool Store')
+@section('page_heading', 'Exchanges')
 @section('page_subheading', 'Review and approve requests; process received items')
 
 @section('content')
@@ -95,8 +95,8 @@
         .btn-action-sm:hover { opacity: 0.9; }
         
         .btn-view { background: #fff; border: 1px solid #d0d5dd; color: #344054; }
-        .btn-approve { background: #dcfce7; color: #027a48; }
-        .btn-deny { background: #fee4e2; color: #b42318; }
+        .btn-approve { background: #dcfce7; color: #027a48; padding: 6px 10px; }
+        .btn-deny { background: #fee4e2; color: #b42318; padding: 6px 10px; }
         .btn-blue { background: #e0f2fe; color: #026aa7; }
         
         .table-wrap {
@@ -105,6 +105,54 @@
             overflow-x: auto;
             background: #fff;
             box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+        }
+        /* Order hover card */
+        .order-hover-card {
+            position: relative;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .order-hover-card .hover-card {
+            display: none;
+            position: absolute;
+            top: 105%;
+            left: 0;
+            background: #fff;
+            border: 1px solid #e5e7eb;
+            border-radius: 10px;
+            padding: 10px 12px;
+            box-shadow: 0 10px 30px rgba(15, 23, 42, 0.12);
+            min-width: 250px;
+            z-index: 30;
+        }
+        .order-hover-card .hover-card .row {
+            display: grid;
+            grid-template-columns: 90px 1fr;
+            gap: 6px;
+            align-items: baseline;
+            margin-bottom: 6px;
+        }
+        .order-hover-card .hover-card .row:last-child {
+            margin-bottom: 0;
+        }
+        .order-hover-card .hover-card .label {
+            font-size: 12px;
+            color: #6b7280;
+            text-transform: uppercase;
+            letter-spacing: 0.03em;
+            white-space: nowrap;
+        }
+        .order-hover-card .hover-card .value {
+            font-size: 14px;
+            color: #111827;
+            font-weight: 600;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .order-hover-card:hover .hover-card {
+            display: block;
         }
         table { width: 100%; border-collapse: collapse; }
         th, td { padding: 12px 16px; text-align: left; border-bottom: 1px solid #e5e7eb; font-size: 13px; vertical-align: middle; }
@@ -131,6 +179,22 @@
                     <option value="">All Status</option>
                     @foreach(['pending','approved','rejected','received_restocked','received_discarded','completed'] as $st)
                         <option value="{{ $st }}" {{ ($filters['status'] ?? '') === $st ? 'selected' : '' }} style="text-transform:capitalize;">{{ str_replace('_',' ', $st) }}</option>
+                    @endforeach
+                </select>
+            </div>
+            <div style="flex:1; min-width: 150px;">
+                <select name="school_id" class="filter-input-rounded no-tom" style="width:100%;">
+                    <option value="">All Schools</option>
+                    @foreach($schools as $school)
+                        <option value="{{ $school->id }}" @selected(($filters['school_id'] ?? '') == $school->id)>{{ $school->name }}</option>
+                    @endforeach
+                </select>
+            </div>
+            <div style="flex:1; min-width: 150px;">
+                <select name="grade" class="filter-input-rounded no-tom" style="width:100%;">
+                    <option value="">All Grades</option>
+                    @foreach($grades as $grade)
+                        <option value="{{ $grade }}" @selected(($filters['grade'] ?? '') === $grade)>{{ $grade }}</option>
                     @endforeach
                 </select>
             </div>
@@ -177,7 +241,33 @@
                         <td>
                             <div style="display:flex;flex-direction:column;gap:4px;">
                                 @if($req->order)
-                                    <a href="{{ route('master.admin.orders.show', $req->order) }}" style="color:#490d59;font-weight:700;text-decoration:none;">{{ $req->order->order_number ?? '—' }}</a>
+                                    @php
+                                        $tooltipSchool = $req->order->school?->name ?? '—';
+                                        $tooltipGrade = $req->order->grade ?? '—';
+                                        $tooltipStudent = $req->order->student_name
+                                            ?? ($req->order->student->name ?? null)
+                                            ?? '—';
+                                    @endphp
+                                    <div class="order-hover-card">
+                                        <a
+                                            href="{{ route('master.admin.orders.show', $req->order) }}"
+                                            style="color:#490d59;font-weight:700;text-decoration:none;"
+                                        >{{ $req->order->order_number ?? '—' }}</a>
+                                        <div class="hover-card">
+                                            <div class="row">
+                                                <span class="label">School:</span>
+                                                <span class="value">{{ $tooltipSchool }}</span>
+                                            </div>
+                                            <div class="row">
+                                                <span class="label">Grade:</span>
+                                                <span class="value">{{ $tooltipGrade }}</span>
+                                            </div>
+                                            <div class="row">
+                                                <span class="label">Student:</span>
+                                                <span class="value">{{ $tooltipStudent }}</span>
+                                            </div>
+                                        </div>
+                                    </div>
                                 @else
                                     <span style="color:#6b7280;">—</span>
                                 @endif
@@ -215,11 +305,15 @@
                                 @if($req->status === 'pending')
                                     <form method="POST" action="{{ route('master.admin.returns-exchange.approve', $req) }}">
                                         @csrf
-                                        <button type="submit" class="btn-action-sm btn-approve" title="Approve">Approve</button>
+                                        <button type="submit" class="btn-action-sm btn-approve" title="Approve">
+                                            <i class="fas fa-check"></i>
+                                        </button>
                                     </form>
                                     <form method="POST" action="{{ route('master.admin.returns-exchange.deny', $req) }}">
                                         @csrf
-                                        <button type="submit" class="btn-action-sm btn-deny" title="Deny">Deny</button>
+                                        <button type="submit" class="btn-action-sm btn-deny" title="Deny">
+                                            <i class="fas fa-times"></i>
+                                        </button>
                                     </form>
                                 @endif
 
@@ -253,7 +347,7 @@
                         </td>
                     </tr>
                 @empty
-                    <tr><td colspan="9" style="padding:40px;text-align:center;color:#6b7280;">No return/exchange requests found.</td></tr>
+                    <tr><td colspan="9" style="padding:40px;text-align:center;color:#6b7280;">No exchange requests found.</td></tr>
                 @endforelse
             </tbody>
         </table>

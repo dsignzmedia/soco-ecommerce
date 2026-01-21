@@ -5,7 +5,7 @@
 @section('content')
     <div style="max-width:400px;margin:100px auto;padding:40px;background:#fff;border-radius:16px;box-shadow:0 12px 30px rgba(0,0,0,0.1);">
         <div style="text-align:center;margin-bottom:32px;">
-            <img src="{{ asset('assets/img/new logo/new_logo.png') }}" alt="The Skool Store" style="width:140px;margin-bottom:16px;">
+            <img src="{{ asset('assets/img/new logo/new_logo-invent.png') }}" alt="The Skool Store" style="width:140px;margin-bottom:16px;">
             <h1 style="margin:0;color:#111827;font-size:24px;">Inventory Admin</h1>
             <p style="margin:8px 0 0;color:#6b7280;">Sign in to manage inventory</p>
         </div>

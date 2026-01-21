@@ -55,11 +55,12 @@
                     </button>
                 </div>
 
-                <!-- Order Items -->
-                <div class="card shadow-sm border-0 mb-4" style="border-radius: 16px; overflow: hidden;">
-                    <div class="card-body p-4">
-                        @foreach($order['items'] as $item)
-                            <div class="d-flex gap-3 {{ !$loop->last ? 'mb-4 pb-4 border-bottom' : '' }}">
+                <!-- Order Items with Individual Tracking -->
+                @foreach($order['items'] as $itemIndex => $item)
+                    <div class="card shadow-sm border-0 mb-4" style="border-radius: 16px; overflow: hidden;">
+                        <div class="card-body p-4">
+                            <!-- Product Info -->
+                            <div class="d-flex gap-3 mb-4">
                                 <!-- Product Image -->
                                 <div class="flex-shrink-0">
                                     @if(isset($item['image']) && $item['image'])
@@ -73,143 +74,149 @@
                                     @endif
                                 </div>
 
-                                    <div class="d-flex flex-column flex-sm-row justify-content-between align-items-start gap-2">
-                                        <div class="mb-2 mb-sm-0">
-                                            <h6 class="mb-2" style="font-weight: 600; color: #333; font-size: 1rem;">
-                                                {{ !empty($item['name']) ? $item['name'] : 'Product Name Unavailable' }}
-                                            </h6>
-                                            <div class="d-flex gap-3 mt-2">
-                                                <span class="text-muted small">Size: <strong>{{ $item['size'] ?? 'N/A' }}</strong></span>
-                                                <span class="text-muted small">Qty: <strong>{{ $item['quantity'] }}</strong></span>
-                                            </div>
-                                        </div>
-                                    </div>
-                        @endforeach
-                    </div>
-                </div>
-
-                <!-- Order ID & Status Combined -->
-                <div class="card shadow-sm border-0 mb-4" style="border-radius: 16px; overflow: hidden;">
-                    <div class="card-body p-4">
-                        <!-- Order Status -->
-                        <h5 class="mb-4" style="font-weight: 600; color: #333;">
-                            @if($order['status'] === 'cancelled')
-                                Order Cancelled
-                            @elseif($order['status'] === 'delivered')
-                                Order Delivered
-                            @else
-                                Order Processing
-                            @endif
-                        </h5>
-                        
-                        @if($order['status'] === 'cancelled')
-                            <p class="text-muted mb-4">The delivery partner was unable to deliver to your location</p>
-                        @endif
-
-                        <!-- Status Timeline -->
-                        <div class="position-relative" style="padding-left: 40px;">
-                            @foreach($statuses as $index => $status)
-                                @php
-                                    $isCompleted = $index <= $currentStatusIndex;
-                                    $isCurrent = $index === $currentStatusIndex;
-                                    $circleColor = $isCompleted ? '#28a745' : '#e0e0e0';
-                                    if ($order['status'] === 'cancelled' && $isCurrent) {
-                                        $circleColor = '#dc3545';
-                                    }
-                                @endphp
-                                
-                                <div class="mb-4 position-relative">
-                                    <!-- Timeline Line -->
-                                    @if(!$loop->last)
-                                        <div style="position: absolute; left: -28px; top: 20px; bottom: -24px; width: 2px; background-color: {{ $isCompleted ? '#28a745' : '#e0e0e0' }};"></div>
-                                    @endif
-                                    
-                                    <!-- Status Circle -->
-                                    <div style="position: absolute; left: -35px; top: 0; width: 16px; height: 16px; border-radius: 50%; background-color: {{ $circleColor }}; border: 3px solid #ffffff; box-shadow: 0 0 0 2px {{ $circleColor }};"></div>
-                                    
-                                    <!-- Status Content -->
-                                    <div>
-                                        <h6 class="mb-1" style="font-weight: 600; color: {{ $isCompleted ? '#333' : '#999' }};">
-                                            @php
-                                                $icon = 'fa-circle';
-                                                $desc = '';
-                                                switch(strtolower($status['label'])) {
-                                                    case 'order placed':
-                                                        $icon = 'fa-clipboard-check';
-                                                        $desc = 'We have received your order';
-                                                        break;
-                                                    case 'processing':
-                                                        $icon = 'fa-cog';
-                                                        $desc = 'We are preparing your order';
-                                                        break;
-                                                    case 'packed':
-                                                        $icon = 'fa-box-open';
-                                                        $desc = 'Your order is packed and ready';
-                                                        break;
-                                                    case 'shipped':
-                                                        $icon = 'fa-shipping-fast';
-                                                        $desc = 'Your order is on the way';
-                                                        break;
-                                                    case 'delivered':
-                                                        $icon = 'fa-home';
-                                                        $desc = 'Package delivered';
-                                                        break;
-                                                }
-                                            @endphp
-                                            <i class="fas {{ $icon }} me-2"></i> {{ $status['label'] }}
-                                        </h6>
-                                        <p class="text-muted small mb-1" style="font-size: 0.85rem;">{{ $desc }}</p>
-                                        @if($isCurrent)
-                                            <p class="text-muted small mb-0">
-                                                {{ $order['status'] === 'cancelled' ? 'Today, ' . date('M d', strtotime($order['updated_at'])) : date('D M d', strtotime($order['updated_at'])) }}
-                                            </p>
-                                        @endif
+                                <div class="flex-grow-1">
+                                    <h6 class="mb-2" style="font-weight: 600; color: #333; font-size: 1rem;">
+                                        {{ !empty($item['name']) ? $item['name'] : 'Product Name Unavailable' }}
+                                    </h6>
+                                    <div class="d-flex gap-3 mt-2">
+                                        <span class="text-muted small">Size: <strong>{{ $item['size'] ?? 'N/A' }}</strong></span>
+                                        <span class="text-muted small">Qty: <strong>{{ $item['quantity'] }}</strong></span>
                                     </div>
                                 </div>
-                            @endforeach
+                            </div>
 
-                            <!-- Return / Exchange Button or Status (Shown after timeline if delivered) -->
-                            @if($order['status'] === 'delivered')
-                                @if(isset($returnRequest) && $returnRequest->status != 'pending')
-                                    <div class="mb-4">
-                                        @if($returnRequest->status == 'approved')
-                                            <div class="p-3 rounded" style="background-color: #ecfdf5; border: 1px solid #dcfce7; color: #065f46;">
-                                                <i class="fas fa-check-circle me-2"></i> 
-                                                <strong>{{ ucfirst($returnRequest->type) }} Request Approved</strong>
-                                            </div>
-                                        @elseif(in_array($returnRequest->status, ['received_restocked', 'received_discarded']))
-                                            <div class="p-3 rounded" style="background-color: #eff6ff; border: 1px solid #dbeafe; color: #1e40af;">
-                                                <i class="fas fa-box-open me-2"></i> 
-                                                <strong>Return Received</strong>
-                                            </div>
-                                        @elseif($returnRequest->status == 'completed')
-                                            <div class="p-3 rounded" style="background-color: #f0f9ff; border: 1px solid #e0f2fe; color: #0369a1;">
-                                                <i class="fas fa-check-double me-2"></i> 
-                                                <strong>Exchange Completed</strong>
-                                            </div>
-                                        @elseif($returnRequest->status == 'rejected')
-                                            <div class="p-3 rounded" style="background-color: #fef2f2; border: 1px solid #fee2e2; color: #991b1b;">
-                                                <i class="fas fa-times-circle me-2"></i> 
-                                                <strong>Request Rejected</strong>
-                                            </div>
-                                        @endif
-                                    </div>
+                            <!-- Item Status Header -->
+                            <h5 class="mb-4" style="font-weight: 600; color: #333;">
+                                @php
+                                    $itemStatus = strtolower($item['status'] ?? 'pending');
+                                @endphp
+                                @if($itemStatus === 'cancelled')
+                                    Order Cancelled
+                                @elseif($itemStatus === 'delivered')
+                                    Order Delivered
                                 @else
-                                    <div class="mb-4">
-                                        <a href="{{ route('frontend.parent.return-exchange', ['orderId' => $order['id']]) }}" class="btn btn-outline-danger btn-sm" style="border-radius: 8px; font-weight: 600;">
-                                            Proceed to Return/Exchange
-                                        </a>
-                                        @if(isset($returnRequest) && $returnRequest->status == 'pending')
-                                            <div class="mt-2 text-warning small">
-                                                <i class="fas fa-clock me-1"></i> Request Pending Approval
-                                            </div>
-                                        @endif
-                                    </div>
+                                    Order Processing
                                 @endif
+                            </h5>
+                            
+                            @if($itemStatus === 'cancelled')
+                                <p class="text-muted mb-4">The delivery partner was unable to deliver to your location</p>
                             @endif
+
+                            <!-- Individual Status Timeline for this item -->
+                            <div class="position-relative" style="padding-left: 40px;">
+                                @php
+                                    $itemStatusIndex = $item['status_index'] ?? 0;
+                                @endphp
+                                @foreach($statuses as $index => $status)
+                                    @php
+                                        $isCompleted = $index <= $itemStatusIndex;
+                                        $isCurrent = $index === $itemStatusIndex;
+                                        $circleColor = $isCompleted ? '#28a745' : '#e0e0e0';
+                                        if ($itemStatus === 'cancelled' && $isCurrent) {
+                                            $circleColor = '#dc3545';
+                                        }
+                                    @endphp
+                                    
+                                    <div class="mb-4 position-relative">
+                                        <!-- Timeline Line -->
+                                        @if(!$loop->last)
+                                            <div style="position: absolute; left: -28px; top: 20px; bottom: -24px; width: 2px; background-color: {{ $isCompleted ? '#28a745' : '#e0e0e0' }};"></div>
+                                        @endif
+                                        
+                                        <!-- Status Circle -->
+                                        <div style="position: absolute; left: -35px; top: 0; width: 16px; height: 16px; border-radius: 50%; background-color: {{ $circleColor }}; border: 3px solid #ffffff; box-shadow: 0 0 0 2px {{ $circleColor }};"></div>
+                                        
+                                        <!-- Status Content -->
+                                        <div>
+                                            <h6 class="mb-1" style="font-weight: 600; color: {{ $isCompleted ? '#333' : '#999' }};">
+                                                @php
+                                                    $icon = 'fa-circle';
+                                                    $desc = '';
+                                                    switch(strtolower($status['label'])) {
+                                                        case 'order placed':
+                                                            $icon = 'fa-clipboard-check';
+                                                            $desc = 'We have received your order';
+                                                            break;
+                                                        case 'processing':
+                                                            $icon = 'fa-cog';
+                                                            $desc = 'We are preparing your order';
+                                                            break;
+                                                        case 'packed':
+                                                            $icon = 'fa-box-open';
+                                                            $desc = 'Your order is packed and ready';
+                                                            break;
+                                                        case 'shipped':
+                                                            $icon = 'fa-shipping-fast';
+                                                            $desc = 'Your order is on the way';
+                                                            break;
+                                                        case 'delivered':
+                                                            $icon = 'fa-home';
+                                                            $desc = 'Package delivered';
+                                                            break;
+                                                    }
+                                                @endphp
+                                                <i class="fas {{ $icon }} me-2"></i> {{ $status['label'] }}
+                                            </h6>
+                                            <p class="text-muted small mb-1" style="font-size: 0.85rem;">{{ $desc }}</p>
+                                            @if($isCurrent)
+                                                <p class="text-muted small mb-0">
+                                                    @php
+                                                        $itemUpdatedAt = isset($item['updated_at']) ? $item['updated_at'] : $order['updated_at'];
+                                                    @endphp
+                                                    {{ $itemStatus === 'cancelled' ? 'Today, ' . date('M d', strtotime($itemUpdatedAt)) : date('D M d', strtotime($itemUpdatedAt)) }}
+                                                </p>
+                                            @endif
+                                        </div>
+                                    </div>
+                                @endforeach
+
+                                <!-- Exchange Button or Status (Shown after timeline if delivered) -->
+                                @if($itemStatus === 'delivered')
+                                    @php
+                                        $itemReturnRequest = isset($returnRequests) && $returnRequests->has($item['id']) ? $returnRequests[$item['id']] : null;
+                                    @endphp
+                                    @if($itemReturnRequest && $itemReturnRequest->status != 'pending')
+                                        <div class="mb-4">
+                                            @if($itemReturnRequest->status == 'approved')
+                                                <div class="p-3 rounded" style="background-color: #ecfdf5; border: 1px solid #dcfce7; color: #065f46;">
+                                                    <i class="fas fa-check-circle me-2"></i> 
+                                                    <strong>{{ ucfirst($itemReturnRequest->type) }} Request Approved</strong>
+                                                </div>
+                                            @elseif(in_array($itemReturnRequest->status, ['received_restocked', 'received_discarded']))
+                                                <div class="p-3 rounded" style="background-color: #eff6ff; border: 1px solid #dbeafe; color: #1e40af;">
+                                                    <i class="fas fa-box-open me-2"></i> 
+                                                    <strong>Item Received</strong>
+                                                </div>
+                                            @elseif($itemReturnRequest->status == 'completed')
+                                                <div class="p-3 rounded" style="background-color: #f0f9ff; border: 1px solid #e0f2fe; color: #0369a1;">
+                                                    <i class="fas fa-check-double me-2"></i> 
+                                                    <strong>Exchange Completed</strong>
+                                                </div>
+                                            @elseif($itemReturnRequest->status == 'rejected')
+                                                <div class="p-3 rounded" style="background-color: #fef2f2; border: 1px solid #fee2e2; color: #991b1b;">
+                                                    <i class="fas fa-times-circle me-2"></i> 
+                                                    <strong>Request Rejected</strong>
+                                                </div>
+                                            @endif
+                                        </div>
+                                    @else
+                                        <div class="mb-4">
+                                            <a href="{{ route('frontend.parent.return-exchange', ['orderId' => $order['id'], 'itemId' => $item['id']]) }}" class="btn btn-outline-danger btn-sm" style="border-radius: 8px; font-weight: 600;">
+                                                Proceed to Exchange
+                                            </a>
+                                            @if($itemReturnRequest && $itemReturnRequest->status == 'pending')
+                                                <div class="mt-2 text-warning small">
+                                                    <i class="fas fa-clock me-1"></i> Request Pending Approval
+                                                </div>
+                                            @endif
+                                        </div>
+                                    @endif
+                                @endif
+                            </div>
                         </div>
                     </div>
-                </div>
+                @endforeach
 
                 <!-- Rate Experience (if cancelled) -->
                 @if($order['status'] === 'cancelled')

@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width">
 
-<title>Return/Exchange Request - The Skool Store</title>
+<title>Exchange Request - The Skool Store</title>
 
 <style>
 /* CLIENT RESETS */
@@ -61,15 +61,15 @@ Request #{{ $returnRequest->id }}
 <!-- TITLE -->
 <h1 class="h1" style="margin:0 0 10px;font-size:30px;font-weight:800;">
 @if($status === 'submitted')
-Return/Exchange Request Submitted
+Exchange Request Submitted
 @elseif($status === 'approved')
-Return/Exchange Request Approved
+Exchange Request Approved
 @elseif($status === 'rejected')
-Return/Exchange Request Rejected
+Exchange Request Rejected
 @elseif($status === 'received')
-Return Item Received
+Item Received
 @else
-Return/Exchange Request Update
+Exchange Request Update
 @endif
 </h1>
 
@@ -81,7 +81,7 @@ Great news, {{ $returnRequest->order->customer_name }}! Your {{ $returnRequest->
 @elseif($status === 'rejected')
 Hello {{ $returnRequest->order->customer_name }}, we're sorry, but your {{ $returnRequest->type }} request could not be approved at this time.
 @elseif($status === 'received')
-Hello {{ $returnRequest->order->customer_name }}, we've received your returned item. We're processing it now.
+Hello {{ $returnRequest->order->customer_name }}, we've received your item. We're processing it now.
 @else
 Hello {{ $returnRequest->order->customer_name }}, your {{ $returnRequest->type }} request has been updated.
 @endif

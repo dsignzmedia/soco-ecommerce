@@ -26,7 +26,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link
-        href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&family=Roboto:wght@400;500;600;700&display=swap"
+        href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&family=Roboto:wght@400;500;600;700&family=Playfair+Display:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500;1,600;1,700&display=swap"
         rel="stylesheet">
 
 
@@ -192,7 +192,39 @@
         .sidebar-gallery .gallery-thumb img {
             width: 250px !important;
             height: auto !important;
-            max-width: 100%;
+            max-width: 130px;
+        }
+        
+        /* Initiative wrapper styling */
+        .initiative-wrapper {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 6px;
+        }
+
+        /* Row for: [An Initiative of] [SO/CO logo] */
+        .initiative-row {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .initiative-text {
+            color: #ffffff;
+            font-size: 16px;
+            font-weight: 400;
+            margin: 0;
+        }
+        
+        .initiative-tagline {
+            color: #ffffff;
+            font-size: 8px;
+            font-weight: 400;
+            /* font-style: italic; */
+            font-family: 'Playfair Display', serif;
+            margin: 0;
+            margin-left: 130px; /* roughly under the logo */
         }
         
         /* Footer heading font size */
@@ -226,6 +258,21 @@
                 height: auto !important;
                 max-width: 100%;
                 margin: 0 auto;
+            }
+            
+            /* Center initiative wrapper on mobile */
+            .initiative-wrapper {
+                align-items: center !important;
+                text-align: center;
+            }
+            
+            .initiative-text,
+            .initiative-tagline {
+                text-align: center;
+            }
+
+            .initiative-tagline {
+                /* margin-left: 0 !important; */
             }
             
             /* Center the logo container on mobile */
@@ -318,6 +365,168 @@
             padding-bottom: 0 !important;
         }
 
+        /* Footer background color */
+        .footer-wrapper.footer-layout1 {
+            background-color: #071B54 !important;
+        }
+
+        /* Footer logo sizing - responsive */
+        .footer-top .col-lg img[alt="logo"] {
+            width: 160px;
+            height: auto;
+        }
+
+        /* Tablet: 769px–991px (slightly larger, but not huge) */
+        @media (min-width: 769px) and (max-width: 991px) {
+            .footer-top .col-lg img[alt="logo"] {
+                width: 200px;
+            }
+            
+            /* Center footer content on tablet */
+            .footer-top .row {
+                justify-content: center !important;
+                text-align: center !important;
+            }
+            
+            .footer-top .col-lg,
+            .footer-top .col-lg-auto {
+                text-align: center !important;
+                margin-bottom: 15px;
+            }
+            
+            .widget-area .row {
+                justify-content: center !important;
+                text-align: center !important;
+            }
+            
+            .widget-area .col-lg-4,
+            .widget-area .col-md-6 {
+                text-align: center !important;
+            }
+            
+            .footer-widget {
+                text-align: center !important;
+            }
+            
+            .widget-about {
+                text-align: center !important;
+            }
+            
+            .map-link {
+                justify-content: center !important;
+            }
+            
+            .footer-menu ul.menu {
+                text-align: center !important;
+            }
+            
+            .footer-menu ul.menu li {
+                display: inline-block;
+                margin: 0 10px;
+            }
+            
+            /* Center initiative wrapper on tablet */
+            .initiative-wrapper {
+                align-items: center !important;
+                text-align: center;
+            }
+            
+            .initiative-text,
+            .initiative-tagline {
+                text-align: center;
+            }
+
+            .initiative-tagline {
+                margin-left: 0 !important;
+            }
+            
+            .sidebar-gallery .gallery-thumb img {
+                width: 200px !important;
+            }
+        }
+
+        /* Desktop: 992px–1299px */
+        @media (min-width: 992px) and (max-width: 1299px) {
+            .footer-top .col-lg img[alt="logo"] {
+                width: 240px;
+            }
+            
+            /* Center map-link on desktop */
+            .map-link {
+                justify-content: center !important;
+            }
+        }
+        
+        /* Center map-link for all screen sizes */
+        .map-link {
+            justify-content: center !important;
+            /* margin-left: auto !important; */
+            margin-right: auto !important;
+            display: flex !important;
+            align-items: center !important;
+            gap: 12px;
+            text-align: left !important;
+        }
+
+        /* Make map icon match the yellow circular style of other footer icons */
+        .map-link i {
+            width: var(--icon-size, 85px);
+            height: var(--icon-size, 42px);
+            line-height: var(--icon-size, 42px);
+            text-align: center;
+            border-radius: 50%;
+            background-color: var(--theme-color2);
+            color: var(--black-color);
+            font-size: 18px;
+        }
+        
+        /* Ensure parent container centers the map-link */
+        .widget-about {
+            display: flex !important;
+            flex-direction: column !important;
+            align-items: center !important;
+            text-align: center !important;
+        }
+        
+        /* Center map-link on all desktop sizes */
+        @media (min-width: 1300px) {
+            .map-link {
+                justify-content: center !important;
+                /* margin-left: auto !important; */
+                margin-right: auto !important;
+            }
+        }
+
+        /* Large desktop: 1300px and above */
+        @media (min-width: 1300px) {
+            .footer-top .col-lg img[alt="logo"] {
+                width: 220px;
+            }
+        }
+
+        /* Fix address text wrapping - align wrapped lines with text, not icon */
+        .footer-info-address {
+            display: flex;
+            align-items: flex-start;
+            gap: 12px;
+        }
+        
+        .footer-info-address i {
+            flex-shrink: 0;
+            margin-top: 2px;
+        }
+        
+        .footer-info-text {
+            flex: 1;
+            min-width: 0;
+        }
+        
+        .footer-info-text a {
+            display: inline;
+            word-wrap: break-word;
+            overflow-wrap: break-word;
+        }
+
     </style>
 
 </head>
@@ -335,8 +544,8 @@
                      <div class="col-lg"><a href="{{ route('frontend.index') }}"><img
                                  src="{{ asset('assets/img/soco_logo/logo_voilet_v.png') }}" alt="logo"></a></div>
                     <div class="col-lg-auto">
-                        <h3 class="h4 mb-0 text-white"><img src="{{ asset('assets/img/icon/check-list.svg') }}"
-                                alt="icon" class="me-2">Shop Your School’s Uniform & Essentials in one place.</h3>
+                        <h3 class="h5 mb-0 text-white">
+                                Shop Your School’s Uniform & Essentials in one place.</h3>
                     </div>
                     <div class="col-lg-auto"><a href="{{ route('login') }}" class="vs-btn">Shop Now</a></div>
                 </div>
@@ -349,24 +558,18 @@
                         <div class="widget footer-widget">
                             <div class="widget-about">
                                 <h3 class="mt-n2 bottom-text">Giving the best uniforms with care</h3>
-                                <p class="map-link"><img src="{{ asset('assets/img/icon/map.svg') }}" alt="svg">No.219,
-                                    Dr.Radhakrishnan Road, Tatabad, Coimbatore, Tamil Nadu - 641012</p>
+                                
                                 <div class="sidebar-gallery">
-                                    <div class="gallery-thumb">
-                                        <img src="{{ asset('assets/img/icon/initiative_soco.png') }}"
-                                            alt="Gallery Image">
-
+                                    <div class="initiative-wrapper">
+                                        <div class="initiative-row">
+                                            <p class="initiative-text">An Initiative of</p>
+                                            <div class="gallery-thumb">
+                                                <img src="{{ asset('assets/img/icon/initiative_soco.png') }}"
+                                                    alt="SOCO Logo">
+                                            </div>
+                                        </div>
+                                        <p class="initiative-tagline">Create Your own Identity</p>
                                     </div>
-                                    <div class="gallery-thumb">
-                                        <!-- <img src="{{ asset('assets/img/widget/gal-2-2.jpg') }}" alt="Gallery Image" class="w-100">
-                                    <a href="{{ asset('assets/img/widget/gal-2-2.jpg') }}" class="popup-image gal-btn"><i
-                                            class="fal fa-plus"></i></a> -->
-                                    </div>
-                                    <!-- <div class="gallery-thumb">
-                                    <img src="{{ asset('assets/img/widget/gal-2-3.jpg') }}" alt="Gallery Image" class="w-100">
-                                    <a href="{{ asset('assets/img/widget/gal-2-3.jpg') }}" class="popup-image gal-btn"><i
-                                            class="fal fa-plus"></i></a>
-                                </div> -->
                                 </div>
                             </div>
                         </div>
@@ -377,10 +580,32 @@
                             <div>
                                 <!-- <p class="footer-text">Monday to Friday: <span class="time">8.30am – 02.00pm</span></p>
                             <p class="footer-text">Saturday, Sunday: <span class="time">Close</span></p> -->
-                                <p class="footer-info"><i class="fal fa-envelope"></i>Email: <a
-                                        href="mailto:hello@theskoolstore.com">hello@theskoolstore.com</a></p>
-                                <p class="footer-info"><i class="fas fa-mobile-alt"></i>Phone: <a
-                                        href="tel:+919994878486">+91 9994878486</a></p>
+                                <p class="footer-info">
+                                    <i class="fal fa-envelope"></i>
+                                    Email:
+                                    <a href="mailto:hello@theskoolstore.com">hello@theskoolstore.com</a>
+                                </p>
+
+                                <p class="footer-info">
+                                    <i class="fas fa-mobile-alt"></i>
+                                    Phone:
+                                    <a href="tel:+919994878486">+91 99948 78486</a>
+                                </p>
+
+                                <p class="footer-info footer-info-address">
+                                    <i class="fas fa-map-marker-alt"></i>
+                                    <span class="footer-info-text">
+                                        <a href="https://www.google.com/maps/dir//219,+Dr+Radhakrishna+St+near+Indian+Bank+Tatabad,+Sivananda+Colony,+Tatabad+Gandhipuram,+Coimbatore,+Tamil+Nadu+641012/@11.0220074,76.9585226,16z/data=!4m5!4m4!1m0!1m2!1m1!1s0x3ba858fa2a8132a5:0x8022e83379efd97a"
+                                        target="_blank"
+                                        rel="noopener noreferrer">
+                                            No. 219, Dr. Radhakrishnan Road,
+                                             Tatabad,
+                                            Coimbatore, Tamil Nadu – 641012,
+                                            India
+                                        </a>
+                                    </span>
+                                </p>
+
                             </div>
                         </div>
                     </div>
@@ -390,7 +615,7 @@
                             <div class="menu-all-pages-container footer-menu">
                                 <ul class="menu">
                                     <li><a href="{{ route('frontend.index') }}">Home</a></li>
-                                    <li><a href="{{ route('frontend.return-exchange') }}">Return/Exchange Policy</a></li>
+                                    <li><a href="{{ route('frontend.return-exchange') }}">Exchange Policy</a></li>
                                     <li><a href="{{ route('frontend.about-us') }}">About Us</a></li>
                                     <li><a href="{{ route('frontend.privacy-policy') }}">Privacy Policy</a></li>
                                     <li><a href="{{ route('frontend.services') }}">Services</a></li>

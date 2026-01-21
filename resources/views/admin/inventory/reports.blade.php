@@ -12,7 +12,7 @@
         .card h4 { margin:0 0 12px;color:#111827; }
         .grid { display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:16px; }
 
-        /* Filter Styles from Returns & Exchanges */
+        /* Filter Styles from Exchanges */
         .filters-card {
             background: #ffffff;
             border-radius: 12px;

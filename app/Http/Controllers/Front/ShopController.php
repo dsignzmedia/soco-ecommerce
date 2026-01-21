@@ -15,6 +15,14 @@ class ShopController extends Controller
         $query = ProductMapping::whereIn('product_type', ['merchandised', 'back_to_school'])
             ->where('status', 'live');
 
+        // Filter by product type if provided
+        if ($request->has('product_type') && !empty($request->product_type)) {
+            $productType = $request->product_type;
+            if (in_array($productType, ['merchandised', 'back_to_school'])) {
+                $query->where('product_type', $productType);
+            }
+        }
+
         if ($request->has('category')) {
              $query->where('category', $request->category);
         }

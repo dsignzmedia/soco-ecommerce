@@ -32,14 +32,14 @@ class ReturnExchangeRequestMail extends Mailable
     public function envelope(): Envelope
     {
         $subjects = [
-            'submitted' => 'Return/Exchange Request Submitted',
-            'approved' => 'Return/Exchange Request Approved',
-            'rejected' => 'Return/Exchange Request Rejected',
-            'received' => 'Return Item Received',
-            'completed' => 'Return/Exchange Request Completed',
+            'submitted' => 'Exchange Request Submitted',
+            'approved' => 'Exchange Request Approved',
+            'rejected' => 'Exchange Request Rejected',
+            'received' => 'Item Received',
+            'completed' => 'Exchange Request Completed',
         ];
 
-        $subject = $subjects[$this->status] ?? 'Return/Exchange Request Update';
+        $subject = $subjects[$this->status] ?? 'Exchange Request Update';
 
         return new Envelope(
             subject: $subject . ' - Order ' . $this->returnRequest->order->order_number . ' - The Skool Store',

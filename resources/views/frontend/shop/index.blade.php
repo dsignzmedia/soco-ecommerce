@@ -710,6 +710,31 @@ document.addEventListener('DOMContentLoaded', function() {
     // Check if mobile view
     const isMobile = window.innerWidth < 992;
 
+    // Check URL parameter for product_type filter
+    const urlParams = new URLSearchParams(window.location.search);
+    const urlProductType = urlParams.get('product_type');
+    
+    // If URL has product_type parameter, set the corresponding checkbox
+    if (urlProductType) {
+        // Set desktop checkboxes
+        productTypeCheckboxes.forEach(cb => {
+            if (cb.value === urlProductType) {
+                cb.checked = true;
+            } else {
+                cb.checked = false;
+            }
+        });
+        
+        // Set mobile checkboxes
+        productTypeCheckboxesMobile.forEach(cb => {
+            if (cb.value === urlProductType) {
+                cb.checked = true;
+            } else {
+                cb.checked = false;
+            }
+        });
+    }
+
     function filterProducts(useMobileFilters = false) {
         let selectedTypes, selectedCategories, searchTerm, hasAnyTypeChecked, hasAnyCategoryChecked;
 

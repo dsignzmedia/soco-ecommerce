@@ -1,7 +1,7 @@
 @extends('admin.layouts.back_to_school')
 
-@section('title', 'Return/Exchange Request #'.$returnRequest->id.' | The Skool Store')
-@section('page_heading', 'Return/Exchange Request #' . $returnRequest->id)
+@section('title', 'Exchange Request #'.$returnRequest->id.' | The Skool Store')
+@section('page_heading', 'Exchange Request #' . $returnRequest->id)
 
 @section('content')
     <div style="display:flex;justify-content:flex-end;align-items:center;margin-bottom:24px;">
@@ -19,7 +19,7 @@
                 <p><strong>Quantity:</strong> 
                     <span style="color: #490D59; font-weight: 600;">{{ $returnRequest->requested_quantity ?? $returnRequest->order->quantity }}</span>
                     @if($returnRequest->order && ($returnRequest->requested_quantity ?? $returnRequest->order->quantity) < $returnRequest->order->quantity)
-                        <span class="badge bg-warning text-dark ms-2">Partial Return</span>
+                        <span class="badge bg-warning text-dark ms-2">Partial Exchange</span>
                     @endif
                     of {{ $returnRequest->order->quantity ?? 'N/A' }} ordered
                 </p>

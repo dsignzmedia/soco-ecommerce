@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Front;
 
 use App\Http\Controllers\Controller;
+use App\Models\Admin\Master\ExchangePolicy;
 use Illuminate\Http\Request;
 
 class HomeController extends Controller
@@ -46,7 +47,8 @@ class HomeController extends Controller
 
     public function returnExchange()
     {
-        return view('frontend.policies.return-exchange');
+        $policy = ExchangePolicy::current();
+        return view('frontend.policies.return-exchange', compact('policy'));
     }
 
     public function privacyPolicy()

@@ -4,6 +4,32 @@
 @section('page_heading', 'System Settings')
 @section('page_subheading', 'Configure payment gateways, templates, branding, and backups')
 
+@push('styles')
+    <style>
+        /* Tablet Responsive Styles (768px - 1024px) */
+        @media (min-width: 768px) and (max-width: 1024px) {
+            .card {
+                padding: 18px;
+            }
+            
+            .card h3 {
+                font-size: 16px !important;
+            }
+            
+            .card p {
+                font-size: 13px !important;
+            }
+        }
+        
+        /* Mobile Responsive Styles */
+        @media (max-width: 767px) {
+            .card {
+                padding: 16px;
+            }
+        }
+    </style>
+@endpush
+
 @section('content')
     <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:20px;">
         <a href="{{ route('master.admin.settings.payment-gateways') }}" class="card" style="display:block;text-decoration:none;color:inherit;transition:transform 0.2s,box-shadow 0.2s;" onmouseover="this.style.transform='translateY(-4px)';this.style.boxShadow='0 16px 40px rgba(15,23,42,0.1)'" onmouseout="this.style.transform='';this.style.boxShadow=''">
@@ -64,6 +90,18 @@
                 <h3 style="margin:0;color:var(--heading);font-size:18px;">App Branding</h3>
             </div>
             <p style="margin:0;color:var(--text);font-size:14px;">Customize app logo, colors, fonts, and meta information for SEO.</p>
+        </a>
+
+        <a href="{{ route('master.admin.settings.exchange-template') }}" class="card" style="display:block;text-decoration:none;color:inherit;transition:transform 0.2s,box-shadow 0.2s;" onmouseover="this.style.transform='translateY(-4px)';this.style.boxShadow='0 16px 40px rgba(15,23,42,0.1)'" onmouseout="this.style.transform='';this.style.boxShadow=''">
+            <div style="display:flex;align-items:center;gap:16px;margin-bottom:12px;">
+                <div style="width:48px;height:48px;border-radius:12px;background:#fef3c7;display:grid;place-items:center;color:#f59e0b;">
+                    <svg width="24" height="24" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"/>
+                    </svg>
+                </div>
+                <h3 style="margin:0;color:var(--heading);font-size:18px;">Exchange Template</h3>
+            </div>
+            <p style="margin:0;color:var(--text);font-size:14px;">Edit and manage the Return-Exchange Policy page content.</p>
         </a>
 
         <a href="{{ route('master.admin.settings.backups') }}" class="card" style="display:block;text-decoration:none;color:inherit;transition:transform 0.2s,box-shadow 0.2s;" onmouseover="this.style.transform='translateY(-4px)';this.style.boxShadow='0 16px 40px rgba(15,23,42,0.1)'" onmouseout="this.style.transform='';this.style.boxShadow=''">

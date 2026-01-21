@@ -85,8 +85,8 @@ Route::middleware(['auth', 'prevent-back-history', 'parent'])->group(function ()
     Route::post('/parent/update-address/{addressId}', [AuthController::class, 'updateAddress'])->name('frontend.parent.update-address');
     Route::post('/parent/delete-address/{addressId}', [AuthController::class, 'deleteAddress'])->name('frontend.parent.delete-address');
     Route::get('/parent/orders', [AuthController::class, 'orders'])->name('frontend.parent.orders');
-    Route::get('/parent/track-order/{orderId}', [AuthController::class, 'trackOrder'])->name('frontend.parent.track-order');
-    Route::get('/parent/return-exchange/{orderId}', [AuthController::class, 'returnExchange'])->name('frontend.parent.return-exchange');
+    Route::get('/parent/track-order/{orderId}/{itemId?}', [AuthController::class, 'trackOrder'])->name('frontend.parent.track-order');
+    Route::get('/parent/return-exchange/{orderId}/{itemId?}', [AuthController::class, 'returnExchange'])->name('frontend.parent.return-exchange');
     Route::post('/parent/request-return-exchange', [AuthController::class, 'requestReturnExchange'])->name('frontend.parent.request-return-exchange');
     Route::get('/parent/account', [AuthController::class, 'accountDetails'])->name('frontend.parent.account');
     Route::get('/parent/profile', [AuthController::class, 'profile'])->name('frontend.parent.profile');
@@ -215,6 +215,10 @@ Route::prefix('MasterAdmin')->name('master.admin.')->group(function () {
         // SMS Templates
         Route::get('/settings/sms-templates', [SystemSettingsController::class, 'smsTemplates'])->name('settings.sms-templates');
         Route::post('/settings/sms-templates', [SystemSettingsController::class, 'storeSmsTemplate'])->name('settings.sms-templates.store');
+
+        // Exchange Template
+        Route::get('/settings/exchange-template', [SystemSettingsController::class, 'exchangeTemplate'])->name('settings.exchange-template');
+        Route::post('/settings/exchange-template', [SystemSettingsController::class, 'updateExchangeTemplate'])->name('settings.exchange-template.update');
         Route::put('/settings/sms-templates/{smsTemplate}', [SystemSettingsController::class, 'updateSmsTemplate'])->name('settings.sms-templates.update');
         Route::delete('/settings/sms-templates/{smsTemplate}', [SystemSettingsController::class, 'destroySmsTemplate'])->name('settings.sms-templates.destroy');
 

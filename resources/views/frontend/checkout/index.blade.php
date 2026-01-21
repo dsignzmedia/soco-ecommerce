@@ -50,7 +50,7 @@
         @if(count($cartItems) > 0)
             <form action="{{ route('frontend.parent.process-checkout') }}" method="POST" id="checkoutForm">
                 @csrf
-                <input type="hidden" name="total" value="{{ $total }}">
+                <input type="hidden" name="total" value="{{ $totalWithShipping ?? $total }}">
                 <input type="hidden" name="selected_address" id="selected_address" value="{{ isset($savedAddresses) && $savedAddresses->count() > 0 ? '0' : '' }}">
                 
                 <div class="row">
@@ -208,7 +208,11 @@
                                     @endif
                                     <div class="d-flex justify-content-between mb-2">
                                         <span style="color: #666;">Shipping:</span>
-                                        <span style="color: #28a745; font-weight: 500;">Free</span>
+                                        @if(($shippingCost ?? 0) > 0)
+                                            <span style="color: #333; font-weight: 500;">₹{{ number_format($shippingCost, 2) }}</span>
+                                        @else
+                                            <span style="color: #28a745; font-weight: 500;">Free</span>
+                                        @endif
                                     </div>
                                 </div>
                                 
@@ -216,7 +220,7 @@
                                 
     <div class="d-flex justify-content-between mb-4">
                                     <strong style="color: #333; font-size: 1.1rem;">Total:</strong>
-                                    <strong style="color: #dc3545; font-size: 1.1rem;">₹{{ number_format($total) }}</strong>
+                                    <strong style="color: #dc3545; font-size: 1.1rem;">₹{{ number_format($totalWithShipping ?? $total) }}</strong>
                                 </div>
                                 
                                 @if(isset($razorpayEnabled) && $razorpayEnabled)
@@ -245,7 +249,7 @@
                         initiateRoute: "{{ route('frontend.parent.payment.initiate') }}",
                         verifyRoute: "{{ route('frontend.parent.payment.verify') }}",
                         csrfToken: "{{ csrf_token() }}",
-                        totalAmount: {{ $total }}
+                        totalAmount: {{ $totalWithShipping ?? $total }}
                     });
                 }
 

@@ -7,6 +7,7 @@ use App\Models\Admin\Master\AppBranding;
 use App\Models\Admin\Master\AuditLog;
 use App\Models\Admin\Master\Backup;
 use App\Models\Admin\Master\EmailTemplate;
+use App\Models\Admin\Master\ExchangePolicy;
 use App\Models\Admin\Master\InvoiceTemplate;
 use App\Models\Admin\Master\PaymentGateway;
 use App\Models\Admin\Master\SmsTemplate;
@@ -335,6 +336,60 @@ class SystemSettingsController extends Controller
         $branding->update($data);
 
         return back()->with('status', 'App branding updated.');
+    }
+
+    // Exchange Template
+    public function exchangeTemplate(): View
+    {
+        $policy = ExchangePolicy::current();
+        
+        // Migrate existing content from file if database is empty but file exists
+        if (empty($policy->content)) {
+            $filePath = resource_path('views/frontend/policies/return-exchange.blade.php');
+            if (file_exists($filePath)) {
+                $fullTemplate = file_get_contents($filePath);
+                $content = $this->extractPolicyContent($fullTemplate);
+                if (!empty($content)) {
+                    $policy->update(['content' => $content]);
+                }
+            }
+        }
+        
+        $content = $policy->content ?? '';
+
+        return view('admin.settings.exchange-template', compact('content'));
+    }
+    
+    /**
+     * Extract just the policy-content inner HTML so the editor stays clean.
+     */
+    private function extractPolicyContent(string $fullTemplate): string
+    {
+        if (!$fullTemplate) {
+            return '';
+        }
+
+        // Capture everything inside the policy-content wrapper
+        if (preg_match('/<div class="policy-content">(.*?)<\/div>\s*<\/div>\s*<\/div>\s*<\/div>\s*<\/section>/is', $fullTemplate, $matches)) {
+            return trim($matches[1]);
+        }
+
+        // Fallback: return the full template if structure was changed
+        return trim($fullTemplate);
+    }
+
+    public function updateExchangeTemplate(Request $request): RedirectResponse
+    {
+        $data = $request->validate([
+            'content' => ['required', 'string'],
+        ]);
+
+        $policy = ExchangePolicy::current();
+        $policy->update([
+            'content' => $data['content'],
+        ]);
+
+        return back()->with('status', 'Exchange template updated successfully.');
     }
 
     // Backup & Restore

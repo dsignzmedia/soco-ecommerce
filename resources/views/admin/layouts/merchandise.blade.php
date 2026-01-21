@@ -583,7 +583,7 @@
                         ['label' => 'Inventory', 'route' => 'admin.merchandise.inventory.index', 'active' => 'admin.merchandise.inventory.*', 'icon' => 'fas fa-cubes'],
                         ['label' => 'Orders', 'route' => 'admin.merchandise.orders.index', 'active' => 'admin.merchandise.orders.*', 'icon' => 'fas fa-shopping-bag'],
                         ['label' => 'Payments', 'route' => 'admin.merchandise.payments.index', 'active' => 'admin.merchandise.payments.*', 'icon' => 'fas fa-credit-card'],
-                        ['label' => 'Returns & Exchanges', 'route' => 'admin.merchandise.returns-exchange.index', 'active' => 'admin.merchandise.returns-exchange.*', 'icon' => 'fas fa-exchange-alt'],
+                        ['label' => 'Exchanges', 'route' => 'admin.merchandise.returns-exchange.index', 'active' => 'admin.merchandise.returns-exchange.*', 'icon' => 'fas fa-exchange-alt'],
                         ['label' => 'Reports', 'route' => 'admin.merchandise.reports.index', 'active' => 'admin.merchandise.reports.*', 'icon' => 'fas fa-chart-line'],
                         ['label' => 'Print Queue', 'route' => 'admin.merchandise.print-queue.index', 'active' => 'admin.merchandise.print-queue.*', 'icon' => 'fas fa-print'],
                         ['label' => 'Category Settings', 'route' => 'admin.merchandise.product-settings.index', 'active' => 'admin.merchandise.product-settings.*', 'icon' => 'fas fa-cog'],

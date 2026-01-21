@@ -40,7 +40,7 @@
                         <li>We do not store payment details; transactions are securely handled by third-party payment processors.</li>
                     </ul>
 
-                    <h3>4. Shipping, Returns & Exchanges</h3>
+                    <h3>4. Shipping & Exchanges</h3>
                     <ul>
                         <li>Shipping timelines are estimates and may vary based on availability.</li>
                         <li>Please check the size chart and video tutorials before placing an order. If you receive a defective or incorrect product, please contact us within 2 days for assistance.</li>

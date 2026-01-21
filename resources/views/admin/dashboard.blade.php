@@ -92,8 +92,63 @@
             grid-template-columns: 2fr 1fr;
             gap: 24px;
         }
-        @media (max-width: 1024px) {
-            .dashboard-mid-section { grid-template-columns: 1fr; }
+        
+        /* Tablet Responsive Styles (768px - 1024px) */
+        @media (min-width: 768px) and (max-width: 1024px) {
+            .kpi-grid {
+                grid-template-columns: repeat(2, 1fr);
+                gap: 20px;
+            }
+            
+            .kpi-card {
+                padding: 20px;
+            }
+            
+            .kpi-value {
+                font-size: 24px;
+            }
+            
+            .dashboard-mid-section {
+                grid-template-columns: 1fr;
+                gap: 20px;
+            }
+            
+            .actions-grid {
+                grid-template-columns: repeat(2, 1fr);
+                gap: 12px;
+            }
+            
+            .action-item {
+                padding: 14px;
+            }
+            
+            .chart-container {
+                padding: 20px;
+            }
+            
+            .filter-group {
+                flex-wrap: wrap;
+            }
+            
+            .filter-select {
+                min-width: 140px;
+            }
+        }
+        
+        /* Mobile Responsive Styles */
+        @media (max-width: 767px) {
+            .dashboard-mid-section { 
+                grid-template-columns: 1fr; 
+            }
+            
+            .kpi-grid {
+                grid-template-columns: 1fr;
+                gap: 16px;
+            }
+            
+            .actions-grid {
+                grid-template-columns: 1fr;
+            }
         }
 
         /* Quick Actions Grid */
@@ -548,7 +603,7 @@
             <div class="tips-text">
                 <strong>1. Manage Schools & Products:</strong> Onboard schools and map catalog items.<br>
                 <strong>2. Inventory & Pricing:</strong> Update stock levels and set school-specific pricing.<br>
-                <strong>3. Order Fulfillment:</strong> Monitor and process incoming orders and returns.<br>
+                <strong>3. Order Fulfillment:</strong> Monitor and process incoming orders and exchanges.<br>
                 <strong>4. Analytics:</strong> Track sales trends and performance reports.
             </div>
         </div>
