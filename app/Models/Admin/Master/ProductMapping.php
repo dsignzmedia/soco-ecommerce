@@ -43,7 +43,8 @@ class ProductMapping extends Model
         'size_measurement_image',
         'media_measurement_video',
         'size_chart_path',
-        'video_url'
+        'video_url',
+        'video_file'
     ];
 
     protected $casts = [

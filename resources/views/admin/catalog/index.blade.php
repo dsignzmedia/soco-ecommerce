@@ -213,6 +213,64 @@
             }
         }
     }
+
+    // Helper function to format grade pricing with ranges
+    if (!function_exists('formatGradePricingRanges')) {
+        function formatGradePricingRanges($mapping) {
+            if (!$mapping->gradePricing || $mapping->gradePricing->count() === 0) {
+                return [];
+            }
+            
+            $gradeOrder = ['Pre-KG', 'LKG', 'UKG', '1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11', '12'];
+            
+            // Group by price
+            $pricingByPrice = [];
+            foreach ($mapping->gradePricing as $gp) {
+                if (!isset($pricingByPrice[$gp->price])) {
+                    $pricingByPrice[$gp->price] = [];
+                }
+                $pricingByPrice[$gp->price][] = $gp->grade;
+            }
+            
+            $ranges = [];
+            foreach ($pricingByPrice as $price => $gradeList) {
+                // Sort by grade order
+                usort($gradeList, function($a, $b) use ($gradeOrder) {
+                    $aIndex = array_search($a, $gradeOrder);
+                    $bIndex = array_search($b, $gradeOrder);
+                    if ($aIndex === false) $aIndex = 999;
+                    if ($bIndex === false) $bIndex = 999;
+                    return $aIndex <=> $bIndex;
+                });
+                
+                // Group consecutive grades into ranges
+                $currentRange = ['from' => $gradeList[0], 'to' => $gradeList[0]];
+                foreach ($gradeList as $i => $grade) {
+                    if ($i === 0) continue;
+                    $prevIndex = array_search($gradeList[$i-1], $gradeOrder);
+                    $currIndex = array_search($grade, $gradeOrder);
+                    if ($currIndex === $prevIndex + 1) {
+                        // Consecutive, extend range
+                        $currentRange['to'] = $grade;
+                    } else {
+                        // Not consecutive, save current range and start new
+                        $rangeStr = $currentRange['from'] === $currentRange['to'] 
+                            ? $currentRange['from'] 
+                            : $currentRange['from'] . '-' . $currentRange['to'];
+                        $ranges[] = ['range' => $rangeStr, 'price' => $price];
+                        $currentRange = ['from' => $grade, 'to' => $grade];
+                    }
+                }
+                // Add last range for this price
+                $rangeStr = $currentRange['from'] === $currentRange['to'] 
+                    ? $currentRange['from'] 
+                    : $currentRange['from'] . '-' . $currentRange['to'];
+                $ranges[] = ['range' => $rangeStr, 'price' => $price];
+            }
+            
+            return $ranges;
+        }
+    }
 @endphp
 
 @section('content')
@@ -297,9 +355,9 @@
                     <tr>
                         <th style="width: 40px;">#</th>
                         <th>Product Details</th>
-                        <th>School / Grade</th>
+                        <th>School</th>
                         <th>Category / Type</th>
-                        <th style="text-align:right;">Price</th>
+                        <th style="text-align:left;min-width:180px;">Price</th>
                         <th style="text-align:center;">Stock</th>
                         <th style="min-width: 100px;">Status</th>
                         <th style="text-align:right;">Actions</th>
@@ -331,22 +389,35 @@
                             </td>
                             <td>
                                 <div style="font-weight:500;color:#111827;">{{ optional($mapping->school)->name ?? '—' }}</div>
-                                <small>{{ formatGradesDisplay($mapping) }}</small>
                                 @if($mapping->gender)
-                                    <small>{{ ucfirst($mapping->gender) }}</small>
+                                    <small style="color:#6b7280;">{{ ucfirst($mapping->gender) }}</small>
                                 @endif
                             </td>
                             <td>
                                 <div style="color:#111827;font-weight:500;">{{ $mapping->category ?? '—' }}</div>
                                 <small>{{ ucfirst(str_replace('_', ' ', $mapping->product_type ?? '—')) }}</small>
                             </td>
-                            <td style="text-align:right;">
-                                <div style="font-weight:600;color:#111827;">₹{{ number_format($mapping->getDisplayPrice(), 2) }}</div>
-                                @if($mapping->price_sale && $mapping->price_sale > 0)
-                                    <small style="color:#b42318;">Sale: ₹{{ number_format($mapping->price_sale, 2) }}</small>
-                                @endif
-                                @if($mapping->price_inclusive_tax)
-                                    <small style="color:#027a48;">Incl. tax</small>
+                            <td style="text-align:left;">
+                                @if($mapping->gradePricing && $mapping->gradePricing->count() > 0)
+                                    @php $pricingRanges = formatGradePricingRanges($mapping); @endphp
+                                    <div style="display:flex;flex-direction:column;gap:4px;min-width:160px;">
+                                        @foreach($pricingRanges as $range)
+                                            <div style="display:flex;justify-content:space-between;align-items:center;gap:12px;font-size:11px;line-height:1.5;">
+                                                <span style="font-weight:600;color:#111827;text-align:left;min-width:50px;">{{ $range['range'] }}:</span>
+                                                <span style="color:#490d59;font-weight:600;text-align:right;white-space:nowrap;margin-left:auto;">₹{{ number_format($range['price'], 2) }}</span>
+                                            </div>
+                                        @endforeach
+                                    </div>
+                                @else
+                                    <div style="text-align:right;">
+                                        <div style="font-weight:600;color:#111827;">₹{{ number_format($mapping->getDisplayPrice(), 2) }}</div>
+                                        @if($mapping->price_sale && $mapping->price_sale > 0)
+                                            <small style="color:#b42318;">Sale: ₹{{ number_format($mapping->price_sale, 2) }}</small>
+                                        @endif
+                                        @if($mapping->price_inclusive_tax)
+                                            <small style="color:#027a48;">Incl. tax</small>
+                                        @endif
+                                    </div>
                                 @endif
                             </td>
                             <td style="text-align:center;">
@@ -417,21 +488,33 @@
                                 </h4>
                                 <div style="display: flex; flex-wrap: wrap; gap: 6px;">
                                     <span class="status-pill status-{{ $mapping->status }}" style="padding: 2px 10px; font-size: 11px;">{{ ucfirst($mapping->status) }}</span>
-                                    <span style="font-size: 11px; color: #344054; background: #f2f4f7; padding: 2px 10px; border-radius: 999px; border: 1px solid #e4e7ec;">{{ formatGradesDisplay($mapping) }}</span>
                                 </div>
                             </div>
                         </div>
 
                         <div style="background: #fcfcfd; border-radius: 12px; padding: 12px; border: 1px solid #f2f4f7; font-size: 13px; color: #475467; display: flex; flex-direction: column; gap: 8px; flex-grow: 1;">
-                            <div style="display: flex; justify-content: space-between;">
-                                <span>Price:</span>
-                                <span style="font-weight: 600; color: #101828;">
-                                    ₹{{ number_format($mapping->getDisplayPrice(), 2) }}
-                                    @if($mapping->price_sale && $mapping->price_sale > 0)
-                                        <span style="color:#b42318; margin-left: 4px; font-size: 12px;">(₹{{ number_format($mapping->price_sale, 2) }})</span>
-                                    @endif
-                                </span>
-                            </div>
+                            @if($mapping->gradePricing && $mapping->gradePricing->count() > 0)
+                                @php $pricingRanges = formatGradePricingRanges($mapping); @endphp
+                                <div style="display: flex; flex-direction: column; gap: 4px;">
+                                    <span style="font-weight: 600; color: #101828; margin-bottom: 2px; font-size: 12px;">Grade Pricing:</span>
+                                    @foreach($pricingRanges as $range)
+                                        <div style="display: flex; justify-content: space-between; align-items: center; gap: 8px; padding: 2px 0;">
+                                            <span style="font-size: 11px; color: #111827; font-weight: 600; text-align: left; flex-shrink: 0;">{{ $range['range'] }}:</span>
+                                            <span style="font-weight: 600; color: #490d59; font-size: 12px; text-align: right; white-space: nowrap;">₹{{ number_format($range['price'], 2) }}</span>
+                                        </div>
+                                    @endforeach
+                                </div>
+                            @else
+                                <div style="display: flex; justify-content: space-between;">
+                                    <span>Price:</span>
+                                    <span style="font-weight: 600; color: #101828;">
+                                        ₹{{ number_format($mapping->getDisplayPrice(), 2) }}
+                                        @if($mapping->price_sale && $mapping->price_sale > 0)
+                                            <span style="color:#b42318; margin-left: 4px; font-size: 12px;">(₹{{ number_format($mapping->price_sale, 2) }})</span>
+                                        @endif
+                                    </span>
+                                </div>
+                            @endif
                             <div style="display: flex; justify-content: space-between;">
                                 <span>School:</span>
                                 <span style="text-align: right; max-width: 60%; color: #344054;">{{ optional($mapping->school)->name ?? 'N/A' }}</span>
