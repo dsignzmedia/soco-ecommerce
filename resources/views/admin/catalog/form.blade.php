@@ -377,9 +377,9 @@
                     </h3>
                     
                     <div style="display:flex;flex-direction:column;gap:16px;">
-                        <label>
+                        <label style="min-width: 0; overflow: hidden; width: 100%;">
                             <span>School *</span>
-                            <select name="school_id" id="school-select" required>
+                            <select name="school_id" id="school-select" required style="width: 100%; max-width: 100%; box-sizing: border-box;">
                                 <option value="">Select school</option>
                                 @foreach($schools as $school)
                                     <option value="{{ $school->id }}" @selected(old('school_id', $product->school_id) == $school->id)>{{ $school->name }}</option>
@@ -472,9 +472,9 @@
                     <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px;">
                         <label>
                             <span>Featured product image</span>
-                            <div class="file-input-wrapper">
-                                <input type="file" id="featured_image_input" name="featured_image" accept="image/*">
-                            </div>
+                            <label for="featured_image_input" class="file-input-wrapper" style="display: inline-block; width: 100%; cursor: pointer;">
+                                <input type="file" id="featured_image_input" name="featured_image" accept="image/*" style="display: none;">
+                            </label>
                             <div id="featured_image_preview" style="margin-top:8px;position:relative;display:inline-block;">
                                 @if($product->featured_image)
                                     <img src="{{ Str::startsWith($product->featured_image, 'http') ? $product->featured_image : asset('storage/' . $product->featured_image) }}" alt="Featured" style="width:120px;height:120px;object-fit:cover;border-radius:8px;border:2px solid #ddd;">
@@ -542,9 +542,9 @@
                         
                     <label style="margin-bottom:16px;">
                             <span>Size Chart (Image)</span>
-                            <div class="file-input-wrapper">
-                                <input type="file" id="size_chart_path_input" name="size_chart_path" accept="image/*">
-                            </div>
+                            <label for="size_chart_path_input" class="file-input-wrapper" style="display: inline-block; width: 100%; cursor: pointer;">
+                                <input type="file" id="size_chart_path_input" name="size_chart_path" accept="image/*" style="display: none;">
+                            </label>
                             <div id="size_chart_path_preview" style="margin-top:8px;position:relative;display:inline-block;">
                                 @if($product->size_chart_path)
                                     <img src="{{ asset('storage/' . $product->size_chart_path) }}" alt="Size Chart" style="width:120px;height:120px;object-fit:cover;border-radius:8px;border:2px solid #ddd;">
@@ -557,9 +557,9 @@
                         </label>
                         <label style="margin-bottom:16px;">
                             <span>Size Measurement Image</span>
-                            <div class="file-input-wrapper">
-                                <input type="file" id="size_measurement_image_input" name="size_measurement_image" accept="image/*">
-                            </div>
+                            <label for="size_measurement_image_input" class="file-input-wrapper" style="display: inline-block; width: 100%; cursor: pointer;">
+                                <input type="file" id="size_measurement_image_input" name="size_measurement_image" accept="image/*" style="display: none;">
+                            </label>
                             <div id="size_measurement_image_preview" style="margin-top:8px;position:relative;display:inline-block;">
                                 @if($product->size_measurement_image)
                                     <img src="{{ Str::startsWith($product->size_measurement_image, 'http') ? $product->size_measurement_image : asset('storage/' . $product->size_measurement_image) }}" alt="Size Measurement" style="width:120px;height:120px;object-fit:cover;border-radius:8px;border:2px solid #ddd;">
@@ -572,7 +572,43 @@
                         </label>
                         <label>
                             <span>Measurement Video (YouTube URL)</span>
-                            <input type="url" name="video_url" value="{{ old('video_url', $product->video_url) }}" placeholder="https://youtube.com/watch?v=...">
+                            <div style="position: relative;">
+                                <input type="url" name="video_url" id="video_url_input" value="{{ old('video_url', $product->video_url) }}" placeholder="https://youtube.com/watch?v=...">
+                                @if($product->video_url)
+                                    <button type="button" onclick="removeVideoUrl()" style="position: absolute; right: 8px; top: 50%; transform: translateY(-50%); width: 28px; height: 28px; background: rgba(220,53,69,0.9); color: white; border: none; border-radius: 50%; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 12px;">
+                                        <i class="fas fa-times"></i>
+                                    </button>
+                                @endif
+                            </div>
+                            @if($product->video_url)
+                                <div style="margin-top: 8px; padding: 8px; background: #e8f5e9; border-radius: 6px; border: 1px solid #c8e6c9;">
+                                    <a href="{{ $product->video_url }}" target="_blank" style="font-size: 12px; color: #2e7d32; text-decoration: underline;">
+                                        <i class="fab fa-youtube" style="margin-right: 4px;"></i> View Current Video
+                                    </a>
+                                </div>
+                            @endif
+                            <input type="hidden" name="remove_video_url" id="remove_video_url" value="0">
+                        </label>
+                        <label style="margin-top: 16px;">
+                            <span>Measurement Video (Local File)</span>
+                            <label for="video_file_input" class="file-input-wrapper" style="display: inline-block; width: 100%; cursor: pointer;">
+                                <input type="file" id="video_file_input" name="video_file" accept="video/*" style="display: none;">
+                            </label>
+                            <div id="video_file_preview" style="margin-top: 8px;">
+                                @if($product->video_file)
+                                    <div style="display: flex; align-items: center; gap: 12px; padding: 8px; background: #f8f9fa; border-radius: 8px; border: 1px solid #e0e0e0;">
+                                        <i class="fas fa-video" style="color: #490d59; font-size: 20px;"></i>
+                                        <div style="flex: 1;">
+                                            <div style="font-weight: 600; color: #333; font-size: 14px;">Current Video File</div>
+                                            <a href="{{ asset('storage/' . $product->video_file) }}" target="_blank" style="font-size: 12px; color: #490d59; text-decoration: underline;">View/Download Video</a>
+                                        </div>
+                                        <button type="button" class="preview-remove-btn" onclick="removeVideoFile()" style="width: 28px; height: 28px; background: rgba(220,53,69,0.9); color: white; border: none; border-radius: 50%; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 12px;">
+                                            <i class="fas fa-times"></i>
+                                        </button>
+                                    </div>
+                                @endif
+                            </div>
+                            <input type="hidden" name="remove_video_file" id="remove_video_file" value="0">
                         </label>
                     </div>
                 </div>
@@ -898,6 +934,62 @@
                 if (preview) preview.innerHTML = '';
                 if (input) input.value = '';
             };
+
+            window.removeVideoFile = function() {
+                const preview = document.getElementById('video_file_preview');
+                const input = document.getElementById('video_file_input');
+                const removeInput = document.getElementById('remove_video_file');
+                if (preview) preview.innerHTML = '';
+                if (input) input.value = '';
+                if (removeInput) removeInput.value = '1';
+            };
+
+            window.removeVideoUrl = function() {
+                const input = document.getElementById('video_url_input');
+                const removeInput = document.getElementById('remove_video_url');
+                if (input) input.value = '';
+                if (removeInput) removeInput.value = '1';
+            };
+
+            // File input wrapper - using label, no JS needed but keeping for other file inputs
+            document.querySelectorAll('.file-input-wrapper:not(label)').forEach(wrapper => {
+                wrapper.addEventListener('click', function(e) {
+                    const input = this.querySelector('input[type="file"]');
+                    if (input && e.target !== input) {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        input.click();
+                    }
+                });
+            });
+
+            // Video file preview
+            const videoFileInput = document.getElementById('video_file_input');
+            if (videoFileInput) {
+                videoFileInput.addEventListener('change', function(e) {
+                    const file = e.target.files[0];
+                    const preview = document.getElementById('video_file_preview');
+                    const removeInput = document.getElementById('remove_video_file');
+                    
+                    if (file) {
+                        // Reset remove flag if new file is selected
+                        if (removeInput) removeInput.value = '0';
+                        
+                        const fileSize = (file.size / (1024 * 1024)).toFixed(2);
+                        const fileName = file.name;
+                        
+                        preview.innerHTML = `
+                            <div style="display: flex; align-items: center; gap: 12px; padding: 8px; background: #f8f9fa; border-radius: 8px; border: 1px solid #e0e0e0;">
+                                <i class="fas fa-video" style="color: #490d59; font-size: 20px;"></i>
+                                <div style="flex: 1;">
+                                    <div style="font-weight: 600; color: #333; font-size: 14px;">${fileName}</div>
+                                    <div style="font-size: 12px; color: #666;">Size: ${fileSize} MB</div>
+                                </div>
+                            </div>
+                        `;
+                    }
+                });
+            }
 
             window.removeFeaturedImage = function() {
                 const preview = document.getElementById('featured_image_preview');
@@ -1911,6 +2003,18 @@
     .organization-card {
         z-index: 10 !important;
         overflow: visible !important;
+        min-width: 0;
+        width: 100%;
+        max-width: 100%;
+        box-sizing: border-box;
+    }
+    
+    /* Ensure Organization card content doesn't expand */
+    .organization-card > div {
+        min-width: 0;
+        width: 100%;
+        max-width: 100%;
+        overflow: hidden;
     }
     
     /* Publish card should be below Organization card */
@@ -1947,6 +2051,8 @@
         font-size: 14px;
         transition: all 0.2s ease;
         background: white;
+        min-width: 0;
+        box-sizing: border-box;
     }
     
     input[type="text"]:focus,
@@ -1965,6 +2071,32 @@
     select:hover,
     textarea:hover {
         border-color: #9ca3af;
+    }
+
+    /* School Select Field - Fixed Width */
+    #school-select {
+        width: 100% !important;
+        max-width: 100% !important;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        box-sizing: border-box;
+    }
+    
+    #school-select option {
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        max-width: 100%;
+    }
+    
+    /* Ensure parent label doesn't expand */
+    label:has(#school-select) {
+        min-width: 0 !important;
+        overflow: hidden;
+        width: 100%;
+        max-width: 100%;
+        box-sizing: border-box;
     }
 
     /* Label Styling */
@@ -2183,8 +2315,7 @@
     }
     
     .file-input-wrapper input[type="file"] {
-        position: absolute;
-        left: -9999px;
+        display: none;
     }
     
     .file-input-wrapper::before {
@@ -2200,6 +2331,16 @@
         transition: all 0.2s ease;
     }
     
+    .file-input-wrapper:hover::before {
+        background: linear-gradient(135deg, #6b1179 0%, #490d59 100%);
+        transform: translateY(-1px);
+        box-shadow: 0 4px 8px rgba(73, 13, 89, 0.3);
+    }
+    
+    .file-input-wrapper {
+        cursor: pointer;
+        position: relative;
+    }
     
 
     /* Media Drop Zone Enhancement */

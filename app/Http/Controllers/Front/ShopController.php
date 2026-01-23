@@ -93,6 +93,7 @@ class ShopController extends Controller
             'size_chart_path' => $dbProduct->size_chart_path,
             'size_measurement_image' => $dbProduct->size_measurement_image,
             'video_url' => $dbProduct->video_url,
+            'video_file' => $dbProduct->video_file,
             'delivery_duration' => $dbProduct->delivery_duration,
             'tags' => $dbProduct->tag_name ? explode(',', $dbProduct->tag_name) : [],
             'sku' => $dbProduct->id,

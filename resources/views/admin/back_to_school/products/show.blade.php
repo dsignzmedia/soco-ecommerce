@@ -298,6 +298,15 @@
                         </a>
                     </div>
                 @endif
+                
+                @if($product->video_file)
+                    <div>
+                        <span style="display:block;font-size:13px;font-weight:500;color:#374151;margin-bottom:8px;">Video File</span>
+                        <a href="{{ asset('storage/' . $product->video_file) }}" target="_blank" style="color:#490d59;text-decoration:underline;">
+                            <i class="fas fa-video"></i> View/Download Local Video
+                        </a>
+                    </div>
+                @endif
             </div>
         </div>
     </div>

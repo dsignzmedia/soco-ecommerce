@@ -513,6 +513,10 @@
     }
 
     @media (max-width: 991px) {
+        .breadcumb-title {
+           
+            margin: 0.2em 0 -0.4em !important;
+        }
         .filter-sidebar {
             position: relative;
             top: 0;
@@ -644,12 +648,20 @@
 
     /* Desktop breadcrumb and spacing */
     @media (min-width: 768px) {
+        .breadcrumb-wrapper,
         .breadcumb-wrapper {
-            padding-top: 115px !important;
+            padding-top: 50px !important;
         }
 
         .shop-page-section.space-top {
             padding-top: 24px !important;
+        }
+    }
+
+    /* Breadcrumb title margin for screens greater than 991px */
+    @media (min-width: 992px) {
+        .breadcumb-title {
+            margin: 0.21em 0 -0.4em 0 !important;
         }
     }
 
@@ -664,6 +676,7 @@
         }
 
         /* Compact breadcrumb for mobile */
+        .breadcrumb-wrapper,
         .breadcumb-wrapper {
             padding-top: 50px !important;
             padding-bottom: 15px !important;
@@ -672,18 +685,22 @@
 
         .breadcumb-title {
             display: none;
+            
         }
 
-        .breadcumb-menu-wrap {
+        .breadcumb-menu-wrap,
+        .breadcrumb-menu-wrap {
             margin-top: 0 !important;
             min-height: auto !important;
         }
 
-        .breadcumb-content {
+        .breadcumb-content,
+        .breadcrumb-content {
             text-align: left;
         }
 
-        .breadcumb-menu {
+        .breadcumb-menu,
+        .breadcrumb-menu {
             justify-content: flex-start;
             margin-bottom: 0;
         }

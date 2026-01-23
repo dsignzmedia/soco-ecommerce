@@ -112,13 +112,15 @@
             <table>
                 <thead>
                     <tr>
-                        <th style="width: 25%;">Product Name</th>
-                        <th style="width: 15%;">Grade</th>
-                        <th style="width: 15%;">Category / Type</th>
-                        <th style="width: 10%;">Gender</th>
-                        <th style="width: 15%;">Prices</th>
-                        <th style="width: 10%;">Stock</th>
-                        <th style="width: 10%;">Status</th>
+                        <th style="width: 20%;">Product Name</th>
+                        <th style="width: 12%;">Grade</th>
+                        <th style="width: 12%;">Category / Type</th>
+                        <th style="width: 8%;">Gender</th>
+                        <th style="width: 12%;">Prices</th>
+                        <th style="width: 15%;">Grade Pricing</th>
+                        <th style="width: 15%;">Variants</th>
+                        <th style="width: 8%;">Stock</th>
+                        <th style="width: 7%;">Status</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -137,11 +139,86 @@
                             </td>
                             <td>
                                 ₹{{ number_format($product->getDisplayPrice(), 2) }}
-                                @if($product->price_sale && $product->price_sale > 0)
-                                    <br><span style="color: #b42318;">Sale: ₹{{ number_format($product->price_sale, 2) }}</span>
-                                @endif
                                 @if($product->price_inclusive_tax)
                                     <br><span style="color: #027a48; font-size: 8px;">(Incl. Tax)</span>
+                                @endif
+                            </td>
+                            <td style="font-size: 9px;">
+                                @if($product->gradePricing && $product->gradePricing->count() > 0)
+                                    @php
+                                        $gradeOrder = ['Pre-KG', 'LKG', 'UKG', '1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11', '12'];
+                                        
+                                        // Group by price
+                                        $pricingByPrice = [];
+                                        foreach ($product->gradePricing as $gp) {
+                                            if (!isset($pricingByPrice[$gp->price])) {
+                                                $pricingByPrice[$gp->price] = [];
+                                            }
+                                            $pricingByPrice[$gp->price][] = $gp->grade;
+                                        }
+                                        
+                                        $ranges = [];
+                                        foreach ($pricingByPrice as $price => $gradeList) {
+                                            // Sort by grade order
+                                            usort($gradeList, function($a, $b) use ($gradeOrder) {
+                                                $aIndex = array_search($a, $gradeOrder);
+                                                $bIndex = array_search($b, $gradeOrder);
+                                                if ($aIndex === false) $aIndex = 999;
+                                                if ($bIndex === false) $bIndex = 999;
+                                                return $aIndex <=> $bIndex;
+                                            });
+                                            
+                                            // Group consecutive grades into ranges
+                                            $currentRange = ['from' => $gradeList[0], 'to' => $gradeList[0]];
+                                            foreach ($gradeList as $i => $grade) {
+                                                if ($i === 0) continue;
+                                                $prevIndex = array_search($gradeList[$i-1], $gradeOrder);
+                                                $currIndex = array_search($grade, $gradeOrder);
+                                                if ($currIndex === $prevIndex + 1) {
+                                                    $currentRange['to'] = $grade;
+                                                } else {
+                                                    $rangeStr = $currentRange['from'] === $currentRange['to'] 
+                                                        ? $currentRange['from'] 
+                                                        : $currentRange['from'] . '-' . $currentRange['to'];
+                                                    $ranges[] = ['range' => $rangeStr, 'price' => $price];
+                                                    $currentRange = ['from' => $grade, 'to' => $grade];
+                                                }
+                                            }
+                                            $rangeStr = $currentRange['from'] === $currentRange['to'] 
+                                                ? $currentRange['from'] 
+                                                : $currentRange['from'] . '-' . $currentRange['to'];
+                                            $ranges[] = ['range' => $rangeStr, 'price' => $price];
+                                        }
+                                    @endphp
+                                    @foreach($ranges as $range)
+                                        <div style="margin-bottom: 2px; line-height: 1.3;">
+                                            <strong>{{ $range['range'] }}:</strong> ₹{{ number_format($range['price'], 2) }}
+                                        </div>
+                                    @endforeach
+                                @else
+                                    @php
+                                        $regularPrice = $product->price_regular ?? 0;
+                                    @endphp
+                                    @if($regularPrice > 0)
+                                        <div style="margin-bottom: 2px; line-height: 1.3;">
+                                            <strong>Pre-KG–12:</strong> ₹{{ number_format($regularPrice, 2) }}
+                                        </div>
+                                    @else
+                                        <span style="color: #9ca3af;">N/A</span>
+                                    @endif
+                                @endif
+                            </td>
+                            <td style="font-size: 9px;">
+                                @if($product->variants && $product->variants->count() > 0)
+                                    @foreach($product->variants as $variant)
+                                        <div style="margin-bottom: 3px; line-height: 1.4;">
+                                            <strong>{{ $variant->option }}:</strong><br>
+                                            <span style="color: #6b7280;">Weight: {{ $variant->weight ? number_format($variant->weight, 2) : 'N/A' }}</span><br>
+                                            <span style="color: #6b7280;">Stock: {{ number_format($variant->stock ?? 0) }}</span>
+                                        </div>
+                                    @endforeach
+                                @else
+                                    <span style="color: #9ca3af;">N/A</span>
                                 @endif
                             </td>
                             <td>

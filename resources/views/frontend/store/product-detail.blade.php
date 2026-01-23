@@ -109,7 +109,7 @@
                         <div class="mb-4">
                             <div class="d-flex align-items-center gap-2 mb-2">
                                 <label class="form-label fw-bold mb-0">Size:</label>
-                                @if(!empty($product['size_chart_path']) || !empty($product['size_measurement_image']) || !empty($product['video_url']))
+                                @if(!empty($product['size_chart_path']) || !empty($product['size_measurement_image']) || !empty($product['video_url']) || !empty($product['video_file']))
                                     <a href="#" class="text-primary small" data-bs-toggle="modal" data-bs-target="#sizeGuideModal" style="text-decoration: underline;">Size Guide</a>
                                 @endif
                             </div>
@@ -274,7 +274,7 @@
                      @if(!empty($product['size_chart_path']))
                         @php
                             $hasBothImages = !empty($product['size_measurement_image']);
-                            $hasVideo = !empty($product['video_url']);
+                            $hasVideo = !empty($product['video_url']) || !empty($product['video_file']);
                             $colClass = ($hasBothImages && $hasVideo) ? 'col-md-4' : (($hasBothImages || $hasVideo) ? 'col-md-6' : 'col-12');
                         @endphp
                         <div class="{{ $colClass }}">
@@ -287,7 +287,7 @@
                     @if(!empty($product['size_measurement_image']))
                         @php
                             $hasChart = !empty($product['size_chart_path']);
-                            $hasVideo = !empty($product['video_url']);
+                            $hasVideo = !empty($product['video_url']) || !empty($product['video_file']);
                             $colClass = ($hasChart && $hasVideo) ? 'col-md-4' : (($hasChart || $hasVideo) ? 'col-md-6' : 'col-12');
                         @endphp
                         <div class="{{ $colClass }}">
@@ -312,7 +312,8 @@
                             $embedUrl = $videoId ? 'https://www.youtube.com/embed/' . $videoId : '';
                             $hasChart = !empty($product['size_chart_path']);
                             $hasMeasurement = !empty($product['size_measurement_image']);
-                            $colClass = ($hasChart && $hasMeasurement) ? 'col-md-4' : (($hasChart || $hasMeasurement) ? 'col-md-6' : 'col-12');
+                            $hasVideoFile = !empty($product['video_file']);
+                            $colClass = ($hasChart && $hasMeasurement && $hasVideoFile) ? 'col-md-4' : (($hasChart && ($hasMeasurement || $hasVideoFile)) || ($hasMeasurement && $hasVideoFile) ? 'col-md-4' : (($hasChart || $hasMeasurement || $hasVideoFile) ? 'col-md-6' : 'col-12'));
                         @endphp
                         @if(!empty($embedUrl))
                             <div class="{{ $colClass }}">
@@ -329,6 +330,27 @@
                                 </div>
                             </div>
                         @endif
+                    @endif
+                    
+                    @if(!empty($product['video_file']))
+                        @php
+                            $hasChart = !empty($product['size_chart_path']);
+                            $hasMeasurement = !empty($product['size_measurement_image']);
+                            $hasVideoUrl = !empty($product['video_url']);
+                            $colClass = ($hasChart && $hasMeasurement && $hasVideoUrl) ? 'col-md-4' : (($hasChart && ($hasMeasurement || $hasVideoUrl)) || ($hasMeasurement && $hasVideoUrl) ? 'col-md-4' : (($hasChart || $hasMeasurement || $hasVideoUrl) ? 'col-md-6' : 'col-12'));
+                        @endphp
+                        <div class="{{ $colClass }}">
+                            <div class="size-guide-video">
+                                <div class="ratio ratio-16x9">
+                                    <video controls style="width: 100%; height: 100%; border-radius: 8px;">
+                                        <source src="{{ asset('storage/' . $product['video_file']) }}" type="video/mp4">
+                                        <source src="{{ asset('storage/' . $product['video_file']) }}" type="video/webm">
+                                        <source src="{{ asset('storage/' . $product['video_file']) }}" type="video/ogg">
+                                        Your browser does not support the video tag.
+                                    </video>
+                                </div>
+                            </div>
+                        </div>
                     @endif
                 </div>
             </div>

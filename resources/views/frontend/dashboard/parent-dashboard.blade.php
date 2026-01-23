@@ -100,10 +100,10 @@
                                                     @endif
                                                 </div>
                                                 <!-- School Name and Location on Right -->
-                                                <div class="flex-grow-1">
-                                                    <p class="mb-1" style="color: #333; font-weight: 500; font-size: 1rem;"><strong>School:</strong> {{ $selectedProfile['school_name'] }}</p>
+                                                <div class="flex-grow-1 school-name-container" style="word-wrap: break-word; overflow-wrap: break-word;">
+                                                    <p class="mb-1" style="color: #333; font-weight: 500; font-size: 1rem; word-wrap: break-word; overflow-wrap: break-word;"><strong>School:</strong> {{ $selectedProfile['school_name'] }}</p>
                                                     @if(isset($schoolAddress) && $schoolAddress)
-                                                        <p class="mb-0 text-muted small">{{ $schoolAddress }}</p>
+                                                        <p class="mb-0 text-muted small" style="word-wrap: break-word; overflow-wrap: break-word;">{{ $schoolAddress }}</p>
                                                     @endif
                                                 </div>
                                             </div>
@@ -1017,6 +1017,18 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
 
+    /* School Name Container - Prevent overlap with buttons on desktop */
+    .school-name-container {
+        padding-right: 320px; /* Space for Edit Profile + Delete Profile buttons + gap */
+    }
+    
+    /* For smaller desktop screens, reduce padding */
+    @media (max-width: 1200px) and (min-width: 769px) {
+        .school-name-container {
+            padding-right: 280px;
+        }
+    }
+
     @media (max-width: 768px) {
         .tab-content-container {
             padding: 18px;
@@ -1028,6 +1040,11 @@ document.addEventListener('DOMContentLoaded', function() {
 
         .school-logo-container {
             margin: 0; /* Align left with text */
+        }
+
+        /* Remove padding on mobile since buttons are not absolutely positioned */
+        .school-name-container {
+            padding-right: 0 !important;
         }
 
         /* Fix Edit/Delete Buttons on Mobile */

@@ -1234,11 +1234,14 @@ class AuthController extends Controller
         }
 
         // Get purchased products for selected student from actual orders in database
+        // Only show products from orders that have been delivered
         $purchasedProducts = [];
         if ($selectedProfile) {
             // Query orders from database for this user and student
+            // Only include orders with 'delivered' status
             $orders = \App\Models\Admin\Master\Order::where('user_id', $user->id)
                 ->where('student_name', $selectedProfile->student_name)
+                ->where('order_status', 'delivered')
                 ->orderBy('created_at', 'desc')
                 ->get();
 
@@ -2553,6 +2556,7 @@ class AuthController extends Controller
             'size_chart_path' => $dbProduct->size_chart_path,
             'size_measurement_image' => $dbProduct->size_measurement_image,
             'video_url' => $dbProduct->video_url,
+            'video_file' => $dbProduct->video_file,
             'delivery_duration' => $dbProduct->delivery_duration,
             'tags' => $dbProduct->tag_name ? explode(',', $dbProduct->tag_name) : [],
             'sku' => $dbProduct->id,
