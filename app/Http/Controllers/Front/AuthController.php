@@ -72,7 +72,7 @@ class AuthController extends Controller
             if (isset($order['id'])) {
                 // Sanitize name for Razorpay - only allow letters, spaces, hyphens, apostrophes, and periods
                 $sanitizedName = $this->sanitizeNameForRazorpay($user->name ?? 'Customer');
-                
+
                 return response()->json([
                     'success' => true,
                     'order_id' => $order['id'],
@@ -111,27 +111,27 @@ class AuthController extends Controller
         if (empty($name) || is_null($name)) {
             return 'Customer';
         }
-        
+
         // Remove numbers and special characters except spaces, hyphens, apostrophes, and periods
         $sanitized = preg_replace('/[^a-zA-Z\s\-\'\.]/', '', $name);
-        
+
         // Trim whitespace
         $sanitized = trim($sanitized);
-        
+
         // Remove multiple consecutive spaces
         $sanitized = preg_replace('/\s+/', ' ', $sanitized);
-        
+
         // If after sanitization the name is empty or too short, use default
         if (empty($sanitized) || strlen($sanitized) < 2) {
             return 'Customer';
         }
-        
+
         // Limit to 100 characters (Razorpay's max length)
         if (strlen($sanitized) > 100) {
             $sanitized = substr($sanitized, 0, 100);
             $sanitized = rtrim($sanitized);
         }
-        
+
         return $sanitized;
     }
 
@@ -523,13 +523,13 @@ class AuthController extends Controller
             $request->session()->regenerate();
 
             $user = Auth::user();
-            
+
             // Check if user account has been deleted (school deleted)
             if ($user->has_deleted == 1) {
                 Auth::logout();
                 $request->session()->invalidate();
                 $request->session()->regenerateToken();
-                
+
                 // Redirect to dedicated account deleted page
                 return redirect()->route('account.deleted');
             }
@@ -649,7 +649,7 @@ class AuthController extends Controller
         if (!$user) {
              return redirect()->route('login');
         }
-        
+
         // Check if user account has been deleted (school deleted)
         if ($user->has_deleted == 1) {
             Auth::logout();
@@ -1257,23 +1257,23 @@ class AuthController extends Controller
                 if ($product) {
                     // Use product ID as key to avoid duplicates
                     $productKey = $product->id . '_' . ($order->size ?? 'default');
-                    
+
                     if (!isset($productMap[$productKey])) {
                         // Get product image
                         $productImage = null;
                         if ($product->featured_image) {
-                            $productImage = \Illuminate\Support\Str::startsWith($product->featured_image, 'http') 
-                                ? $product->featured_image 
+                            $productImage = \Illuminate\Support\Str::startsWith($product->featured_image, 'http')
+                                ? $product->featured_image
                                 : asset('storage/' . $product->featured_image);
                         } elseif ($product->media_images && is_array($product->media_images) && !empty($product->media_images)) {
                             $firstImage = $product->media_images[0];
-                            $productImage = \Illuminate\Support\Str::startsWith($firstImage, 'http') 
-                                ? $firstImage 
+                            $productImage = \Illuminate\Support\Str::startsWith($firstImage, 'http')
+                                ? $firstImage
                                 : asset('storage/' . $firstImage);
                         } elseif ($product->media_gallery && is_array($product->media_gallery) && !empty($product->media_gallery)) {
                             $firstImage = $product->media_gallery[0];
-                            $productImage = \Illuminate\Support\Str::startsWith($firstImage, 'http') 
-                                ? $firstImage 
+                            $productImage = \Illuminate\Support\Str::startsWith($firstImage, 'http')
+                                ? $firstImage
                                 : asset('storage/' . $firstImage);
                         }
 
@@ -1329,7 +1329,7 @@ class AuthController extends Controller
 
         // Get parent phone number from session (in production, from database)
         $parentPhone = session('parent_phone', $user->phone ?? '+91 9159413234');
-        
+
         // Get selected profile ID for product links
         $selectedProfileId = $selectedProfile['id'] ?? null;
 
@@ -2312,7 +2312,7 @@ class AuthController extends Controller
         // Get categories dynamically from database (active categories only)
         // But only show categories that have products in $allProducts
         $allCategorySlugs = collect($allProducts)->pluck('category')->filter()->unique();
-        
+
         $categories = \App\Models\Admin\Master\Category::where('is_active', true)
             ->whereIn('slug', $allCategorySlugs)
             ->orderBy('sort_order')
@@ -2766,7 +2766,7 @@ class AuthController extends Controller
 
         // Identify cart items with deleted/missing products
         $orphanedCartItemIds = [];
-        
+
         $cartItems = [];
         $total = 0;
         $hasInclusiveTax = false; // Track if any product has inclusive tax
@@ -2778,7 +2778,7 @@ class AuthController extends Controller
                 $orphanedCartItemIds[] = $item->id;
                 continue; // Skip this item
             }
-            
+
             $product = $products[$item->product_id];
 
             // Check if this product has inclusive tax
@@ -2853,7 +2853,7 @@ class AuthController extends Controller
                 'student_name' => $studentName,
             ];
         }
-        
+
         // Clean up orphaned cart items (products from deleted schools)
         if (!empty($orphanedCartItemIds)) {
             \App\Models\Cart::whereIn('id', $orphanedCartItemIds)
@@ -2898,14 +2898,14 @@ class AuthController extends Controller
             $variant = $product->variants->where('option', $cartItem->size)->first();
             if ($variant && $variant->stock < $request->quantity) {
                 return response()->json([
-                    'success' => false, 
+                    'success' => false,
                     'message' => 'Insufficient stock. Available: ' . $variant->stock
                 ], 400);
             }
         } else {
             if ($product->inventory_stock < $request->quantity) {
                 return response()->json([
-                    'success' => false, 
+                    'success' => false,
                     'message' => 'Insufficient stock. Available: ' . $product->inventory_stock
                 ], 400);
             }
@@ -2920,7 +2920,7 @@ class AuthController extends Controller
         $profile = $profiles->firstWhere('id', (int)$cartItem->profile_id);
         $studentGrade = $profile ? $profile->grade : null;
         $itemPrice = $this->getProductPriceForGrade($product, $studentGrade);
-        
+
         // If variant-based pricing, get variant price
         if ($product->variant_based_pricing && $product->variants->count() > 0) {
             $variant = $product->variants->where('option', $cartItem->size)->first();
@@ -2928,7 +2928,7 @@ class AuthController extends Controller
                 $itemPrice = $variant->price;
             }
         }
-        
+
         $itemTotal = $itemPrice * $request->quantity;
 
         return response()->json([
@@ -3413,7 +3413,7 @@ class AuthController extends Controller
 
                 // Track processed cart item IDs
                 $processedCartIds[] = $item->id;
-                
+
                 // Send Order Confirmation Email
                 if (!empty($order->customer_email)) {
                     try {
@@ -3423,7 +3423,7 @@ class AuthController extends Controller
                         \Illuminate\Support\Facades\Log::error("Failed to send order confirmation email: " . $e->getMessage());
                     }
                 }
-                
+
                 // Send Payment Success Email if payment was successful
                 if (session('payment_method') === 'razorpay' && session('payment_id') && !empty($order->customer_email)) {
                     try {
@@ -3634,12 +3634,12 @@ class AuthController extends Controller
                     $q->where('order_number', 'like', 'SOCO-' . $orderId . '-%')
                       ->orWhere('order_number', 'like', 'SOCO-' . $orderId);
                 });
-            
+
             // If itemId is provided, filter to show only that specific item
             if ($itemId) {
                 $orders->where('id', $itemId);
             }
-            
+
             $orders = $orders->get();
 
             if ($orders->isEmpty()) {
@@ -3652,12 +3652,12 @@ class AuthController extends Controller
                             $q->where('order_number', 'like', 'SOCO-' . $orderId . '-%')
                             ->orWhere('order_number', 'like', 'SOCO-' . $orderId);
                         });
-                    
+
                     // If itemId is provided, filter to show only that specific item
                     if ($itemId) {
                         $fallbackOrders->where('id', $itemId);
                     }
-                    
+
                     $orders = $fallbackOrders->get();
                 }
             }
@@ -3765,12 +3765,10 @@ class AuthController extends Controller
                 $q->where('order_number', 'like', 'SOCO-' . $orderId . '-%')
                   ->orWhere('order_number', 'like', $orderId . '%');
             });
-        
         // If itemId is provided, filter to show only that specific item
         if ($itemId) {
             $orders->where('id', $itemId);
         }
-        
         $orders = $orders->get();
 
         if ($orders->isEmpty()) {
@@ -3782,12 +3780,10 @@ class AuthController extends Controller
                         $q->where('order_number', 'like', 'SOCO-' . $orderId . '-%')
                           ->orWhere('order_number', 'like', $orderId . '%');
                     });
-                
                 // If itemId is provided, filter to show only that specific item
                 if ($itemId) {
                     $fallbackOrders->where('id', $itemId);
                 }
-                
                 $orders = $fallbackOrders->get();
             }
         }
@@ -3802,12 +3798,10 @@ class AuthController extends Controller
 
         // Get pre-selected items from query string
         $selectedItems = $request->query('selected_items', []);
-        
         // If itemId is provided, automatically select that item
         if ($itemId) {
             $selectedItems = [$itemId];
         }
-        
         // Ensure selectedItems is an array (handle single value query param case)
         if (!is_array($selectedItems)) {
             $selectedItems = [$selectedItems];
@@ -3824,9 +3818,9 @@ class AuthController extends Controller
                 $alreadyReturned = \App\Models\Admin\Master\ReturnExchangeRequest::where('order_id', $item->id)
                     ->whereIn('status', ['pending', 'approved', 'received_restocked', 'received_discarded', 'completed'])
                     ->sum('requested_quantity');
-                
+
                 $availableForReturn = max(0, $item->quantity - $alreadyReturned);
-                
+
                 // Try to get product image from ProductMapping
                 $product = \App\Models\Admin\Master\ProductMapping::where('product_name', $item->item_name)
                     ->where('school_id', $item->school_id)
@@ -3905,7 +3899,7 @@ class AuthController extends Controller
                 $photoPaths[] = $path;
             }
         }
-        
+
         // Store as JSON array in photo_path field
         $photoPath = !empty($photoPaths) ? json_encode($photoPaths) : null;
 
@@ -3928,31 +3922,31 @@ class AuthController extends Controller
         // Create exchange request for each selected item
         foreach ($orders as $order) {
             // Get requested quantity (default to 1 if not provided)
-            $requestedQty = isset($request->quantities[$order->id]) 
-                ? (int)$request->quantities[$order->id] 
+            $requestedQty = isset($request->quantities[$order->id])
+                ? (int)$request->quantities[$order->id]
                 : 1;
-            
+
             // Calculate already returned quantity
             $alreadyReturned = \App\Models\Admin\Master\ReturnExchangeRequest::where('order_id', $order->id)
                 ->whereIn('status', ['pending', 'approved', 'received_restocked', 'received_discarded', 'completed'])
                 ->sum('requested_quantity');
-            
+
             $availableQty = $order->quantity - $alreadyReturned;
-            
+
             // Validate requested quantity doesn't exceed available
             if ($requestedQty > $availableQty) {
                 return redirect()->back()
                     ->withInput()
                     ->with('error', "Cannot exchange {$requestedQty} units for {$order->item_name}. Only {$availableQty} unit(s) available for exchange.");
             }
-            
+
             // Validate requested quantity doesn't exceed order quantity
             if ($requestedQty > $order->quantity) {
                 return redirect()->back()
                     ->withInput()
                     ->with('error', "Cannot exchange {$requestedQty} units. Order quantity is only {$order->quantity}.");
             }
-            
+
             // Check if request already exists for this item to prevent duplicates (only for pending/approved)
             $exists = \App\Models\Admin\Master\ReturnExchangeRequest::where('order_id', $order->id)
                 ->whereIn('status', ['pending', 'approved'])
@@ -3972,7 +3966,6 @@ class AuthController extends Controller
                 'customer_notes' => $request->reason,
                 'exchange_size' => $request->exchange_sizes[$order->id] ?? null,
             ]);
-            
             // Send Exchange Request Submitted Email
             if (!empty($order->customer_email)) {
                 try {

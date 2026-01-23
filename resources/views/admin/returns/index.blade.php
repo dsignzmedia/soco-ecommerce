@@ -249,10 +249,10 @@
                                             ?? '—';
                                     @endphp
                                     <div class="order-hover-card">
-                                    <a
-                                        href="{{ route('master.admin.orders.show', $req->order) }}"
+                                        <a
+                                            href="{{ route('master.admin.orders.show', $req->order) }}"
                                             style="color:#490d59;font-weight:700;text-decoration:none;"
-                                    >{{ $req->order->order_number ?? '—' }}</a>
+                                        >{{ $req->order->order_number ?? '—' }}</a>
                                         <div class="hover-card">
                                             <div class="row">
                                                 <span class="label">School:</span>
