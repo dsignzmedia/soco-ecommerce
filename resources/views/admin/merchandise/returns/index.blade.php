@@ -96,7 +96,8 @@
         .btn-view { background: #fff; border: 1px solid #d0d5dd; color: #344054; }
         .btn-approve { background: #dcfce7; color: #027a48; }
         .btn-deny { background: #fee4e2; color: #b42318; }
-        .btn-blue { background: #e0f2fe; color: #026aa7; }
+        .btn-blue { background: #e0f2fe; color: #026aa7; border: 2px solid #0284c7; }
+        .btn-blue:hover { background: #bae6fd; border-color: #7dd3fc; color: #0369a1; }
         
         .table-wrap {
             border: 1px solid #e5e7eb;
@@ -237,8 +238,8 @@
                                     @endif
 
                                     @if($req->type === 'exchange')
-                                        <a href="{{ route('admin.merchandise.returns-exchange.show', $req) }}" class="btn-action-sm btn-blue">
-                                            Process Exchange
+                                        <a href="{{ route('admin.merchandise.returns-exchange.show', $req) }}" class="btn-action-sm btn-blue" style="border: 2px solid #0284c7;">
+                                            <i class="fas fa-exchange-alt" style="margin-right: 4px;"></i> Process Exchange
                                         </a>
                                     @endif
                                 @endif

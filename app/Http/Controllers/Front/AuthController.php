@@ -31,10 +31,12 @@ class AuthController extends Controller
 
         $keyId = null;
         $keySecret = null;
+        $isTestMode = true; // Default to test mode for safety
 
         if ($gateway && !empty($gateway->credentials)) {
             $keyId = $gateway->credentials['key_id'] ?? ($gateway->credentials['key'] ?? null);
             $keySecret = $gateway->credentials['key_secret'] ?? ($gateway->credentials['secret'] ?? null);
+            $isTestMode = $gateway->test_mode ?? true;
         }
         // Fallback to .env if not configured in DB
         if (empty($keyId) || empty($keySecret)) {
@@ -43,7 +45,42 @@ class AuthController extends Controller
         }
 
         if (empty($keyId) || empty($keySecret)) {
+            Log::error('Razorpay Init - Missing Credentials', [
+                'gateway_exists' => !!$gateway,
+                'has_credentials' => $gateway && !empty($gateway->credentials)
+            ]);
             return response()->json(['success' => false, 'message' => 'Payment gateway not configured.']);
+        }
+
+        // Validate key matches mode
+        $keyIsTest = str_starts_with($keyId, 'rzp_test_');
+        $keyIsLive = str_starts_with($keyId, 'rzp_live_');
+        
+        Log::info('Razorpay Init - Mode Validation', [
+            'test_mode_setting' => $isTestMode,
+            'key_id_prefix' => substr($keyId, 0, 8),
+            'key_is_test' => $keyIsTest,
+            'key_is_live' => $keyIsLive,
+            'mode_match' => ($isTestMode && $keyIsTest) || (!$isTestMode && $keyIsLive)
+        ]);
+
+        // Warn if mode mismatch
+        if (!$isTestMode && $keyIsTest) {
+            Log::warning('Razorpay Init - MODE MISMATCH: Live mode enabled but TEST key detected!', [
+                'test_mode' => $isTestMode,
+                'key_id' => substr($keyId, 0, 20) . '...'
+            ]);
+            return response()->json([
+                'success' => false, 
+                'message' => 'Configuration Error: Live mode is enabled but test keys are configured. Please update to live keys in Payment Gateway settings.'
+            ]);
+        }
+
+        if ($isTestMode && $keyIsLive) {
+            Log::warning('Razorpay Init - MODE MISMATCH: Test mode enabled but LIVE key detected!', [
+                'test_mode' => $isTestMode,
+                'key_id' => substr($keyId, 0, 20) . '...'
+            ]);
         }
 
         // Create order via Razorpay API
@@ -52,7 +89,10 @@ class AuthController extends Controller
             Log::info('Razorpay Init - Requesting Order', [
                 'total_input' => $total,
                 'amount_paise' => $amountInPaise,
-                'key_source' => $gateway ? 'database' : 'env' // helpful for debugging
+                'key_source' => $gateway ? 'database' : 'env',
+                'test_mode' => $isTestMode,
+                'key_type' => $keyIsTest ? 'TEST' : ($keyIsLive ? 'LIVE' : 'UNKNOWN'),
+                'key_id_prefix' => substr($keyId, 0, 12)
             ]);
 
             // Disable SSL verification only in local environment
@@ -2093,18 +2133,43 @@ class AuthController extends Controller
 
         $allProducts = [];
 
+        // Log for debugging
+        \Log::info('[Store Page] Loading products', [
+            'profile_id' => $selectedProfile->id,
+            'student_name' => $selectedProfile->student_name,
+            'school_name' => $schoolName,
+            'school_found' => $school ? true : false,
+            'school_id' => $school ? $school->id : null,
+            'grade' => $selectedProfile->grade,
+            'gender' => $selectedProfile->gender
+        ]);
+
         if ($school) {
             $dbProductsQuery = \App\Models\Admin\Master\ProductMapping::with('variants')
-                ->where(function($q) use ($school) {
-                    $q->where('school_id', $school->id)
-                      ->orWhereNull('school_id');
-                })
                 ->where('status', 'live')
                 // Show: authorized/optional (school products), merchandised, and back_to_school products
-                ->where(function($q) {
-                    $q->whereIn('product_type', ['authorized', 'optional', 'authorized_product', 'optional_product', 'merchandised', 'back_to_school'])
-                      ->orWhereNull('product_type')
-                      ->orWhere('product_type', '');
+                ->where(function($q) use ($school) {
+                    // School products: must match school_id or be NULL
+                    $q->where(function($schoolQ) use ($school) {
+                        $schoolQ->whereIn('product_type', ['authorized', 'optional', 'authorized_product', 'optional_product'])
+                                 ->where(function($schoolIdQ) use ($school) {
+                                     $schoolIdQ->where('school_id', $school->id)
+                                               ->orWhereNull('school_id');
+                                 });
+                    })
+                    // BTS and Merchandise: show regardless of school_id (they're global)
+                    ->orWhereIn('product_type', ['merchandised', 'back_to_school'])
+                    // Legacy products with no product_type: match school_id or NULL
+                    ->orWhere(function($legacyQ) use ($school) {
+                        $legacyQ->where(function($typeQ) {
+                            $typeQ->whereNull('product_type')
+                                  ->orWhere('product_type', '');
+                        })
+                        ->where(function($schoolIdQ) use ($school) {
+                            $schoolIdQ->where('school_id', $school->id)
+                                      ->orWhereNull('school_id');
+                        });
+                    });
                 });
 
             // Filter by grade if available in profile
@@ -2156,8 +2221,9 @@ class AuthController extends Controller
                 });
             }
 
-            // Filter by gender if available in profile (but allow products with no gender set)
-            // Note: Gender filter applies to all products, but merchandised and BTS can still show if unisex
+            // Filter by gender if available in profile
+            // Note: Gender filter only applies to school products (authorized/optional)
+            // BTS and Merchandise products bypass gender filtering (they're universal)
             if ($selectedProfile->gender) {
                 $gender = strtolower($selectedProfile->gender);
                 // Map legacy terms if necessary, though profile should ideally be 'male'/'female'
@@ -2170,15 +2236,36 @@ class AuthController extends Controller
                 $mappedGender = $genderMap[$gender] ?? $selectedProfile->gender;
 
                 $dbProductsQuery->where(function($q) use ($mappedGender) {
-                    $q->where('gender', $mappedGender)
-                      ->orWhere('gender', 'unisex')
-                      ->orWhere('gender', 'Unisex')
-                      ->orWhereNull('gender')
-                      ->orWhere('gender', '');
+                    // BTS and Merchandise products bypass gender filter (always show)
+                    $q->whereIn('product_type', ['merchandised', 'back_to_school'])
+                      // OR school products (authorized/optional) filtered by gender
+                      ->orWhere(function($subQ) use ($mappedGender) {
+                          $subQ->where(function($typeQ) {
+                              $typeQ->whereIn('product_type', ['authorized', 'optional', 'authorized_product', 'optional_product'])
+                                    ->orWhereNull('product_type')
+                                    ->orWhere('product_type', '');
+                          })
+                          ->where(function($genderQ) use ($mappedGender) {
+                              $genderQ->where('gender', $mappedGender)
+                                      ->orWhere('gender', 'unisex')
+                                      ->orWhere('gender', 'Unisex')
+                                      ->orWhereNull('gender')
+                                      ->orWhere('gender', '');
+                          });
+                      });
                 });
             }
 
             $dbProducts = $dbProductsQuery->with('gradePricing')->get();
+            
+            // Log product counts for debugging
+            \Log::info('[Store Page] Products fetched', [
+                'total_products_before_filters' => $dbProducts->count(),
+                'bts_count' => $dbProducts->where('product_type', 'back_to_school')->count(),
+                'merchandised_count' => $dbProducts->where('product_type', 'merchandised')->count(),
+                'school_products_count' => $dbProducts->whereIn('product_type', ['authorized', 'optional', 'authorized_product', 'optional_product'])->count()
+            ]);
+            
             $studentGrade = $selectedProfile->grade ?? null;
 
             // Filter products with grade-wise pricing: only show if student's grade has pricing
@@ -2238,6 +2325,13 @@ class AuthController extends Controller
                 // Others = priority 4
                 return 4;
             })->values();
+
+            // Log final product count after all filters
+            \Log::info('[Store Page] Products after filtering', [
+                'total_products' => $dbProducts->count(),
+                'bts_count' => $dbProducts->where('product_type', 'back_to_school')->count(),
+                'merchandised_count' => $dbProducts->where('product_type', 'merchandised')->count()
+            ]);
 
             foreach ($dbProducts as $dbProduct) {
                 // Note: Products with grade-wise pricing will still show, but will use regular price
@@ -2301,12 +2395,105 @@ class AuthController extends Controller
                     },
                     'sizes' => $sizes,
                     'tags' => $dbProduct->tag_name ? explode(',', $dbProduct->tag_name) : [],
-                    'sku' => $dbProduct->id, // Use ID as SKU for now
+                    'sku' => $dbProduct->sku ?? $dbProduct->id,
                 ];
             }
         } else {
-            // Fallback or empty if school not found in DB
-            $allProducts = [];
+            // Fallback: If school not found, still show BTS and Merchandise products (global products)
+            \Log::warning('[Store Page] School not found, loading global products only', [
+                'school_name' => $schoolName,
+                'profile_id' => $selectedProfile->id
+            ]);
+            
+            $dbProductsQuery = \App\Models\Admin\Master\ProductMapping::with('variants')
+                ->whereNull('school_id') // Only global products
+                ->where('status', 'live')
+                ->whereIn('product_type', ['merchandised', 'back_to_school']); // Only BTS and Merchandise
+            
+            // Apply gender filter for global products (but more lenient)
+            if ($selectedProfile->gender) {
+                $gender = strtolower($selectedProfile->gender);
+                $genderMap = [
+                    'boys' => 'male',
+                    'girls' => 'female',
+                    'male' => 'male',
+                    'female' => 'female'
+                ];
+                $mappedGender = $genderMap[$gender] ?? $selectedProfile->gender;
+                
+                // For global products, be very lenient - show all genders, unisex, or null
+                $dbProductsQuery->where(function($q) use ($mappedGender) {
+                    $q->where('gender', $mappedGender)
+                      ->orWhere('gender', 'unisex')
+                      ->orWhere('gender', 'Unisex')
+                      ->orWhereNull('gender')
+                      ->orWhere('gender', '');
+                });
+            }
+            
+            $dbProducts = $dbProductsQuery->with('gradePricing')->get();
+            
+            \Log::info('[Store Page] Global products loaded (school not found)', [
+                'total_products' => $dbProducts->count(),
+                'bts_count' => $dbProducts->where('product_type', 'back_to_school')->count(),
+                'merchandised_count' => $dbProducts->where('product_type', 'merchandised')->count()
+            ]);
+            
+            // Format global products
+            foreach ($dbProducts as $dbProduct) {
+                $image = $dbProduct->featured_image
+                    ? (\Illuminate\Support\Str::startsWith($dbProduct->featured_image, 'http') ? $dbProduct->featured_image : asset('storage/' . $dbProduct->featured_image))
+                    : asset('assets/img/product/product1-1.png');
+
+                $images = [$image];
+                $gallerySource = (!empty($dbProduct->media_gallery) && is_array($dbProduct->media_gallery) && count($dbProduct->media_gallery) > 0)
+                    ? $dbProduct->media_gallery
+                    : ($dbProduct->media_images ?? []);
+
+                if ($gallerySource && is_array($gallerySource) && count($gallerySource) > 0) {
+                    foreach ($gallerySource as $mediaImg) {
+                        if (is_array($mediaImg)) {
+                            $mediaImg = $mediaImg[0] ?? null;
+                        }
+                        if (is_string($mediaImg) && !empty($mediaImg)) {
+                            $images[] = \Illuminate\Support\Str::startsWith($mediaImg, 'http') ? $mediaImg : asset('storage/' . $mediaImg);
+                        }
+                    }
+                }
+
+                $sizes = ['S', 'M', 'L', 'XL', 'XXL'];
+                if ($dbProduct->variants && $dbProduct->variants->count() > 0) {
+                    $sizes = $dbProduct->variants->pluck('option')->toArray();
+                }
+
+                $productPrice = $this->getProductPriceForGrade($dbProduct, $selectedProfile->grade);
+                $productType = strtolower($dbProduct->product_type ?? 'merchandised');
+                $normalizedType = match($productType) {
+                    'back_to_school' => 'back_to_school',
+                    'merchandised' => 'merchandised',
+                    default => $productType
+                };
+                
+                $allProducts[] = [
+                    'id' => $dbProduct->id,
+                    'name' => $dbProduct->product_name,
+                    'price' => $productPrice,
+                    'original_price' => $dbProduct->price_sale,
+                    'image' => $image,
+                    'images' => $images,
+                    'description' => $dbProduct->description,
+                    'type' => $normalizedType,
+                    'category' => $dbProduct->category ?? 'General',
+                    'gender' => match(strtolower($dbProduct->gender ?? 'unisex')) {
+                        'male' => 'Male',
+                        'female' => 'Female',
+                        default => 'Unisex'
+                    },
+                    'sizes' => $sizes,
+                    'tags' => $dbProduct->tag_name ? explode(',', $dbProduct->tag_name) : [],
+                    'sku' => $dbProduct->sku ?? $dbProduct->id,
+                ];
+            }
         }
 
         // Get categories dynamically from database (active categories only)
@@ -2333,6 +2520,14 @@ class AuthController extends Controller
             $product['category'] = $normalizedCategory;
         }
         unset($product); // Break the reference
+
+        // Final log before returning to view
+        \Log::info('[Store Page] Final products array', [
+            'total_products' => count($allProducts),
+            'bts_count' => collect($allProducts)->where('type', 'back_to_school')->count(),
+            'merchandised_count' => collect($allProducts)->where('type', 'merchandised')->count(),
+            'categories_count' => count($categories)
+        ]);
 
         return view('frontend.store.index', compact('selectedProfile', 'allProducts', 'categories'));
     }
@@ -3360,7 +3555,7 @@ class AuthController extends Controller
                     'tax_amount' => $itemTax,
                     'shipping_cost' => $rowShipping,
                     'payment_status' => session('payment_method') === 'razorpay' ? 'paid' : 'pending',
-                    'order_status' => 'processing',
+                    'order_status' => 'pending', // Start with 'pending' (Order Placed) instead of 'processing'
                     'payment_method' => session('payment_method'),
                     'payment_id' => session('payment_id'),
                     'amount_paid' => session('payment_method') === 'razorpay' ? $rowTotalWithShipping : 0,
@@ -3541,24 +3736,20 @@ class AuthController extends Controller
         $studentNames = $profiles->pluck('student_name')->toArray();
 
         // Fetch orders strictly belonging to this user
-    $orders = \App\Models\Admin\Master\Order::where(function($q) use ($user) {
-        $q->where('user_id', $user->id);
-
-        // Strict isolation for now.
-        // If we need to "claim" old guest orders, we should do that via a separate "Claim Orders" process
-        // rather than auto-showing based on loose email/phone matching which causes the reported issue.
-        /*
-        $q->orWhere(function($sub) use ($user) {
-             $sub->whereNull('user_id')
-                 ->where(function($nested) use ($user) {
-                     $nested->where('customer_email', $user->email)
-                            ->orWhere('customer_phone', $user->phone);
-                 });
-        });
-        */
-    })
-    ->orderByDesc('created_at')
-    ->get();
+        // Use withoutGlobalScopes() temporarily to ensure we get all orders, then filter manually
+        // This ensures BTS/Merchandise orders with NULL school_id or deleted schools are included
+        $orders = \App\Models\Admin\Master\Order::withoutGlobalScopes()
+            ->where('user_id', $user->id)
+            ->where(function($q) {
+                // Include orders with NULL school_id (BTS/Merchandise global products)
+                $q->whereNull('school_id')
+                  // OR orders linked to active (non-deleted) schools
+                  ->orWhereHas('school', function ($query) {
+                      $query->where('has_deleted', 0);
+                  });
+            })
+            ->orderByDesc('created_at')
+            ->get();
 
         // Group orders by the base order number (SOCO-ID-Index -> ID)
         $groupedOrders = $orders->groupBy(function ($order) {
@@ -3681,11 +3872,16 @@ class AuthController extends Controller
         // Helper function to get status index for an order
         $getStatusIndex = function($orderStatus) use ($statuses) {
             $currentStatus = strtolower($orderStatus);
+            // Map 'order_placed' to 'pending' for compatibility
+            if ($currentStatus === 'order_placed') {
+                $currentStatus = 'pending';
+            }
             foreach ($statuses as $index => $status) {
                 if ($status['key'] === $currentStatus) {
                     return $index;
                 }
             }
+            // Default to 0 (Order Placed) if status not found
             return 0;
         };
 
@@ -3745,13 +3941,101 @@ class AuthController extends Controller
             ->get()
             ->keyBy('order_id');
 
+        // Fetch exchange orders (new orders generated from exchanges)
+        // Show exchange order tracking as soon as exchange order is created (when new_order_id exists)
+        $exchangeOrders = collect();
+        $exchangeOrdersFormatted = [];
+        
+        // Get all exchange requests with new_order_id (not just completed - show as soon as order is generated)
+        $exchangeRequests = \App\Models\Admin\Master\ReturnExchangeRequest::whereIn('order_id', $itemIds)
+            ->whereNotNull('new_order_id')
+            ->where('type', 'exchange')
+            ->get();
+        
+        if ($exchangeRequests->isNotEmpty()) {
+            $exchangeOrderIds = $exchangeRequests->pluck('new_order_id')->filter();
+            
+            // Fetch exchange orders - try by user_id first, then fallback to customer_email match
+            $exchangeOrders = \App\Models\Admin\Master\Order::withoutGlobalScopes()
+                ->whereIn('id', $exchangeOrderIds)
+                ->where(function($q) use ($user) {
+                    $q->where('user_id', $user->id)
+                      // Fallback: match by customer_email if user_id is missing (for older exchange orders)
+                      ->orWhere('customer_email', $user->email);
+                })
+                ->get();
+            
+            \Log::info('[Track Order] Exchange orders found', [
+                'exchange_request_count' => $exchangeRequests->count(),
+                'exchange_order_ids' => $exchangeOrderIds->toArray(),
+                'exchange_orders_fetched' => $exchangeOrders->count(),
+                'user_id' => $user->id,
+                'user_email' => $user->email,
+                'exchange_orders_user_ids' => $exchangeOrders->pluck('user_id')->toArray()
+            ]);
+            
+            // Format exchange orders similar to original orders
+            foreach ($exchangeOrders as $exchangeOrder) {
+                // Get product image for exchange order
+                $exchangeProduct = \App\Models\Admin\Master\ProductMapping::where('product_name', $exchangeOrder->item_name)
+                    ->where('school_id', $exchangeOrder->school_id)
+                    ->first();
+                
+                if (!$exchangeProduct) {
+                    $exchangeProduct = \App\Models\Admin\Master\ProductMapping::where('product_name', $exchangeOrder->item_name)->first();
+                }
+                
+                $exchangeProductImage = null;
+                if ($exchangeProduct) {
+                    if ($exchangeProduct->featured_image) {
+                        $exchangeProductImage = $exchangeProduct->featured_image;
+                    } elseif ($exchangeProduct->media_images && is_array($exchangeProduct->media_images) && !empty($exchangeProduct->media_images)) {
+                        $exchangeProductImage = $exchangeProduct->media_images[0];
+                    } elseif ($exchangeProduct->media_gallery && is_array($exchangeProduct->media_gallery) && !empty($exchangeProduct->media_gallery)) {
+                        $exchangeProductImage = $exchangeProduct->media_gallery[0];
+                    }
+                }
+                
+                // Get status index for exchange order
+                $exchangeStatusIndex = $getStatusIndex($exchangeOrder->order_status);
+                
+                // Find the original exchange request for this order
+                $originalExchangeRequest = $exchangeRequests->firstWhere('new_order_id', $exchangeOrder->id);
+                
+                $exchangeOrdersFormatted[] = [
+                    'id' => $exchangeOrder->id,
+                    'order_number' => $exchangeOrder->order_number,
+                    'name' => $exchangeOrder->item_name,
+                    'quantity' => $exchangeOrder->quantity,
+                    'size' => $exchangeOrder->size,
+                    'price' => $exchangeOrder->total_amount,
+                    'image' => $exchangeProductImage ? asset('storage/' . $exchangeProductImage) : null,
+                    'status' => $exchangeOrder->order_status,
+                    'status_index' => $exchangeStatusIndex,
+                    'updated_at' => $exchangeOrder->updated_at,
+                    'created_at' => $exchangeOrder->created_at,
+                    'original_order_id' => $originalExchangeRequest ? $originalExchangeRequest->order_id : null,
+                ];
+            }
+        }
+
         // Calculate overall status index (for backward compatibility - use minimum status if items have different statuses)
         $currentStatusIndex = $getStatusIndex($firstOrder->order_status);
 
         // Get the latest return request for backward compatibility
         $returnRequest = $returnRequests->sortByDesc('created_at')->first();
 
-        return view('frontend.orders.track', compact('order', 'statuses', 'currentStatusIndex', 'returnRequest', 'returnRequests'));
+        // Final log before returning to view
+        \Log::info('[Track Order] Final data for view', [
+            'order_id' => $orderId,
+            'item_id' => $itemId,
+            'original_items_count' => count($order['items']),
+            'exchange_orders_count' => count($exchangeOrdersFormatted),
+            'has_exchange_orders' => count($exchangeOrdersFormatted) > 0,
+            'exchange_order_ids' => collect($exchangeOrdersFormatted)->pluck('id')->toArray()
+        ]);
+
+        return view('frontend.orders.track', compact('order', 'statuses', 'currentStatusIndex', 'returnRequest', 'returnRequests', 'exchangeOrdersFormatted'));
     }
 
     public function returnExchange($orderId, Request $request, $itemId = null)

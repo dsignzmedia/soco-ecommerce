@@ -82,8 +82,12 @@
             color: #111827;
         }
 
-        .btn-vs-sm { padding: 6px 12px; font-size: 12px; border-radius: 6px; text-decoration: none; border: 1px solid #d0d5dd; background: white; color: #490d59; font-weight: 500; display: inline-flex; align-items: center; gap: 4px; }
-        .btn-vs-sm:hover { background-color: #f3e8f5; border-color: #490d59; text-decoration: none; color: #490d59; }
+        .btn-vs-sm { padding: 6px 12px; font-size: 12px; border-radius: 6px; text-decoration: none; border: 1px solid #d0d5dd; background: white; color: #490d59; font-weight: 500; display: inline-flex; align-items: center; gap: 4px; transition: all 0.2s; }
+        .btn-vs-sm:hover { background-color: #490d59; border-color: #490d59; text-decoration: none; color: #490d59; transform: translateY(-1px); box-shadow: 0 2px 4px rgba(73, 13, 89, 0.15); }
+        
+        /* Delete button styling */
+        .btn-delete { background: #fef2f2 !important; color: #dc2626 !important; border: 1px solid #fecaca !important; }
+        .btn-delete:hover { background: #fee2e2 !important; border-color: #fca5a5 !important; color: #b91c1c !important; }
         
         /* Tablet Responsive Styles (768px - 1024px) */
         @media (min-width: 768px) and (max-width: 1024px) {
@@ -461,14 +465,14 @@
     /* Disabled State (Previous/Next arrows when inactive) */
     .pagination-container nav span[aria-disabled],
     .pagination span[aria-disabled="true"],
-    .pagination .page-item.disabled .page-link,
-    .pagination .page-link.disabled {
-        background-color: #f3f4f6 !important;
-        color: #9ca3af !important;
-        cursor: not-allowed !important;
-        opacity: 0.6 !important;
-        pointer-events: none;
-    }
+    .pagination .page-item.disabled .page-link,                                                                                                                 
+    .pagination .page-link.disabled {                   
+        background-color: #f3f4f6 !important;       
+        color: #9ca3af !important;      
+        cursor: not-allowed !important;         
+        opacity: 0.6 !important;            
+        pointer-events: none;               
+    }               
     
     /* Previous/Next buttons */
     .pagination-container nav a[rel="prev"],

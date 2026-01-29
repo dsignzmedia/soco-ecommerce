@@ -88,7 +88,7 @@
         }
 
         .btn-vs-sm { padding: 6px 12px; font-size: 12px; border-radius: 6px; text-decoration: none; border: 1px solid #d0d5dd; background: white; color: #490d59; font-weight: 500; display: inline-flex; align-items: center; gap: 4px; }
-        .btn-vs-sm:hover { background-color: #f3e8f5; border-color: #490d59; text-decoration: none; color: #490d59; }
+        .btn-vs-sm:hover { background-color: #490d59 ; border-color: #490d59; text-decoration: none; color: #490d59; }
 
         /* Custom Pagination Styling */
         .pagination-container {

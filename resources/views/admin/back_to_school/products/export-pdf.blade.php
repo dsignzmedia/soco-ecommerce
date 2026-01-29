@@ -61,13 +61,14 @@
             <table>
                 <thead>
                     <tr>
-                        <th style="width: 25%;">Product Name</th>
-                        <th style="width: 10%;">Grade</th>
-                        <th style="width: 10%;">Category</th>
-                        <th style="width: 10%;">Attributes</th>
-                        <th style="width: 15%;">Prices (Reg/Sale)</th>
-                        <th style="width: 10%;">Stock</th>
-                        <th style="width: 10%;">Status</th>
+                        <th style="width: 20%;">Product Name</th>
+                        <th style="width: 8%;">Grade</th>
+                        <th style="width: 8%;">Category</th>
+                        <th style="width: 8%;">Attributes</th>
+                        <th style="width: 12%;">Prices (Reg/Sale)</th>
+                        <th style="width: 12%;">Variants</th>
+                        <th style="width: 8%;">Stock</th>
+                        <th style="width: 8%;">Status</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -86,6 +87,57 @@
                                 ₹{{ number_format($product->price_regular, 2) }}
                                 @if($product->price_sale)
                                     <br><span style="color: #b42318;">₹{{ number_format($product->price_sale, 2) }}</span>
+                                @endif
+                            </td>
+                            <td style="font-size: 9px; line-height: 1.3;">
+                                @if($product->variants && $product->variants->count() > 0)
+                                    @php
+                                        $variants = $product->variants;
+                                        $variantCount = $variants->count();
+                                        $totalStock = $variants->sum('stock');
+                                        
+                                        // Extract sizes and find min/max
+                                        $allOptions = $variants->pluck('option')->filter()->values();
+                                        $numericSizes = $allOptions->map(function($size) {
+                                            // Extract numeric value from size string (e.g., "13", "28", "XL", etc.)
+                                            if (preg_match('/^(\d+)/', trim($size), $matches)) {
+                                                return (int)$matches[1];
+                                            }
+                                            return null;
+                                        })->filter();
+                                        
+                                        $sizeRange = '';
+                                        if ($numericSizes->count() > 0) {
+                                            // Use numeric sizes for range
+                                            $minSize = $numericSizes->min();
+                                            $maxSize = $numericSizes->max();
+                                            if ($minSize == $maxSize) {
+                                                $sizeRange = (string)$minSize;
+                                            } else {
+                                                $sizeRange = $minSize . '–' . $maxSize;
+                                            }
+                                        } elseif ($allOptions->count() > 0) {
+                                            // If no numeric sizes, show first and last variant option
+                                            if ($allOptions->count() == 1) {
+                                                $sizeRange = $allOptions->first();
+                                            } else {
+                                                $sizeRange = $allOptions->first() . '–' . $allOptions->last();
+                                            }
+                                        }
+                                    @endphp
+                                    <div style="margin-bottom: 2px;">
+                                        <strong>{{ $variantCount }} {{ $variantCount == 1 ? 'variant' : 'variants' }}</strong>
+                                    </div>
+                                    @if($sizeRange)
+                                        <div style="color: #6b7280; margin-bottom: 2px;">
+                                            Sizes: {{ $sizeRange }}
+                                        </div>
+                                    @endif
+                                    <div style="color: #6b7280;">
+                                        Total Stock: <strong>{{ number_format($totalStock) }}</strong>
+                                    </div>
+                                @else
+                                    <span style="color: #9ca3af;">N/A</span>
                                 @endif
                             </td>
                             <td>

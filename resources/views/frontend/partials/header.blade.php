@@ -37,6 +37,7 @@
                     <li>
                         <a href="{{ route('frontend.contact') }}" class="{{ request()->routeIs('frontend.contact') ? 'active' : '' }}"><i class="fas fa-comments me-2"></i>Contact Us</a>
                     </li>
+                    <li class="mobile-menu-divider"><hr style="margin: 8px; border: 0; border-top: 4px solid #000000;"></li>
                     @auth
                         @if(Auth::user()->isMasterAdmin())
                             <li><a href="{{ route('master.admin.dashboard') }}"><i class="fas fa-tachometer-alt me-2"></i>Dashboard</a></li>
@@ -624,6 +625,24 @@
             padding: 0 !important;
             font-size: 0 !important;
             line-height: 0 !important;
+        }
+
+        /* Fix mobile menu transparency at bottom */
+        .vs-menu-wrapper .vs-menu-area {
+            background-color: #ffffff !important;
+            min-height: 100vh !important;
+            height: 100% !important;
+            overflow-y: auto !important;
+            display: flex !important;
+            flex-direction: column !important;
+        }
+
+        .vs-mobile-menu {
+            flex: 1 !important;
+            background-color: #ffffff !important;
+            max-height: none !important;
+            overflow-y: auto !important;
+            padding-bottom: 100px !important;
         }
 
     </style>

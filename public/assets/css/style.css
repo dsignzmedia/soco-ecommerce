@@ -563,9 +563,9 @@ input[type=checkbox] {
 
 input[type=checkbox]:checked~label:before {
   content: "\f00c";
-  color: #e8063c;
+  color: #ffffff;
   background-color: #ffffff;
-  border-color: #000;
+  border-color: #ffffff;
 }
 
 input[type=checkbox]~label {

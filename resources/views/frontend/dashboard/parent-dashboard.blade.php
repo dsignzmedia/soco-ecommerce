@@ -209,11 +209,11 @@
                             </div>
 
                             <div class="d-flex justify-content-center gap-3 flex-wrap">
-                                <button type="button" class="vs-btn" style="background: linear-gradient(135deg, #8c4fcf, #490D59); border: none; border-radius: 30px; padding: 12px 30px;" data-bs-toggle="modal" data-bs-target="#addStudentModal" onclick="prepareAddStudentModal()">
+                                <button type="button" class="vs-btn" style="background: linear-gradient(135deg, #8c4fcf, #490D59); border: none; border-radius: 30px; padding: 12px 30px; color: #ffffff;" data-bs-toggle="modal" data-bs-target="#addStudentModal" onclick="prepareAddStudentModal()">
                                     <i class="fas fa-plus me-2"></i> Add Student Profile
                                 </button>
                                 
-                                <a href="{{ route('frontend.shop.index') }}" class="vs-btn style-outline btn-guest-continue" style="background: linear-gradient(135deg, #8c4fcf, #490D59); border: none; border-radius: 30px; padding: 12px 30px;">
+                                <a href="{{ route('frontend.shop.index') }}" class="vs-btn" style="background: linear-gradient(135deg, #8c4fcf, #490D59); border: none; border-radius: 30px; padding: 12px 30px; color: #ffffff;">
                                     <i class="fas fa-shopping-bag me-2"></i> Continue Shopping
                                 </a>
                             </div>

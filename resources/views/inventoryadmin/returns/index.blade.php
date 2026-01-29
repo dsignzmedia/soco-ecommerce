@@ -305,8 +305,8 @@
                                     @endif
 
                                     @if($req->type === 'exchange')
-                                        <a href="{{ route('inventory.admin.returns-exchange.show', $req) }}" class="btn-action-sm btn-blue">
-                                            Process Exchange
+                                        <a href="{{ route('inventory.admin.returns-exchange.show', $req) }}" class="btn-action-sm btn-blue" style="border: 2px solid #0284c7;">
+                                            <i class="fas fa-exchange-alt" style="margin-right: 4px;"></i> Process Exchange
                                         </a>
                                     @endif
                                 @endif

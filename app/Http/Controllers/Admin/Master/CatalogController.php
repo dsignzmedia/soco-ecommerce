@@ -20,12 +20,21 @@ class CatalogController extends Controller
         $filters = $request->only(['school_id', 'grade_id', 'status', 'gender', 'category', 'product_type', 'stock_status', 'q']);
 
         $query = ProductMapping::with(['school', 'gradePricing', 'variants'])->withCount('variants');
+        
+        // Exclude BTS and Merchandise products from Master Admin catalog
+        // Master Admin should only see school-specific catalog products
+        $query->where(function($q) {
+            $q->whereNotIn('product_type', ['back_to_school', 'merchandised'])
+              ->orWhereNull('product_type'); // Include legacy products without product_type
+        });
+        
         $this->applyFilters($query, $filters);
 
         if (! empty($filters['q'])) {
             $query->where(function (Builder $builder) use ($filters) {
                 $builder->where('product_name', 'like', '%' . $filters['q'] . '%')
-                    ->orWhere('product_type', 'like', '%' . $filters['q'] . '%');
+                    ->orWhere('product_type', 'like', '%' . $filters['q'] . '%')
+                    ->orWhere('sku', 'like', '%' . $filters['q'] . '%');
             });
         }
 
@@ -79,6 +88,11 @@ class CatalogController extends Controller
                 'back_to_school' => 'Back to School Product',
             ];
         }
+
+        // Remove BTS and Merchandise from product types filter in Master Admin
+        // Master Admin should only manage school-specific catalog products
+        unset($productTypes['merchandised']);
+        unset($productTypes['back_to_school']);
 
         return view('admin.catalog.index', [
             'mappings' => $mappings,
@@ -385,12 +399,21 @@ class CatalogController extends Controller
         $filters = $request->only(['school_id', 'grade_id', 'status', 'gender', 'category', 'product_type', 'stock_status', 'q']);
 
         $query = ProductMapping::with(['school', 'gradePricing', 'variants'])->withCount('variants');
+        
+        // Exclude BTS and Merchandise products from Master Admin exports
+        // Master Admin should only export school-specific catalog products
+        $query->where(function($q) {
+            $q->whereNotIn('product_type', ['back_to_school', 'merchandised'])
+              ->orWhereNull('product_type'); // Include legacy products without product_type
+        });
+        
         $this->applyFilters($query, $filters);
 
         if (! empty($filters['q'])) {
             $query->where(function (Builder $builder) use ($filters) {
                 $builder->where('product_name', 'like', '%' . $filters['q'] . '%')
-                    ->orWhere('product_type', 'like', '%' . $filters['q'] . '%');
+                    ->orWhere('product_type', 'like', '%' . $filters['q'] . '%')
+                    ->orWhere('sku', 'like', '%' . $filters['q'] . '%');
             });
         }
 
@@ -459,8 +482,7 @@ class CatalogController extends Controller
         // Add file validation rules
         if ($request->hasFile('featured_image')) {
             $rules['featured_image'] = [
-                'image', 
-                'max:200',
+                'image',
                 function ($attribute, $value, $fail) {
                     if ($value && $value->getSize() < 1024) { // 1 KB = 1024 bytes
                         $fail('The featured image must be at least 1 KB in size.');
@@ -472,13 +494,13 @@ class CatalogController extends Controller
         }
         
         if ($request->hasFile('size_chart_path')) {
-            $rules['size_chart_path'] = ['image', 'max:2048']; 
+            $rules['size_chart_path'] = ['image']; 
         } else {
             $rules['size_chart_path'] = ['nullable', 'string', 'max:2048'];
         }
         
         if ($request->hasFile('size_measurement_image')) {
-            $rules['size_measurement_image'] = ['image', 'max:2048']; 
+            $rules['size_measurement_image'] = ['image']; 
         } else {
             $rules['size_measurement_image'] = ['nullable', 'string', 'max:2048'];
         }
@@ -492,7 +514,6 @@ class CatalogController extends Controller
             $rules['media_images.*'] = [
                 'file',
                 'mimes:jpeg,jpg,png,gif,webp,mp4,webm,ogg,mov,avi,wmv,flv,mkv,m3u8',
-                'max:20480' // 20MB for videos (increased from 2MB)
             ];
         }
 

@@ -74,7 +74,7 @@
         }
 
         .btn-vs-sm { padding: 6px 12px; font-size: 12px; border-radius: 6px; text-decoration: none; border: 1px solid #d0d5dd; background: white; color: #490d59; font-weight: 500; display: inline-flex; align-items: center; gap: 4px; }
-        .btn-vs-sm:hover { background-color: #f3e8f5; border-color: #490d59; text-decoration: none; color: #490d59; }
+        .btn-vs-sm:hover { background-color: #490d59 !important; border-color: #490d59 !important; text-decoration: none !important; color: #fff !important; }
         
         /* Tablet Responsive Styles (768px - 1024px) */
         @media (min-width: 768px) and (max-width: 1024px) {
@@ -380,7 +380,7 @@
                                         <div style="font-weight:600;color:#111827;margin-bottom:4px;">
                                             <a href="{{ route('master.admin.catalog.show', $mapping) }}" style="color:#490d59;text-decoration:none;">{{ Str::limit($mapping->product_name, 40) }}</a>
                                         </div>
-                                        <small>SKU: {{ $mapping->id }}</small>
+                                        <small>SKU: {{ $mapping->sku ?? $mapping->id }}</small>
                                         @if($mapping->variants_count > 0)
                                             <small>Variants: {{ $mapping->variants_count }}</small>
                                         @endif
@@ -444,7 +444,7 @@
                                     <form method="POST" action="{{ route('master.admin.catalog.destroy', $mapping) }}" onsubmit="return confirm('Delete this product?');" style="display:inline;margin:0;">
                                         @csrf
                                         @method('DELETE')
-                                        <button type="submit" class="btn-vs-sm" style="background:#fff;color:#b42318;border:1px solid #fedf89;" title="Delete">
+                                        <button type="submit" class="btn-vs-sm" style="background:background-color:rgb(89, 13, 13) !important;;color:#b42318;border:1px solid #fedf89;" title="Delete">
                                             <i class="fas fa-trash"></i>
                                         </button>
                                     </form>

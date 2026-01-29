@@ -16,18 +16,27 @@ class ReportController extends Controller
         $filters = $request->only(['date_from', 'date_to', 'status']);
 
         // Stats Logic
-        // Strict scope: explicit type only
-        $query = Order::query()->where(function($q) {
-            $q->where('product_type', 'back_to_school');
-        });
+        // Strict scope: explicit type only (exclude exchange orders)
+        $query = Order::query()
+            ->where(function($q) {
+                $q->where('product_type', 'back_to_school');
+            })
+            ->where(function($q) {
+                $q->whereNull('return_exchange_status')
+                  ->orWhere('return_exchange_status', '!=', 'exchange_created');
+            });
 
         $totalOrders = (clone $query)->count();
         $totalRevenue = (clone $query)->sum('total_amount');
         
-        // Product-wise Sales
+        // Product-wise Sales (exclude exchange orders)
         $productSales = Order::selectRaw('item_name, SUM(quantity) as total_qty, SUM(total_amount) as total_revenue')
             ->where(function($q) {
                 $q->where('product_type', 'back_to_school');
+            })
+            ->where(function($q) {
+                $q->whereNull('return_exchange_status')
+                  ->orWhere('return_exchange_status', '!=', 'exchange_created');
             })
             ->groupBy('item_name')
             ->orderByDesc('total_revenue')

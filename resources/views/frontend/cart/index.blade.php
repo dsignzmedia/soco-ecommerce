@@ -173,7 +173,7 @@
                             <i class="fas fa-shopping-cart fa-5x text-muted mb-3"></i>
                             <h4 class="mb-3">Your cart is empty</h4>
                             <p class="text-muted mb-4">Start shopping to add items to your cart.</p>
-                            <a href="{{ route('frontend.parent.dashboard') }}" class="vs-btn">Go to Dashboard</a>
+                            <a href="{{ route('frontend.parent.store') }}" class="vs-btn">Shop Now</a>
                         </div>
                     </div>
                 @endif

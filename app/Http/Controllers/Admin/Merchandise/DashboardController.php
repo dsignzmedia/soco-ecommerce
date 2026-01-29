@@ -16,7 +16,12 @@ class DashboardController extends Controller
         $filters = $request->only(['category', 'start_date', 'end_date']);
 
         // Base queries - Merchandise only
-        $ordersQuery = Order::query();
+        $ordersQuery = Order::query()
+            // Exclude exchange orders (they have zero payment and are covered by original orders)
+            ->where(function($q) {
+                $q->whereNull('return_exchange_status')
+                  ->orWhere('return_exchange_status', '!=', 'exchange_created');
+            });
         $productsQuery = Product::query();
 
         // Apply Filters to Orders
@@ -76,12 +81,25 @@ class DashboardController extends Controller
         ];
 
         // Stock KPIs
+        // Count returns/exchanges separately (include all return/exchange orders, not filtered)
+        $returnsExchangeQuery = Order::query();
+        if (!empty($filters['category'])) {
+            $returnsExchangeQuery->where('category', $filters['category']);
+        }
+        if (!empty($filters['start_date'])) {
+            $returnsExchangeQuery->whereDate('created_at', '>=', $filters['start_date']);
+        }
+        if (!empty($filters['end_date'])) {
+            $returnsExchangeQuery->whereDate('created_at', '<=', $filters['end_date']);
+        }
+        
         $stockKpi = [
             'in_stock' => (clone $productsQuery)->where('inventory_stock', '>', 0)->count(),
             'out_of_stock' => (clone $productsQuery)->where('inventory_stock', '<=', 0)->count(),
             'low_stock' => (clone $productsQuery)->whereColumn('inventory_stock', '<=', 'low_stock_threshold')->count(),
             'active_products' => (clone $productsQuery)->where('status', 'live')->count(),
             'pending_print_jobs' => PrintJob::where('status', 'pending')->count(),
+            'returns' => (clone $returnsExchangeQuery)->whereNotNull('return_exchange_status')->count(),
         ];
 
         $kpis = [
@@ -99,6 +117,7 @@ class DashboardController extends Controller
             ['label' => 'Low Stock Products', 'value' => $stockKpi['low_stock']],
             ['label' => 'Active Products', 'value' => $stockKpi['active_products']],
             ['label' => 'Pending Print Jobs', 'value' => $stockKpi['pending_print_jobs']],
+            ['label' => 'Returns / Exchange', 'value' => $stockKpi['returns']],
         ];
 
         // --- Charts ---

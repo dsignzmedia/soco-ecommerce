@@ -51,12 +51,18 @@ class Order extends Model
     /**
      * The "booted" method of the model.
      * Add global scope to hide orders from deleted schools
+     * Allow orders with NULL school_id (for BTS/Merchandise global products)
      */
     protected static function booted(): void
     {
         static::addGlobalScope('activeSchool', function (Builder $builder) {
-            $builder->whereHas('school', function ($query) {
-                // School model's global scope will automatically filter has_deleted = 0
+            $builder->where(function($q) {
+                // Allow orders that are not linked to any school (BTS/Merchandise global products)
+                $q->whereNull('school_id')
+                  // OR orders linked to an active school
+                  ->orWhereHas('school', function ($query) {
+                      // School model's global scope will automatically filter has_deleted = 0
+                  });
             });
         });
     }

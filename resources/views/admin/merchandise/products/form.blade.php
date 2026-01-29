@@ -1047,7 +1047,7 @@
                                 removeBtn.style.cssText = 'position:absolute;top:4px;right:4px;width:24px;height:24px;background:rgba(220,53,69,0.9);color:white;border:none;border-radius:50%;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:12px;z-index:2;';
                                 removeBtn.onclick = function() {
                                     preview.innerHTML = '';
-                                    input.value = '';
+                                    resetFileInput(inputId);
                                 };
                                 
                                 wrapper.appendChild(img);
@@ -1063,19 +1063,31 @@
                 }
             }
 
+            // Helper function to properly reset a file input
+            function resetFileInput(inputId) {
+                const input = document.getElementById(inputId);
+                if (input) {
+                    // Simply reset the value - this is the safest approach
+                    // This allows the file input to accept new files
+                    input.value = '';
+                    
+                    // Re-setup the preview handler in case it was lost
+                    const previewId = inputId.replace('_input', '_preview');
+                    setupImagePreview(inputId, previewId);
+                }
+            }
+
             // Remove functions for existing images
             window.removeSizeChartImage = function() {
                 const preview = document.getElementById('size_chart_path_preview');
-                const input = document.getElementById('size_chart_path_input');
                 if (preview) preview.innerHTML = '';
-                if (input) input.value = '';
+                resetFileInput('size_chart_path_input');
             };
 
             window.removeSizeMeasurementImage = function() {
                 const preview = document.getElementById('size_measurement_image_preview');
-                const input = document.getElementById('size_measurement_image_input');
                 if (preview) preview.innerHTML = '';
-                if (input) input.value = '';
+                resetFileInput('size_measurement_image_input');
             };
 
             window.removeVideoFile = function() {
@@ -1124,22 +1136,25 @@
 
             window.removeFeaturedImage = function() {
                 const preview = document.getElementById('featured_image_preview');
-                const input = document.getElementById('featured_image_input');
                 if (preview) preview.innerHTML = '';
-                if (input) input.value = '';
+                resetFileInput('featured_image_input');
             };
 
-            // Make file input wrapper clickable
-            document.querySelectorAll('.file-input-wrapper').forEach(wrapper => {
-                wrapper.addEventListener('click', function(e) {
+            // Make file input wrapper clickable - use event delegation for reliability
+            document.addEventListener('click', function(e) {
+                const wrapper = e.target.closest('.file-input-wrapper');
+                if (wrapper && e.target.type !== 'file') {
                     e.preventDefault();
                     e.stopPropagation();
-                    const input = this.querySelector('input[type="file"]');
+                    const input = wrapper.querySelector('input[type="file"]');
                     if (input) {
-                        input.click();
+                        // Use a small timeout to ensure the click is processed
+                        setTimeout(() => {
+                            input.click();
+                        }, 10);
                     }
-                });
-            });
+                }
+            }, true); // Use capture phase for better reliability
 
             // Setup previews for all three image fields
             setupImagePreview('featured_image_input', 'featured_image_preview');
@@ -1502,18 +1517,20 @@
     /* File Input Wrapper */
     .file-input-wrapper {
         position: relative;
-        overflow: hidden;
+        overflow: visible;
         display: inline-block;
         width: 100%;
+        cursor: pointer;
     }
     
     .file-input-wrapper input[type="file"] {
         position: absolute;
         left: -9999px;
         opacity: 0;
-        width: 0;
-        height: 0;
+        width: 1px;
+        height: 1px;
         pointer-events: none;
+        z-index: -1;
     }
     
     .file-input-wrapper::before {
@@ -1527,16 +1544,13 @@
         font-size: 14px;
         font-weight: 500;
         transition: all 0.2s ease;
+        pointer-events: none;
     }
     
     .file-input-wrapper:hover::before {
         background: linear-gradient(135deg, #6b1179 0%, #490d59 100%);
         transform: translateY(-1px);
         box-shadow: 0 4px 8px rgba(73, 13, 89, 0.3);
-    }
-    
-    .file-input-wrapper {
-        cursor: pointer;
     }
     
 
