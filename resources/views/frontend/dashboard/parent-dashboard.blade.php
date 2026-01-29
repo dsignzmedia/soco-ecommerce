@@ -38,7 +38,7 @@
                 <!-- Tab Navigation -->
                 <div class="tab-navigation">
                     @foreach($profiles as $profile)
-                        <a href="{{ route('frontend.parent.dashboard', ['student_id' => $profile['id']]) }}" 
+                        <a href="{{ route('frontend.parent.dashboard', ['student_id' => $profile['id']]) }}"
                            class="tab-button {{ (isset($selectedProfile) && $selectedProfile['id'] == $profile['id']) ? 'active' : '' }}">
                             <span class="student-name">{{ $profile['student_name'] }}</span>
                         </a>
@@ -71,13 +71,13 @@
                                             title="Edit Profile">
                                             <i class="fas fa-edit me-2"></i> Edit Profile
                                         </button>
-                                        <form action="{{ route('frontend.parent.delete-profile', ['profileId' => $selectedProfile['id']]) }}" 
-                                            method="POST" 
+                                        <form action="{{ route('frontend.parent.delete-profile', ['profileId' => $selectedProfile['id']]) }}"
+                                            method="POST"
                                             class="d-inline"
                                             onsubmit="return confirm('Are you sure you want to delete this student profile? This action cannot be undone.');">
                                             @csrf
-                                            <button type="submit" 
-                                                    class="btn btn-sm delete-profile-btn" 
+                                            <button type="submit"
+                                                    class="btn btn-sm delete-profile-btn"
                                                     style="background: linear-gradient(135deg, #ff6b6b, #d90429); color: #ffffff; border: none; padding: 8px 18px; border-radius: 30px;"
                                                     title="Delete Profile">
                                                 <i class="fas fa-trash me-2"></i> <span class="d-none d-sm-inline">Delete Profile</span><span class="d-inline d-sm-none">Delete</span>
@@ -130,7 +130,7 @@
                             <div class="mb-3">
                                 <h5 class="mb-3" style="color: #333; font-weight: 600;">Purchased Products</h5>
                             </div>
-                            
+
                             @if(isset($purchasedProducts) && count($purchasedProducts) > 0)
                                 <div class="purchased-products-list">
                                     @foreach($purchasedProducts as $product)
@@ -142,11 +142,11 @@
                                                     <!-- Product Image -->
                                                     <div class="col-auto">
                                                             @if(isset($product['image']) && $product['image'])
-                                                            <img src="{{ $product['image'] }}" alt="{{ $product['name'] }}" 
+                                                            <img src="{{ $product['image'] }}" alt="{{ $product['name'] }}"
                                                                 style="width: 80px; height: 80px; object-fit: cover; border-radius: 8px; border: 1px solid #e0e0e0;"
                                                                 onerror="this.onerror=null; this.src='{{ asset('assets/img/no image/no_image.png') }}';">
                                                             @else
-                                                            <div class="bg-light rounded d-flex align-items-center justify-content-center" 
+                                                            <div class="bg-light rounded d-flex align-items-center justify-content-center"
                                                                 style="width: 80px; height: 80px; border: 1px solid #e0e0e0;">
                                                                 <i class="fas fa-image text-muted fa-2x"></i>
                                                                 </div>
@@ -212,7 +212,11 @@
                                 <button type="button" class="vs-btn" style="background: linear-gradient(135deg, #8c4fcf, #490D59); border: none; border-radius: 30px; padding: 12px 30px; color: #ffffff;" data-bs-toggle="modal" data-bs-target="#addStudentModal" onclick="prepareAddStudentModal()">
                                     <i class="fas fa-plus me-2"></i> Add Student Profile
                                 </button>
+<<<<<<< HEAD
                                 
+=======
+
+>>>>>>> 75144e0856a38b44506f1a07e5980b66d309121e
                                 <a href="{{ route('frontend.shop.index') }}" class="vs-btn" style="background: linear-gradient(135deg, #8c4fcf, #490D59); border: none; border-radius: 30px; padding: 12px 30px; color: #ffffff;">
                                     <i class="fas fa-shopping-bag me-2"></i> Continue Shopping
                                 </a>
@@ -313,7 +317,7 @@
                     }
                 });
             }
-            
+
             // Handle 'Continue as Parent' click
             const btnContinue = document.getElementById('btnContinueParent');
             if (btnContinue) {
@@ -432,13 +436,13 @@ document.addEventListener('DOMContentLoaded', function() {
     const modalSubmitBtn = document.getElementById('modalSubmitBtn');
     const addStudentModalEl = document.getElementById('addStudentModal');
     const welcomeModalEl = document.getElementById('welcomeModal');
-    
+
     // Check if profiles exist
     const hasProfiles = @json(isset($profiles) && count($profiles) > 0);
     const sessionGuestMode = @json(session('guest_mode_active', false));
     const userId = "{{ Auth::id() }}";
     const storageKey = 'dashboard_welcome_seen_' + userId;
-    
+
     // Welcome modal JS removed as per user request
 
 
@@ -453,18 +457,18 @@ document.addEventListener('DOMContentLoaded', function() {
             return;
         }
 
-        const matches = schools.filter(school => 
-            school.name.toLowerCase().includes(query) || 
+        const matches = schools.filter(school =>
+            school.name.toLowerCase().includes(query) ||
             school.location.toLowerCase().includes(query)
         );
-        
+
         if (matches.length === 0) {
             modalSuggestionBox.style.display = 'none';
             modalSuggestionBox.innerHTML = '';
             return;
         }
 
-        modalSuggestionBox.innerHTML = matches.map(school => 
+        modalSuggestionBox.innerHTML = matches.map(school =>
             `<div class="suggestion-item-modal" data-value="${school.name}" style="padding: 10px 12px; cursor: pointer; border-bottom: 1px solid #f0f0f0; display: flex; align-items: center; gap: 10px;">
                 <div style="width: 30px; height: 30px; display: flex; align-items: center; justify-content: center;">
                     ${school.logo ? `<img src="${school.logo}" alt="${school.name}" style="width: 30px; height: 30px; object-fit: contain; border-radius: 4px;" onerror="this.parentNode.innerHTML='<div style=\'width: 30px; height: 30px; background: #f0f0f0; border-radius: 4px;\'></div>'">` : '<div style="width: 30px; height: 30px; background: #f0f0f0; border-radius: 4px;"></div>'}
@@ -485,7 +489,7 @@ document.addEventListener('DOMContentLoaded', function() {
             setTimeout(() => {
                 const currentVal = this.value.trim();
                 const isValid = schools.some(s => s.name === currentVal);
-                
+
                 if (currentVal && !isValid) {
                     this.classList.add('is-invalid');
                     this.value = ''; // Clear invalid input
@@ -550,7 +554,7 @@ document.addEventListener('DOMContentLoaded', function() {
         if(schoolInput) schoolInput.classList.remove('is-invalid');
         const gradeSelect = document.getElementById('modalGrade');
         if(gradeSelect) gradeSelect.value = '';
-        
+
         // Reset radio buttons
         const genderRadios = document.querySelectorAll('input[name="gender"]');
         genderRadios.forEach(radio => radio.checked = false);
@@ -573,7 +577,7 @@ document.addEventListener('DOMContentLoaded', function() {
     if (addStudentForm) {
         addStudentForm.addEventListener('submit', function(e) {
             e.preventDefault();
-            
+
             const grade = document.getElementById('modalGrade').value;
             const genderRadio = document.querySelector('input[name="gender"]:checked');
             const gender = genderRadio ? genderRadio.value : '';
@@ -636,10 +640,10 @@ document.addEventListener('DOMContentLoaded', function() {
                     if (modalInstance) {
                         modalInstance.hide();
                     }
-                    
+
                     const redirectId = data.profile_id ?? (profileIdField ? profileIdField.value : null);
-                    const redirectUrl = redirectId 
-                        ? '{{ route("frontend.parent.dashboard") }}?student_id=' + redirectId 
+                    const redirectUrl = redirectId
+                        ? '{{ route("frontend.parent.dashboard") }}?student_id=' + redirectId
                         : '{{ route("frontend.parent.dashboard") }}';
                     window.location.href = redirectUrl;
                 } else {
@@ -801,12 +805,12 @@ document.addEventListener('DOMContentLoaded', function() {
             margin-left: 15px !important;
             margin-right: 15px !important;
         }
-        
+
         .modal-scrollable {
             max-height: 55vh; /* Reduced height for mobile */
             padding: 15px; /* Slightly smaller padding on mobile */
         }
-        
+
         .modal-body {
             padding: 0 !important;
         }
@@ -886,7 +890,7 @@ document.addEventListener('DOMContentLoaded', function() {
         border: none;
         border-radius: 8px;
         gap: 6px;
-        
+
     }
 
     .tab-button.add-tab i {
@@ -998,7 +1002,7 @@ document.addEventListener('DOMContentLoaded', function() {
             font-size: 14px; /* Smaller font */
             width: auto !important; /* Fit content */
         }
-        
+
         .tab-button.add-tab {
              display: inline-flex !important; /* Ensure visible */
              width: auto !important;
@@ -1021,7 +1025,7 @@ document.addEventListener('DOMContentLoaded', function() {
     .school-name-container {
         padding-right: 320px; /* Space for Edit Profile + Delete Profile buttons + gap */
     }
-    
+
     /* For smaller desktop screens, reduce padding */
     @media (max-width: 1200px) and (min-width: 769px) {
         .school-name-container {
@@ -1070,14 +1074,14 @@ document.addEventListener('DOMContentLoaded', function() {
             justify-content: center;
             height: auto;
         }
-        
+
         /* Stack Student Details */
         .tab-content-inner .bg-light {
             flex-direction: column;
             align-items: flex-start !important;
             gap: 15px;
         }
-        
+
         .tab-content-inner .bg-light > div {
             width: 100%;
             flex-direction: column;
@@ -1248,7 +1252,7 @@ document.addEventListener('DOMContentLoaded', function() {
             padding-bottom: 14px; /* Updated padding */
             scrollbar-width: none;
         }
-        
+
         .tab-content-container.active-content {
             margin-top: 0px !important; /* Removed top margin */
         }
@@ -1298,7 +1302,7 @@ document.addEventListener('DOMContentLoaded', function() {
         .tab-content-inner .mb-3 h5 {
             margin-bottom: 8px !important;
         }
-        
+
         .tab-content-inner > .mb-3 {
             margin-bottom: 8px !important; /* Override Bootstrap mb-3 with 8px */
         }
@@ -1374,4 +1378,3 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 </style>
 @endsection
- 
