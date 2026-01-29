@@ -144,7 +144,12 @@ class AuthController extends Controller
         $filters = $request->only(['date_range', 'school_id', 'category', 'start_date', 'end_date']);
 
         // Base queries
-        $ordersQuery = \App\Models\Admin\Master\Order::query();
+        $ordersQuery = \App\Models\Admin\Master\Order::query()
+            // Exclude exchange orders (they have zero payment and are covered by original orders)
+            ->where(function($q) {
+                $q->whereNull('return_exchange_status')
+                  ->orWhere('return_exchange_status', '!=', 'exchange_created');
+            });
         $productsQuery = ProductMapping::query();
 
         // Apply Filters to Orders
@@ -223,11 +228,26 @@ class AuthController extends Controller
         ];
 
         // Stock KPIs (based on Products, not Orders)
+        // Count returns/exchanges separately (include all return/exchange orders, not filtered)
+        $returnsExchangeQuery = \App\Models\Admin\Master\Order::query();
+        if (!empty($filters['school_id'])) {
+            $returnsExchangeQuery->where('school_id', $filters['school_id']);
+        }
+        if (!empty($filters['category'])) {
+            $returnsExchangeQuery->where('category', $filters['category']);
+        }
+        if (!empty($filters['start_date'])) {
+            $returnsExchangeQuery->whereDate('order_date', '>=', $filters['start_date']);
+        }
+        if (!empty($filters['end_date'])) {
+            $returnsExchangeQuery->whereDate('order_date', '<=', $filters['end_date']);
+        }
+        
         $stockKpi = [
             'in_stock' => (clone $productsQuery)->where('inventory_stock', '>', 0)->count(),
             'out_of_stock' => (clone $productsQuery)->where('inventory_stock', '<=', 0)->count(),
             'low_stock' => (clone $productsQuery)->whereColumn('inventory_stock', '<=', 'low_stock_threshold')->count(),
-            'returns' => (clone $ordersQuery)->whereNotNull('return_exchange_status')->count(),
+            'returns' => (clone $returnsExchangeQuery)->whereNotNull('return_exchange_status')->count(),
         ];
 
         $kpis = [

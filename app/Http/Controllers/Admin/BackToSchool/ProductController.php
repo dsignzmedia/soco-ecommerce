@@ -17,7 +17,10 @@ class ProductController extends Controller
         $query = Product::with(['school'])->withCount('variants');
 
         if ($request->has('q')) {
-            $query->where('product_name', 'like', '%' . $request->q . '%');
+            $query->where(function($builder) use ($request) {
+                $builder->where('product_name', 'like', '%' . $request->q . '%')
+                    ->orWhere('sku', 'like', '%' . $request->q . '%');
+            });
         }
         
         if ($request->filled('school_id')) {
@@ -60,7 +63,10 @@ class ProductController extends Controller
         $query = Product::with(['school', 'variants', 'gradePricing']);
 
         if ($request->has('q')) {
-            $query->where('product_name', 'like', '%' . $request->q . '%');
+            $query->where(function($builder) use ($request) {
+                $builder->where('product_name', 'like', '%' . $request->q . '%')
+                    ->orWhere('sku', 'like', '%' . $request->q . '%');
+            });
         }
         
         if ($request->filled('school_id')) {
@@ -833,7 +839,6 @@ class ProductController extends Controller
             'featured_image' => [
                 'nullable',
                 'image',
-                'max:200',
                 function ($attribute, $value, $fail) {
                     if ($value && $value->getSize() < 1024) { // 1 KB = 1024 bytes
                         $fail('The featured image must be at least 1 KB in size.');
@@ -893,9 +898,9 @@ class ProductController extends Controller
             $data['video_file'] = $request->file('video_file')->store('videos', 'public');
         }
 
-        if (empty($data['product_type'])) {
-            $data['product_type'] = 'back_to_school'; // Default
-        }
+        // Always ensure product_type is set to 'back_to_school' for BTS products
+        // This prevents products from disappearing if product_type is missing or changed
+        $data['product_type'] = 'back_to_school';
         
         if (empty($data['gender'])) {
             $data['gender'] = 'unisex'; // Default
@@ -906,28 +911,56 @@ class ProductController extends Controller
             $data['featured_image'] = $request->file('featured_image')->store('products', 'public');
         }
 
+        // Handle Gallery Images & Videos
+        $galleryPaths = [];
         if ($request->hasFile('media_images')) {
-            $galleryPaths = [];
+            \Log::info('[BTS Product Store] Gallery images uploaded', [
+                'count' => count($request->file('media_images'))
+            ]);
+            
             foreach($request->file('media_images') as $image) {
                 $path = $image->store('products', 'public');
                 $galleryPaths[] = $path;
                 
                 // Set first image as featured if currently null
                 if (empty($data['featured_image'])) {
-                        $data['featured_image'] = $path;
+                    $data['featured_image'] = $path;
                 }
             }
-            $data['media_gallery'] = $galleryPaths;
+            
+            \Log::info('[BTS Product Store] Gallery paths saved', [
+                'paths' => $galleryPaths,
+                'count' => count($galleryPaths)
+            ]);
+        } else {
+            \Log::warning('[BTS Product Store] No gallery images in request', [
+                'has_media_images' => $request->has('media_images'),
+                'has_file_media_images' => $request->hasFile('media_images')
+            ]);
         }
         
-        // Remove media_images from data to prevent saving UploadedFile objects
-        if (isset($data['media_images'])) {
-            unset($data['media_images']);
+        // Save gallery images to media_gallery (frontend checks this first)
+        if (!empty($galleryPaths)) {
+            $data['media_gallery'] = $galleryPaths;
+            $data['media_images'] = $galleryPaths; // Also save to media_images for backward compatibility
+            
+            \Log::info('[BTS Product Store] Setting gallery data', [
+                'media_gallery_count' => count($data['media_gallery']),
+                'media_images_count' => count($data['media_images'])
+            ]);
         }
         
         $data['stock_status'] = $data['inventory_stock'] > 0 ? 'in_stock' : 'out_of_stock';
 
         $product = Product::create($data);
+        
+        \Log::info('[BTS Product Store] Product created', [
+            'product_id' => $product->id,
+            'has_media_gallery' => !empty($product->media_gallery),
+            'has_media_images' => !empty($product->media_images),
+            'media_gallery_count' => is_array($product->media_gallery) ? count($product->media_gallery) : 0,
+            'media_images_count' => is_array($product->media_images) ? count($product->media_images) : 0
+        ]);
 
         if ($request->has('variants')) {
             $this->saveVariants($product, $request->input('variants'));
@@ -1024,6 +1057,10 @@ class ProductController extends Controller
         
         $data = $request->validate($validationRules);
         
+        // Always ensure product_type is set to 'back_to_school' for BTS products
+        // This prevents products from disappearing if product_type is missing or changed
+        $data['product_type'] = 'back_to_school';
+        
         // Handle checkbox
         $data['price_inclusive_tax'] = $request->has('price_inclusive_tax') ? 1 : 0;
         
@@ -1093,35 +1130,63 @@ class ProductController extends Controller
             $data['featured_image'] = $request->file('featured_image')->store('products', 'public');
         }
         
-        // Handle featured image / media gallery
+        // Handle Gallery Images with reordering and existing media support
+        $paths = [];
         if ($request->hasFile('media_images')) {
-            // Eloquent casts 'media_gallery' to array automatically. Use it directly.
-            $galleryPaths = $product->media_gallery ?? [];
-            if (!is_array($galleryPaths)) {
-                 $galleryPaths = []; // Safety check
-            }
-            
-            foreach($request->file('media_images') as $image) {
-                $path = $image->store('products', 'public');
-                $galleryPaths[] = $path;
-                
-                // Set first image as featured if currently null
-                if (empty($data['featured_image']) && empty($product->featured_image)) {
-                     $data['featured_image'] = $path;
-                }
-            }
-            $data['media_gallery'] = $galleryPaths; // Eloquent handles encoding
-            
-            // If featured_image was just set above, ensure it persists (it's in $data)
-            // If not, and we have gallery but no featured, pick the first one
-            if (empty($data['featured_image']) && empty($product->featured_image) && !empty($galleryPaths)) {
-                $data['featured_image'] = $galleryPaths[0];
+            foreach ($request->file('media_images') as $file) {
+                $paths[] = $file->store('products', 'public');
             }
         }
+
+        // Handle gallery images with reordering support
+        $finalGalleryImages = null;
+        if ($request->filled('media_order_ids')) {
+            $existing = $request->input('existing_media_images', []);
+            $orderMap = explode(',', $request->input('media_order_ids'));
+            $finalImages = [];
+            
+            $existingIndex = 0;
+            $newIndex = 0;
+
+            foreach ($orderMap as $type) {
+                if ($type === 'existing') {
+                    if (isset($existing[$existingIndex])) {
+                        $finalImages[] = $existing[$existingIndex];
+                        $existingIndex++;
+                    }
+                } else if ($type === 'new') {
+                    if (isset($paths[$newIndex])) {
+                        $finalImages[] = $paths[$newIndex];
+                        $newIndex++;
+                    }
+                }
+            }
+            
+            // Safety: Append any remaining
+            while(isset($existing[$existingIndex])) {
+                $finalImages[] = $existing[$existingIndex++];
+            }
+            while(isset($paths[$newIndex])) {
+                $finalImages[] = $paths[$newIndex++];
+            }
+
+            $finalGalleryImages = $finalImages;
+        } elseif ($request->exists('existing_media_images') || $request->has('media_list_modified')) {
+            $existing = $request->input('existing_media_images', []);
+            $finalGalleryImages = array_merge($existing, $paths);
+        } elseif (!empty($paths)) {
+            // New files only - append to existing if any
+            $galleryPaths = $product->media_gallery ?? ($product->media_images ?? []);
+            if (!is_array($galleryPaths)) {
+                $galleryPaths = [];
+            }
+            $finalGalleryImages = array_merge($galleryPaths, $paths);
+        }
         
-        // Remove media_images from data to prevent saving UploadedFile objects
-        if (isset($data['media_images'])) {
-            unset($data['media_images']);
+        // Save gallery images to both media_gallery (frontend checks this first) and media_images (backward compatibility)
+        if ($finalGalleryImages !== null && !empty($finalGalleryImages)) {
+            $data['media_gallery'] = $finalGalleryImages;
+            $data['media_images'] = $finalGalleryImages;
         }
         
         // Handle specific featured image upload (overrides gallery logic if present)

@@ -222,7 +222,7 @@
                                         <div style="font-weight:600;color:#111827;margin-bottom:4px;">
                                             <a href="{{ route('admin.merchandise.products.show', $mapping) }}" style="color:#490d59;text-decoration:none;">{{ Str::limit($mapping->product_name, 40) }}</a>
                                         </div>
-                                        <small>SKU: {{ $mapping->id }}</small>
+                                        <small>SKU: {{ $mapping->sku ?? $mapping->id }}</small>
                                         @if(isset($mapping->variants_count) && $mapping->variants_count > 0)
                                             <small>Variants: {{ $mapping->variants_count }}</small>
                                         @endif

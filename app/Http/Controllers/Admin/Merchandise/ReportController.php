@@ -13,15 +13,24 @@ class ReportController extends Controller
     {
         $filters = $request->only(['date_from', 'date_to', 'status']);
 
-        // Strict scope for Merchandise Orders
-        $query = Order::query()->where('product_type', 'merchandised');
+        // Strict scope for Merchandise Orders (exclude exchange orders)
+        $query = Order::query()
+            ->where('product_type', 'merchandised')
+            ->where(function($q) {
+                $q->whereNull('return_exchange_status')
+                  ->orWhere('return_exchange_status', '!=', 'exchange_created');
+            });
 
         $totalOrders = (clone $query)->count();
         $totalRevenue = (clone $query)->sum('total_amount');
         
-        // Product-wise Sales
+        // Product-wise Sales (exclude exchange orders)
         $productSales = Order::selectRaw('item_name, SUM(quantity) as total_qty, SUM(total_amount) as total_revenue')
             ->where('product_type', 'merchandised')
+            ->where(function($q) {
+                $q->whereNull('return_exchange_status')
+                  ->orWhere('return_exchange_status', '!=', 'exchange_created');
+            })
             ->groupBy('item_name')
             ->orderByDesc('total_revenue')
             ->take(10)

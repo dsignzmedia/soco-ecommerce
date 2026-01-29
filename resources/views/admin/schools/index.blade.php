@@ -43,6 +43,30 @@
         .status-pending { background: #fff4e6; color: #b54708; }
         .status-inactive { background: #fef3f2; color: #912018; }
         
+        /* Icon button styles */
+        .actions .btn-vs-sm {
+            min-width: 36px;
+            padding: 8px 12px;
+        }
+        
+        .actions .btn-vs-sm:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        
+        .actions a.btn-vs-sm:hover {
+            background-color: #490d59 !important;
+            border-color: #490d59 !important;
+            color:rgb(249, 249, 249) !important;
+        }
+        
+        .actions button.btn-vs-sm:hover {
+            background: #fee2e2 !important;
+            border-color: #f87171 !important;
+            color: #b91c1c !important;
+            box-shadow: 0 2px 4px rgba(220, 38, 38, 0.2);
+        }
+        
         /* Tablet Responsive Styles (768px - 1024px) */
         @media (min-width: 768px) and (max-width: 1024px) {
             table {
@@ -276,7 +300,7 @@
                     <tr>
                         <td style="width:70px;">{{ $loop->iteration }}</td>
                         <td>
-                            <strong style="color:#111827;">{{ $school->name }}</strong>
+                            <strong style="color:#111827; display: block; max-width: 300px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="{{ $school->name }}">{{ Str::limit($school->name, 45) }}</strong>
                             <div style="font-size:12px;color:#98a2b3;">{{ $school->board ?? 'Board TBD' }}</div>
                         </td>
                         <td>{{ $school->city ?? '—' }}</td>
@@ -287,15 +311,21 @@
                         <td>{{ $school->product_mappings_count }}</td>
                         <td class="actions">
                             <div class="d-flex flex-wrap gap-2">
-                                <a href="{{ route('master.admin.schools.edit', $school) }}" class="btn-vs-sm">Edit</a>
+                                <a href="{{ route('master.admin.schools.edit', $school) }}" 
+                                   class="btn-vs-sm" 
+                                   title="Edit School"
+                                   style="padding: 8px 12px; border-radius: 6px; border: 1px solid #d0d5dd; background: white; color: #490d59; font-weight: 500; display: inline-flex; align-items: center; gap: 6px; text-decoration: none; transition: all 0.2s;">
+                                    <i class="fas fa-edit"></i>
+                                </a>
                                 <button onclick="openDeleteModal('{{ route('master.admin.schools.destroy', $school) }}', '{{ route('master.admin.schools.deletion-stats', $school) }}')" 
                                         class="btn-vs-sm" 
-                                        style="background:#fef2f2;color:#dc2626 !important;border:1px solid #fecaca;cursor:pointer;">
-                                    Delete
+                                        title="Delete School"
+                                        style="padding: 8px 12px; border-radius: 6px; background:#fef2f2;color:#ff0000 !important;border:1  px solid #dc2626 !important;cursor:pointer; display: inline-flex; align-items: center; gap: 6px; transition: all 0.2s;">
+                                    <i class="fas fa-trash"></i>
                                 </button>
                             </div>
                         </td>
-                    </tr>
+                    </tr>       
                 @empty
                     <tr>
                         <td colspan="6">No schools yet.</td>

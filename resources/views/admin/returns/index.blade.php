@@ -90,14 +90,21 @@
             align-items: center;
             justify-content: center;
             height: 32px;
-            transition: opacity 0.2s;
+            transition: all 0.2s;
         }
-        .btn-action-sm:hover { opacity: 0.9; }
+        .btn-action-sm:hover { opacity: 0.9; transform: translateY(-1px); box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
         
         .btn-view { background: #fff; border: 1px solid #d0d5dd; color: #344054; }
-        .btn-approve { background: #dcfce7; color: #027a48; padding: 6px 10px; }
-        .btn-deny { background: #fee4e2; color: #b42318; padding: 6px 10px; }
-        .btn-blue { background: #e0f2fe; color: #026aa7; }
+        .btn-view:hover { background: #f9fafb; border-color: #490d59; color: #490d59; }
+        
+        .btn-approve { background: #dcfce7; color: #027a48; padding: 6px 10px; border: 1px solid #bbf7d0; }
+        .btn-approve:hover { background: #bbf7d0; border-color: #86efac; }
+        
+        .btn-deny { background: #fee4e2; color: #b42318; padding: 6px 10px; border: 1px solid #fecaca; }
+        .btn-deny:hover { background: #fecaca; border-color: #fca5a5; color: #991b1b; }
+        
+        .btn-blue { background: #e0f2fe; color: #026aa7; border: 2px solid #0284c7; }
+        .btn-blue:hover { background: #bae6fd; border-color: #7dd3fc; color: #0369a1; }
         
         .table-wrap {
             border: 1px solid #e5e7eb;
@@ -338,8 +345,8 @@
                                     @endif
 
                                     @if($req->type === 'exchange')
-                                        <a href="{{ route('master.admin.returns-exchange.show', $req) }}" class="btn-action-sm btn-blue">
-                                            Process Exchange
+                                        <a href="{{ route('master.admin.returns-exchange.show', $req) }}" class="btn-action-sm btn-blue" style="border: 2px solid #0284c7;">
+                                            <i class="fas fa-exchange-alt" style="margin-right: 4px;"></i> Process Exchange
                                         </a>
                                     @endif
                                 @endif

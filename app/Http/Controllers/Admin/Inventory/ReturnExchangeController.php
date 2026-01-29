@@ -285,6 +285,7 @@ class ReturnExchangeController extends Controller
 
         $newOrder = Order::create([
             'order_number' => $exchangeNumber,
+            'user_id' => $order->user_id, // IMPORTANT: Copy user_id from original order so parents can track it
             'school_id' => $order->school_id,
             'order_date' => now(),
             'student_name' => $order->student_name,
@@ -301,7 +302,7 @@ class ReturnExchangeController extends Controller
             'tax_amount' => $exchangeTax,
             'shipping_cost' => 0,
             'payment_status' => 'paid',
-            'order_status' => 'processing',
+            'order_status' => 'pending', // Start with 'pending' (Order Placed) so tracking shows from beginning
             'return_exchange_status' => 'exchange_created',
             'notes' => "Exchange for {$exchangeQty} unit(s) from order {$order->order_number}",
         ]);

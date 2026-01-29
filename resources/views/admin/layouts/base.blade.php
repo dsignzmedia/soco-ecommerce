@@ -156,6 +156,7 @@
             display: grid;
             grid-template-columns: 260px 1fr;
             min-height: 100vh;
+            transition: grid-template-columns 0.3s ease;
         }
 
         .sidebar {
@@ -166,6 +167,8 @@
             top: 0;
             height: 100vh;
             overflow-y: auto;
+            transition: all 0.3s ease;
+            width: 100%;
         }
 
         .brand {
@@ -174,10 +177,12 @@
             align-items: flex-start;
             gap: 12px;
             margin-bottom: 36px;
+            transition: all 0.3s ease;
         }
 
         .brand img {
             width: 160px;
+            transition: all 0.3s ease;
         }
 
         .brand small {
@@ -185,6 +190,10 @@
             font-weight: 500;
             letter-spacing: 0.05em;
             text-transform: uppercase;
+            transition: all 0.3s ease;
+            opacity: 1;
+            max-height: 30px;
+            overflow: hidden;
         }
 
         .nav {
@@ -233,7 +242,7 @@
             align-items: center;
             font-size: 14px !important;
             gap: 10px;
-            transition: background 0.2s ease, color 0.2s ease;
+            transition: all 0.3s ease;
         }
 
         .nav__item.active {
@@ -247,6 +256,7 @@
             display: flex;
             flex-direction: column;
             min-width: 0;
+            transition: all 0.3s ease;
         }
 
         .content-body {
@@ -558,7 +568,7 @@
             border-color: var(--primary);
             color: var(--primary);
             background: var(--primary-light);
-        }
+        }                                                                                               
 
         /* Collapsed Sidebar Styles */
         .layout.collapsed {
@@ -578,7 +588,11 @@
         }
         
         .layout.collapsed .sidebar .brand small {
-            display: none;
+            opacity: 0;
+            max-height: 0;
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
         }
         
         .layout.collapsed .sidebar .nav__item {
@@ -586,15 +600,40 @@
             padding: 12px;
             position: relative;
         }
+        .layout.collapsed .sidebar .nav__item a {       
+            justify-content: center;
+            padding: 12px;
+            position: relative;
+        }
+        .layout.collapsed .sidebar .nav__item span {
+            opacity: 0;
+            width: 0;
+            overflow: hidden;
+            transition: opacity 0.2s ease, width 0.3s ease;
+        }
         
-        .layout.collapsed .sidebar .nav__item span, 
-        .layout.collapsed .sidebar .nav__item .nav__chevron {
-            display: none;
+        .layout.collapsed .sidebar .nav__chevron {
+            display: none !important;
+        }
+        
+        .sidebar .nav__item span {
+            transition: opacity 0.2s ease, width 0.3s ease;
+            opacity: 1;
+            white-space: nowrap;
+        }
+        
+        .sidebar .nav__chevron {
+            transition: opacity 0.2s ease;
+            opacity: 1;
         }
         
         .layout.collapsed .sidebar .nav__item i {
             margin: 0;
             font-size: 18px;
+        }
+        
+        .sidebar .nav__item i {
+            transition: margin 0.3s ease, font-size 0.3s ease;
         }
 
         /* Show tooltip/text on hover for collapsed state could be added here, 

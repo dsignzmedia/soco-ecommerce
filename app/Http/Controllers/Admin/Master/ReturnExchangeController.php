@@ -14,11 +14,40 @@ use Illuminate\View\View;
 
 class ReturnExchangeController extends Controller
 {
+    /**
+     * Check if the exchange request belongs to BTS or Merchandise
+     * If so, abort with 403 error
+     */
+    protected function ensureNotBTSOrMerchandise(ReturnExchangeRequest $returnRequest): void
+    {
+        $returnRequest->load(['order' => fn($q) => $q->withoutGlobalScopes()]);
+        
+        if ($returnRequest->order) {
+            $productType = $returnRequest->order->product_type;
+            if (in_array($productType, ['back_to_school', 'merchandised'])) {
+                abort(403, 'This return/exchange request belongs to ' . ucfirst(str_replace('_', ' ', $productType)) . ' products and should be accessed through the corresponding admin section.');
+            }
+        }
+    }
+
     public function index(Request $request): View
     {
         $filters = $request->only(['type', 'status', 'q', 'school_id', 'grade']);
 
         $requests = ReturnExchangeRequest::with(['order' => fn($q) => $q->withoutGlobalScopes()->with(['school' => fn($sq) => $sq->withoutGlobalScopes()])])
+            // Exclude BTS and Merchandise exchanges - only show school products (authorized/optional)
+            ->whereHas('order', function($q) {
+                $q->withoutGlobalScopes()
+                    ->where(function($sub) {
+                        // Include school products (authorized/optional) or products without specific type
+                        $sub->whereIn('product_type', ['authorized', 'optional', 'authorized_product', 'optional_product'])
+                            ->orWhereNull('product_type')
+                            ->orWhere('product_type', '');
+                    })
+                    // Explicitly exclude BTS and Merchandise
+                    ->where('product_type', '!=', 'back_to_school')
+                    ->where('product_type', '!=', 'merchandised');
+            })
             ->when($filters['type'] ?? null, fn($q, $type) => $q->where('type', $type))
             ->when($filters['status'] ?? null, fn($q, $status) => $q->where('status', $status))
             ->when($filters['school_id'] ?? null, function ($q, $schoolId) {
@@ -78,6 +107,8 @@ class ReturnExchangeController extends Controller
 
     public function show(ReturnExchangeRequest $returnRequest): View
     {
+        $this->ensureNotBTSOrMerchandise($returnRequest);
+        
         $returnRequest->load(['order' => fn($q) => $q->withoutGlobalScopes()]);
         
         // Fetch product and variants for size dropdown
@@ -105,6 +136,8 @@ class ReturnExchangeController extends Controller
 
     public function switchType(Request $request, ReturnExchangeRequest $returnRequest): RedirectResponse
     {
+        $this->ensureNotBTSOrMerchandise($returnRequest);
+        
         if ($returnRequest->type === 'return') {
             $returnRequest->update([
                 'type' => 'exchange',
@@ -151,6 +184,8 @@ class ReturnExchangeController extends Controller
 
     public function deny(Request $request, ReturnExchangeRequest $returnRequest): RedirectResponse
     {
+        $this->ensureNotBTSOrMerchandise($returnRequest);
+        
         $returnRequest->update([
             'status' => 'rejected',
             'admin_notes' => $request->input('admin_notes')
@@ -177,6 +212,8 @@ class ReturnExchangeController extends Controller
 
     public function receive(Request $request, ReturnExchangeRequest $returnRequest): RedirectResponse
     {
+        $this->ensureNotBTSOrMerchandise($returnRequest);
+        
         $data = $request->validate([
             'action' => ['required', 'in:restock,discard'],
             'admin_notes' => ['nullable', 'string']
@@ -264,6 +301,8 @@ class ReturnExchangeController extends Controller
 
     public function generateExchange(Request $request, ReturnExchangeRequest $returnRequest): RedirectResponse
     {
+        $this->ensureNotBTSOrMerchandise($returnRequest);
+        
         $data = $request->validate([
             'exchange_product_name' => ['required', 'string', 'max:255'],
             'exchange_size' => ['nullable', 'string', 'max:255'],
@@ -282,17 +321,15 @@ class ReturnExchangeController extends Controller
         // Use requested_quantity for partial exchanges
         $exchangeQty = $returnRequest->requested_quantity ?? $order->quantity;
         
-        // Calculate proportional price based on requested quantity
-        // Unit price = total_amount / order quantity
-        $unitPrice = $order->quantity > 0 ? ($order->total_amount / $order->quantity) : $order->total_amount;
-        $unitTax = $order->quantity > 0 ? ($order->tax_amount / $order->quantity) : $order->tax_amount;
-        
-        // Calculate exchange amount (proportional to requested quantity)
-        $exchangeAmount = $unitPrice * $exchangeQty;
-        $exchangeTax = $unitTax * $exchangeQty;
+        // Exchange orders have ZERO payment amount (user already paid in original order)
+        // The total_amount and tax_amount are set to 0 to ensure:
+        // 1. Dashboard revenue calculations don't double-count
+        // 2. Net profit = original order amount only (₹6,070)
+        // 3. No payment is expected from user
 
         $newOrder = Order::create([
             'order_number' => $exchangeNumber,
+            'user_id' => $order->user_id, // IMPORTANT: Copy user_id from original order so parents can track it
             'school_id' => $order->school_id,
             'order_date' => now(),
             'student_name' => $order->student_name,
@@ -300,18 +337,18 @@ class ReturnExchangeController extends Controller
             'category' => $order->category,
             'item_name' => $data['exchange_product_name'],
             'size' => $data['exchange_size'],
-            'quantity' => $exchangeQty, // Use requested quantity, not full order quantity
+            'quantity' => $exchangeQty, // Exchanged quantity (e.g., 2 items)
             'customer_name' => $order->customer_name,
             'customer_address' => $order->customer_address,
             'customer_phone' => $order->customer_phone,
             'customer_email' => $order->customer_email,
-            'total_amount' => $exchangeAmount,
-            'tax_amount' => $exchangeTax,
-            'shipping_cost' => 0, // Free shipping for exchange usually? Or copy original? Let's say 0 for now as it's admin generated.
-            'payment_status' => 'paid', // Mark as paid since it's an exchange
-            'order_status' => 'processing', // Ready to process
+            'total_amount' => 0, // NO PAYMENT - user already paid in original order
+            'tax_amount' => 0, // NO TAX - included in original order
+            'shipping_cost' => 0, // NO SHIPPING - free for exchanges
+            'payment_status' => 'paid', // Mark as paid since it's covered by original payment
+            'order_status' => 'pending', // Start with 'pending' (Order Placed) so tracking shows from beginning
             'return_exchange_status' => 'exchange_created',
-            'notes' => "Exchange for {$exchangeQty} unit(s) from order {$order->order_number}",
+            'notes' => "Exchange for {$exchangeQty} unit(s) from order {$order->order_number} | User already paid in original order - NO ADDITIONAL CHARGE",
         ]);
 
         // Link back to request
@@ -378,6 +415,8 @@ class ReturnExchangeController extends Controller
 
     public function refund(Request $request, ReturnExchangeRequest $returnRequest): RedirectResponse
     {
+        $this->ensureNotBTSOrMerchandise($returnRequest);
+        
         if ($returnRequest->type !== 'return') {
             return back()->with('error', 'Only return requests can be refunded.');
         }

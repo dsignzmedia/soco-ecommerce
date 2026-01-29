@@ -245,6 +245,14 @@
             <script src="{{ asset('assets/js/razorpay-checkout.js') }}"></script>
             <script>
                 function initiatePayment() {
+                    console.log('[Checkout] initiatePayment called');
+                    console.log('[Checkout] Payment config:', {
+                        initiateRoute: "{{ route('frontend.parent.payment.initiate') }}",
+                        verifyRoute: "{{ route('frontend.parent.payment.verify') }}",
+                        totalAmount: {{ $totalWithShipping ?? $total }},
+                        csrfTokenPresent: !!("{{ csrf_token() }}")
+                    });
+                    
                     initiateRazorpayPayment({
                         initiateRoute: "{{ route('frontend.parent.payment.initiate') }}",
                         verifyRoute: "{{ route('frontend.parent.payment.verify') }}",
@@ -255,8 +263,9 @@
 
                 // Auto-detect Test Mode and show helper
                 document.addEventListener('DOMContentLoaded', function() {
-                    // We don't have the key directly here, but we can infer or waiting for the initiate response.
-                    // For better UX, let's just make the modal available.
+                    console.log('[Checkout] Page loaded, Razorpay available:', typeof Razorpay !== 'undefined');
+                    console.log('[Checkout] Pay button exists:', !!document.getElementById('payWithRazorpayBtn'));
+                    console.log('[Checkout] Checkout form exists:', !!document.getElementById('checkoutForm'));
                 });
             </script>
         @else
@@ -357,26 +366,43 @@ let formSubmitted = false;
 const checkoutForm = document.getElementById('checkoutForm');
 if (checkoutForm) {
     checkoutForm.addEventListener('submit', function(e) {
+        console.log('[Checkout Form] Submit event triggered');
+        console.log('[Checkout Form] Form action:', this.action);
+        console.log('[Checkout Form] Form method:', this.method);
+        
         const selectedAddressInput = document.getElementById('selected_address');
+        console.log('[Checkout Form] Selected address before check:', selectedAddressInput?.value);
+        
         if (selectedAddressInput && (!selectedAddressInput.value || selectedAddressInput.value === '')) {
             const checkedRadio = document.querySelector('input[name="address_radio"]:checked');
+            console.log('[Checkout Form] Checked radio found:', checkedRadio?.value);
             if (checkedRadio) {
                 selectedAddressInput.value = checkedRadio.value;
+                console.log('[Checkout Form] Updated selected address to:', selectedAddressInput.value);
+            } else {
+                console.warn('[Checkout Form] No address selected and no radio checked!');
             }
         }
         
         if (formSubmitted) {
+            console.warn('[Checkout Form] Form already submitted, preventing double submit');
             e.preventDefault();
             return false;
         }
         formSubmitted = true;
+        console.log('[Checkout Form] Marking form as submitted');
         
         const submitBtn = document.getElementById('placeOrderBtn');
         if (submitBtn) {
             submitBtn.disabled = true;
             submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i> Processing...';
+            console.log('[Checkout Form] Submit button disabled');
         }
+        
+        console.log('[Checkout Form] Form submission proceeding...');
     });
+} else {
+    console.error('[Checkout Form] ERROR: checkoutForm element not found!');
 }
 
 function selectSavedAddress(index) {

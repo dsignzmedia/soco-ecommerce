@@ -133,62 +133,84 @@
                 </div>
 
                 <div class="row justify-content-start" id="productsContainer">
-                    @foreach($allProducts as $product)
-                        <div class="col-6 col-md-6 col-lg-4 col-xl-4 product-item"
-                             data-product-type="{{ strtolower($product['type'] ?? '') }}"
-                             data-product-name="{{ strtolower($product['name']) }}"
-                             data-product-category="{{ strtolower($product['category'] ?? 'regular_uniforms') }}"
-                             data-product-gender="{{ strtolower($product['gender'] ?? 'unisex') }}">
-                            <div class="vs-product product-style1 product-card-clickable"
-                                 data-product-url="{{ route('frontend.parent.product-detail', ['productId' => $product['id'], 'profile_id' => $selectedProfile['id']]) }}">
-                                <div class="product-img">
+                    @if(count($allProducts) > 0)
+                        @foreach($allProducts as $product)
+                            <div class="col-6 col-md-6 col-lg-4 col-xl-4 product-item"
+                                 data-product-type="{{ strtolower($product['type'] ?? '') }}"
+                                 data-product-name="{{ strtolower($product['name']) }}"
+                                 data-product-category="{{ strtolower($product['category'] ?? 'regular_uniforms') }}"
+                                 data-product-gender="{{ strtolower($product['gender'] ?? 'unisex') }}">
+                                <div class="vs-product product-style1 product-card-clickable"
+                                     data-product-url="{{ route('frontend.parent.product-detail', ['productId' => $product['id'], 'profile_id' => $selectedProfile['id']]) }}">
+                                    <div class="product-img">
 
-                                    <a href="{{ route('frontend.parent.product-detail', ['productId' => $product['id'], 'profile_id' => $selectedProfile['id']]) }}" target="_blank">
-                                        @if(isset($product['image']) && $product['image'])
-                                            <img src="{{ $product['image'] }}" alt="{{ $product['name'] }}" class="w-100" onerror="this.onerror=null; this.src='{{ asset('assets/img/no image/no_image.png') }}';">
-                                        @else
-                                            <img src="{{ asset('assets/img/no image/no_image.png') }}" alt="{{ $product['name'] }}" class="w-100">
-                                        @endif
-                                    </a>
-                                    @if(isset($product['type']) && in_array(strtolower($product['type']), ['authorized', 'optional']))
-                                        <div class="product-tag {{ strtolower($product['type']) }}">
-                                            {{ strtoupper($product['type']) }}
-                                        </div>
-                                    @endif
-                                </div>
-                                <div class="product-content">
-                                    <span class="product-price">
-                                        ₹{{ number_format($product['price']) }}
-                                        @if(isset($product['original_price']) && $product['original_price'] > $product['price'])
-                                            <del>₹{{ number_format($product['original_price']) }}</del>
-                                        @endif
-                                    </span>
-                                    <h3 class="product-title">
-                                        <a class="text-inherit" href="{{ route('frontend.parent.product-detail', ['productId' => $product['id'], 'profile_id' => $selectedProfile['id']]) }}" target="_blank">
-                                            {{ $product['name'] }}
+                                        <a href="{{ route('frontend.parent.product-detail', ['productId' => $product['id'], 'profile_id' => $selectedProfile['id']]) }}" target="_blank">
+                                            @if(isset($product['image']) && $product['image'])
+                                                <img src="{{ $product['image'] }}" alt="{{ $product['name'] }}" class="w-100" onerror="this.onerror=null; this.src='{{ asset('assets/img/no image/no_image.png') }}';">
+                                            @else
+                                                <img src="{{ asset('assets/img/no image/no_image.png') }}" alt="{{ $product['name'] }}" class="w-100">
+                                            @endif
                                         </a>
-                                    </h3>
-                                    <!-- <div class="star-rating" role="img" aria-label="Rated 5.00 out of 5">
-                                        <span style="width:100%">Rated <strong class="rating">5.00</strong> out of 5</span>
-                                    </div> -->
-                                    <div class="actions">
-                                        @if(isset($selectedProfile) && $selectedProfile)
-                                            @php
-                                                $defaultSize = $product['sizes'][0] ?? 'Standard';
-                                            @endphp
-                                            <a href="{{ route('frontend.parent.product-detail', ['productId' => $product['id'], 'profile_id' => $selectedProfile['id']]) }}" class="vs-btn w-100">
-                                                <i class="far fa-shopping-cart"></i>Choose Size
-                                            </a>
-                                        @else
-                                            <a href="{{ route('frontend.parent.dashboard') }}" class="vs-btn flex-fill">
-                                                <i class="far fa-shopping-cart"></i>Select Profile
-                                            </a>
+                                        @if(isset($product['type']) && in_array(strtolower($product['type']), ['authorized', 'optional']))
+                                            <div class="product-tag {{ strtolower($product['type']) }}">
+                                                {{ strtoupper($product['type']) }}
+                                            </div>
                                         @endif
+                                    </div>
+                                    <div class="product-content">
+                                        <span class="product-price">
+                                            ₹{{ number_format($product['price']) }}
+                                            @if(isset($product['original_price']) && $product['original_price'] > $product['price'])
+                                                <del>₹{{ number_format($product['original_price']) }}</del>
+                                            @endif
+                                        </span>
+                                        <h3 class="product-title">
+                                            <a class="text-inherit" href="{{ route('frontend.parent.product-detail', ['productId' => $product['id'], 'profile_id' => $selectedProfile['id']]) }}" target="_blank">
+                                                {{ $product['name'] }}
+                                            </a>
+                                        </h3>
+                                        <!-- <div class="star-rating" role="img" aria-label="Rated 5.00 out of 5">
+                                            <span style="width:100%">Rated <strong class="rating">5.00</strong> out of 5</span>
+                                        </div> -->
+                                        <div class="actions">
+                                            @if(isset($selectedProfile) && $selectedProfile)
+                                                @php
+                                                    $defaultSize = $product['sizes'][0] ?? 'Standard';
+                                                @endphp
+                                                <a href="{{ route('frontend.parent.product-detail', ['productId' => $product['id'], 'profile_id' => $selectedProfile['id']]) }}" class="vs-btn w-100">
+                                                    <i class="far fa-shopping-cart"></i>Choose Size
+                                                </a>
+                                            @else
+                                                <a href="{{ route('frontend.parent.dashboard') }}" class="vs-btn flex-fill">
+                                                    <i class="far fa-shopping-cart"></i>Select Profile
+                                                </a>
+                                            @endif
+                                        </div>
                                     </div>
                                 </div>
                             </div>
+                        @endforeach
+                    @else
+                        <!-- Empty State -->
+                        <div class="col-12">
+                            <div class="text-center py-5">
+                                <i class="fas fa-shopping-bag fa-4x text-muted mb-3"></i>
+                                <h4 class="mb-3" style="color: #333;">No Products Found</h4>
+                                <p class="text-muted mb-4">
+                                    We couldn't find any products matching your student profile.<br>
+                                    Please check back later or contact support if you believe this is an error.
+                                </p>
+                                <div class="d-flex gap-3 justify-content-center flex-wrap">
+                                    <a href="{{ route('frontend.parent.dashboard') }}" class="btn btn-outline-primary">
+                                        <i class="fas fa-arrow-left me-2"></i>Back to Dashboard
+                                    </a>
+                                    <a href="{{ route('frontend.shop.index') }}" class="btn btn-primary">
+                                        <i class="fas fa-shopping-bag me-2"></i>Browse All Products
+                                    </a>
+                                </div>
+                            </div>
                         </div>
-                    @endforeach
+                    @endif
                 </div>
         </div>
     </div>
@@ -533,7 +555,11 @@
     .product-title a {
         color: #333;
         text-decoration: none;
-
+        font-size: 16px;
+        display: block;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
     }
 
     .product-title a:hover {
@@ -735,6 +761,11 @@
         .product-price {
             font-size: 14px;
             margin-bottom: 12px !important;
+        }
+
+        .product-style1 .vs-btn {
+            font-size: 12px;
+            padding: 12px 10px;
         }
     }
 

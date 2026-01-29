@@ -312,13 +312,16 @@
         position: absolute;
         opacity: 0 !important;
         cursor: pointer;
-        height: 0;
-        width: 0;
-        margin: 0;
-        padding: 0;
+        height: 0 !important;
+        width: 0 !important;
+        margin: 0 !important;
+        padding: 0 !important;
         z-index: -1;
-        -webkit-appearance: none;
-        appearance: none;
+        -webkit-appearance: none !important;
+        -moz-appearance: none !important;
+        appearance: none !important;
+        visibility: hidden;
+        pointer-events: none;
     }
 
     .checkbox-mark {
@@ -369,13 +372,16 @@
         position: absolute;
         opacity: 0 !important;
         cursor: pointer;
-        height: 0;
-        width: 0;
-        margin: 0;
-        padding: 0;
+        height: 0 !important;
+        width: 0 !important;
+        margin: 0 !important;
+        padding: 0 !important;
         z-index: -1;
-        -webkit-appearance: none;
-        appearance: none;
+        -webkit-appearance: none !important;
+        -moz-appearance: none !important;
+        appearance: none !important;
+        visibility: hidden;
+        pointer-events: none;
     }
 
     .filter-checkbox-mobile:checked ~ .checkbox-mark {
@@ -708,6 +714,12 @@
         /* Reduce product content padding on mobile */
         .product-style1 .product-content {
             padding: 8px !important;
+        }
+
+        /* Reduce Choose Size button font on mobile */
+        .product-style1 .vs-btn {
+            font-size: 12px;
+            padding: 12px 10px;
         }
     }
 </style>

@@ -406,9 +406,17 @@
                         <div id="unifiedMediaPreview" style="display: flex; flex-wrap: nowrap; gap: 12px; overflow-x: auto; overflow-y: hidden; padding-bottom: 8px; -webkit-overflow-scrolling: touch; align-items: flex-start; scroll-behavior: smooth;">
                         <!-- Existing images and videos rendered as media items -->
                         <?php 
-                        if($product->media_images): 
+                        // Check media_gallery first (primary field), then fallback to media_images
+                        $existingGallery = null;
+                        if (!empty($product->media_gallery) && is_array($product->media_gallery) && count($product->media_gallery) > 0) {
+                            $existingGallery = $product->media_gallery;
+                        } elseif (!empty($product->media_images) && is_array($product->media_images) && count($product->media_images) > 0) {
+                            $existingGallery = $product->media_images;
+                        }
+                        
+                        if($existingGallery): 
                             $index = 0;
-                            foreach($product->media_images as $mediaItem):
+                            foreach($existingGallery as $mediaItem):
                                 $finalImgUrl = is_array($mediaItem) ? ($mediaItem[0] ?? '') : $mediaItem;
                                 if(is_string($finalImgUrl) && !empty($finalImgUrl)):
                                     $index++;
@@ -563,16 +571,38 @@
             const fileInput = document.getElementById('gallery-upload-input');
             const previewContainer = document.getElementById('unifiedMediaPreview');
             let draggedItem = null;
+            // Store all new files that need to be uploaded (for fallback)
+            const newFilesMap = new Map(); // Map of hidden input element to file object
 
             window.updatePositionNumbers = function() {
                 const items = previewContainer.querySelectorAll('.media-item');
+                const orderIds = [];
+                
                 items.forEach((item, index) => {
                     const badge = item.querySelector('.position-number');
                     if(badge) badge.textContent = index + 1;
+                    
+                    // Determine if this is an existing media item or new
+                    const isExisting = item.classList.contains('existing-media');
+                    orderIds.push(isExisting ? 'existing' : 'new');
                 });
+                
+                // Update the hidden input with the order
+                const orderInput = document.getElementById('media_order_ids');
+                if(orderInput) {
+                    orderInput.value = orderIds.join(',');
+                }
             }
 
-            if(fileInput) fileInput.addEventListener('change', (e) => handleFiles(e.target.files));
+            if(fileInput) {
+                fileInput.addEventListener('change', (e) => {
+                    if(e.target.files && e.target.files.length > 0) {
+                        handleFiles(e.target.files);
+                        // Reset the input so the same files can be selected again if needed
+                        e.target.value = '';
+                    }
+                });
+            }
 
             if(dropZone) {
                 dropZone.addEventListener('dragover', (e) => { e.preventDefault(); dropZone.style.borderColor = '#490d59'; dropZone.style.background = '#f7f2fb'; });
@@ -581,14 +611,17 @@
             }
 
             function handleFiles(files) {
-                Array.from(files).forEach(file => createUploadedMediaPreview(file));
-                updatePositionNumbers();
+                if(files && files.length > 0) {
+                    Array.from(files).forEach(file => createUploadedMediaPreview(file));
+                    updatePositionNumbers();
+                }
             }
 
             window.createUploadedMediaPreview = function(file) {
                  const mediaContainer = document.createElement('div');
                  mediaContainer.className = 'media-item';
                  mediaContainer.draggable = true;
+                 
                  if (file.type.startsWith('image/')) {
                      const img = document.createElement('img');
                      img.src = URL.createObjectURL(file);
@@ -604,19 +637,46 @@
                  const posBadge = document.createElement('div');
                  posBadge.className = 'position-number';
                  mediaContainer.appendChild(posBadge);
-                 const removeBtn = document.createElement('div');
-                 removeBtn.className = 'remove-btn';
-                 removeBtn.innerHTML = '<i class="fas fa-times"></i>';
-                 removeBtn.onclick = (e) => { e.stopPropagation(); mediaContainer.remove(); updatePositionNumbers(); };
-                 mediaContainer.appendChild(removeBtn);
-                 const hiddenInput = document.createElement('input');
-                 hiddenInput.type = 'file';
-                 hiddenInput.name = 'media_images[]';
-                 hiddenInput.className = 'd-none';
-                 const dt = new DataTransfer(); dt.items.add(file); hiddenInput.files = dt.files;
-                 mediaContainer.appendChild(hiddenInput);
-                 addDragEvents(mediaContainer);
-                 previewContainer.appendChild(mediaContainer);
+                const removeBtn = document.createElement('div');
+                removeBtn.className = 'remove-btn';
+                removeBtn.innerHTML = '<i class="fas fa-times"></i>';
+                removeBtn.onclick = (e) => { 
+                    e.stopPropagation(); 
+                    // Remove file from map when container is removed
+                    const hiddenInput = mediaContainer.querySelector('input[type="file"]');
+                    if(hiddenInput && newFilesMap.has(hiddenInput)) {
+                        newFilesMap.delete(hiddenInput);
+                    }
+                    mediaContainer.remove(); 
+                    updatePositionNumbers(); 
+                };
+                mediaContainer.appendChild(removeBtn);
+                
+                // Hidden Input for Form Submission (like merchandise form)
+                const hiddenInput = document.createElement('input');
+                hiddenInput.type = 'file';
+                hiddenInput.name = 'media_images[]';
+                hiddenInput.style.display = 'none';
+                hiddenInput.style.visibility = 'hidden';
+                hiddenInput.style.position = 'absolute';
+                hiddenInput.style.width = '0';
+                hiddenInput.style.height = '0';
+                
+                // Store file reference for fallback
+                newFilesMap.set(hiddenInput, file);
+                
+                try {
+                    const dataTransfer = new DataTransfer();
+                    dataTransfer.items.add(file);
+                    hiddenInput.files = dataTransfer.files;
+                } catch(error) {
+                    console.warn('DataTransfer not supported, will use fallback on submit:', error);
+                    // File will be added via fallback on form submit
+                }
+                mediaContainer.appendChild(hiddenInput);
+                
+                addDragEvents(mediaContainer);
+                previewContainer.appendChild(mediaContainer);
             };
 
             function addDragEvents(item) {
@@ -651,6 +711,9 @@
             }
 
             document.querySelectorAll('.existing-media').forEach(item => addDragEvents(item));
+            
+            // Initialize position numbers and order on page load
+            updatePositionNumbers();
 
             // Image Preview Functionality
             function setupImagePreview(inputId, previewId) {
@@ -684,7 +747,7 @@
                                 removeBtn.style.cssText = 'position:absolute;top:4px;right:4px;width:24px;height:24px;background:rgba(220,53,69,0.9);color:white;border:none;border-radius:50%;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:12px;z-index:2;';
                                 removeBtn.onclick = function() {
                                     preview.innerHTML = '';
-                                    input.value = '';
+                                    resetFileInput(inputId);
                                 };
                                 
                                 wrapper.appendChild(img);
@@ -700,19 +763,31 @@
                 }
             }
 
+            // Helper function to properly reset a file input
+            function resetFileInput(inputId) {
+                const input = document.getElementById(inputId);
+                if (input) {
+                    // Simply reset the value - this is the safest approach
+                    // This allows the file input to accept new files
+                    input.value = '';
+                    
+                    // Re-setup the preview handler in case it was lost
+                    const previewId = inputId.replace('_input', '_preview');
+                    setupImagePreview(inputId, previewId);
+                }
+            }
+
             // Remove functions for existing images
             window.removeSizeChartImage = function() {
                 const preview = document.getElementById('size_chart_path_preview');
-                const input = document.getElementById('size_chart_path_input');
                 if (preview) preview.innerHTML = '';
-                if (input) input.value = '';
+                resetFileInput('size_chart_path_input');
             };
 
             window.removeSizeMeasurementImage = function() {
                 const preview = document.getElementById('size_measurement_image_preview');
-                const input = document.getElementById('size_measurement_image_input');
                 if (preview) preview.innerHTML = '';
-                if (input) input.value = '';
+                resetFileInput('size_measurement_image_input');
             };
 
             window.removeVideoFile = function() {
@@ -731,17 +806,21 @@
                 if (removeInput) removeInput.value = '1';
             };
 
-            // Make file input wrapper clickable
-            document.querySelectorAll('.file-input-wrapper').forEach(wrapper => {
-                wrapper.addEventListener('click', function(e) {
+            // Make file input wrapper clickable - simple and reliable
+            document.addEventListener('click', function(e) {
+                const wrapper = e.target.closest('.file-input-wrapper');
+                if (wrapper && e.target.type !== 'file') {
                     e.preventDefault();
                     e.stopPropagation();
-                    const input = this.querySelector('input[type="file"]');
+                    const input = wrapper.querySelector('input[type="file"]');
                     if (input) {
-                        input.click();
+                        // Use a small timeout to ensure the click is processed
+                        setTimeout(() => {
+                            input.click();
+                        }, 10);
                     }
-                });
-            });
+                }
+            }, true); // Use capture phase for better reliability
 
             // Video file preview
             const videoFileInput = document.getElementById('video_file_input');
@@ -773,9 +852,8 @@
 
             window.removeFeaturedImage = function() {
                 const preview = document.getElementById('featured_image_preview');
-                const input = document.getElementById('featured_image_input');
                 if (preview) preview.innerHTML = '';
-                if (input) input.value = '';
+                resetFileInput('featured_image_input');
             };
 
             // Setup previews for all three image fields
@@ -1417,18 +1495,20 @@
     /* File Input Wrapper */
     .file-input-wrapper {
         position: relative;
-        overflow: hidden;
+        overflow: visible;
         display: inline-block;
         width: 100%;
+        cursor: pointer;
     }
     
     .file-input-wrapper input[type="file"] {
         position: absolute;
         left: -9999px;
         opacity: 0;
-        width: 0;
-        height: 0;
+        width: 1px;
+        height: 1px;
         pointer-events: none;
+        z-index: -1;
     }
     
     .file-input-wrapper::before {
@@ -1442,22 +1522,13 @@
         font-size: 14px;
         font-weight: 500;
         transition: all 0.2s ease;
+        pointer-events: none;
     }
     
     .file-input-wrapper:hover::before {
         background: linear-gradient(135deg, #6b1179 0%, #490d59 100%);
         transform: translateY(-1px);
         box-shadow: 0 4px 8px rgba(73, 13, 89, 0.3);
-    }
-    
-    .file-input-wrapper {
-        cursor: pointer;
-    }
-        border-radius: 8px;
-        cursor: pointer;
-        font-size: 14px;
-        font-weight: 500;
-        transition: all 0.2s ease;
     }
     
     
@@ -1774,7 +1845,86 @@ document.addEventListener('DOMContentLoaded', function() {
     });
     
     // Show loading overlay on form submit
-    document.querySelector('form')?.addEventListener('submit', function() {
+    document.querySelector('form')?.addEventListener('submit', function(e) {
+        console.log('[BTS Form Submit] Form submission started');
+        
+        // Count existing and new media items
+        const existingMedia = previewContainer?.querySelectorAll('.existing-media') || [];
+        const newMediaItems = previewContainer?.querySelectorAll('.media-item:not(.existing-media)') || [];
+        const allFileInputs = document.querySelectorAll('input[name="media_images[]"]');
+        
+        console.log('[BTS Form Submit] Media items count:', {
+            existing: existingMedia.length,
+            new: newMediaItems.length,
+            total_file_inputs: allFileInputs.length,
+            newFilesMap_size: newFilesMap?.size || 0
+        });
+        
+        // Log each file input
+        allFileInputs.forEach((input, index) => {
+            console.log(`[BTS Form Submit] File input ${index}:`, {
+                has_files: input.files && input.files.length > 0,
+                file_count: input.files?.length || 0,
+                file_names: input.files ? Array.from(input.files).map(f => f.name) : []
+            });
+        });
+        
+        // Fallback: Collect all files from hidden inputs that might not have files set
+        // This ensures files are submitted even if DataTransfer didn't work
+        if(previewContainer && fileInput && newFilesMap && newFilesMap.size > 0) {
+            const filesToAdd = [];
+            
+            newMediaItems.forEach((item, index) => {
+                const hiddenInput = item.querySelector('input[type="file"]');
+                if(hiddenInput) {
+                    // Check if the hidden input has files (DataTransfer worked)
+                    if(hiddenInput.files && hiddenInput.files.length > 0) {
+                        // DataTransfer worked, file is already attached
+                        console.log(`[BTS Form Submit] File ${index}: Using DataTransfer file`, hiddenInput.files[0].name);
+                        filesToAdd.push(hiddenInput.files[0]);
+                    } else if(newFilesMap.has(hiddenInput)) {
+                        // DataTransfer didn't work, use stored file reference
+                        const file = newFilesMap.get(hiddenInput);
+                        console.log(`[BTS Form Submit] File ${index}: Using fallback file`, file.name);
+                        filesToAdd.push(file);
+                    } else {
+                        console.warn(`[BTS Form Submit] File ${index}: No file found in hidden input or map`);
+                    }
+                }
+            });
+            
+            console.log('[BTS Form Submit] Files to add:', filesToAdd.length);
+            
+            // If we have files to add and the main file input is empty or needs updating
+            if(filesToAdd.length > 0) {
+                try {
+                    const dt = new DataTransfer();
+                    filesToAdd.forEach(file => {
+                        dt.items.add(file);
+                    });
+                    if(dt.files.length > 0) {
+                        // Append to existing files if any, or replace
+                        fileInput.files = dt.files;
+                        console.log('[BTS Form Submit] Successfully set files on main input:', dt.files.length);
+                    }
+                } catch(error) {
+                    console.error('[BTS Form Submit] Error setting files on submit:', error);
+                }
+            }
+        } else {
+            console.log('[BTS Form Submit] No new files to process');
+        }
+        
+        // Final check before submit
+        const finalFileInputs = document.querySelectorAll('input[name="media_images[]"]');
+        let totalFiles = 0;
+        finalFileInputs.forEach(input => {
+            if (input.files && input.files.length > 0) {
+                totalFiles += input.files.length;
+            }
+        });
+        console.log('[BTS Form Submit] Total files being submitted:', totalFiles);
+        
         const overlay = document.createElement('div');
         overlay.className = 'loading-overlay';
         overlay.innerHTML = '<div class="spinner"></div>';

@@ -59,7 +59,30 @@ class ShopController extends Controller
 
         // Handle media images if available
         $images = [$image];
-        $gallerySource = $dbProduct->media_gallery ?? $dbProduct->media_images;
+        
+        // Check media_gallery first (primary field), then fallback to media_images
+        $gallerySource = null;
+        if (!empty($dbProduct->media_gallery) && is_array($dbProduct->media_gallery) && count($dbProduct->media_gallery) > 0) {
+            $gallerySource = $dbProduct->media_gallery;
+            \Log::info('[BTS Product Detail] Using media_gallery', [
+                'product_id' => $dbProduct->id,
+                'gallery_count' => count($gallerySource)
+            ]);
+        } elseif (!empty($dbProduct->media_images) && is_array($dbProduct->media_images) && count($dbProduct->media_images) > 0) {
+            $gallerySource = $dbProduct->media_images;
+            \Log::info('[BTS Product Detail] Using media_images (fallback)', [
+                'product_id' => $dbProduct->id,
+                'gallery_count' => count($gallerySource)
+            ]);
+        } else {
+            \Log::warning('[BTS Product Detail] No gallery images found', [
+                'product_id' => $dbProduct->id,
+                'has_media_gallery' => !empty($dbProduct->media_gallery),
+                'has_media_images' => !empty($dbProduct->media_images),
+                'media_gallery_type' => gettype($dbProduct->media_gallery),
+                'media_images_type' => gettype($dbProduct->media_images)
+            ]);
+        }
         
         if ($gallerySource && is_array($gallerySource)) {
             foreach ($gallerySource as $mediaImg) {
@@ -72,6 +95,12 @@ class ShopController extends Controller
                 }
             }
         }
+        
+        \Log::info('[BTS Product Detail] Final images array', [
+            'product_id' => $dbProduct->id,
+            'total_images' => count($images),
+            'images' => $images
+        ]);
 
         // Determine sizes from variants or fallback
         $sizes = ['Standard'];
@@ -96,7 +125,7 @@ class ShopController extends Controller
             'video_file' => $dbProduct->video_file,
             'delivery_duration' => $dbProduct->delivery_duration,
             'tags' => $dbProduct->tag_name ? explode(',', $dbProduct->tag_name) : [],
-            'sku' => $dbProduct->id,
+            'sku' => $dbProduct->sku ?? $dbProduct->id,
             'variants' => $dbProduct->variants,
         ];
 

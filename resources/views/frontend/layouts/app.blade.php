@@ -311,7 +311,7 @@
         /* Ensure last items also have consistent margin */
         .footer-widget.widget_nav_menu .footer-menu ul.menu li:nth-last-child(-n+2),
         .footer-widget.widget_nav_menu .footer-menu ul.menu li:nth-last-child(-n+2) a {
-            margin-bottom: 15px !important;
+            margin-bottom: 36px !important;
             padding-bottom: 0 !important;
         }
         

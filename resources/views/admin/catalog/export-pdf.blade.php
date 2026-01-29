@@ -208,15 +208,53 @@
                                     @endif
                                 @endif
                             </td>
-                            <td style="font-size: 9px;">
+                            <td style="font-size: 9px; line-height: 1.3;">
                                 @if($product->variants && $product->variants->count() > 0)
-                                    @foreach($product->variants as $variant)
-                                        <div style="margin-bottom: 3px; line-height: 1.4;">
-                                            <strong>{{ $variant->option }}:</strong><br>
-                                            <span style="color: #6b7280;">Weight: {{ $variant->weight ? number_format($variant->weight, 2) : 'N/A' }}</span><br>
-                                            <span style="color: #6b7280;">Stock: {{ number_format($variant->stock ?? 0) }}</span>
+                                    @php
+                                        $variants = $product->variants;
+                                        $variantCount = $variants->count();
+                                        $totalStock = $variants->sum('stock');
+                                        
+                                        // Extract sizes and find min/max
+                                        $allOptions = $variants->pluck('option')->filter()->values();
+                                        $numericSizes = $allOptions->map(function($size) {
+                                            // Extract numeric value from size string (e.g., "13", "28", "XL", etc.)
+                                            if (preg_match('/^(\d+)/', trim($size), $matches)) {
+                                                return (int)$matches[1];
+                                            }
+                                            return null;
+                                        })->filter();
+                                        
+                                        $sizeRange = '';
+                                        if ($numericSizes->count() > 0) {
+                                            // Use numeric sizes for range
+                                            $minSize = $numericSizes->min();
+                                            $maxSize = $numericSizes->max();
+                                            if ($minSize == $maxSize) {
+                                                $sizeRange = (string)$minSize;
+                                            } else {
+                                                $sizeRange = $minSize . '–' . $maxSize;
+                                            }
+                                        } elseif ($allOptions->count() > 0) {
+                                            // If no numeric sizes, show first and last variant option
+                                            if ($allOptions->count() == 1) {
+                                                $sizeRange = $allOptions->first();
+                                            } else {
+                                                $sizeRange = $allOptions->first() . '–' . $allOptions->last();
+                                            }
+                                        }
+                                    @endphp
+                                    <div style="margin-bottom: 2px;">
+                                        <strong>{{ $variantCount }} {{ $variantCount == 1 ? 'variant' : 'variants' }}</strong>
+                                    </div>
+                                    @if($sizeRange)
+                                        <div style="color: #6b7280; margin-bottom: 2px;">
+                                            Sizes: {{ $sizeRange }}
                                         </div>
-                                    @endforeach
+                                    @endif
+                                    <div style="color: #6b7280;">
+                                        Total Stock: <strong>{{ number_format($totalStock) }}</strong>
+                                    </div>
                                 @else
                                     <span style="color: #9ca3af;">N/A</span>
                                 @endif

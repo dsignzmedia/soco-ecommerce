@@ -17,6 +17,7 @@ class ProductMapping extends Model
         'grade_id',
         'grade',
         'product_name',
+        'sku',
         'category',
         'product_type',
         'gender',
@@ -68,6 +69,95 @@ class ProductMapping extends Model
                   });
             });
         });
+
+        // Auto-generate SKU when creating a new product
+        static::creating(function ($product) {
+            if (empty($product->sku)) {
+                $product->sku = static::generateSku($product);
+            }
+        });
+    }
+
+    /**
+     * Generate a unique SKU for the product
+     * Format: PREFIX + 3-digit sequential number (e.g., BVB001, BTS001, MER001)
+     * 
+     * @param ProductMapping $product
+     * @return string
+     */
+    public static function generateSku($product): string
+    {
+        $prefix = '';
+        
+        // Determine prefix based on product type or school
+        if ($product->product_type === 'back_to_school') {
+            $prefix = 'BTS';
+        } elseif ($product->product_type === 'merchandised') {
+            $prefix = 'MER';
+        } elseif ($product->school_id) {
+            // Get school name and extract first 3 letters
+            $school = School::withoutGlobalScopes()->find($product->school_id);
+            if ($school && $school->name) {
+                $schoolName = $school->name;
+                // Remove special characters and spaces, convert to uppercase
+                $cleanedName = preg_replace('/[^A-Za-z0-9\s]/', '', $schoolName);
+                $words = explode(' ', trim($cleanedName));
+                
+                // Extract first 3 letters from school name
+                if (count($words) >= 3) {
+                    // Take first letter of first 3 words
+                    $prefix = strtoupper(
+                        substr($words[0], 0, 1) . 
+                        substr($words[1] ?? '', 0, 1) . 
+                        substr($words[2] ?? '', 0, 1)
+                    );
+                } elseif (count($words) >= 2) {
+                    // Take first 2 letters from first word, 1 from second
+                    $prefix = strtoupper(
+                        substr($words[0], 0, 2) . 
+                        substr($words[1] ?? '', 0, 1)
+                    );
+                } else {
+                    // Take first 3 letters from single word
+                    $prefix = strtoupper(substr($words[0], 0, 3));
+                }
+                
+                // Ensure prefix is exactly 3 characters
+                $prefix = str_pad(substr($prefix, 0, 3), 3, 'X', STR_PAD_RIGHT);
+            } else {
+                $prefix = 'SCH'; // Fallback for school products without school name
+            }
+        } else {
+            $prefix = 'GLO'; // Global products
+        }
+
+        // Find the next available number for this prefix globally
+        // This ensures uniqueness even if multiple schools have the same name
+        $query = static::withoutGlobalScopes()
+            ->where('sku', 'like', $prefix . '%');
+        
+        $maxSku = $query->max('sku');
+        
+        if ($maxSku) {
+            // Extract number part (after prefix)
+            $numberPart = substr($maxSku, strlen($prefix));
+            $nextNumber = (int)$numberPart + 1;
+        } else {
+            $nextNumber = 1;
+        }
+        
+        // Format as 3-digit number
+        $sku = $prefix . str_pad($nextNumber, 3, '0', STR_PAD_LEFT);
+        
+        // Double-check uniqueness (handle edge cases)
+        $attempts = 0;
+        while (static::withoutGlobalScopes()->where('sku', $sku)->exists() && $attempts < 100) {
+            $nextNumber++;
+            $sku = $prefix . str_pad($nextNumber, 3, '0', STR_PAD_LEFT);
+            $attempts++;
+        }
+        
+        return $sku;
     }
 
     public function school(): BelongsTo

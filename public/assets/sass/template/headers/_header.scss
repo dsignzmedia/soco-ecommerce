@@ -144,7 +144,7 @@
 
       &.menu-item-has-children {
         > a:after {
-         
+          content: "\f105";
           float: right;
           top: 3px;
         }

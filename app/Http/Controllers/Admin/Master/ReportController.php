@@ -62,6 +62,11 @@ class ReportController extends Controller
     protected function buildOrderQuery(array $filters)
     {
         return Order::query()
+            // Exclude exchange orders from revenue calculations (they have zero payment)
+            ->where(function($q) {
+                $q->whereNull('return_exchange_status')
+                  ->orWhere('return_exchange_status', '!=', 'exchange_created');
+            })
             ->when($filters['school_id'] ?? null, fn ($q, $school) => $q->where('school_id', $school))
             ->when($filters['grade'] ?? null, fn ($q, $grade) => $q->where('grade', $grade))
             ->when($filters['category'] ?? null, fn ($q, $category) => $q->where('category', $category))

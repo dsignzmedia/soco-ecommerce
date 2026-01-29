@@ -16,7 +16,10 @@ class ProductController extends Controller
         $query = Product::with(['school'])->withCount('variants');
 
         if ($request->has('q')) {
-            $query->where('product_name', 'like', '%' . $request->q . '%');
+            $query->where(function($builder) use ($request) {
+                $builder->where('product_name', 'like', '%' . $request->q . '%')
+                    ->orWhere('sku', 'like', '%' . $request->q . '%');
+            });
         }
 
         if ($request->filled('school_id')) {
@@ -59,7 +62,10 @@ class ProductController extends Controller
         $query = Product::with(['school', 'variants', 'gradePricing']);
 
         if ($request->has('q')) {
-            $query->where('product_name', 'like', '%' . $request->q . '%');
+            $query->where(function($builder) use ($request) {
+                $builder->where('product_name', 'like', '%' . $request->q . '%')
+                    ->orWhere('sku', 'like', '%' . $request->q . '%');
+            });
         }
 
         if ($request->filled('school_id')) {
@@ -824,7 +830,6 @@ class ProductController extends Controller
             'featured_image' => [
                 'nullable',
                 'image',
-                'max:200',
                 function ($attribute, $value, $fail) {
                     if ($value && $value->getSize() < 1024) { // 1 KB = 1024 bytes
                         $fail('The featured image must be at least 1 KB in size.');
@@ -1032,7 +1037,6 @@ class ProductController extends Controller
             'featured_image' => [
                 'nullable',
                 'image',
-                'max:200',
                 function ($attribute, $value, $fail) {
                     if ($value && $value->getSize() < 1024) { // 1 KB = 1024 bytes
                         $fail('The featured image must be at least 1 KB in size.');
@@ -1063,10 +1067,9 @@ class ProductController extends Controller
         
         $data = $request->validate($validationRules);
         
-        // Set default product_type if not provided
-        if (empty($data['product_type'])) {
-            $data['product_type'] = 'merchandised';
-        }
+        // Always ensure product_type is set to 'merchandised' for merchandise products
+        // This prevents products from disappearing if product_type is missing or changed
+        $data['product_type'] = 'merchandised';
         
         // Handle checkbox
         $data['price_inclusive_tax'] = $request->has('price_inclusive_tax') ? 1 : 0;
