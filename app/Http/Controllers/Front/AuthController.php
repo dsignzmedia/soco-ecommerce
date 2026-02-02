@@ -3769,6 +3769,13 @@ class AuthController extends Controller
             return isset($parts[1]) ? $parts[1] : $parts[0];
         });
 
+        // Fetch all exchange orders (orders created from exchange requests)
+        $allExchangeOrderIds = \App\Models\Admin\Master\ReturnExchangeRequest::whereNotNull('new_order_id')
+            ->where('type', 'exchange')
+            ->pluck('new_order_id')
+            ->filter()
+            ->toArray();
+        
         // Transform for view
         $formattedOrders = [];
         foreach ($groupedOrders as $baseOrderNumber => $items) {
@@ -3780,14 +3787,19 @@ class AuthController extends Controller
                     ->get()
                     ->keyBy('order_id');
 
-
+                // Get exchange request mapping (which original order_id created which exchange order)
+                $exchangeRequestMap = \App\Models\Admin\Master\ReturnExchangeRequest::whereIn('order_id', $orderIds)
+                    ->whereNotNull('new_order_id')
+                    ->where('type', 'exchange')
+                    ->get()
+                    ->keyBy('order_id');
 
                 $formattedOrders[] = [
                     'id' => $baseOrderNumber,
                     'status' => $firstItem->order_status,
                     'created_at' => $firstItem->created_at,
                     'total' => $items->sum('total_amount'),
-                    'items' => $items->map(function ($item) use ($returnRequests) {
+                    'items' => $items->map(function ($item) use ($returnRequests, $exchangeRequestMap, $allExchangeOrderIds) {
                         // Get product image - try strict match first, then loose match
                         $product = \App\Models\Admin\Master\ProductMapping::where('product_name', $item->item_name)
                             ->where('school_id', $item->school_id)
@@ -3809,6 +3821,17 @@ class AuthController extends Controller
                             }
                         }
 
+                        // Check if this order is an exchange order (created from an exchange request)
+                        $isExchangeOrder = in_array($item->id, $allExchangeOrderIds);
+                        $exchangeOrderId = null;
+                        if ($isExchangeOrder) {
+                            // Find which exchange request created this order
+                            $exchangeRequest = \App\Models\Admin\Master\ReturnExchangeRequest::where('new_order_id', $item->id)
+                                ->where('type', 'exchange')
+                                ->first();
+                            $exchangeOrderId = $exchangeRequest ? $exchangeRequest->order_id : null;
+                        }
+
                         return [
                             'id' => $item->id,
                             'product_id' => $product ? $product->id : null,
@@ -3818,6 +3841,8 @@ class AuthController extends Controller
                             'size' => $item->size,
                             'image' => $productImage ? asset('storage/' . $productImage) : null,
                             'return_request' => $returnRequests[$item->id] ?? null,
+                            'is_exchange_order' => $isExchangeOrder,
+                            'original_order_id' => $exchangeOrderId,
                         ];
                     })->toArray(),
                 ];
@@ -3831,16 +3856,32 @@ class AuthController extends Controller
             // Get orders from database based on the base order number
             $user = Auth::user();
 
+            // Check if this is an exchange order (itemId matches an exchange order ID)
+            $isExchangeOrder = false;
+            if ($itemId) {
+                $exchangeRequest = \App\Models\Admin\Master\ReturnExchangeRequest::where('new_order_id', $itemId)
+                    ->where('type', 'exchange')
+                    ->first();
+                $isExchangeOrder = (bool) $exchangeRequest;
+            }
+
             // Fix: Query by user_id
-            $orders = \App\Models\Admin\Master\Order::where('user_id', $user->id)
-                ->where(function($q) use ($orderId) {
+            $orders = \App\Models\Admin\Master\Order::where('user_id', $user->id);
+            
+            // If it's an exchange order, show only that specific exchange order
+            if ($isExchangeOrder && $itemId) {
+                $orders->where('id', $itemId);
+            } else {
+                // Regular order tracking
+                $orders->where(function($q) use ($orderId) {
                     $q->where('order_number', 'like', 'SOCO-' . $orderId . '-%')
                       ->orWhere('order_number', 'like', 'SOCO-' . $orderId);
                 });
 
-            // If itemId is provided, filter to show only that specific item
-            if ($itemId) {
-                $orders->where('id', $itemId);
+                // If itemId is provided, filter to show only that specific item
+                if ($itemId) {
+                    $orders->where('id', $itemId);
+                }
             }
 
             $orders = $orders->get();

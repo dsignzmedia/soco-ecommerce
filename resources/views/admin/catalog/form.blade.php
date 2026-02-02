@@ -323,7 +323,7 @@
                              <div class="variant-row" style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr auto;gap:12px;margin-bottom:12px;align-items:end;">
                                 <label>
                                     <span style="font-size:12px;">Size / Option</span>
-                                    <input type="text" name="variants[0][option]" placeholder="e.g. S, M, 10">
+                                    <input type="text" name="variants[0][option]" value="22" placeholder="e.g. S, M, 10">
                                 </label>
                                 <label class="variant-price-label" style="display:none;position:absolute;visibility:hidden;">
                                     <span style="font-size:12px;">Price *</span>
@@ -332,7 +332,7 @@
                                 <label class="variant-weight-label" style="display:block;">
                                     <span class="variant-weight-label-text" style="font-size:12px;">Weight (kg)</span>
                                     <div style="display:flex; gap:5px;">
-                                        <input type="number" name="variants[0][weight]" min="0" step="0.01" placeholder="0.00" class="variant-weight-input">
+                                        <input type="number" name="variants[0][weight]" value="1" min="0" step="0.01" placeholder="0.00" class="variant-weight-input">
                                         <button type="button" class="apply-all-btn" data-field="weight" title="Apply to all variants" style="background:#f3f4f6; border:1px solid #d1d5db; border-radius:4px; padding:0 8px; cursor:pointer;">
                                             <i class="fas fa-angle-double-down" style="color:#4b5563; font-size:12px;"></i>
                                         </button>
@@ -341,7 +341,7 @@
                                 <label>
                                     <span class="variant-stock-label-text" style="font-size:12px;">Stock</span>
                                     <div style="display:flex; gap:5px;">
-                                        <input type="number" name="variants[0][stock]" placeholder="Qty" min="0" class="variant-stock">
+                                        <input type="number" name="variants[0][stock]" value="100" placeholder="Qty" min="0" class="variant-stock">
                                         <button type="button" class="apply-all-btn" data-field="stock" title="Apply to all variants" style="background:#f3f4f6; border:1px solid #d1d5db; border-radius:4px; padding:0 8px; cursor:pointer;">
                                             <i class="fas fa-angle-double-down" style="color:#4b5563; font-size:12px;"></i>
                                         </button>
@@ -1840,9 +1840,10 @@
                 row.style.cssText = `display:grid;grid-template-columns:${gridColumns};gap:12px;margin-bottom:12px;align-items:end;`;
                 
                 // Auto-increment size, copy weight and stock logic
-                let newSize = '';
-                let lastWeight = '';
-                let lastStock = '';
+                // Default values: Size=22, Weight=1, Stock=100, Low Stock Alert=5
+                let newSize = '22';
+                let lastWeight = '1';
+                let lastStock = '100';
                 
                 const lastRow = container.querySelector('.variant-row:last-child');
                 if (lastRow) {
@@ -1852,19 +1853,26 @@
                         // Check if it's a valid number
                         if (!isNaN(sizeNum)) {
                              newSize = sizeNum + 2;
+                        } else {
+                            // If not a number, use default
+                            newSize = '22';
                         }
                     }
                     
                     // Get weight
                     const lastWeightInput = lastRow.querySelector('input[name*="[weight]"]');
-                    if (lastWeightInput) {
+                    if (lastWeightInput && lastWeightInput.value) {
                         lastWeight = lastWeightInput.value;
+                    } else {
+                        lastWeight = '1';
                     }
                     
                     // Get stock
                     const lastStockInput = lastRow.querySelector('input[name*="[stock]"]');
-                    if (lastStockInput) {
+                    if (lastStockInput && lastStockInput.value) {
                         lastStock = lastStockInput.value;
+                    } else {
+                        lastStock = '100';
                     }
                 }
 

@@ -47,15 +47,25 @@
                     <div class="orders-list">
                         @foreach($orders as $order)
                             @foreach($order['items'] as $item)
-                                <a href="{{ route('frontend.parent.track-order', ['orderId' => $order['id'], 'itemId' => $item['id']]) }}" class="card shadow-sm border-0 mb-3 position-relative text-decoration-none" style="border-radius: 12px; transition: all 0.3s; display: block;"
+                                @php
+                                    // Determine route - if exchange order, show only that exchange order's tracking
+                                    if (isset($item['is_exchange_order']) && $item['is_exchange_order']) {
+                                        // For exchange orders, show only that exchange order's tracking
+                                        $trackRoute = route('frontend.parent.track-order', ['orderId' => $item['id'], 'itemId' => $item['id']]);
+                                    } else {
+                                        // For regular orders, use normal tracking
+                                        $trackRoute = route('frontend.parent.track-order', ['orderId' => $order['id'], 'itemId' => $item['id']]);
+                                    }
+                                @endphp
+                                <a href="{{ $trackRoute }}" class="card shadow-sm border-0 mb-3 position-relative text-decoration-none" style="border-radius: 12px; transition: all 0.3s; display: block;"
                                     onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 6px 20px rgba(73, 13, 89, 0.15)'"
                                     onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 2px 8px rgba(0,0,0,0.1)'">
 
 
                                     <div class="card-body p-3">
-                                        <div class="row align-items-center">
+                                        <div class="row align-items-center g-3">
                                             <!-- Product Image -->
-                                            <div class="col-auto">
+                                            <div class="col-auto flex-shrink-0">
                                                 @if(isset($item['image']) && $item['image'])
                                                     <img src="{{ $item['image'] }}" alt="{{ $item['name'] }}" 
                                                         style="width: 80px; height: 80px; object-fit: cover; border-radius: 8px; border: 1px solid #e0e0e0;">
@@ -68,7 +78,16 @@
                                             </div>
 
                                             <!-- Order Details -->
-                                            <div class="col">
+                                            <div class="col" style="min-width: 0; padding-right: 30px;">
+                                                <!-- Exchange Order Badge - Mobile Responsive -->
+                                                @if(isset($item['is_exchange_order']) && $item['is_exchange_order'])
+                                                    <div class="mb-2">
+                                                        <span class="badge exchange-badge" style="background-color: #28a745; color: white; padding: 4px 10px; border-radius: 6px; font-size: 0.7rem; font-weight: 600; display: inline-block; position: relative;">
+                                                            <i class="fas fa-exchange-alt me-1"></i> Exchange
+                                                        </span>
+                                                    </div>
+                                                @endif
+                                                
                                                 <!-- Status Badge (Commented out in original) -->
                                                 @php
                                                     $statusColor = '#6c757d';
@@ -103,9 +122,11 @@
                                                 
 
 
-                                                <!-- Product Name -->
-                                                <h6 class="mb-2" style="font-weight: 600; color: #333; font-size: 1rem;">
-                                                    {{ trim($item['name']) !== '' ? $item['name'] : 'Product Name Unavailable' }}
+                                                <!-- Product Name - Mobile Responsive with proper wrapping -->
+                                                <h6 class="mb-2 product-name-responsive" style="font-weight: 600; color: #333; font-size: 1rem; word-wrap: break-word; overflow-wrap: break-word; line-height: 1.4;">
+                                                    <span title="{{ trim($item['name']) !== '' ? $item['name'] : 'Product Name Unavailable' }}">
+                                                        {{ trim($item['name']) !== '' ? $item['name'] : 'Product Name Unavailable' }}
+                                                    </span>
                                                 </h6>
 
                                                 <!-- Simple Quantity Display -->
@@ -117,7 +138,7 @@
                                             </div>
 
                                             <!-- Arrow Icon -->
-                                            <div class="col-auto">
+                                            <div class="col-auto flex-shrink-0">
                                                 <i class="fas fa-chevron-right" style="color: #999; font-size: 1.2rem;"></i>
                                             </div>
                                         </div>
@@ -145,8 +166,104 @@
             </div>
         </div>
     </div>
-</section>
+    </section>
 
-
+    <style>
+        /* Mobile Responsive Styles for Order Cards */
+        .product-name-responsive {
+            word-wrap: break-word !important;
+            overflow-wrap: break-word !important;
+            hyphens: auto;
+            max-width: 100%;
+        }
+        
+        /* Remove margin-top from row elements */
+        .orders-list .row > * {
+            margin-top: 0 !important;
+        }
+        
+        .orders-list .row {
+            margin-top: 0 !important;
+        }
+        
+        /* Fix badge positioning - ensure it doesn't overlap */
+        .exchange-badge {
+            position: relative !important;
+            display: inline-block !important;
+            margin-bottom: 8px !important;
+            z-index: 1 !important;
+        }
+        
+        /* Override any absolute positioning that might be causing overlap */
+        .orders-list .badge {
+            position: relative !important;
+        }
+        
+        @media (max-width: 768px) {
+            .orders-list .card-body {
+                padding: 12px !important;
+            }
+            
+            .orders-list .card-body .row {
+                margin: 0 !important;
+            }
+            
+            .orders-list .product-name-responsive {
+                font-size: 0.9rem !important;
+                margin-right: 0 !important;
+                padding-right: 0 !important;
+                word-break: break-word;
+                margin-top: 4px !important;
+            }
+            
+            .orders-list .exchange-badge {
+                font-size: 0.65rem !important;
+                padding: 3px 8px !important;
+                margin-bottom: 8px !important;
+                display: block !important;
+                width: fit-content !important;
+            }
+            
+            .orders-list img {
+                width: 70px !important;
+                height: 70px !important;
+            }
+            
+            .orders-list .bg-light {
+                width: 70px !important;
+                height: 70px !important;
+            }
+            
+            .orders-list .col {
+                padding-right: 25px !important;
+            }
+        }
+        
+        @media (max-width: 576px) {
+            .orders-list .product-name-responsive {
+                font-size: 0.85rem !important;
+                line-height: 1.3 !important;
+            }
+            
+            .orders-list .exchange-badge {
+                font-size: 0.6rem !important;
+                padding: 2px 6px !important;
+            }
+            
+            .orders-list img {
+                width: 60px !important;
+                height: 60px !important;
+            }
+            
+            .orders-list .bg-light {
+                width: 60px !important;
+                height: 60px !important;
+            }
+            
+            .orders-list .col {
+                padding-right: 20px !important;
+            }
+        }
+    </style>
 
 @endsection

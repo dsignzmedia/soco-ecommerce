@@ -150,16 +150,20 @@
 @endpush
 
 @section('content')
-    @if(session('success'))
-        <div style="margin-bottom: 16px; padding: 12px 16px; background: #d1fae5; color: #065f46; border-radius: 8px; border: 1px solid #10b981;">
-            <i class="fas fa-check-circle"></i> {{ session('success') }}
-        </div>
-    @endif
+    {{-- Success and error messages are handled by layout files to avoid duplication --}}
+    {{-- Only show messages if using Master admin layout (base.blade.php) which doesn't have built-in messages --}}
+    @if(($layout ?? 'admin.layouts.base') === 'admin.layouts.base')
+        @if(session('success'))
+            <div style="margin-bottom: 16px; padding: 12px 16px; background: #d1fae5; color: #065f46; border-radius: 8px; border: 1px solid #10b981;">
+                <i class="fas fa-check-circle"></i> {{ session('success') }}
+            </div>
+        @endif
 
-    @if(session('error'))
-        <div style="margin-bottom: 16px; padding: 12px 16px; background: #fef2f2; color: #991b1b; border-radius: 8px; border: 1px solid #ef4444;">
-            <i class="fas fa-exclamation-circle"></i> {{ session('error') }}
-        </div>
+        @if(session('error'))
+            <div style="margin-bottom: 16px; padding: 12px 16px; background: #fef2f2; color: #991b1b; border-radius: 8px; border: 1px solid #ef4444;">
+                <i class="fas fa-exclamation-circle"></i> {{ session('error') }}
+            </div>
+        @endif
     @endif
 
     <div class="card">

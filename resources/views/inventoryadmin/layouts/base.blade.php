@@ -581,15 +581,17 @@
             // Initialize Tom Select
             document.querySelectorAll('select').forEach((el) => {
                 if (!el.classList.contains('no-tom')) {
+                    // Skip sorting for order_status dropdowns to maintain workflow order
+                    const shouldSort = !el.name || el.name !== 'order_status';
                    new TomSelect(el, {
                         plugins: [],
                         allowEmptyOption: true,
                         create: false,
                         controlInput: null, // Disable input in control
-                        sortField: {
+                        sortField: shouldSort ? {
                             field: "text",
                             direction: "asc"
-                        },
+                        } : null,
                         onDropdownOpen: function() {
                             // 1. Move dropdown to body
                             if (this.dropdown.parentNode !== document.body) {

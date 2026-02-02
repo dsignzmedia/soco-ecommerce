@@ -111,8 +111,9 @@
                     <option value="{{ $category }}" @selected(($filters['category'] ?? '') === $category)>{{ $category }}</option>
                 @endforeach
             </select>
-            <select name="order_status">
+            <select name="order_status" class="no-sort">
                 <option value="">Order Status</option>
+                {{-- Order statuses in workflow sequence: Order Placed -> Processing -> Packed -> Shipped -> Delivered --}}
                 @foreach(['order_placed' => 'Order Placed', 'processing' => 'Processing', 'packed' => 'Packed', 'shipped' => 'Shipped', 'delivered' => 'Delivered'] as $value => $label)
                     <option value="{{ $value }}" @selected(($filters['order_status'] ?? '') === $value)>{{ $label }}</option>
                 @endforeach

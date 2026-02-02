@@ -33,6 +33,17 @@
             min-width: 150px; /* Reduced min-width slightly to fit more */
             flex: 1; /* Allow them to grow */
         }
+        select.filter-input-rounded {
+            appearance: none;
+            -webkit-appearance: none;
+            -moz-appearance: none;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%236B7280' stroke-width='2'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' d='M19 9l-7 7-7-7'%3E%3C/path%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: right 14px center;
+            background-size: 16px;
+            padding-right: 40px;
+            cursor: pointer;
+        }
         .filter-input-rounded:focus {
             border-color: #490d59;
             box-shadow: 0 0 0 4px rgba(73, 13, 89, 0.1);
@@ -110,20 +121,26 @@
             border: 1px solid #e5e7eb;
             border-radius: 12px;
             overflow-x: auto;
+            overflow-y: visible;
             background: #fff;
             box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+        }
+        
+        /* Ensure table cells don't allow horizontal overflow of hover cards */
+        .table-wrap table {
+            table-layout: auto;
         }
         /* Order hover card */
         .order-hover-card {
             position: relative;
-            display: inline-flex;
+            display: inline-block;
             align-items: center;
             gap: 8px;
         }
         .order-hover-card .hover-card {
             display: none;
             position: absolute;
-            top: 105%;
+            top: 100%;
             left: 0;
             background: #fff;
             border: 1px solid #e5e7eb;
@@ -131,7 +148,49 @@
             padding: 10px 12px;
             box-shadow: 0 10px 30px rgba(15, 23, 42, 0.12);
             min-width: 250px;
-            z-index: 30;
+            max-width: 280px;
+            z-index: 1000;
+            margin-top: 4px;
+            white-space: nowrap;
+        }
+        
+        /* Prevent hover card from extending beyond table cell */
+        table td {
+            position: relative;
+            overflow: visible;
+            vertical-align: top;
+        }
+        
+        /* Constrain ORDER DETAILS column to prevent hover card overflow */
+        table td:nth-child(3) {
+            overflow: visible;
+            position: relative;
+            max-width: 200px;
+            min-width: 150px;
+        }
+        
+        /* Ensure hover card stays within ORDER DETAILS column boundaries */
+        table td:nth-child(3) .order-hover-card {
+            display: inline-block;
+            max-width: 100%;
+            position: relative;
+        }
+        
+        /* Constrain hover card width and prevent horizontal overflow */
+        table td:nth-child(3) .order-hover-card .hover-card {
+            max-width: 280px;
+            word-wrap: break-word;
+            white-space: normal;
+            left: 0 !important;
+            right: auto !important;
+        }
+        
+        /* Ensure ITEM column has proper z-index and spacing */
+        table td:nth-child(4) {
+            position: relative;
+            z-index: 1;
+            padding-left: 12px;
+            min-width: 150px;
         }
         .order-hover-card .hover-card .row {
             display: grid;
@@ -235,17 +294,21 @@
                     <tr>
                         <td>{{ $loop->iteration }}</td>
                         <td>
-                            @if(isset($productImages[$req->order_id]))
+                            @if(isset($productImages[$req->order_id]) && !empty($productImages[$req->order_id]))
                                 <img src="{{ asset('storage/' . $productImages[$req->order_id]) }}" 
                                      alt="Product" 
-                                     style="width: 40px; height: 40px; object-fit: cover; border-radius: 6px; border: 1px solid #e5e7eb;">
+                                     style="width: 40px; height: 40px; object-fit: cover; border-radius: 6px; border: 1px solid #e5e7eb;"
+                                     onerror="this.onerror=null; this.style.display='none'; this.nextElementSibling.style.display='flex';">
+                                <div style="width: 40px; height: 40px; background: #f3f4f6; border-radius: 6px; display: none; align-items: center; justify-content: center; color: #9ca3af; font-size: 10px; border: 1px solid #e5e7eb;">
+                                    <i class="fas fa-image"></i>
+                                </div>
                             @else
                                 <div style="width: 40px; height: 40px; background: #f3f4f6; border-radius: 6px; display: flex; align-items: center; justify-content: center; color: #9ca3af; font-size: 10px; border: 1px solid #e5e7eb;">
                                     <i class="fas fa-image"></i>
                                 </div>
                             @endif
                         </td>
-                        <td>
+                        <td style="position: relative; overflow: visible;">
                             <div style="display:flex;flex-direction:column;gap:4px;">
                                 @if($req->order)
                                     @php
@@ -255,7 +318,7 @@
                                             ?? ($req->order->student->name ?? null)
                                             ?? '—';
                                     @endphp
-                                    <div class="order-hover-card">
+                                    <div class="order-hover-card" style="display: inline-block;">
                                     <a
                                         href="{{ route('master.admin.orders.show', $req->order) }}"
                                             style="color:#490d59;font-weight:700;text-decoration:none;"
@@ -283,7 +346,7 @@
                                 </span>
                             </div>
                         </td>
-                        <td>{{ $req->order->item_name ?? '—' }}</td>
+                        <td style="position: relative; z-index: 1;">{{ $req->order->item_name ?? '—' }}</td>
                         <td>{{ $req->order->quantity ?? 1 }}</td>
                         <td>
                             <span style="font-size:12px;text-transform:capitalize;color:#4b5563;">{{ str_replace('_',' ', $req->status) }}</span>

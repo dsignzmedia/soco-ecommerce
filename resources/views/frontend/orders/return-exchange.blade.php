@@ -162,26 +162,31 @@
                                     <strong>Important:</strong> Exchange requests must be raised within <strong>48 hours</strong> of the delivery date.
                                 </div>
 
-                                <!-- Terms and Service Tick -->
+                                <!-- Terms and Service Toggle -->
                                 <div class="mb-4">
-                                    <div class="terms-toggle-wrapper d-flex align-items-center gap-3">
-                                        <input class="form-check-input" type="checkbox" name="accept_terms" id="accept_terms" required>
-
-                                        <label class="form-check-label toggle-label" for="accept_terms" style="cursor: pointer; margin: 0;">
+                                    <div style="display: flex; align-items: center; gap: 12px;">
+                                        <label class="toggle-switch-label" style="display: flex; align-items: center; cursor: pointer; margin: 0;">
+                                            <input type="checkbox" name="accept_terms" id="accept_terms" value="1" required class="toggle-switch-input">
+                                            <span class="toggle-switch-slider"></span>
+                                        </label>
+                                        <span style="margin: 0;">
                                             I accept the <a href="{{ route('frontend.return-exchange') }}" target="_blank" class="text-primary text-decoration-underline">
                                                 Exchange Policy
                                             </a>
-                                        </label>
+                                        </span>
                                     </div>
                                 </div>
 
-                                <!-- Size change acknowledgement -->
+                                <!-- Size change acknowledgement Toggle -->
                                 <div class="mb-4">
-                                    <div class="terms-toggle-wrapper d-flex align-items-center gap-3">
-                                        <input class="form-check-input" type="checkbox" name="accept_size_change" id="accept_size_change" required>
-                                        <label class="form-check-label toggle-label" for="accept_size_change" style="cursor: pointer; margin: 0;">
-                                            I confirm I am requesting an <strong>exchange</strong> and the <strong>size will be changed</strong> for the selected item(s).
+                                    <div style="display: flex; align-items: center; gap: 12px;">
+                                        <label class="toggle-switch-label" style="display: flex; align-items: center; cursor: pointer; margin: 0;">
+                                            <input type="checkbox" name="accept_size_change" id="accept_size_change" value="1" required class="toggle-switch-input">
+                                            <span class="toggle-switch-slider"></span>
                                         </label>
+                                        <span style="margin: 0;">
+                                            I confirm I am requesting an <strong>exchange</strong> and the <strong>size will be changed</strong> for the selected item(s).
+                                        </span>
                                     </div>
                                 </div>
 
@@ -483,11 +488,55 @@
             vertical-align: middle;
         }
         
-        /* Terms Toggle Switch Styling */
-        .terms-toggle-wrapper {
-            display: flex;
-            align-items: center;
-            gap: 12px;
+        /* Toggle Switch Styling */
+        .toggle-switch-label {
+            position: relative;
+            display: inline-block;
+            width: 50px;
+            height: 26px;
+            flex-shrink: 0;
+        }
+        
+        .toggle-switch-input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+        
+        .toggle-switch-slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: #ccc;
+            transition: 0.4s;
+            border-radius: 26px;
+        }
+        
+        .toggle-switch-slider:before {
+            position: absolute;
+            content: "";
+            height: 20px;
+            width: 20px;
+            left: 3px;
+            bottom: 3px;
+            background-color: white;
+            transition: 0.4s;
+            border-radius: 50%;
+        }
+        
+        .toggle-switch-input:checked + .toggle-switch-slider {
+            background-color: #28a745;
+        }
+        
+        .toggle-switch-input:checked + .toggle-switch-slider:before {
+            transform: translateX(24px);
+        }
+        
+        .toggle-switch-input:focus + .toggle-switch-slider {
+            box-shadow: 0 0 1px #28a745;
         }
         
         .toggle-switch {

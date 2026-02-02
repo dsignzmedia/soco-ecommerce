@@ -181,8 +181,9 @@
                     <option value="{{ $type }}" @selected(($filters['product_type'] ?? '') === $type)>{{ ucfirst($label) }}</option>
                 @endforeach
             </select>
-            <select name="order_status">
+            <select name="order_status" class="no-sort">
                 <option value="">Order Status</option>
+                {{-- Order statuses in workflow sequence: Order Placed -> Processing -> Packed -> Shipped -> Delivered --}}
                 @foreach(['order_placed' => 'Order Placed', 'processing' => 'Processing', 'packed' => 'Packed', 'shipped' => 'Shipped', 'delivered' => 'Delivered'] as $value => $label)
                     <option value="{{ $value }}" @selected(($filters['order_status'] ?? '') === $value)>{{ $label }}</option>
                 @endforeach
@@ -288,7 +289,7 @@
                             <td>
                                 <form action="{{ route('master.admin.orders.status', $order) }}" method="POST">
                                     @csrf
-                                    <select name="order_status" onchange="this.form.submit()" style="
+                                    <select name="order_status" onchange="this.form.submit()" class="no-tom" style="
                                         padding: 6px 10px;
                                         border-radius: 6px;
                                         font-size: 12px;
