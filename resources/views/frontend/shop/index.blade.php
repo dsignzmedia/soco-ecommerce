@@ -425,6 +425,13 @@
         display: none !important;
     }
 
+    /* Prevent any product from appearing in filter column */
+    .col-lg-3 .product-item,
+    .col-lg-3 #productsContainer,
+    .filter-sidebar .product-item {
+        display: none !important;
+    }
+
     .product-item.hidden {
         display: none !important;
     }
@@ -534,7 +541,7 @@
 
     @media (max-width: 991px) {
         .breadcumb-title {
-           
+
             margin: 0.2em 0 -0.4em !important;
         }
         .filter-sidebar {
@@ -548,7 +555,11 @@
             float: none;
             clear: both;
         }
+<<<<<<< HEAD
         
+=======
+
+>>>>>>> c5d61283a9f2d981751c568ce079b8d71d17f4ea
         .shop-page-section .row > .col-lg-3,
         .shop-page-section .row > .col-lg-9 {
             width: 100% !important;
@@ -718,7 +729,7 @@
 
         .breadcumb-title {
             display: none;
-            
+
         }
 
         .breadcumb-menu-wrap,
@@ -775,7 +786,7 @@ document.addEventListener('DOMContentLoaded', function() {
     // Check URL parameter for product_type filter
     const urlParams = new URLSearchParams(window.location.search);
     const urlProductType = urlParams.get('product_type');
-    
+
     // If URL has product_type parameter, set the corresponding checkbox
     if (urlProductType) {
         // Set desktop checkboxes
@@ -786,7 +797,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 cb.checked = false;
             }
         });
-        
+
         // Set mobile checkboxes
         productTypeCheckboxesMobile.forEach(cb => {
             if (cb.value === urlProductType) {
