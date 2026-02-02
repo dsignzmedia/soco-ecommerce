@@ -1039,15 +1039,17 @@
             // Tom Select Initialization
             // ========================================
             document.querySelectorAll('select:not(.no-tom)').forEach((el) => {
+                // Skip sorting for order_status dropdowns to maintain workflow order
+                const shouldSort = !el.name || el.name !== 'order_status';
                 const ts = new TomSelect(el, {
                     plugins: [],
                     // controlInput: null, // REMOVED to enable search
                     allowEmptyOption: true,
                     create: false,
-                    sortField: {
+                    sortField: shouldSort ? {
                         field: "text",
                         direction: "asc"
-                    },
+                    } : null,
                     onItemAdd: function() {
                         this.blur(); // Fix blinky cursor on selection
                     },

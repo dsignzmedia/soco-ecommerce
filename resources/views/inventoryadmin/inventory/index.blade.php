@@ -11,9 +11,40 @@
         th { text-transform: uppercase; letter-spacing: 0.05em; color:#111827; font-size: 12px; }
         td small { color:#98a2b3; display:block; }
         .filters { display:grid; grid-template-columns:repeat(auto-fit,minmax(160px,1fr)); gap:12px; margin-bottom: 20px; }
-        .filters button, .filters a.reset { border-radius:9999px; font-weight:600; text-align:center; padding:6px 14px; font-size: 12px; }
-        .filters button { border:none; background:#490d59; color:#fff; cursor: pointer; }
-        .filters a.reset { border:1.5px solid #d0d5dd; color:#475467; display: inline-block; text-decoration: none; }
+        .filters button, .filters a.reset { 
+            width: 100%; 
+            height: 46px !important; 
+            border-radius: 12px !important; 
+            font-weight: 600; 
+            text-align: center; 
+            padding: 0 16px; 
+            font-size: 14px; 
+            transition: all 0.2s; 
+            box-sizing: border-box; 
+            display: flex; 
+            align-items: center; 
+            justify-content: center; 
+            cursor: pointer;
+        }
+        .filters button { 
+            border: none; 
+            background: #490d59; 
+            color: #fff; 
+            box-shadow: 0 1px 2px rgba(16, 24, 40, 0.05); 
+        }
+        .filters button:hover { background: #370a43; }
+        
+        .filters a.reset { 
+            border: 1px solid #e5e7eb; 
+            color: #374151; 
+            text-decoration: none; 
+            background: #fff; 
+        }
+        .filters a.reset:hover { 
+            background: #f9fafb; 
+            border-color: #d1d5db; 
+            color: #111827;
+        }
         .status-pill { padding:4px 10px; border-radius:999px; font-size:12px; font-weight:600; text-transform:capitalize; display: inline-block; }
         .status-active { background:#f0fdf4; color:#15803d; }
         .status-inactive { background:#fef2f2; color:#b91c1c; }
@@ -62,7 +93,7 @@
             </select>
             <input type="text" name="q" placeholder="Search Product..." value="{{ $filters['q'] ?? '' }}" style="padding:8px;border:1px solid #d0d5dd;border-radius:8px;">
             <div style="grid-column: 1 / -1; display: flex; justify-content: flex-end; gap: 10px;">
-                <button type="submit" style="width: auto; min-width: 120px;">Filter</button>
+                <button type="submit" style="width: auto; min-width: 120px;">Apply Filter</button>
                 <a class="reset" href="{{ route('inventory.admin.inventory.index') }}" style="width: auto; min-width: 100px;">Reset</a>
             </div>
         </form>

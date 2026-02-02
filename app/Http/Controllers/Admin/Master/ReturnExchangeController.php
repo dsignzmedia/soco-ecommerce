@@ -93,7 +93,11 @@ class ReturnExchangeController extends Controller
                 });
                 
                 if ($match && $match->featured_image) {
-                    $productImages[$order->id] = $match->featured_image;
+                    // Verify file exists before adding to array
+                    $imagePath = storage_path('app/public/' . $match->featured_image);
+                    if (file_exists($imagePath)) {
+                        $productImages[$order->id] = $match->featured_image;
+                    }
                 }
             }
         }

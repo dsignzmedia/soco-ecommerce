@@ -69,10 +69,13 @@
                         <h6 class="filter-title">Categories</h6>
                         <div class="filter-options">
                             @foreach($categories as $cat)
+                                @php
+                                    $displayName = ucwords(str_replace('_', ' ', $cat));
+                                @endphp
                                 <label class="filter-option">
                                     <input type="checkbox" name="category" value="{{ strtolower($cat) }}" class="filter-checkbox" checked>
                                     <span class="checkbox-mark"></span>
-                                    <span class="option-label">{{ $cat }}</span>
+                                    <span class="option-label">{{ $displayName }}</span>
                                 </label>
                             @endforeach
                         </div>
@@ -190,10 +193,13 @@
                     <h6 class="filter-title">Categories</h6>
                     <div class="filter-options">
                         @foreach($categories as $cat)
+                            @php
+                                $displayName = ucwords(str_replace('_', ' ', $cat));
+                            @endphp
                             <label class="filter-option">
                                 <input type="checkbox" name="category_mobile" value="{{ strtolower($cat) }}" class="filter-checkbox-mobile" checked>
                                 <span class="checkbox-mark"></span>
-                                <span class="option-label">{{ $cat }}</span>
+                                <span class="option-label">{{ $displayName }}</span>
                             </label>
                         @endforeach
                     </div>
@@ -220,6 +226,12 @@
         position: sticky;
         top: 20px;
         display: block;
+        width: 100%;
+        max-width: 100%;
+        overflow: visible;
+        z-index: 1;
+        float: none;
+        clear: none;
     }
 
     .filter-header {
@@ -354,6 +366,7 @@
         font-size: 14px;
         color: #333;
         margin-left: 10px;
+        text-transform: capitalize;
     }
 
     .filter-checkbox:checked ~ .option-label {
@@ -403,6 +416,13 @@
     .product-item {
         display: flex;
         flex-direction: column;
+    }
+    
+    /* Prevent any product from appearing in filter column */
+    .col-lg-3 .product-item,
+    .col-lg-3 #productsContainer,
+    .filter-sidebar .product-item {
+        display: none !important;
     }
 
     .product-item.hidden {
@@ -523,6 +543,19 @@
             margin-bottom: 20px;
             border: 2px solid #e0d5f0;
             display: none;
+            width: 100%;
+            max-width: 100%;
+            float: none;
+            clear: both;
+        }
+        
+        .shop-page-section .row > .col-lg-3,
+        .shop-page-section .row > .col-lg-9 {
+            width: 100% !important;
+            max-width: 100% !important;
+            flex: 0 0 100% !important;
+            float: none;
+            clear: both;
         }
 
         .filter-sidebar.active {
@@ -783,6 +816,15 @@ document.addEventListener('DOMContentLoaded', function() {
             hasAnyCategoryChecked = categoryCheckboxes.length ? Array.from(categoryCheckboxes).some(cb => cb.checked) : false;
         }
 
+        // If no product types are checked OR no categories are checked, hide all products
+        if (!hasAnyTypeChecked || !hasAnyCategoryChecked) {
+            productItems.forEach(item => {
+                item.style.display = 'none';
+                item.classList.add('hidden');
+            });
+            return; // Exit early - no products should be shown
+        }
+
         productItems.forEach(item => {
             const productType = (item.getAttribute('data-product-type') || '').toLowerCase();
             const productName = (item.getAttribute('data-product-name') || '').toLowerCase();
@@ -790,35 +832,31 @@ document.addEventListener('DOMContentLoaded', function() {
 
             let show = true;
 
-            // Filter by product type
-            if (hasAnyTypeChecked) {
-                const productTypeLower = productType.toLowerCase();
-                const matchesType = selectedTypes.some(type => {
-                    const typeLower = type.toLowerCase();
-                    // Handle different type formats
-                    if (typeLower === 'merchandised' && (productTypeLower.includes('merchandise') || productTypeLower === 'merchandised')) {
-                        return true;
-                    }
-                    if (typeLower === 'back_to_school' && (productTypeLower.includes('back') || productTypeLower.includes('school') || productTypeLower === 'back_to_school')) {
-                        return true;
-                    }
-                    return productTypeLower === typeLower;
-                });
-                if (!matchesType) {
-                    show = false;
+            // Filter by product type (must match at least one selected type)
+            const productTypeLower = productType.toLowerCase();
+            const matchesType = selectedTypes.some(type => {
+                const typeLower = type.toLowerCase();
+                // Handle different type formats
+                if (typeLower === 'merchandised' && (productTypeLower.includes('merchandise') || productTypeLower === 'merchandised')) {
+                    return true;
                 }
+                if (typeLower === 'back_to_school' && (productTypeLower.includes('back') || productTypeLower.includes('school') || productTypeLower === 'back_to_school')) {
+                    return true;
+                }
+                return productTypeLower === typeLower;
+            });
+            if (!matchesType) {
+                show = false;
             }
 
-            // Filter by category
-            if (hasAnyCategoryChecked) {
-                const productCategoryLower = productCategory.toLowerCase();
-                const matchesCategory = selectedCategories.some(cat => {
-                    const catLower = cat.toLowerCase();
-                    return productCategoryLower === catLower || productCategoryLower.includes(catLower) || catLower.includes(productCategoryLower);
-                });
-                if (!matchesCategory) {
-                    show = false;
-                }
+            // Filter by category (must match at least one selected category)
+            const productCategoryLower = productCategory.toLowerCase();
+            const matchesCategory = selectedCategories.some(cat => {
+                const catLower = cat.toLowerCase();
+                return productCategoryLower === catLower || productCategoryLower.includes(catLower) || catLower.includes(productCategoryLower);
+            });
+            if (!matchesCategory) {
+                show = false;
             }
 
             // Filter by search term

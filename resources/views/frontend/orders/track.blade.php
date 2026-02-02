@@ -206,7 +206,7 @@
                                                     @elseif($itemReturnRequest->status == 'completed')
                                                         <div class="p-3 rounded" style="background-color: #f0f9ff; border: 1px solid #e0f2fe; color: #0369a1;">
                                                             <i class="fas fa-check-double me-2"></i> 
-                                                            <strong>Exchange Completed</strong>
+                                                            <strong>Exchange Request Approved</strong>
                                                         </div>
                                                     @elseif($itemReturnRequest->status == 'rejected')
                                                         <div class="p-3 rounded" style="background-color: #fef2f2; border: 1px solid #fee2e2; color: #991b1b;">
@@ -305,13 +305,10 @@
                                                     $isCurrent = $index === $exchangeStatusIndex;
                                                     $isOrderPlaced = strtolower($status['label']) === 'order placed';
                                                     
-                                                    // Orange color for "Order Placed" status in exchange orders
-                                                    if ($isOrderPlaced && $isCompleted) {
-                                                        $circleColor = '#ff9800'; // Orange color
-                                                        $lineColor = '#ff9800'; // Orange for timeline line
-                                                    } elseif ($isCompleted) {
-                                                        $circleColor = '#28a745'; // Green for other completed statuses
-                                                        $lineColor = '#28a745';
+                                                    // Green color for all completed statuses in exchange orders
+                                                    if ($isCompleted) {
+                                                        $circleColor = '#28a745'; // Green color
+                                                        $lineColor = '#28a745'; // Green for timeline line
                                                     } else {
                                                         $circleColor = '#e0e0e0'; // Grey for incomplete
                                                         $lineColor = '#e0e0e0';
@@ -327,15 +324,12 @@
                                                     <!-- Timeline Line -->
                                                     @if(!$loop->last)
                                                         @php
-                                                            // Determine line color: Orange if connecting from Order Placed, otherwise use standard logic
+                                                            // Determine line color: Green for all completed statuses
                                                             $nextStatusIndex = $index + 1;
                                                             $nextIsCompleted = $nextStatusIndex <= $exchangeStatusIndex;
                                                             
-                                                            if ($isOrderPlaced && $isCompleted && $nextIsCompleted) {
-                                                                // Orange line connecting from Order Placed to next status
-                                                                $lineColorToUse = '#ff9800';
-                                                            } elseif ($isCompleted && $nextIsCompleted) {
-                                                                // Green line for other completed statuses
+                                                            if ($isCompleted && $nextIsCompleted) {
+                                                                // Green line for completed statuses
                                                                 $lineColorToUse = '#28a745';
                                                             } else {
                                                                 // Grey line for incomplete sections
@@ -350,7 +344,7 @@
                                                     
                                                     <!-- Status Content -->
                                                     <div>
-                                                        <h6 class="mb-1" style="font-weight: 600; color: {{ $isCompleted ? ($isOrderPlaced ? '#ff9800' : '#333') : '#999' }};">
+                                                        <h6 class="mb-1" style="font-weight: 600; color: {{ $isCompleted ? '#333' : '#999' }};">
                                                             @php
                                                                 $icon = 'fa-circle';
                                                                 $desc = '';
@@ -377,7 +371,7 @@
                                                                         break;
                                                                 }
                                                             @endphp
-                                                            <i class="fas {{ $icon }} me-2" style="color: {{ $isCompleted && $isOrderPlaced ? '#ff9800' : ($isCompleted ? '#28a745' : '#999') }};"></i> {{ $status['label'] }}
+                                                            <i class="fas {{ $icon }} me-2" style="color: {{ $isCompleted ? '#28a745' : '#999' }};"></i> {{ $status['label'] }}
                                                         </h6>
                                                         <p class="text-muted small mb-1" style="font-size: 0.85rem;">{{ $desc }}</p>
                                                         @if($isCurrent)

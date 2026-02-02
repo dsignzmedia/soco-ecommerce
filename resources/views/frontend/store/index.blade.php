@@ -1054,6 +1054,15 @@ document.addEventListener('DOMContentLoaded', function() {
             hasAnyGenderChecked = genderCheckboxes.length ? Array.from(genderCheckboxes).some(cb => cb.checked) : false;
         }
 
+        // If no product types are checked OR no categories are checked, hide all products
+        if (!hasAnyTypeChecked || !hasAnyCategoryChecked) {
+            productItems.forEach(item => {
+                item.style.display = 'none';
+                item.classList.add('hidden');
+            });
+            return; // Exit early - no products should be shown
+        }
+
         productItems.forEach(item => {
             const productType = (item.getAttribute('data-product-type') || '').toLowerCase();
             const productName = (item.getAttribute('data-product-name') || '').toLowerCase();
@@ -1062,47 +1071,39 @@ document.addEventListener('DOMContentLoaded', function() {
 
             let show = true;
 
-            // Filter by product type (multi-select)
-            // If any type checkbox is checked, show only products matching selected types
-            // If no type checkbox is checked, show all products (don't filter by type)
-            if (hasAnyTypeChecked) {
-                const matchesType = selectedTypes.some(type => {
-                    const typeLower = type.toLowerCase();
-                    // Handle different type formats
-                    if (typeLower === 'merchandised' && (productType.includes('merchandise') || productType === 'merchandised')) {
-                        return true;
-                    }
-                    if (typeLower === 'back_to_school' && (productType.includes('back') || productType.includes('school') || productType === 'back_to_school')) {
-                        return true;
-                    }
-                    if (typeLower === 'authorized' && (productType === 'authorized' || productType.includes('authorized'))) {
-                        return true;
-                    }
-                    if (typeLower === 'optional' && (productType === 'optional' || productType.includes('optional'))) {
-                        return true;
-                    }
-                    return productType === typeLower;
-                });
-                if (!matchesType) {
-                    show = false;
+            // Filter by product type (must match at least one selected type)
+            const matchesType = selectedTypes.some(type => {
+                const typeLower = type.toLowerCase();
+                // Handle different type formats
+                if (typeLower === 'merchandised' && (productType.includes('merchandise') || productType === 'merchandised')) {
+                    return true;
                 }
+                if (typeLower === 'back_to_school' && (productType.includes('back') || productType.includes('school') || productType === 'back_to_school')) {
+                    return true;
+                }
+                if (typeLower === 'authorized' && (productType === 'authorized' || productType.includes('authorized'))) {
+                    return true;
+                }
+                if (typeLower === 'optional' && (productType === 'optional' || productType.includes('optional'))) {
+                    return true;
+                }
+                return productType === typeLower;
+            });
+            if (!matchesType) {
+                show = false;
             }
 
-            // Filter by category (multi-select)
-            // If any category checkbox is checked, show only products matching selected categories
-            // If no category checkbox is checked, show all products (don't filter by category)
-            if (hasAnyCategoryChecked) {
-                const matchesCategory = selectedCategories.some(cat => {
-                    const catLower = cat.toLowerCase();
-                    // Try exact match first, then partial match
-                    return productCategory === catLower || productCategory.includes(catLower) || catLower.includes(productCategory);
-                });
-                if (!matchesCategory) {
-                    show = false;
-                }
+            // Filter by category (must match at least one selected category)
+            const matchesCategory = selectedCategories.some(cat => {
+                const catLower = cat.toLowerCase();
+                // Try exact match first, then partial match
+                return productCategory === catLower || productCategory.includes(catLower) || catLower.includes(productCategory);
+            });
+            if (!matchesCategory) {
+                show = false;
             }
 
-            // Filter by gender (multi-select)
+            // Filter by gender (optional - only filter if genders are checked)
             if (hasAnyGenderChecked) {
                 const matchesGender = selectedGenders.some(gender => {
                     const genderLower = gender.toLowerCase();

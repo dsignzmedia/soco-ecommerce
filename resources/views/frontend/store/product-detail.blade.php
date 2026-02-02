@@ -265,9 +265,11 @@
 <div class="modal fade" id="sizeGuideModal" tabindex="-1" aria-labelledby="sizeGuideModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-lg modal-dialog-centered">
         <div class="modal-content">
-            <div class="modal-header">
+            <div class="modal-header" style="position: relative;">
                 <h5 class="modal-title" id="sizeGuideModalLabel">Size Guide</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                <button type="button" class="size-guide-close-btn" data-bs-dismiss="modal" aria-label="Close" style="background: #fff; border: 2px solid #dc3545; border-radius: 50%; padding: 0; width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; cursor: pointer; position: absolute; right: 15px; top: 15px; z-index: 10; transition: all 0.2s;">
+                    <i class="fas fa-times" style="color: #dc3545; font-size: 18px; font-weight: bold;"></i>
+                </button>
             </div>
             <div class="modal-body">
                 <div class="row g-3 align-items-center">
@@ -424,6 +426,38 @@
     .product-thumb-slide .thumb:hover,
     .product-thumb-slide .thumb.active {
         border-color: #490D59;
+    }
+
+    /* Size Guide Modal Close Button - Red Color with Round Border */
+    #sizeGuideModal .size-guide-close-btn {
+        background: #fff !important;
+        border: 2px solid #dc3545 !important;
+        border-radius: 50% !important;
+        opacity: 1 !important;
+        background-image: none !important;
+        width: 32px !important;
+        height: 32px !important;
+        padding: 0 !important;
+        margin: 0 !important;
+        transition: all 0.2s !important;
+    }
+    
+    #sizeGuideModal .size-guide-close-btn:hover {
+        background: #dc3545 !important;
+        border-color: #dc3545 !important;
+        transform: scale(1.1);
+    }
+    
+    #sizeGuideModal .size-guide-close-btn i {
+        color: #dc3545 !important;
+        font-size: 18px !important;
+        font-weight: bold !important;
+        display: block !important;
+        transition: color 0.2s !important;
+    }
+    
+    #sizeGuideModal .size-guide-close-btn:hover i {
+        color: #fff !important;
     }
 
     /* Size Guide Modal Images */

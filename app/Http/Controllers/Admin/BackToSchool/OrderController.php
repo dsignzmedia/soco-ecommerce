@@ -77,13 +77,13 @@ class OrderController extends Controller
             'tracking_number' => $request->tracking_number,
         ]);
 
-        // Send Order Status Update Email if order status changed
+        // Send Order Status Update Email if order status changed (including delivered status)
         if ($previousOrderStatus !== $order->order_status && !empty($order->customer_email)) {
             try {
                 \Illuminate\Support\Facades\Mail::to($order->customer_email)->send(new \App\Mail\OrderStatusUpdateMail($order, $previousOrderStatus));
-                \Illuminate\Support\Facades\Log::info("Order status update email sent to {$order->customer_email} for order {$order->order_number}");
+                \Illuminate\Support\Facades\Log::info("Order status update email sent to {$order->customer_email} for order {$order->order_number} - Status: {$order->order_status}");
             } catch (\Exception $e) {
-                \Illuminate\Support\Facades\Log::error("Failed to send order status update email: " . $e->getMessage());
+                \Illuminate\Support\Facades\Log::error("Failed to send order status update email for order {$order->order_number}: " . $e->getMessage());
             }
         }
 

@@ -212,11 +212,6 @@
                                 <button type="button" class="vs-btn" style="background: linear-gradient(135deg, #8c4fcf, #490D59); border: none; border-radius: 30px; padding: 12px 30px; color: #ffffff;" data-bs-toggle="modal" data-bs-target="#addStudentModal" onclick="prepareAddStudentModal()">
                                     <i class="fas fa-plus me-2"></i> Add Student Profile
                                 </button>
-<<<<<<< HEAD
-                                
-=======
-
->>>>>>> 75144e0856a38b44506f1a07e5980b66d309121e
                                 <a href="{{ route('frontend.shop.index') }}" class="vs-btn" style="background: linear-gradient(135deg, #8c4fcf, #490D59); border: none; border-radius: 30px; padding: 12px 30px; color: #ffffff;">
                                     <i class="fas fa-shopping-bag me-2"></i> Continue Shopping
                                 </a>
