@@ -10,9 +10,11 @@ use Carbon\Carbon;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
+use App\Traits\DtdcShipmentTrait;
 
 class OrderController extends Controller
 {
+    use DtdcShipmentTrait;
     public function index(Request $request): View
     {
         $filters = $request->only([
@@ -75,8 +77,12 @@ class OrderController extends Controller
 
     public function updateStatus(Request $request, Order $order): RedirectResponse
     {
+        if ($request->input('order_status') === 'cancelled') {
+            return $this->cancelShipment($request, $order);
+        }
+
         $data = $request->validate([
-            'order_status' => ['required', 'string', 'in:order_placed,processing,packed,shipped,delivered'],
+            'order_status' => ['required', 'string', 'in:order_placed,processing,packed,shipped,delivered,cancelled'],
             'tracking_number' => ['nullable', 'string', 'max:255'],
             'courier_name' => ['nullable', 'string', 'max:255'],
             'notes' => ['nullable', 'string'],
@@ -153,105 +159,66 @@ class OrderController extends Controller
 
     public function printLabel(Order $order)
     {
-        $order->load('school');
+        if (!$order->tracking_number) {
+            return back()->with('error', 'Order has no tracking number. Cannot generate label.');
+        }
+
+        $filename = "labels/{$order->order_number}.pdf";
         
-        // Calculate actual product weight
-        $weight = 0.5; // Default fallback weight
-        $weightLabel = 'Weight: ' . number_format($weight, 2) . 'kg (Est)';
-        
-        // Try to find the product and get actual weight
-        $product = \App\Models\Admin\Master\ProductMapping::where('product_name', $order->item_name)
-            ->with('variants')
-            ->first();
-        
-        if ($product) {
-            $unitWeight = null;
+        // Return cached label if exists
+        if (\Illuminate\Support\Facades\Storage::disk('public')->exists($filename)) {
+            return \Illuminate\Support\Facades\Storage::disk('public')->download($filename);
+        }
+
+        try {
+            \Illuminate\Support\Facades\Log::info("Print Label Requested for Order: {$order->order_number}");
+
+            /** @var \App\Services\DtdcService $dtdcService */
+            $dtdcService = app(\App\Services\DtdcService::class);
             
-            // Check if product has variant-based pricing and size matches a variant
-            if ($product->variant_based_pricing && $order->size && $product->variants) {
-                $variant = $product->variants->where('option', $order->size)->first();
-                if ($variant && $variant->weight) {
-                    $unitWeight = $variant->weight;
+            // Fetch label from DTDC API using reference number
+            // IMPORTANT: The shipment was created with the Group Order ID (without the item suffix index).
+            // We must strip the suffix to get the correct reference number used for shipment creation.
+            $referenceNumber = \Illuminate\Support\Str::beforeLast($order->order_number, '-');
+            $response = $dtdcService->generateLabel($referenceNumber);
+
+            \Illuminate\Support\Facades\Log::info("DTDC Label Response Type: " . gettype($response));
+
+            // Handle API errors (if response is array with success=false)
+            if (is_array($response)) {
+                 \Illuminate\Support\Facades\Log::error("DTDC Label API Error Response", $response);
+                 if (isset($response['success']) && !$response['success']) {
+                     return back()->with('error', 'DTDC API Error: ' . ($response['message'] ?? 'Unknown error'));
+                 }
+                 // If it's an array but not success=false, it might be unexpected JSON
+                 return back()->with('error', 'Unexpected response from DTDC API.');
+            }
+
+            // If response is a string, check if it's a PDF
+            if (is_string($response)) {
+                $isPdf = str_starts_with($response, '%PDF');
+                \Illuminate\Support\Facades\Log::info("DTDC Label Response is String. Is PDF? " . ($isPdf ? 'Yes' : 'No'));
+                
+                if ($isPdf) {
+                    \Illuminate\Support\Facades\Storage::disk('public')->put($filename, $response);
+                    \Illuminate\Support\Facades\Log::info("Label saved to storage: {$filename}");
+                    return \Illuminate\Support\Facades\Storage::disk('public')->download($filename);
                 }
+                
+                // Log non-PDF string content (start of it)
+                \Illuminate\Support\Facades\Log::warning("DTDC returned non-PDF string: " . substr($response, 0, 100));
             }
-            
-            // If no variant weight found, use product weight
-            if ($unitWeight === null && $product->product_weight) {
-                $unitWeight = $product->product_weight;
+
+            // Fallback for mocks or non-PDF strings
+            if (config('dtdc.test_mode')) {
+                 return back()->with('error', 'Test Mode: DTDC Service returned mock data ("' . substr(is_string($response) ? $response : json_encode($response), 0, 20) . '...") instead of a real PDF.');
             }
-            
-            // Calculate total weight (unit weight * quantity)
-            if ($unitWeight !== null) {
-                $weight = $unitWeight * $order->quantity;
-                $weightLabel = 'Weight: ' . number_format($weight, 2) . 'kg';
-            }
+
+            return back()->with('error', 'Invalid label format received from DTDC.');
+
+        } catch (\Exception $e) {
+            \Illuminate\Support\Facades\Log::error('Label Generation Error: ' . $e->getMessage());
+            return back()->with('error', 'System Error: ' . $e->getMessage());
         }
-        
-        $lines = [
-            'SHIPPING LABEL',
-            '----------------------------------------',
-            'FROM:',
-            'The Skool Store',
-            'Warehouse Fulfillment Center',
-            '----------------------------------------',
-            'TO:',
-            $order->customer_name,
-            $order->customer_address,
-            'Phone: ' . $order->customer_phone,
-            '----------------------------------------',
-            'ORDER DETAILS:',
-            'Order #: ' . $order->order_number,
-            'Courier: ' . ($order->courier_name ?? 'Not Assigned'),
-            'Tracking: ' . ($order->tracking_number ?? 'Pending'),
-            '----------------------------------------',
-            $weightLabel,
-        ];
-
-        $pdf = $this->buildSimplePdf($lines);
-
-        return response()->streamDownload(fn () => print($pdf), $order->order_number . '-label.pdf', [
-            'Content-Type' => 'application/pdf',
-        ]);
-    }
-
-    protected function buildSimplePdf(array $lines): string
-    {
-        $escaped = array_map(fn ($line) => str_replace(['\\', '(', ')'], ['\\\\', '\\(', '\\)'], $line), $lines);
-        $contentBody = "BT\n/F1 11 Tf\n72 720 Td\n";
-        foreach ($escaped as $index => $line) {
-            $contentBody .= '(' . $line . ") Tj\n";
-            if ($index !== array_key_last($escaped)) {
-                $contentBody .= "T*\n";
-            }
-        }
-        $contentBody .= "ET";
-        $length = strlen($contentBody);
-
-        $pdf = "%PDF-1.4\n";
-        $objects = [
-            '<< /Type /Catalog /Pages 2 0 R >>',
-            '<< /Type /Pages /MediaBox [0 0 612 792] /Count 1 /Kids [3 0 R] >>',
-            '<< /Type /Page /Parent 2 0 R /Contents 4 0 R /Resources << /Font << /F1 5 0 R >> >> >>',
-            "<< /Length $length >>\nstream\n$contentBody\nendstream",
-            '<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>',
-        ];
-
-        $offsets = [];
-        foreach ($objects as $index => $object) {
-            $offsets[] = strlen($pdf);
-            $pdf .= ($index + 1) . " 0 obj\n" . $object . "\nendobj\n";
-        }
-
-        $xrefPosition = strlen($pdf);
-        $pdf .= "xref\n0 " . (count($objects) + 1) . "\n";
-        $pdf .= "0000000000 65535 f \n";
-        foreach ($offsets as $offset) {
-            $pdf .= sprintf("%010d 00000 n \n", $offset);
-        }
-
-        $pdf .= "trailer << /Size " . (count($objects) + 1) . " /Root 1 0 R >>\n";
-        $pdf .= "startxref\n$xrefPosition\n%%EOF";
-
-        return $pdf;
     }
 }

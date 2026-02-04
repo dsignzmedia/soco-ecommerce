@@ -41,9 +41,15 @@ class CategoryController extends Controller
             default => 'master.admin.categories.store',
         };
 
-        // Calculate next sort order
-        $maxSortOrder = Category::max('sort_order');
-        $nextSortOrder = ($maxSortOrder !== null) ? $maxSortOrder + 1 : 0;
+        // Calculate next sort order based on type
+        $type = match (true) {
+            str_starts_with($routeName, 'admin.back_to_school.') => 'back_to_school',
+            str_starts_with($routeName, 'admin.merchandise.') => 'merchandise',
+            default => 'school',
+        };
+
+        $maxSortOrder = Category::where('type', $type)->max('sort_order');
+        $nextSortOrder = ($maxSortOrder !== null) ? $maxSortOrder + 1 : 1;
 
         return view('admin.categories.form', [
             'category' => new Category(),
@@ -69,15 +75,23 @@ class CategoryController extends Controller
             $validated['slug'] = \Illuminate\Support\Str::slug($validated['name'], '_');
         }
 
+        // Determine type based on route context
+        $routeName = $request->route()?->getName() ?? '';
+        $type = match (true) {
+            str_starts_with($routeName, 'admin.back_to_school.') => 'back_to_school',
+            str_starts_with($routeName, 'admin.merchandise.') => 'merchandise',
+            default => 'school',
+        };
+
         Category::create([
             'name' => $validated['name'],
             'slug' => $validated['slug'],
+            'type' => $type,
             'is_active' => $validated['is_active'] ?? true,
             'sort_order' => $validated['sort_order'] ?? 0,
         ]);
 
         // Determine redirect route based on referrer or route context
-        $routeName = $request->route()?->getName() ?? '';
         $redirectRoute = match (true) {
             str_starts_with($routeName, 'admin.back_to_school.') => 'admin.back_to_school.product-settings.index',
             str_starts_with($routeName, 'admin.merchandise.') => 'admin.merchandise.product-settings.index',

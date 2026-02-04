@@ -7,9 +7,11 @@ use App\Models\Merchandise\Order;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
 use Illuminate\Http\RedirectResponse;
+use App\Traits\DtdcShipmentTrait;
 
 class OrderController extends Controller
 {
+    use DtdcShipmentTrait;
     public function index(Request $request): View
     {
         $query = Order::with(['school', 'product'])->latest();
@@ -60,8 +62,12 @@ class OrderController extends Controller
     {
         $order = Order::findOrFail($id);
         
+        if ($request->input('order_status') === 'cancelled') {
+            return $this->cancelShipment($request, $order);
+        }
+        
         $request->validate([
-            'order_status' => 'required|string|in:order_placed,processing,packed,shipped,delivered',
+            'order_status' => 'required|string|in:order_placed,processing,packed,shipped,delivered,cancelled',
             'tracking_number' => 'nullable|string',
         ]);
 

@@ -134,9 +134,19 @@
                                         <span class="badge bg-{{ $color }}">{{ ucfirst($order->order_status) }}</span>
                                     </td>
                                     <td>
-                                        <button class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#orderModal{{ $order->id }}">
-                                            <i class="fas fa-eye"></i> View
-                                        </button>
+                                        <div style="display:flex; gap:6px;">
+                                            <button class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#orderModal{{ $order->id }}">
+                                                <i class="fas fa-eye"></i> View
+                                            </button>
+                                            @if($order->tracking_number)
+                                            <form action="{{ route('frontend.school.orders.cancel-shipment', $order) }}" method="POST" onsubmit="return confirm('Are you sure you want to cancel this shipment?');" style="display:inline;">
+                                                @csrf
+                                                <button type="submit" class="btn btn-sm btn-outline-danger" title="Cancel Shipment">
+                                                    <i class="fas fa-ban"></i>
+                                                </button>
+                                            </form>
+                                            @endif
+                                        </div>
                                     </td>
                                 </tr>
 

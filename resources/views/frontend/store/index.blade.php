@@ -95,12 +95,12 @@
                             <input type="checkbox" name="product_type" value="optional" class="filter-checkbox d-none" checked>
 
                             <label class="filter-option">
-                                <input type="checkbox" name="product_type" value="merchandised" class="filter-checkbox" checked>
+                                <input type="checkbox" name="product_type" value="merchandised" class="filter-checkbox">
                                 <span class="checkbox-mark"></span>
                                 <span class="option-label">Merchandised Product</span>
                             </label>
                             <label class="filter-option">
-                                <input type="checkbox" name="product_type" value="back_to_school" class="filter-checkbox" checked>
+                                <input type="checkbox" name="product_type" value="back_to_school" class="filter-checkbox">
                                 <span class="checkbox-mark"></span>
                                 <span class="option-label">Back to School Product</span>
                             </label>
@@ -248,12 +248,12 @@
                         <input type="checkbox" name="product_type_mobile" value="optional" class="filter-checkbox-mobile d-none" checked>
 
                         <label class="filter-option">
-                            <input type="checkbox" name="product_type_mobile" value="merchandised" class="filter-checkbox-mobile" checked>
+                            <input type="checkbox" name="product_type_mobile" value="merchandised" class="filter-checkbox-mobile">
                             <span class="checkbox-mark"></span>
                             <span class="option-label">Merchandised Product</span>
                         </label>
                         <label class="filter-option">
-                            <input type="checkbox" name="product_type_mobile" value="back_to_school" class="filter-checkbox-mobile" checked>
+                            <input type="checkbox" name="product_type_mobile" value="back_to_school" class="filter-checkbox-mobile">
                             <span class="checkbox-mark"></span>
                             <span class="option-label">Back to School Product</span>
                         </label>
@@ -1034,6 +1034,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
     function filterProducts(useMobileFilters = false) {
         let selectedTypes, selectedCategories, selectedGenders, searchTerm, hasAnyTypeChecked, hasAnyCategoryChecked, hasAnyGenderChecked;
+        let visibleCategories = new Set();
 
         if (useMobileFilters && isMobile) {
             // Use mobile filter values
@@ -1094,6 +1095,14 @@ document.addEventListener('DOMContentLoaded', function() {
                 show = false;
             }
 
+            // Collect categories that should be visible based on *checked product types*
+            // We do this by checking if the product matches the currently selected TYPES.
+            if (matchesType) {
+                // This product is of a type that is currently checked.
+                // So its category is valid and should be shown in the filters.
+                visibleCategories.add(productCategory);
+            }
+
             // Filter by category (must match at least one selected category)
             const matchesCategory = selectedCategories.some(cat => {
                 const catLower = cat.toLowerCase();
@@ -1127,6 +1136,31 @@ document.addEventListener('DOMContentLoaded', function() {
             } else {
                 item.style.display = 'none';
                 item.classList.add('hidden');
+            }
+        });
+
+        // UPDATE CATEGORY VISIBILITY IN SIDEBAR
+        // We hide category filters that don't have any products in the currently selected TYPES.
+        const checkboxesToUpdate = useMobileFilters && isMobile ? categoryCheckboxesMobile : categoryCheckboxes;
+        
+        checkboxesToUpdate.forEach(cb => {
+            const catSlug = cb.value.toLowerCase();
+            const parentLabel = cb.closest('.filter-option');
+            
+            // Check if this category exists in our "visibleCategories" set
+            // We use simple loose matching (includes) to be safe with slugs/names
+            let isVisible = false;
+            for (let validCat of visibleCategories) {
+                 if (validCat === catSlug || validCat.includes(catSlug) || catSlug.includes(validCat)) {
+                     isVisible = true;
+                     break;
+                 }
+            }
+
+            if (isVisible) {
+                parentLabel.style.display = '';
+            } else {
+                parentLabel.style.display = 'none';
             }
         });
     }

@@ -217,9 +217,11 @@
                                                 </div>
                                             @else
                                                 <div class="mb-4">
-                                                    <a href="{{ route('frontend.parent.return-exchange', ['orderId' => $order['id'], 'itemId' => $item['id']]) }}" class="btn btn-outline-danger btn-sm" style="border-radius: 8px; font-weight: 600;">
-                                                        Proceed to Exchange
-                                                    </a>
+                                                    @if(!in_array($item['product_type'] ?? '', ['back_to_school', 'merchandised']))
+                                                        <a href="{{ route('frontend.parent.return-exchange', ['orderId' => $order['id'], 'itemId' => $item['id']]) }}" class="btn btn-outline-danger btn-sm" style="border-radius: 8px; font-weight: 600;">
+                                                            Proceed to Exchange
+                                                        </a>
+                                                    @endif
                                                     @if($itemReturnRequest && $itemReturnRequest->status == 'pending')
                                                         <div class="mt-2 text-warning small">
                                                             <i class="fas fa-clock me-1"></i> Request Pending Approval

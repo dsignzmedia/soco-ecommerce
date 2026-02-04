@@ -47,6 +47,7 @@
                     </div>
 
                     <!-- Product Type -->
+                    @if(!request()->has('product_type'))
                     <div class="filter-section">
                         <h6 class="filter-title">Product Type</h6>
                         <div class="filter-options">
@@ -63,6 +64,7 @@
                         </div>
                         <div class="filter-divider"></div>
                     </div>
+                    @endif
 
                     <!-- Categories -->
                     <div class="filter-section">
@@ -177,6 +179,7 @@
                 </div>
 
                 <!-- Product Type -->
+                @if(!request()->has('product_type'))
                 <div class="filter-section">
                     <h6 class="filter-title">Product Type</h6>
                     <div class="filter-options">
@@ -193,6 +196,7 @@
                     </div>
                     <div class="filter-divider"></div>
                 </div>
+                @endif
 
                 <!-- Categories -->
                 <div class="filter-section">
@@ -554,7 +558,6 @@
             float: none;
             clear: both;
         }
-
         .shop-page-section .row > .col-lg-3,
         .shop-page-section .row > .col-lg-9 {
             width: 100% !important;
@@ -806,23 +809,43 @@ document.addEventListener('DOMContentLoaded', function() {
     function filterProducts(useMobileFilters = false) {
         let selectedTypes, selectedCategories, searchTerm, hasAnyTypeChecked, hasAnyCategoryChecked;
 
+        // Check if product_type is in URL
+        const urlParams = new URLSearchParams(window.location.search);
+        const urlProductType = urlParams.get('product_type');
+
         if (useMobileFilters && isMobile) {
             // Use mobile filter values
             selectedTypes = Array.from(productTypeCheckboxesMobile).filter(cb => cb.checked).map(cb => cb.value);
+
+            // If checkboxes are hidden/missing but URL param exists, use URL param
+            if (productTypeCheckboxesMobile.length === 0 && urlProductType) {
+                selectedTypes = [urlProductType];
+                hasAnyTypeChecked = true;
+            } else {
+                hasAnyTypeChecked = productTypeCheckboxesMobile.length ? Array.from(productTypeCheckboxesMobile).some(cb => cb.checked) : false;
+            }
+
             selectedCategories = Array.from(categoryCheckboxesMobile).filter(cb => cb.checked).map(cb => cb.value);
             searchTerm = searchInputMobile ? searchInputMobile.value.toLowerCase().trim() : '';
-            hasAnyTypeChecked = productTypeCheckboxesMobile.length ? Array.from(productTypeCheckboxesMobile).some(cb => cb.checked) : false;
             hasAnyCategoryChecked = categoryCheckboxesMobile.length ? Array.from(categoryCheckboxesMobile).some(cb => cb.checked) : false;
         } else {
             // Use desktop filter values
             selectedTypes = Array.from(productTypeCheckboxes).filter(cb => cb.checked).map(cb => cb.value);
+
+            // If checkboxes are hidden/missing but URL param exists, use URL param
+            if (productTypeCheckboxes.length === 0 && urlProductType) {
+                selectedTypes = [urlProductType];
+                hasAnyTypeChecked = true;
+            } else {
+                hasAnyTypeChecked = productTypeCheckboxes.length ? Array.from(productTypeCheckboxes).some(cb => cb.checked) : false;
+            }
+
             selectedCategories = Array.from(categoryCheckboxes).filter(cb => cb.checked).map(cb => cb.value);
             searchTerm = searchInput.value.toLowerCase().trim();
-            hasAnyTypeChecked = productTypeCheckboxes.length ? Array.from(productTypeCheckboxes).some(cb => cb.checked) : false;
             hasAnyCategoryChecked = categoryCheckboxes.length ? Array.from(categoryCheckboxes).some(cb => cb.checked) : false;
         }
 
-        // If no product types are checked OR no categories are checked, hide all products
+        // If no categories are checked, hide all products
         if (!hasAnyTypeChecked || !hasAnyCategoryChecked) {
             productItems.forEach(item => {
                 item.style.display = 'none';

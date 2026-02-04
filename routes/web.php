@@ -135,6 +135,7 @@ Route::middleware(['auth', 'school'])->group(function () {
     Route::post('/school/generate-report', [AuthController::class, 'generateReport'])->name('frontend.school.generate-report');
     Route::get('/school/download-report', [AuthController::class, 'downloadReport'])->name('frontend.school.download-report');
     Route::post('/school/email-report', [AuthController::class, 'emailReport'])->name('frontend.school.email-report');
+    Route::post('/school/orders/{order}/cancel-shipment', [AuthController::class, 'cancelShipment'])->name('frontend.school.orders.cancel-shipment');
 });
 
 // Master Admin Routes
@@ -173,6 +174,7 @@ Route::prefix('MasterAdmin')->name('master.admin.')->group(function () {
         Route::get('/orders/{order}/invoice', [OrderController::class, 'invoiceView'])->name('orders.invoice');
         Route::post('/orders/{order}/status', [OrderController::class, 'updateStatus'])->name('orders.status');
         Route::get('/orders/{order}', [OrderController::class, 'show'])->name('orders.show');
+        Route::post('/orders/{order}/cancel-shipment', [OrderController::class, 'cancelShipment'])->name('orders.cancel-shipment');
 
         // Payments
         Route::get('/payments', [App\Http\Controllers\Admin\Master\PaymentController::class, 'index'])->name('payments.index');
@@ -303,7 +305,9 @@ Route::prefix('InventoryAdmin')->name('inventory.admin.')->group(function () {
         Route::get('/orders/{order}', [App\Http\Controllers\Admin\Inventory\OrderController::class, 'show'])->name('orders.show');
         Route::post('/orders/{order}/status', [App\Http\Controllers\Admin\Inventory\OrderController::class, 'updateStatus'])->name('orders.status');
         Route::get('/orders/{order}/packing-slip', [App\Http\Controllers\Admin\Inventory\OrderController::class, 'packingSlip'])->name('orders.packing-slip');
+
         Route::get('/orders/{order}/print-label', [App\Http\Controllers\Admin\Inventory\OrderController::class, 'printLabel'])->name('orders.print-label');
+        Route::post('/orders/{order}/cancel-shipment', [App\Http\Controllers\Admin\Inventory\OrderController::class, 'cancelShipment'])->name('orders.cancel-shipment');
 
         // Inventory
         Route::get('/inventory', [App\Http\Controllers\Admin\Inventory\InventoryController::class, 'index'])->name('inventory.index');
@@ -356,6 +360,8 @@ Route::prefix('BackToSchoolAdmin')->name('admin.back_to_school.')->group(functio
         Route::get('/orders/{order}/invoice/download', [App\Http\Controllers\Admin\BackToSchool\OrderController::class, 'invoiceDownload'])->name('orders.invoice.download');
         Route::get('/orders/{order}/invoice', [App\Http\Controllers\Admin\BackToSchool\OrderController::class, 'invoiceView'])->name('orders.invoice');
         Route::post('/orders/{order}/status', [App\Http\Controllers\Admin\BackToSchool\OrderController::class, 'updateStatus'])->name('orders.status');
+
+        Route::post('/orders/{order}/cancel-shipment', [App\Http\Controllers\Admin\BackToSchool\OrderController::class, 'cancelShipment'])->name('orders.cancel-shipment');
         Route::resource('orders', App\Http\Controllers\Admin\BackToSchool\OrderController::class);
         
         // Product Settings (alias for BTS admins)
@@ -402,7 +408,9 @@ Route::prefix('MerchandiseAdmin')->name('admin.merchandise.')->group(function ()
         Route::resource('products', App\Http\Controllers\Admin\Merchandise\ProductController::class);
         Route::get('/orders/{order}/invoice/download', [App\Http\Controllers\Admin\Merchandise\OrderController::class, 'invoiceDownload'])->name('orders.invoice.download');
         Route::get('/orders/{order}/invoice', [App\Http\Controllers\Admin\Merchandise\OrderController::class, 'invoiceView'])->name('orders.invoice');
+
         Route::post('/orders/{order}/status', [App\Http\Controllers\Admin\Merchandise\OrderController::class, 'updateStatus'])->name('orders.status');
+        Route::post('/orders/{order}/cancel-shipment', [App\Http\Controllers\Admin\Merchandise\OrderController::class, 'cancelShipment'])->name('orders.cancel-shipment');
         Route::resource('orders', App\Http\Controllers\Admin\Merchandise\OrderController::class);
         Route::resource('print-queue', App\Http\Controllers\Admin\Merchandise\PrintQueueController::class);
         
@@ -432,5 +440,17 @@ Route::prefix('MerchandiseAdmin')->name('admin.merchandise.')->group(function ()
         Route::get('/payments', [App\Http\Controllers\Admin\Merchandise\PaymentController::class, 'index'])->name('payments.index');
         Route::get('/payments/{payment}', [App\Http\Controllers\Admin\Merchandise\PaymentController::class, 'show'])->name('payments.show');
     });
+});
+
+// DTDC Shipping Integration
+Route::middleware(['web'])->group(function () {
+    Route::get('/shipment/create', [App\Http\Controllers\ShipmentController::class, 'create'])->name('shipment.create');
+    Route::post('/shipment/create', [App\Http\Controllers\ShipmentController::class, 'store'])->name('shipment.store');
+    Route::get('/label/{reference}', [App\Http\Controllers\LabelController::class, 'show'])->name('label.show');
+    Route::get('/label/{reference}/download', [App\Http\Controllers\LabelController::class, 'generate'])->name('label.generate');
+    Route::get('/cancel', [App\Http\Controllers\CancelController::class, 'index'])->name('cancel.index');
+    Route::post('/cancel', [App\Http\Controllers\CancelController::class, 'cancel'])->name('cancel.store');
+    Route::get('/track', [App\Http\Controllers\TrackingController::class, 'index'])->name('tracking.index');
+    Route::post('/track', [App\Http\Controllers\TrackingController::class, 'track'])->name('tracking.check');
 });
 

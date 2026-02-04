@@ -231,7 +231,8 @@
                                             'processing' => 'Processing',
                                             'packed' => 'Packed',
                                             'shipped' => 'Shipped',
-                                            'delivered' => 'Delivered'
+                                            'delivered' => 'Delivered',
+                                            'cancelled' => 'Cancel Shipment'
                                         ] as $value => $label)
                                             <option value="{{ $value }}" @selected($order->order_status == $value)>{{ $label }}</option>
                                         @endforeach

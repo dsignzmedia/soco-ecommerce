@@ -10,7 +10,11 @@ class PaymentController extends Controller
 {
     public function index(Request $request)
     {
-        $query = Payment::with(['order' => fn($q) => $q->withoutGlobalScopes()]);
+        $query = Payment::with(['order' => fn($q) => $q->withoutGlobalScopes()])
+            ->where(function ($q) {
+                $q->whereNotIn('product_type', ['back_to_school', 'merchandised'])
+                  ->orWhereNull('product_type');
+            });
 
         // Search (Order Number or Payment ID)
         if ($request->filled('search')) {
@@ -52,6 +56,12 @@ class PaymentController extends Controller
     public function show(Payment $payment)
     {
         $payment->load(['order' => fn($q) => $q->withoutGlobalScopes()]); // Ensure order is loaded
+        
+        // Restrict access to BTS/Merch payments in Master Admin
+        if (in_array($payment->product_type, ['back_to_school', 'merchandised'])) {
+            abort(403, 'This payment belongs to ' . ucfirst(str_replace('_', ' ', $payment->product_type)) . ' section.');
+        }
+
         $routePrefix = 'master.admin';
         return view('admin.master.payments.show', compact('payment', 'routePrefix'));
     }

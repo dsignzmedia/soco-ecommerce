@@ -40,7 +40,7 @@
                         </div>
                         <div class="card-body">
                             <h5 class="card-title">{{ $product['name'] }}</h5>
-                            <p class="text-muted mb-3">Product description goes here...</p>
+                            <p class="text-muted mb-3" style="white-space: pre-wrap;">{{ $product['description'] ?? 'Product description goes here...' }}</p>
                             <div class="mb-3">
                                 <label class="form-label small">Select Size</label>
                                 <select class="form-select form-select-sm" id="size_{{ $product['id'] }}">

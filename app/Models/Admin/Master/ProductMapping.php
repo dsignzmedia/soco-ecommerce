@@ -70,6 +70,8 @@ class ProductMapping extends Model
             });
         });
 
+
+
         // Auto-generate SKU when creating a new product
         static::creating(function ($product) {
             if (empty($product->sku)) {

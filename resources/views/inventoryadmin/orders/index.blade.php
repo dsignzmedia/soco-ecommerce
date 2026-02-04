@@ -234,6 +234,7 @@
                             <td>
                                 <form action="{{ route('inventory.admin.orders.status', $order) }}" method="POST">
                                     @csrf
+
                                     <select name="order_status" class="no-tom" onchange="this.form.submit()" style="
                                         padding: 6px 10px;
                                         border-radius: 6px;
@@ -250,6 +251,7 @@
                                             @elseif($order->order_status == 'packed') #3b82f6
                                             @elseif($order->order_status == 'shipped') #0ea5e9
                                             @elseif($order->order_status == 'delivered') #10b981
+                                            @elseif($order->order_status == 'cancelled') #ef4444
                                             @else #6b7280 @endif;
                                     ">
                                         @foreach([
@@ -257,7 +259,8 @@
                                             'processing' => 'PROCESSING',
                                             'packed' => 'PACKED',
                                             'shipped' => 'SHIPPED',
-                                            'delivered' => 'DELIVERED'
+                                            'delivered' => 'DELIVERED',
+                                            'cancelled' => 'CANCEL SHIPMENT'
                                         ] as $value => $label)
                                             <option value="{{ $value }}" @selected($order->order_status == $value) style="background-color: white; color: black;">{{ $label }}</option>
                                         @endforeach
@@ -275,7 +278,9 @@
                             </td>
                             <td style="text-align:right;">
                                 <div style="display:flex; justify-content:flex-end; gap:8px;">
-                                    <a href="{{ route('inventory.admin.orders.show', $order) }}" class="btn-vs-sm">Manage</a>
+                                    <a href="{{ route('inventory.admin.orders.show', $order) }}" class="btn-vs-sm" title="Manage Order"><i class="fas fa-eye"></i></a>
+                                    <a href="{{ route('inventory.admin.orders.packing-slip', $order) }}" class="btn-vs-sm" title="Packing Slip"><i class="fas fa-box-open"></i></a>
+                                    <a href="{{ route('inventory.admin.orders.print-label', $order) }}" class="btn-vs-sm" title="Print Label"><i class="fas fa-print"></i></a>
                                 </div>
                             </td>
                         </tr>

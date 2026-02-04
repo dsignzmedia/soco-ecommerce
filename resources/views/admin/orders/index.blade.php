@@ -300,13 +300,25 @@
                                         width: 100%;
                                         background-color: #fff;
                                         box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+                                    <select name="order_status" onchange="this.form.submit()" class="no-tom" style="
+                                        padding: 6px 10px;
+                                        border-radius: 6px;
+                                        font-size: 12px;
+                                        font-weight: 500;
+                                        color: #1f2937;
+                                        border: 1px solid #d1d5db;
+                                        cursor: pointer;
+                                        width: 100%;
+                                        background-color: #fff;
+                                        box-shadow: 0 1px 2px rgba(0,0,0,0.05);
                                     ">
                                         @foreach([
                                             'order_placed' => 'Order Placed',
                                             'processing' => 'Processing',
                                             'packed' => 'Packed',
                                             'shipped' => 'Shipped',
-                                            'delivered' => 'Delivered'
+                                            'delivered' => 'Delivered',
+                                            'cancelled' => 'Cancel Shipment'
                                         ] as $value => $label)
                                             <option value="{{ $value }}" @selected($order->order_status == $value)>{{ $label }}</option>
                                         @endforeach

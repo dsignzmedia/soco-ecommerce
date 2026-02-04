@@ -167,73 +167,81 @@
     @endif
 
     <div class="card">
-        <div class="tabs">
-            <button class="tab {{ !request('tab') || request('tab') === 'product-types' ? 'active' : '' }}" onclick="switchTab('product-types')">
-                <i class="fas fa-tags"></i> Product Types
-            </button>
-            <button class="tab {{ request('tab') === 'categories' ? 'active' : '' }}" onclick="switchTab('categories')">
-                <i class="fas fa-folder"></i> Categories
-            </button>
-        </div>
+        @if(!$hideProductTypes)
+            {{-- Tabbed Interface for School Admin --}}
+            <div class="tabs">
+                <button class="tab {{ !request('tab') || request('tab') === 'product-types' ? 'active' : '' }}" onclick="switchTab('product-types')">
+                    <i class="fas fa-tags"></i> Product Types
+                </button>
+                <button class="tab {{ request('tab') === 'categories' ? 'active' : '' }}" onclick="switchTab('categories')">
+                    <i class="fas fa-folder"></i> Categories
+                </button>
+            </div>
 
-        <!-- Product Types Tab -->
-        <div id="product-types" class="tab-content {{ !request('tab') || request('tab') === 'product-types' ? 'active' : '' }}">
-            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:24px;">
-                <div>
-                    <h3 style="margin:0;color:#111827;">Product Types</h3>
-                    <p style="margin:4px 0 0;color:#475467;font-size:14px;">Manage product types used across the platform</p>
+            <!-- Product Types Tab -->
+            <div id="product-types" class="tab-content {{ !request('tab') || request('tab') === 'product-types' ? 'active' : '' }}">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:24px;">
+                    <div>
+                        <h3 style="margin:0;color:#111827;">Product Types</h3>
+                        <p style="margin:4px 0 0;color:#475467;font-size:14px;">Manage product types used across the platform</p>
+                    </div>
+                    <a href="{{ route('master.admin.product-types.create') }}" class="nav__item" style="background:#490d59;color:#fff;border-radius:9999px;padding:8px 16px;width:auto;font-size:13px;font-weight:600;">
+                        <i class="fas fa-plus"></i> Add Product Type
+                    </a>
                 </div>
-                <a href="{{ route('master.admin.product-types.create') }}" class="nav__item" style="background:#490d59;color:#fff;border-radius:9999px;padding:8px 16px;width:auto;font-size:13px;font-weight:600;">
-                    <i class="fas fa-plus"></i> Add Product Type
-                </a>
+
+                <table>
+                    <thead>
+                        <tr>
+                            <th>S.No</th>
+                            <th>Name</th>
+                            <th>Sort Order</th>
+                            <th>Status</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @forelse($productTypes as $type)
+                            <tr>
+                                <td style="width:70px;">{{ $loop->iteration + ($productTypes->currentPage() - 1) * $productTypes->perPage() }}</td>
+                                <td><strong style="color:#111827;">{{ $type->name }}</strong></td>
+                                <td>{{ $type->sort_order }}</td>
+                                <td>
+                                    <span class="status-pill status-{{ $type->is_active ? 'active' : 'inactive' }}">
+                                        {{ $type->is_active ? 'Active' : 'Inactive' }}
+                                    </span>
+                                </td>
+                                <td class="actions">
+                                    <div class="d-flex flex-wrap gap-2">
+                                        <a href="{{ route('master.admin.product-types.edit', $type) }}" class="btn-vs-sm">Edit</a>
+                                        <form action="{{ route('master.admin.product-types.destroy', $type) }}" method="POST" style="display:inline;" onsubmit="return confirm('Are you sure you want to delete this product type?');">
+                                            @csrf
+                                            @method('DELETE')
+                                            <button type="submit" class="btn-vs-sm" style="background:#b42318;color:#fff;border:none;">Delete</button>
+                                        </form>
+                                    </div>
+                                </td>
+                            </tr>
+                        @empty
+                            <tr>
+                                <td colspan="5">No product types yet. <a href="{{ route('master.admin.product-types.create') }}">Create one</a></td>
+                            </tr>
+                        @endforelse
+                    </tbody>
+                </table>
+                <div class="pagination-container">
+                    {{ $productTypes->onEachSide(1)->links() }}
+                </div>
             </div>
 
-            <table>
-                <thead>
-                    <tr>
-                        <th>S.No</th>
-                        <th>Name</th>
-                        <th>Sort Order</th>
-                        <th>Status</th>
-                        <th>Actions</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    @forelse($productTypes as $type)
-                        <tr>
-                            <td style="width:70px;">{{ $loop->iteration + ($productTypes->currentPage() - 1) * $productTypes->perPage() }}</td>
-                            <td><strong style="color:#111827;">{{ $type->name }}</strong></td>
-                            <td>{{ $type->sort_order }}</td>
-                            <td>
-                                <span class="status-pill status-{{ $type->is_active ? 'active' : 'inactive' }}">
-                                    {{ $type->is_active ? 'Active' : 'Inactive' }}
-                                </span>
-                            </td>
-                            <td class="actions">
-                                <div class="d-flex flex-wrap gap-2">
-                                    <a href="{{ route('master.admin.product-types.edit', $type) }}" class="btn-vs-sm">Edit</a>
-                                    <form action="{{ route('master.admin.product-types.destroy', $type) }}" method="POST" style="display:inline;" onsubmit="return confirm('Are you sure you want to delete this product type?');">
-                                        @csrf
-                                        @method('DELETE')
-                                        <button type="submit" class="btn-vs-sm" style="background:#b42318;color:#fff;border:none;">Delete</button>
-                                    </form>
-                                </div>
-                            </td>
-                        </tr>
-                    @empty
-                        <tr>
-                            <td colspan="5">No product types yet. <a href="{{ route('master.admin.product-types.create') }}">Create one</a></td>
-                        </tr>
-                    @endforelse
-                </tbody>
-            </table>
-            <div class="pagination-container">
-                {{ $productTypes->onEachSide(1)->links() }}
-            </div>
-        </div>
+            <!-- Categories Tab -->
+            <div id="categories" class="tab-content {{ request('tab') === 'categories' ? 'active' : '' }}">
+        @endif
 
-        <!-- Categories Tab -->
-        <div id="categories" class="tab-content {{ request('tab') === 'categories' ? 'active' : '' }}">
+        {{-- Categories Content (Used as a Tab if hideProductTypes is false, or as standalone content if true) --}}
+        
+        @if($hideProductTypes)
+             {{-- Header for Standalone View --}}
             <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:24px;">
                 <div>
                     <h3 style="margin:0;color:#111827;">Categories</h3>
@@ -250,127 +258,122 @@
                     <i class="fas fa-plus"></i> Add Category
                 </a>
             </div>
-
-            <table>
-                <thead>
-                    <tr>
-                        <th>S.No</th>
-                        <th>Name</th>
-                        <th>Sort Order</th>
-                        <th>Status</th>
-                        <th>Actions</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    @forelse($categories as $category)
-                        <tr>
-                            <td style="width:70px;">{{ $loop->iteration + ($categories->currentPage() - 1) * $categories->perPage() }}</td>
-                            <td><strong style="color:#111827;">{{ $category->name }}</strong></td>
-                            <td>{{ $category->sort_order }}</td>
-                            <td>
-                                <span class="status-pill status-{{ $category->is_active ? 'active' : 'inactive' }}">
-                                    {{ $category->is_active ? 'Active' : 'Inactive' }}
-                                </span>
-                            </td>
-                            <td class="actions">
-                                @php
-                                    $editRoute = match($layout) {
-                                        'admin.layouts.back_to_school' => 'admin.back_to_school.categories.edit',
-                                        'admin.layouts.merchandise' => 'admin.merchandise.categories.edit',
-                                        default => 'master.admin.categories.edit',
-                                    };
-                                    $destroyRoute = match($layout) {
-                                        'admin.layouts.back_to_school' => 'admin.back_to_school.categories.destroy',
-                                        'admin.layouts.merchandise' => 'admin.merchandise.categories.destroy',
-                                        default => 'master.admin.categories.destroy',
-                                    };
-                                @endphp
-                                <div class="d-flex flex-wrap gap-2">
-                                    <a href="{{ route($editRoute, $category) }}" class="btn-vs-sm">Edit</a>
-                                    <form action="{{ route($destroyRoute, $category) }}" method="POST" style="display:inline;" onsubmit="return confirm('Are you sure you want to delete this category?');">
-                                        @csrf
-                                        @method('DELETE')
-                                        <button type="submit" class="btn-vs-sm" style="background:#b42318;color:#fff;border:none;">Delete</button>
-                                    </form>
-                                </div>
-                            </td>
-                        </tr>
-                    @empty
-                        <tr>
-                            <td colspan="5">No categories yet. <a href="{{ route($createRoute ?? 'master.admin.categories.create') }}">Create one</a></td>
-                        </tr>
-                    @endforelse
-                </tbody>
-            </table>
-            <div class="pagination-container">
-                {{ $categories->onEachSide(1)->links() }}
+        @else
+             {{-- Header for Tabbed View (Reuses same content but wrapped in tab div above) --}}
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:24px;">
+                <div>
+                    <h3 style="margin:0;color:#111827;">Categories</h3>
+                    <p style="margin:4px 0 0;color:#475467;font-size:14px;">Manage product categories for better organization</p>
+                </div>
+                 @php
+                    $createRoute = match($layout) {
+                        'admin.layouts.back_to_school' => 'admin.back_to_school.categories.create',
+                        'admin.layouts.merchandise' => 'admin.merchandise.categories.create',
+                        default => 'master.admin.categories.create',
+                    };
+                @endphp
+                <a href="{{ route($createRoute) }}" class="nav__item" style="background:#490d59;color:#fff;border-radius:9999px;padding:8px 16px;width:auto;font-size:13px;font-weight:600;">
+                    <i class="fas fa-plus"></i> Add Category
+                </a>
             </div>
-        </div>
-    </div>
+        @endif
 
+
+        <table>
+            <thead>
+                <tr>
+                    <th>S.No</th>
+                    <th>Name</th>
+                    <th>Sort Order</th>
+                    <th>Status</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                @forelse($categories as $category)
+                    <tr>
+                        <td style="width:70px;">{{ $loop->iteration + ($categories->currentPage() - 1) * $categories->perPage() }}</td>
+                        <td><strong style="color:#111827;">{{ $category->name }}</strong></td>
+                        <td>{{ $category->sort_order }}</td>
+                        <td>
+                            <span class="status-pill status-{{ $category->is_active ? 'active' : 'inactive' }}">
+                                {{ $category->is_active ? 'Active' : 'Inactive' }}
+                            </span>
+                        </td>
+                        <td class="actions">
+                            @php
+                                $editRoute = match($layout) {
+                                    'admin.layouts.back_to_school' => 'admin.back_to_school.categories.edit',
+                                    'admin.layouts.merchandise' => 'admin.merchandise.categories.edit',
+                                    default => 'master.admin.categories.edit',
+                                };
+                                $destroyRoute = match($layout) {
+                                    'admin.layouts.back_to_school' => 'admin.back_to_school.categories.destroy',
+                                    'admin.layouts.merchandise' => 'admin.merchandise.categories.destroy',
+                                    default => 'master.admin.categories.destroy',
+                                };
+                            @endphp
+                            <div class="d-flex flex-wrap gap-2">
+                                <a href="{{ route($editRoute, $category) }}" class="btn-vs-sm">Edit</a>
+                                <form action="{{ route($destroyRoute, $category) }}" method="POST" style="display:inline;" onsubmit="return confirm('Are you sure you want to delete this category?');">
+                                    @csrf
+                                    @method('DELETE')
+                                    <button type="submit" class="btn-vs-sm" style="background:#b42318;color:#fff;border:none;">Delete</button>
+                                </form>
+                            </div>
+                        </td>
+                    </tr>
+                @empty
+                    <tr>
+                        <td colspan="5">No categories yet. <a href="{{ route($createRoute ?? 'master.admin.categories.create') }}">Create one</a></td>
+                    </tr>
+                @endforelse
+            </tbody>
+        </table>
+        <div class="pagination-container">
+            {{ $categories->onEachSide(1)->links() }}
+        </div>
+
+        
+        @if(!$hideProductTypes)
+            </div> {{-- Close categories tab content --}}
+        @endif
+    </div> {{-- Close card --}}
+
+    @push('scripts')
     <script>
-        function switchTab(tabName) {
+        function switchTab(tabId) {
             // Hide all tab contents
-            document.querySelectorAll('.tab-content').forEach(content => {
-                content.classList.remove('active');
+            document.querySelectorAll('.tab-content').forEach(el => {
+                el.style.display = 'none';
+                el.classList.remove('active');
             });
             
-            // Remove active class from all tabs
-            document.querySelectorAll('.tab').forEach(tab => {
-                tab.classList.remove('active');
+            // Deactivate all tabs
+            document.querySelectorAll('.tab').forEach(el => {
+                el.classList.remove('active');
             });
             
             // Show selected tab content
-            document.getElementById(tabName).classList.add('active');
-            
-            // Add active class to clicked tab
-            event.target.classList.add('active');
-            
-            // Update URL with query parameter to preserve tab state
-            const url = new URL(window.location.href);
-            if (tabName === 'categories') {
-                url.searchParams.set('tab', 'categories');
-            } else {
-                url.searchParams.set('tab', 'product-types');
-            }
-            // Remove pagination parameters when switching tabs (reset to page 1)
-            url.searchParams.delete('product_types');
-            url.searchParams.delete('categories');
-            window.location.href = url.toString();
-        }
-        
-        // Initialize tab state on page load
-        document.addEventListener('DOMContentLoaded', function() {
-            const urlParams = new URLSearchParams(window.location.search);
-            let activeTab = urlParams.get('tab');
-            
-            // Backward compatibility: handle old ?categories=1 format
-            if (!activeTab && urlParams.get('categories') === '1') {
-                activeTab = 'categories';
-                // Redirect to new format
-                const url = new URL(window.location.href);
-                url.searchParams.delete('categories');
-                url.searchParams.set('tab', 'categories');
-                window.history.replaceState({}, '', url);
+            const content = document.getElementById(tabId);
+            if(content) {
+                content.style.display = 'block';
+                content.classList.add('active');
             }
             
-            activeTab = activeTab || 'product-types';
-            
-            // Ensure correct tab is active
-            if (activeTab === 'categories') {
-                const categoriesTab = document.querySelector('.tab:nth-child(2)');
-                const productTypesTab = document.querySelector('.tab:nth-child(1)');
-                const categoriesContent = document.getElementById('categories');
-                const productTypesContent = document.getElementById('product-types');
-                
-                if (categoriesTab && productTypesTab && categoriesContent && productTypesContent) {
-                    productTypesTab.classList.remove('active');
-                    productTypesContent.classList.remove('active');
-                    categoriesTab.classList.add('active');
-                    categoriesContent.classList.add('active');
+            // Activate selected tab button
+            document.querySelectorAll('.tab').forEach(btn => {
+                if(btn.getAttribute('onclick') && btn.getAttribute('onclick').includes(tabId)) {
+                    btn.classList.add('active');
                 }
-            }
-        });
+            });
+
+            // Update URL query param to maintain state on refresh
+            const url = new URL(window.location);
+            url.searchParams.set('tab', tabId);
+            window.history.pushState({}, '', url);
+        }
     </script>
+    @endpush
 @endsection
 

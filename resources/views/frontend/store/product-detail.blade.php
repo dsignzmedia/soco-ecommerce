@@ -92,7 +92,40 @@
                         <span>({{ $reviewCount }} reviews)</span>
                     </div> --}}
 
-                    <p class="product-text">{{ $product['description'] ?? 'Premium quality product with excellent craftsmanship and attention to detail. We think your skin should look and refreshed matter Nourish your outer inner beauty with our essential oil infused beauty products.' }}</p>
+                    <div class="description-wrapper mb-4">
+                        <p class="product-text mb-2" id="productDesc" style="white-space: pre-wrap; display: -webkit-box; -webkit-line-clamp: 9; -webkit-box-orient: vertical; overflow: hidden; transition: all 0.3s ease;">{{ $product['description'] ?? 'Premium quality product with excellent craftsmanship and attention to detail. We think your skin should look and refreshed matter Nourish your outer inner beauty with our essential oil infused beauty products.' }}</p>
+                        <button id="toggleDescBtn" class="btn btn-link text-primary p-0 text-decoration-none" style="display: none; font-size: 14px; font-weight: 600;">
+                            Read More <i class="fas fa-chevron-down ms-1" style="font-size: 12px;"></i>
+                        </button>
+                    </div>
+
+                    <script>
+                        document.addEventListener('DOMContentLoaded', function() {
+                            const desc = document.getElementById('productDesc');
+                            const btn = document.getElementById('toggleDescBtn');
+                            
+                            // Check if truncation is needed
+                            if (desc.scrollHeight > desc.clientHeight) {
+                                btn.style.display = 'inline-flex';
+                                btn.style.alignItems = 'center';
+                            }
+
+                            btn.addEventListener('click', function(e) {
+                                e.preventDefault();
+                                if (desc.style.webkitLineClamp !== 'unset') {
+                                    // Expand
+                                    desc.style.webkitLineClamp = 'unset';
+                                    desc.style.overflow = 'visible';
+                                    this.innerHTML = 'Read Less <i class="fas fa-chevron-up ms-1" style="font-size: 12px;"></i>';
+                                } else {
+                                    // Collapse
+                                    desc.style.webkitLineClamp = '9';
+                                    desc.style.overflow = 'hidden';
+                                    this.innerHTML = 'Read More <i class="fas fa-chevron-down ms-1" style="font-size: 12px;"></i>';
+                                }
+                            });
+                        });
+                    </script>
 
                     @php
                         $defaultSize = isset($product['sizes']) && count($product['sizes']) > 0 ? $product['sizes'][0] : 'Standard';
