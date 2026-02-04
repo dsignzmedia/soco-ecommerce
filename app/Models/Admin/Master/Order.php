@@ -65,6 +65,13 @@ class Order extends Model
                   });
             });
         });
+
+        static::addGlobalScope('school_orders_only', function (Builder $builder) {
+            $builder->where(function($q) {
+                $q->whereNotIn('product_type', ['back_to_school', 'merchandised'])
+                  ->orWhereNull('product_type');
+            });
+        });
     }
 
     public function school(): BelongsTo

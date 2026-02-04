@@ -63,8 +63,14 @@ class CatalogController extends Controller
             '12' => 'Class 12',
         ];
         
-        // Fetch categories from database, fallback to defaults if empty
-        $categories = \App\Models\Admin\Master\Category::getForSelect();
+        // Fetch categories scoped to 'school'
+        $categories = \App\Models\Admin\Master\Category::where('type', 'school')
+            ->where('is_active', true)
+            ->orderBy('sort_order', 'asc')
+            ->orderBy('name', 'asc')
+            ->pluck('name', 'slug')
+            ->toArray();
+
         if (empty($categories)) {
             $categories = [
                 'regular_uniforms' => 'Regular Uniforms',
@@ -138,8 +144,14 @@ class CatalogController extends Controller
             '12' => 'Class 12',
         ];
 
-        // Fetch categories from database, fallback to defaults if empty
-        $categories = \App\Models\Admin\Master\Category::getForSelect();
+        // Fetch categories scoped to 'school'
+        $categories = \App\Models\Admin\Master\Category::where('type', 'school')
+            ->where('is_active', true)
+            ->orderBy('sort_order', 'asc')
+            ->orderBy('name', 'asc')
+            ->pluck('name', 'slug')
+            ->toArray();
+
         if (empty($categories)) {
             $categories = [
                 'regular_uniforms' => 'Regular Uniforms',

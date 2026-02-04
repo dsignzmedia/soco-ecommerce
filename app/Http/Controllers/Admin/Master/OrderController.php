@@ -12,9 +12,11 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
 use Illuminate\View\View;
 use Barryvdh\DomPDF\Facade\Pdf;
+use App\Traits\DtdcShipmentTrait;
 
 class OrderController extends Controller
 {
+    use DtdcShipmentTrait;
     public function index(Request $request): View
     {
         $filters = $request->only([
@@ -59,8 +61,12 @@ class OrderController extends Controller
 
     public function updateStatus(Request $request, Order $order): RedirectResponse
     {
+        if ($request->input('order_status') === 'cancelled') {
+            return $this->cancelShipment($request, $order);
+        }
+
         $data = $request->validate([
-            'order_status' => ['required', 'string', 'in:order_placed,processing,packed,shipped,delivered'],
+            'order_status' => ['required', 'string', 'in:order_placed,processing,packed,shipped,delivered,cancelled'],
             'payment_status' => ['nullable', 'string', 'max:255'],
             'tracking_number' => ['nullable', 'string', 'max:255'],
         ]);

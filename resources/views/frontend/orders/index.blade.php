@@ -58,6 +58,7 @@
                                     }
                                 @endphp
                                 <a href="{{ $trackRoute }}" class="card shadow-sm border-0 mb-3 position-relative text-decoration-none" style="border-radius: 12px; transition: all 0.3s; display: block;"
+                                    onclick="console.log('Clicked Order:', '{{ $order['id'] }}', 'Item:', '{{ $item['id'] }}', 'Route:', '{{ $trackRoute }}')"
                                     onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 6px 20px rgba(73, 13, 89, 0.15)'"
                                     onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 2px 8px rgba(0,0,0,0.1)'">
 

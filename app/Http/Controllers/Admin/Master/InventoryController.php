@@ -40,6 +40,11 @@ class InventoryController extends Controller
         $filters = $request->only(['school_id', 'category', 'status', 'q', 'product_type']);
 
         $products = ProductMapping::with(['school', 'variants'])
+            // Explicitly exclude BTS and Merchandise products from Master Admin Inventory
+            ->where(function($q) {
+                $q->whereNotIn('product_type', ['back_to_school', 'merchandised'])
+                  ->orWhereNull('product_type');
+            })
             ->when($filters['product_type'] ?? null, fn($q, $type) => $q->where('product_type', $type))
             ->when($filters['school_id'] ?? null, fn($q, $school) => $q->where('school_id', $school))
             ->when($filters['category'] ?? null, fn($q, $category) => $q->where('category', $category))
@@ -60,8 +65,9 @@ class InventoryController extends Controller
             ->pluck('product_type')
             ->toArray();
             
-        // Ensure standard types are present
-        $productTypes = array_unique(array_merge($dbTypes, ['back_to_school', 'merchandised']));
+        // Ensure standard types are present, excluding BTS/Merch for Master Admin
+        $productTypes = array_unique(array_merge($dbTypes, ['authorized', 'optional']));
+        $productTypes = array_diff($productTypes, ['back_to_school', 'merchandised', 'merchandise']);
         sort($productTypes);
 
         return view('admin.inventory.list', compact('products', 'schools', 'categories', 'filters', 'productTypes'));

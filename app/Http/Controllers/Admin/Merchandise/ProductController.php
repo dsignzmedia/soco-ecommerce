@@ -782,8 +782,14 @@ class ProductController extends Controller
             '11' => 'Class 11',
             '12' => 'Class 12',
         ];
-        // Fetch categories from database, fallback to defaults if empty
-        $categories = \App\Models\Admin\Master\Category::getForSelect();
+        // Fetch categories scoped to 'merchandise'
+        $categories = \App\Models\Admin\Master\Category::where('type', 'merchandise')
+            ->where('is_active', true)
+            ->orderBy('sort_order', 'asc')
+            ->orderBy('name', 'asc')
+            ->pluck('name', 'slug')
+            ->toArray();
+
         if (empty($categories)) {
             $categories = ['T-Shirts' => 'T-Shirts', 'Hoodies' => 'Hoodies', 'Caps' => 'Caps', 'Mugs' => 'Mugs', 'Accessories' => 'Accessories'];
         }
@@ -990,8 +996,14 @@ class ProductController extends Controller
             '11' => 'Class 11',
             '12' => 'Class 12',
         ];
-        // Fetch categories from database, fallback to defaults if empty
-        $categories = \App\Models\Admin\Master\Category::getForSelect();
+        // Fetch categories scoped to 'merchandise'
+        $categories = \App\Models\Admin\Master\Category::where('type', 'merchandise')
+            ->where('is_active', true)
+            ->orderBy('sort_order', 'asc')
+            ->orderBy('name', 'asc')
+            ->pluck('name', 'slug')
+            ->toArray();
+
         if (empty($categories)) {
             $categories = ['T-Shirts' => 'T-Shirts', 'Hoodies' => 'Hoodies', 'Caps' => 'Caps', 'Mugs' => 'Mugs', 'Accessories' => 'Accessories'];
         }

@@ -14,9 +14,11 @@ use Illuminate\Support\Facades\DB;
 
 use Illuminate\Support\Facades\Http;
 use Barryvdh\DomPDF\Facade\Pdf;
+use App\Traits\DtdcShipmentTrait;
 
 class AuthController extends Controller
 {
+    use DtdcShipmentTrait;
     /**
      * Initiate Razorpay Order
      */
@@ -3303,7 +3305,7 @@ class AuthController extends Controller
                 ->where('name', $selectedProfile->school_name)
                 ->first();
         }
-        $shippingCost = $this->calculateShippingCostForCheckout($selectedSchool, $subtotal);
+        $shippingCost = $this->calculateShippingCost($selectedSchool, $subtotal);
         $totalWithShipping = $total + $shippingCost;
 
         // Get saved addresses from database instead of session
@@ -3433,6 +3435,8 @@ class AuthController extends Controller
 
             // Calculate checkout subtotal (for zone free-shipping threshold logic)
             $checkoutSubtotal = 0.0;
+            $totalWeight = 0.0; // Initialize total weight for shipping
+            $createdOrderIds = []; // Track created order IDs for shipping update
             foreach ($filteredCartItems as $item) {
                 $product = \App\Models\Admin\Master\ProductMapping::with(['variants', 'gradePricing'])->find($item->product_id);
                 if (! $product) {
@@ -3440,7 +3444,7 @@ class AuthController extends Controller
                 }
                 $studentProfile = $profiles->firstWhere('id', (int) $item->profile_id);
                 $studentGrade = $studentProfile ? $studentProfile->grade : null;
-                $itemPrice = $this->calculateItemPriceForCheckout($product, $item, $studentGrade);
+                $itemPrice = $this->calculateItemPrice($product, $item, $studentGrade);
                 $checkoutSubtotal += ((float) $itemPrice) * ((int) $item->quantity);
             }
 
@@ -3455,7 +3459,7 @@ class AuthController extends Controller
                         ->where('name', $profile->school_name)
                         ->first();
                 }
-                $shippingCost = $this->calculateShippingCostForCheckout($school, $checkoutSubtotal);
+                $shippingCost = $this->calculateShippingCost($school, $checkoutSubtotal);
             }
 
             // DB Transaction to ensure data consistency
@@ -3532,6 +3536,10 @@ class AuthController extends Controller
                 $itemTax = ($itemSubtotal * $taxPercentage) / 100;
                 $itemTotal = $itemSubtotal + $itemTax;
 
+                // Calculate weight for shipping
+                $itemWeight = ($product->product_weight ?? 0.5) * $item->quantity; // Default to 0.5kg if missing
+                $totalWeight += $itemWeight;
+
                 $rowShipping = ($index === 0) ? $shippingCost : 0;
                 $rowTotalWithShipping = $itemTotal + $rowShipping;
 
@@ -3606,8 +3614,9 @@ class AuthController extends Controller
                     ]);
                 }
 
-                // Track processed cart item IDs
+                // Track processed cart item IDs AND created order IDs
                 $processedCartIds[] = $item->id;
+                $createdOrderIds[] = $order->id;
 
                 // Send Order Confirmation Email
                 if (!empty($order->customer_email)) {
@@ -3632,28 +3641,121 @@ class AuthController extends Controller
 
             \Illuminate\Support\Facades\DB::commit();
 
+            // ---------------------------------------------------------
+            // DTDC AUTOMATED SHIPMENT CREATION
+            // ---------------------------------------------------------
+            try {
+                if (!empty($createdOrderIds)) {
+                    $dtdcService = app(\App\Services\DtdcService::class);
+                    
+                    // Prepare shipment data
+                    $shipmentData = [
+                        'reference_number' => $orderNumber, // Use the group Order ID
+                        'service_type' => config('dtdc.service_type', 'B2C'), // Default to B2C/Lite
+                        'inco_terms' => 'DDP', // Pre-paid usually
+                        'description' => 'School Supplies',
+                        'declared_value' => $rowTotalWithShipping, // Note: This uses last row's total, fixing below
+                        'weight' => max($totalWeight, 0.5), // Ensure at least 0.5kg
+                        
+                        // Receiver Details
+                        'name' => $shippingAddress['name'],
+                        'address' => $shippingAddress['address'] . ', ' . $shippingAddress['city'] . ', ' . $shippingAddress['state'],
+                        'phone' => $shippingAddress['phone'],
+                        'pincode' => $shippingAddress['pincode'],
+                        'city' => $shippingAddress['city'],
+                        'state' => $shippingAddress['state'],
+                        'email' => $shippingAddress['email'] ?? ($user->email ?? ''),
+                    ];
+                    
+                    // Recalculate total value properly (sum of all created orders)
+                    // We can query it or use the tracking variable $checkoutSubtotal + tax + shipping?
+                    // Better to query the just-committed orders to be safe and accurate
+                    $totalOrderValue = \App\Models\Admin\Master\Order::whereIn('id', $createdOrderIds)->sum('total_amount');
+                    $shipmentData['declared_value'] = $totalOrderValue;
+
+                    // Log the attempt
+                    \Illuminate\Support\Facades\Log::info("Attempting DTDC Shipment for Order Group: $orderNumber");
+
+                    // Call API
+                    $shippingResponse = $dtdcService->createShipment($shipmentData);
+
+                    // Log full response for debugging
+                    \Illuminate\Support\Facades\Log::info("DTDC Shipment Response: ", is_array($shippingResponse) ? $shippingResponse : ['body' => $shippingResponse]);
+
+                    $isSuccess = false;
+                    $awb = null;
+
+                    if (isset($shippingResponse['success']) && $shippingResponse['success']) {
+                        // Check data structure (List vs Object)
+                        if (isset($shippingResponse['data']) && is_array($shippingResponse['data'])) {
+                            // API returns a list of results, use the first one
+                             $firstItem = isset($shippingResponse['data'][0]) ? $shippingResponse['data'][0] : $shippingResponse['data'];
+                             
+                             // Check success of the individual item
+                             if (isset($firstItem['success']) && $firstItem['success']) {
+                                 $awb = $firstItem['awb'] ?? null;
+                                 $isSuccess = true;
+                             } elseif (isset($firstItem['awb'])) {
+                                 // Some responses might just return the object
+                                 $awb = $firstItem['awb'];
+                                 $isSuccess = true;
+                             }
+                        }
+                    }
+
+                    if ($isSuccess && $awb) {
+                        // Update ALL orders in this batch with the tracking number
+                        \App\Models\Admin\Master\Order::whereIn('id', $createdOrderIds)->update([
+                            'tracking_number' => $awb,
+                            'courier_name' => 'DTDC',
+                            'order_status' => 'processing' // Move from pending to processing as label is generated
+                        ]);
+                        \Illuminate\Support\Facades\Log::info("DTDC Shipment Success for $orderNumber. AWB: $awb");
+                    } else {
+                        \Illuminate\Support\Facades\Log::error("DTDC Shipment Failed for $orderNumber", ['response' => $shippingResponse]);
+                        // Optional: Create an admin notification for failed shipping?
+                    }
+                }
+            } catch (\Exception $e) {
+                // Do NOT fail the order if shipping fails. Just log it.
+                \Illuminate\Support\Facades\Log::error("DTDC Auto-Shipment Exception: " . $e->getMessage());
+            }
+            // ---------------------------------------------------------
+
             // Clear processed cart items from database
             \App\Models\Cart::whereIn('id', $processedCartIds)->delete();
 
             // Clear checkout session data
             session()->forget(['checkout_selected_cart_ids', 'orders', 'payment_method', 'payment_id', 'amount_paid', 'payment_details']);
 
-            // Create Notification for Master Admins
-            \App\Models\Notification::create([
-                'type' => 'new_order',
-                'title' => 'New Order Received',
-                'message' => "Order #{$orderNumber} placed by {$shippingAddress['name']}",
-                'target_role' => 'master',
-                'data' => ['order_number' => $orderNumber],
-            ]);
-            // Create Notification for Inventory Admins
-            \App\Models\Notification::create([
-                'type' => 'new_order',
-                'title' => 'New Order Received',
-                'message' => "Order #{$orderNumber} placed by {$shippingAddress['name']}",
-                'target_role' => 'inventory',
-                'data' => ['order_number' => $orderNumber],
-            ]);
+            // Check if we need to send notifications (only for regular school orders)
+            // Skip mechanism for purely BTS/Merch orders as requested
+            $hasRegularOrders = \App\Models\Admin\Master\Order::withoutGlobalScopes()
+                ->whereIn('id', $createdOrderIds)
+                ->where(function($q) {
+                    $q->whereNotIn('product_type', ['back_to_school', 'merchandised'])
+                      ->orWhereNull('product_type');
+                })
+                ->exists();
+
+            if ($hasRegularOrders) {
+                // Create Notification for Master Admins
+                \App\Models\Notification::create([
+                    'type' => 'new_order',
+                    'title' => 'New Order Received',
+                    'message' => "Order #{$orderNumber} placed by {$shippingAddress['name']}",
+                    'target_role' => 'master',
+                    'data' => ['order_number' => $orderNumber],
+                ]);
+                // Create Notification for Inventory Admins
+                \App\Models\Notification::create([
+                    'type' => 'new_order',
+                    'title' => 'New Order Received',
+                    'message' => "Order #{$orderNumber} placed by {$shippingAddress['name']}",
+                    'target_role' => 'inventory',
+                    'data' => ['order_number' => $orderNumber],
+                ]);
+            }
 
             return redirect()->route('frontend.parent.orders')->with('success', 'Order placed successfully! Order # ' . $orderNumber);
 
@@ -3678,7 +3780,7 @@ class AuthController extends Controller
      * Calculate shipping cost for checkout based on school's shipping zone.
      * Fallback: ShippingSetting default_cost.
      */
-    protected function calculateShippingCostForCheckout(?\App\Models\Admin\Master\School $school, float $orderSubtotal): float
+    protected function calculateShippingCost(?\App\Models\Admin\Master\School $school, float $orderSubtotal): float
     {
         $settings = \App\Models\Admin\Master\ShippingSetting::current();
 
@@ -3702,7 +3804,7 @@ class AuthController extends Controller
     /**
      * Determine item unit price for checkout/order creation (variant + grade aware).
      */
-    protected function calculateItemPriceForCheckout(\App\Models\Admin\Master\ProductMapping $product, $cartItem, $studentGrade): float
+    protected function calculateItemPrice(\App\Models\Admin\Master\ProductMapping $product, $cartItem, $studentGrade): float
     {
         // Determine price: For fabric with grade pricing > grade-based > variant-based > regular
         $itemPrice = $product->price_regular ?? 0;
@@ -3752,8 +3854,15 @@ class AuthController extends Controller
             ->get();
 
         // Group orders by the base order number (SOCO-ID-Index -> ID)
+        // Group orders by the base order number (SOCO-ID-Timestamp -> ID-Timestamp)
         $groupedOrders = $orders->groupBy(function ($order) {
             $parts = explode('-', $order->order_number);
+            // Expected format: SOCO-{UserID}-{Timestamp}-{Index}
+            // We want to group by {UserID}-{Timestamp}
+            if (count($parts) >= 3) {
+                return $parts[1] . '-' . $parts[2];
+            }
+            // Fallback for unexpected formats
             return isset($parts[1]) ? $parts[1] : $parts[0];
         });
 
@@ -3853,8 +3962,8 @@ class AuthController extends Controller
                 $isExchangeOrder = (bool) $exchangeRequest;
             }
 
-            // Fix: Query by user_id
-            $orders = \App\Models\Admin\Master\Order::where('user_id', $user->id);
+            // Use withoutGlobalScopes to include BTS/Merch orders and orders from deleted schools
+            $orders = \App\Models\Admin\Master\Order::withoutGlobalScopes()->where('user_id', $user->id);
             
             // If it's an exchange order, show only that specific exchange order
             if ($isExchangeOrder && $itemId) {
@@ -3972,6 +4081,9 @@ class AuthController extends Controller
                     'status' => $item->order_status, // Individual item status
                     'status_index' => $itemStatusIndex, // Status index for this item
                     'updated_at' => $item->updated_at, // Last update time for this item
+                    'tracking_number' => $item->tracking_number,
+                    'courier_name' => $item->courier_name,
+                    'product_type' => $item->product_type,
                 ];
             })->toArray(),
         ];
@@ -4085,7 +4197,7 @@ class AuthController extends Controller
         $user = Auth::user();
 
         // Fix: Query by user_id
-        $orders = \App\Models\Admin\Master\Order::where('user_id', $user->id)
+        $orders = \App\Models\Admin\Master\Order::withoutGlobalScopes()->where('user_id', $user->id)
             ->where(function($q) use ($orderId) {
                 $q->where('order_number', 'like', 'SOCO-' . $orderId . '-%')
                   ->orWhere('order_number', 'like', $orderId . '%');

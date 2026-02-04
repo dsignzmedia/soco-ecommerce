@@ -12,33 +12,25 @@ class ShopController extends Controller
 {
     public function index(Request $request): View
     {
-        $query = ProductMapping::whereIn('product_type', ['merchandised', 'back_to_school'])
-            ->where('status', 'live');
+        // Default allowed types
+        $allowedTypes = ['merchandised', 'back_to_school'];
 
         // Filter by product type if provided
-        if ($request->has('product_type') && !empty($request->product_type)) {
-            $productType = $request->product_type;
-            if (in_array($productType, ['merchandised', 'back_to_school'])) {
-                $query->where('product_type', $productType);
-            }
+        if ($request->has('product_type') && in_array($request->product_type, $allowedTypes)) {
+            $allowedTypes = [$request->product_type];
         }
+
+        $query = ProductMapping::whereIn('product_type', $allowedTypes)
+            ->where('status', 'live');
 
         if ($request->has('category')) {
              $query->where('category', $request->category);
         }
 
-        // Get categories first - only categories that have products
-        $allProductsQuery = ProductMapping::whereIn('product_type', ['merchandised', 'back_to_school'])
-            ->where('status', 'live')
-            ->whereNotNull('category');
-        
-        $categoryIds = $allProductsQuery->distinct()->pluck('category')->filter()->unique();
-        
-        // Get categories that have at least one product
-        $categories = ProductMapping::whereIn('product_type', ['merchandised', 'back_to_school'])
+        // Get categories that have at least one product matching the filtered product types
+        $categories = ProductMapping::whereIn('product_type', $allowedTypes)
             ->where('status', 'live')
             ->whereNotNull('category')
-            ->whereIn('category', $categoryIds)
             ->distinct()
             ->orderBy('category')
             ->pluck('category');
