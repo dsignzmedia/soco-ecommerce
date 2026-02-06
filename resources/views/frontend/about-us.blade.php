@@ -30,7 +30,7 @@
             <div class="about-content-wrapper">
                 <!-- Floating image on the left -->
                 <div class="about-img-float">
-                    <img src="{{ asset('assets/img/about/aboutus_logo_image.png') }}" alt="About Us">
+                    <img src="{{ asset('assets/img/about/about_logo_default.png') }}" alt="About Us">
                 </div>
                 <div class="about-intro">
                 <!-- First paragraph wraps around the image -->

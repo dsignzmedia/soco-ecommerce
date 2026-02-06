@@ -559,5 +559,28 @@ class SystemSettingsController extends Controller
 
         return back()->with('status', 'Backup deleted.');
     }
+    // Maintenance Mode
+    public function maintenance(): View
+    {
+        $branding = AppBranding::current();
+        return view('admin.settings.maintenance', compact('branding'));
+    }
+
+    public function updateMaintenance(Request $request): RedirectResponse
+    {
+        $data = $request->validate([
+            'maintenance_bts' => ['nullable', 'boolean'],
+            'maintenance_merch' => ['nullable', 'boolean'],
+        ]);
+
+        $branding = AppBranding::current();
+        
+        $branding->update([
+            'maintenance_bts' => $request->has('maintenance_bts'),
+            'maintenance_merch' => $request->has('maintenance_merch'),
+        ]);
+
+        return back()->with('status', 'Maintenance settings updated.');
+    }
 }
 

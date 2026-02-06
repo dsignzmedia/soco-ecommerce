@@ -195,7 +195,7 @@
                         <tr>
                             <th>S.No</th>
                             <th>Name</th>
-                            <th>Sort Order</th>
+                            <!-- <th>Sort Order</th> -->
                             <th>Status</th>
                             <th>Actions</th>
                         </tr>
@@ -205,7 +205,7 @@
                             <tr>
                                 <td style="width:70px;">{{ $loop->iteration + ($productTypes->currentPage() - 1) * $productTypes->perPage() }}</td>
                                 <td><strong style="color:#111827;">{{ $type->name }}</strong></td>
-                                <td>{{ $type->sort_order }}</td>
+                                <!-- <td>{{ $type->sort_order }}</td> -->
                                 <td>
                                     <span class="status-pill status-{{ $type->is_active ? 'active' : 'inactive' }}">
                                         {{ $type->is_active ? 'Active' : 'Inactive' }}
@@ -284,7 +284,7 @@
                 <tr>
                     <th>S.No</th>
                     <th>Name</th>
-                    <th>Sort Order</th>
+                    <!-- <th>Sort Order</th> -->
                     <th>Status</th>
                     <th>Actions</th>
                 </tr>
@@ -294,7 +294,7 @@
                     <tr>
                         <td style="width:70px;">{{ $loop->iteration + ($categories->currentPage() - 1) * $categories->perPage() }}</td>
                         <td><strong style="color:#111827;">{{ $category->name }}</strong></td>
-                        <td>{{ $category->sort_order }}</td>
+                        <!-- <td>{{ $category->sort_order }}</td> -->
                         <td>
                             <span class="status-pill status-{{ $category->is_active ? 'active' : 'inactive' }}">
                                 {{ $category->is_active ? 'Active' : 'Inactive' }}
@@ -318,7 +318,7 @@
                                 <form action="{{ route($destroyRoute, $category) }}" method="POST" style="display:inline;" onsubmit="return confirm('Are you sure you want to delete this category?');">
                                     @csrf
                                     @method('DELETE')
-                                    <button type="submit" class="btn-vs-sm" style="background:#b42318;color:#fff;border:none;">Delete</button>
+                                    <button type="submit" class="btn-vs-sm" style="background:#b42318;color:#fff;border:none; !important">Delete</button>
                                 </form>
                             </div>
                         </td>

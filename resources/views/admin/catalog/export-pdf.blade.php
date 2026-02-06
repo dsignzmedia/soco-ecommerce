@@ -120,6 +120,7 @@
                         <th style="width: 15%;">Grade Pricing</th>
                         <th style="width: 15%;">Variants</th>
                         <th style="width: 8%;">Stock</th>
+                        <th style="width: 8%;">Delivery</th>
                         <th style="width: 7%;">Status</th>
                     </tr>
                 </thead>
@@ -264,6 +265,9 @@
                                 @if($product->variants_count > 0)
                                     <br><span style="color: #6b7280; font-size: 8px;">(Variants)</span>
                                 @endif
+                            </td>
+                            <td>
+                                {{ $product->delivery_duration ?? 'N/A' }}
                             </td>
                             <td>
                                 <span class="badge status-{{ $product->status }}">

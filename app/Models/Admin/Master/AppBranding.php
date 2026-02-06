@@ -23,6 +23,8 @@ class AppBranding extends Model
         'meta_title',
         'meta_description',
         'meta_keywords',
+        'maintenance_bts',
+        'maintenance_merch',
     ];
 
     public static function current(): self

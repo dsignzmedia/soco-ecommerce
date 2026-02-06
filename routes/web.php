@@ -195,6 +195,8 @@ Route::prefix('MasterAdmin')->name('master.admin.')->group(function () {
 
         // System Settings
         Route::get('/settings', [SystemSettingsController::class, 'index'])->name('settings.index');
+        Route::get('/settings/maintenance', [SystemSettingsController::class, 'maintenance'])->name('settings.maintenance');
+        Route::put('/settings/maintenance', [SystemSettingsController::class, 'updateMaintenance'])->name('settings.maintenance.update');
 
         // Payment Gateways
         Route::get('/settings/payment-gateways', [SystemSettingsController::class, 'paymentGateways'])->name('settings.payment-gateways');

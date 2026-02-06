@@ -90,25 +90,31 @@
                     <div class="filter-section">
                         <h6 class="filter-title">Product Type</h6>
                         <div class="filter-options">
-                            <!-- Hidden filters for Authorized and Optional (checked by default) -->
-                            <input type="checkbox" name="product_type" value="authorized" class="filter-checkbox d-none" checked>
-                            <input type="checkbox" name="product_type" value="optional" class="filter-checkbox d-none" checked>
+                            @foreach($productTypes as $typeObj)
+                                @php
+                                    $typeSlug = $typeObj->slug;
+                                    $label = $typeObj->label;
+                                    
 
-                            <label class="filter-option">
-                                <input type="checkbox" name="product_type" value="merchandised" class="filter-checkbox">
-                                <span class="checkbox-mark"></span>
-                                <span class="option-label">Merchandised Product</span>
-                            </label>
-                            <label class="filter-option">
-                                <input type="checkbox" name="product_type" value="back_to_school" class="filter-checkbox">
-                                <span class="checkbox-mark"></span>
-                                <span class="option-label">Back to School Product</span>
-                            </label>
+                                    
+                                    // Default checked for all displayed types (including new ones)
+                                    $isChecked = true;
+                                    
+                                    // Helper: skip bts and merch for filters as requested
+                                    // if(in_array($typeSlug, ['merchandised', 'back_to_school'])) continue;
+                                @endphp
+                                <label class="filter-option">
+                                    <input type="checkbox" name="product_type" value="{{ $typeSlug }}" class="filter-checkbox" {{ $isChecked ? 'checked' : '' }}>
+                                    <span class="checkbox-mark"></span>
+                                    <span class="option-label">{{ $label }}</span>
+                                </label>
+                            @endforeach
                         </div>
                         <div class="filter-divider"></div>
                     </div>
 
                     <!-- Categories -->
+                    <!-- Categories (Commented out as per request)
                     <div class="filter-section">
                         <h6 class="filter-title">Categories</h6>
                         <div class="filter-options">
@@ -121,6 +127,7 @@
                             @endforeach
                         </div>
                     </div>
+                    -->
 
 
                 </div>
@@ -132,10 +139,15 @@
                     <p class="text-muted mb-0">Now Shopping By :</p>
                 </div>
 
-                <div class="row justify-content-start" id="productsContainer">
+                <div class="row justify-content-start g-2 g-md-3" id="productsContainer">
                     @if(count($allProducts) > 0)
                         @foreach($allProducts as $product)
-                            <div class="col-6 col-md-6 col-lg-4 col-xl-4 product-item"
+                            @php
+                                $pType = strtolower($product['type'] ?? '');
+                                // Fix for glitch: Don't even render these products to avoid flash
+                                // if(in_array($pType, ['merchandised', 'back_to_school'])) continue;
+                            @endphp
+                            <div class="col-6 col-md-4 col-lg-3 product-item"
                                  data-product-type="{{ strtolower($product['type'] ?? '') }}"
                                  data-product-name="{{ strtolower($product['name']) }}"
                                  data-product-category="{{ strtolower($product['category'] ?? 'regular_uniforms') }}"
@@ -151,9 +163,29 @@
                                                 <img src="{{ asset('assets/img/no image/no_image.png') }}" alt="{{ $product['name'] }}" class="w-100">
                                             @endif
                                         </a>
-                                        @if(isset($product['type']) && in_array(strtolower($product['type']), ['authorized', 'optional']))
-                                            <div class="product-tag {{ strtolower($product['type']) }}">
-                                                {{ strtoupper($product['type']) }}
+                                        </a>
+                                        @php
+                                            $pType = isset($product['type']) ? strtolower($product['type']) : '';
+                                            $pTypeObj = $productTypes->firstWhere('slug', $pType);
+                                            // Show tag if product tag is set in DB, or fallback for authorized/optional
+                                            $showTag = false;
+                                            $tagName = '';
+                                            
+                                            if ($pTypeObj && !empty($pTypeObj->product_tag)) {
+                                                $showTag = true;
+                                                $tagName = $pTypeObj->product_tag;
+                                            } elseif (in_array($pType, ['authorized', 'optional'])) {
+                                                // Legacy fallback
+                                                $showTag = true;
+                                                $tagName = strtoupper($pType);
+                                            }
+                                        @endphp
+
+                                        @if(isset($product['show_product_tag']) && $product['show_product_tag'] && !empty($product['product_tag']))
+                                            <span class="product-tag-badge">{{ $product['product_tag'] }}</span>
+                                        @elseif($showTag)
+                                            <div class="product-tag {{ $pType }}">
+                                                {{ $tagName }}
                                             </div>
                                         @endif
                                     </div>
@@ -212,6 +244,10 @@
                         </div>
                     @endif
                 </div>
+
+                <div class="vs-pagination pt-40 text-center">
+                    {{ $allProducts->links() }}
+                </div>
         </div>
     </div>
 </section>
@@ -243,25 +279,33 @@
                 <div class="filter-section">
                     <h6 class="filter-title">Product Type</h6>
                     <div class="filter-options">
-                        <!-- Hidden filters for Authorized and Optional (checked by default) -->
-                        <input type="checkbox" name="product_type_mobile" value="authorized" class="filter-checkbox-mobile d-none" checked>
-                        <input type="checkbox" name="product_type_mobile" value="optional" class="filter-checkbox-mobile d-none" checked>
+                        @foreach($productTypes as $typeObj)
+                            @php
+                                $typeSlug = $typeObj->slug;
+                                $label = $typeObj->label;
+                                
 
-                        <label class="filter-option">
-                            <input type="checkbox" name="product_type_mobile" value="merchandised" class="filter-checkbox-mobile">
-                            <span class="checkbox-mark"></span>
-                            <span class="option-label">Merchandised Product</span>
-                        </label>
-                        <label class="filter-option">
-                            <input type="checkbox" name="product_type_mobile" value="back_to_school" class="filter-checkbox-mobile">
-                            <span class="checkbox-mark"></span>
-                            <span class="option-label">Back to School Product</span>
-                        </label>
+                                
+                                // Default checked for all displayed types (including new ones)
+                                $isChecked = true;
+                                
+                                // Helper: skip bts and merch for filters as requested
+                                if(in_array($typeSlug, ['merchandised', 'back_to_school'])) continue;
+                            @endphp
+                            <label class="filter-option">
+                                <input type="checkbox" name="product_type_mobile" value="{{ $typeSlug }}" class="filter-checkbox-mobile" {{ $isChecked ? 'checked' : '' }}>
+                                <span class="checkbox-mark"></span>
+                                <span class="option-label">{{ $label }}</span>
+                            </label>
+                        @endforeach
+
+
                     </div>
                     <div class="filter-divider"></div>
                 </div>
 
                 <!-- Categories -->
+                <!-- Categories (Commented out as per request)
                 <div class="filter-section">
                     <h6 class="filter-title">Categories</h6>
                     <div class="filter-options">
@@ -274,6 +318,7 @@
                         @endforeach
                     </div>
                 </div>
+                -->
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
@@ -283,7 +328,7 @@
                     Apply Filters
                 </button>
             </div>
-        </div>
+        </div>     
     </div>
 </div>
 
@@ -779,6 +824,21 @@
         }
     }
 
+    .product-tag-badge {
+        position: absolute;
+        top: 15px;
+        right: 15px;
+        background-color: #ef4444;
+        color: white;
+        padding: 4px 10px;
+        border-radius: 4px;
+        font-size: 12px;
+        font-weight: 600;
+        z-index: 10;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        text-transform: uppercase;
+    }
+
     /* Mobile Filter Modal Styles */
     #filterModal {
         z-index: 9999 !important;
@@ -1042,7 +1102,7 @@ document.addEventListener('DOMContentLoaded', function() {
             selectedGenders = []; // No gender filter in mobile modal for now
             searchTerm = searchInputMobile ? searchInputMobile.value.toLowerCase().trim() : '';
             hasAnyTypeChecked = productTypeCheckboxesMobile.length ? Array.from(productTypeCheckboxesMobile).some(cb => cb.checked) : false;
-            hasAnyCategoryChecked = categoryCheckboxesMobile.length ? Array.from(categoryCheckboxesMobile).some(cb => cb.checked) : false;
+            hasAnyCategoryChecked = categoryCheckboxesMobile.length ? Array.from(categoryCheckboxesMobile).some(cb => cb.checked) : true; // Default to true if no filters exist
             hasAnyGenderChecked = false;
         } else {
             // Use desktop filter values
@@ -1051,7 +1111,7 @@ document.addEventListener('DOMContentLoaded', function() {
             selectedGenders = Array.from(genderCheckboxes).filter(cb => cb.checked).map(cb => cb.value);
             searchTerm = searchInput.value.toLowerCase().trim();
             hasAnyTypeChecked = productTypeCheckboxes.length ? Array.from(productTypeCheckboxes).some(cb => cb.checked) : false;
-            hasAnyCategoryChecked = categoryCheckboxes.length ? Array.from(categoryCheckboxes).some(cb => cb.checked) : false;
+            hasAnyCategoryChecked = categoryCheckboxes.length ? Array.from(categoryCheckboxes).some(cb => cb.checked) : true; // Default to true if no filters exist
             hasAnyGenderChecked = genderCheckboxes.length ? Array.from(genderCheckboxes).some(cb => cb.checked) : false;
         }
 
@@ -1076,10 +1136,10 @@ document.addEventListener('DOMContentLoaded', function() {
             const matchesType = selectedTypes.some(type => {
                 const typeLower = type.toLowerCase();
                 // Handle different type formats
-                if (typeLower === 'merchandised' && (productType.includes('merchandise') || productType === 'merchandised')) {
+                if (typeLower === 'merchandised' && selectedTypes.some(t => t.toLowerCase() === 'merchandised') && (productType.includes('merchandise') || productType === 'merchandised')) {
                     return true;
                 }
-                if (typeLower === 'back_to_school' && (productType.includes('back') || productType.includes('school') || productType === 'back_to_school')) {
+                if (typeLower === 'back_to_school' && selectedTypes.some(t => t.toLowerCase() === 'back_to_school') && (productType.includes('back') || productType.includes('school') || productType === 'back_to_school')) {
                     return true;
                 }
                 if (typeLower === 'authorized' && (productType === 'authorized' || productType.includes('authorized'))) {
@@ -1103,14 +1163,19 @@ document.addEventListener('DOMContentLoaded', function() {
             }
 
             // Filter by category (must match at least one selected category)
-            const matchesCategory = selectedCategories.some(cat => {
-                const catLower = cat.toLowerCase();
-                // Try exact match first, then partial match
-                return productCategory === catLower || productCategory.includes(catLower) || catLower.includes(productCategory);
-            });
-            if (!matchesCategory) {
-                show = false;
+            // Only apply if we actually have category filters active
+            if (selectedCategories.length > 0 || (useMobileFilters && categoryCheckboxesMobile.length > 0) || (!useMobileFilters && categoryCheckboxes.length > 0)) {
+                 const matchesCategory = selectedCategories.some(cat => {
+                    const catLower = cat.toLowerCase();
+                    // Try exact match first, then partial match
+                    return productCategory === catLower || productCategory.includes(catLower) || catLower.includes(productCategory);
+                });
+                // If filters exist but don't match, hide. If no filters exist (checklist empty/hidden), allow.
+                if (!matchesCategory && ((useMobileFilters && categoryCheckboxesMobile.length > 0) || (!useMobileFilters && categoryCheckboxes.length > 0))) {
+                    show = false;
+                }
             }
+
 
             // Filter by gender (optional - only filter if genders are checked)
             if (hasAnyGenderChecked) {

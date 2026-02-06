@@ -185,7 +185,7 @@ class ProductController extends Controller
         
         return response()->streamDownload(function () use ($products, $formatVariants, $formatGradePricing) {
             $file = fopen('php://output', 'w');
-            fputcsv($file, ['S.No', 'Product', 'School', 'Grade', 'Category', 'Product Type', 'Gender', 'Regular', 'Tax', 'Tax Profile', 'Grade Pricing', 'Variants', 'Stock', 'Low Stock', 'Status', 'Stock Status']);
+            fputcsv($file, ['S.No', 'Product', 'School', 'Grade', 'Category', 'Product Type', 'Gender', 'Regular', 'Tax', 'Tax Profile', 'Grade Pricing', 'Variants', 'Stock', 'Low Stock', 'Delivery Duration', 'Status', 'Stock Status']);
             
             $serialNumber = 0;
             foreach ($products as $product) {
@@ -205,6 +205,7 @@ class ProductController extends Controller
                     $formatVariants($product),
                     $product->inventory_stock ?? 0,
                     $product->low_stock_threshold ?? 0,
+                    $product->delivery_duration ?? 'N/A',
                     ucfirst($product->status ?? 'N/A'),
                     ucfirst($product->stock_status ?? 'N/A'),
                 ]);
@@ -809,7 +810,8 @@ class ProductController extends Controller
             'schools' => $schools,
             'grades' => $grades,
             'categories' => $categories,
-            'productTypes' => $productTypes
+            'productTypes' => $productTypes,
+            'productTypeTags' => \App\Models\Admin\Master\ProductType::getActive()->pluck('product_tag', 'slug')->toArray()
         ]);
     }
 
@@ -825,6 +827,7 @@ class ProductController extends Controller
             'school_id' => 'nullable|exists:schools,id',
             'gender' => 'nullable|string',
             'tag_name' => 'nullable|string',
+            'product_tag' => 'nullable|string|max:255',
             'price_regular' => $variantBasedPricing ? 'nullable|numeric|min:0' : 'required|numeric|min:0',
             'price_tax' => 'nullable|numeric|min:0',
             'tax_profile' => 'nullable|string',
@@ -868,6 +871,7 @@ class ProductController extends Controller
         
         // Handle checkbox
         $data['price_inclusive_tax'] = $request->has('price_inclusive_tax') ? 1 : 0;
+        $data['show_product_tag'] = $request->has('show_product_tag') ? 1 : 0;
         
         // Validate variant prices when variant-based pricing is enabled
         if ($variantBasedPricing && $request->has('variants')) {
@@ -1019,7 +1023,8 @@ class ProductController extends Controller
             'schools' => $schools,
             'grades' => $grades,
             'categories' => $categories,
-            'productTypes' => $productTypes
+            'productTypes' => $productTypes,
+            'productTypeTags' => \App\Models\Admin\Master\ProductType::getActive()->pluck('product_tag', 'slug')->toArray()
         ]);
     }
 
@@ -1037,6 +1042,7 @@ class ProductController extends Controller
             'school_id' => 'nullable|exists:schools,id',
             'gender' => 'nullable|string',
             'tag_name' => 'nullable|string',
+            'product_tag' => 'nullable|string|max:255',
             'price_regular' => $variantBasedPricing ? 'nullable|numeric|min:0' : 'required|numeric|min:0',
             'price_tax' => 'nullable|numeric|min:0',
             'tax_profile' => 'nullable|string',
@@ -1085,6 +1091,7 @@ class ProductController extends Controller
         
         // Handle checkbox
         $data['price_inclusive_tax'] = $request->has('price_inclusive_tax') ? 1 : 0;
+        $data['show_product_tag'] = $request->has('show_product_tag') ? 1 : 0;
         
         // Validate variant prices when variant-based pricing is enabled
         if ($variantBasedPricing && $request->has('variants')) {

@@ -37,7 +37,7 @@
                     <li>
                         <a href="{{ route('frontend.contact') }}" class="{{ request()->routeIs('frontend.contact') ? 'active' : '' }}"><i class="fas fa-comments me-2"></i>Contact Us</a>
                     </li>
-                    <li class="mobile-menu-divider"><hr style="margin: 8px; border: 0; border-top: 4px solid #000000;"></li>
+                    <li class="mobile-menu-divider"><hr style="margin: 0px; border: 0; border-top: 4px solid #000000;"></li>
                     @auth
                         @if(Auth::user()->isMasterAdmin())
                             <li><a href="{{ route('master.admin.dashboard') }}"><i class="fas fa-tachometer-alt me-2"></i>Dashboard</a></li>

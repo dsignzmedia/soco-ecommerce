@@ -8,6 +8,7 @@ class ProductType extends Model
 {
     protected $fillable = [
         'name',
+        'product_tag',
         'slug',
         'description',
         'is_active',

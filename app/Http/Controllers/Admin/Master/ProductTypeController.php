@@ -31,6 +31,7 @@ class ProductTypeController extends Controller
     {
         $validated = $request->validate([
             'name' => ['required', 'string', 'max:255'],
+            'product_tag' => ['nullable', 'string', 'max:255'],
             'slug' => ['nullable', 'string', 'max:255', 'unique:product_types,slug'],
             'is_active' => ['boolean'],
             'sort_order' => ['nullable', 'integer', 'min:0'],
@@ -43,9 +44,10 @@ class ProductTypeController extends Controller
 
         ProductType::create([
             'name' => $validated['name'],
+            'product_tag' => $validated['product_tag'],
             'slug' => $validated['slug'],
             'is_active' => $validated['is_active'] ?? true,
-            'sort_order' => $validated['sort_order'] ?? 0,
+            'sort_order' => ProductType::max('sort_order') + 1,
         ]);
 
         return redirect()->route('master.admin.product-settings.index')
@@ -64,6 +66,7 @@ class ProductTypeController extends Controller
     {
         $validated = $request->validate([
             'name' => ['required', 'string', 'max:255'],
+            'product_tag' => ['nullable', 'string', 'max:255'],
             'slug' => ['nullable', 'string', 'max:255', 'unique:product_types,slug,' . $productType->id],
             'is_active' => ['boolean'],
             'sort_order' => ['nullable', 'integer', 'min:0'],
@@ -76,9 +79,10 @@ class ProductTypeController extends Controller
 
         $productType->update([
             'name' => $validated['name'],
+            'product_tag' => $validated['product_tag'],
             'slug' => $validated['slug'],
             'is_active' => $validated['is_active'] ?? true,
-            'sort_order' => $validated['sort_order'] ?? 0,
+            'sort_order' => $validated['sort_order'] ?? $productType->sort_order,
         ]);
 
         return redirect()->route('master.admin.product-settings.index')

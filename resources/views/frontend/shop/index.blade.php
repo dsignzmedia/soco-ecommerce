@@ -22,14 +22,14 @@
     <div class="container">
         <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
             <h2 class="h4 mb-0">Store</h2>
-            <button class="vs-btn btn-sm style-outline d-lg-none" id="toggleFilters" data-bs-toggle="modal" data-bs-target="#filterModal" style="padding: 10px 20px; border: 1px solid #490D59; color: #490D59; background: transparent;">
+            {{-- <button class="vs-btn btn-sm style-outline d-lg-none" id="toggleFilters" data-bs-toggle="modal" data-bs-target="#filterModal" style="padding: 10px 20px; border: 1px solid #490D59; color: #490D59; background: transparent;">
                 <i class="fas fa-sliders-h me-2"></i> <span>Filter</span>
-            </button>
+            </button> --}}
         </div>
 
         <div class="row">
             <!-- Sidebar Filters -->
-            <div class="col-lg-3 col-xl-3 mb-lg-0 d-none d-lg-block">
+            {{-- <div class="col-lg-3 col-xl-3 mb-lg-0 d-none d-lg-block">
                 <div class="filter-sidebar" id="filterSidebar">
                     <div class="filter-header">
                         <i class="fas fa-filter me-2"></i>
@@ -83,19 +83,19 @@
                         </div>
                     </div>
                 </div>
-            </div>
+            </div> --}}
 
             <!-- Product Grid -->
-            <div class="col-lg-9 col-xl-9">
+            <div class="col-lg-12 col-xl-12">
                 <div class="vs-sort-bar d-flex justify-content-between align-items-center mb-3">
                     <p class="woocommerce-result-count mb-0">
                         Showing {{ $products->firstItem() }}–{{ $products->lastItem() }} of {{ $products->total() }} results
                     </p>
                 </div>
 
-                <div class="row justify-content-start align-items-stretch" id="productsContainer">
+                <div class="row justify-content-start align-items-stretch g-2 g-md-3" id="productsContainer">
                     @forelse($products as $product)
-                    <div class="col-6 col-md-6 col-lg-4 col-xl-4 product-item"
+                    <div class="shop-product-card product-item"
                          data-product-type="{{ strtolower($product->product_type ?? '') }}"
                          data-product-name="{{ strtolower($product->product_name) }}"
                          data-product-category="{{ strtolower($product->category ?? 'general') }}">
@@ -108,6 +108,9 @@
                                         <img src="{{ asset('assets/img/no image/no_image.png') }}" alt="{{ $product->product_name }}" class="w-100">
                                     @endif
                                 </a>
+                                @if($product->show_product_tag && !empty($product->product_tag))
+                                    <span class="product-tag-badge">{{ $product->product_tag }}</span>
+                                @endif
                                 {{-- Actions --}}
                                 <div class="actions">
                                     <a href="{{ route('frontend.shop.detail', $product->id) }}" class="icon-btn"><i class="far fa-heart"></i></a>
@@ -151,8 +154,205 @@
     </div>
 </section>
 
+<style>
+    .product-tag-badge {
+        position: absolute;
+        top: 15px;
+        right: 15px;
+        background-color: #490D59;
+        color: #ffffff;
+        padding: 5px 12px;
+        font-size: 11px;
+        font-weight: 700;
+        border-radius: 4px;
+        z-index: 2;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+    }
+
+    /* Copied from Store page for consistent 2-column mobile layout */
+    
+    .product-img {
+        position: relative;
+        overflow: hidden;
+        border-radius: 30px 30px 0 0;
+        background-color: #ffffff;
+        width: 100%;
+        height: 280px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .product-img img {
+        width: 100%;
+        height: 100%;
+        object-fit: contain;
+        padding: 0;
+    }
+
+    .vs-product.product-style1 {
+        display: flex;
+        flex-direction: column;
+        border: 3px solid var(--theme-color2, #e0d5f0);
+        border-radius: 30px;
+        transition: all ease 0.4s;
+        overflow: hidden;
+        background-color: #ffffff;
+    }
+
+    .vs-product.product-style1:hover {
+        border-color: var(--theme-color, #490D59);
+        transform: translateY(-5px);
+        box-shadow: none;
+    }
+
+    .product-content {
+        padding: 25px;
+        flex-grow: 1;
+        display: flex;
+        flex-direction: column;
+    }
+
+    .product-price {
+        font-size: 16px;
+        font-weight: 600;
+        color: #dc3545;
+        font-family: var(--title-font, inherit);
+        margin-bottom: 12px;
+        display: block;
+        line-height: 1;
+    }
+
+    .product-title {
+        font-size: 14px;
+        margin-bottom: 5px;
+        text-transform: capitalize;
+        line-height: 1.4;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        max-width: 100%;
+    }
+
+    .product-title a {
+        color: #333;
+        text-decoration: none;
+        font-size: 16px;
+        display: block;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+
+    .product-item {
+        display: flex;
+        flex-direction: column;
+        height: 100%;
+    }
+
+    /* Clean Card Layout Rules */
+    .shop-product-card {
+        width: 25%; /* Desktop default (4 per row) */
+        padding: 5px; /* Small gutters */
+    }
+
+    @media (max-width: 1199px) { /* Large Tablet */
+        .shop-product-card {
+            width: 33.333%; /* 3 per row */
+        }
+    }
+
+    @media (max-width: 991px) { /* Tablet */
+        .shop-product-card {
+            width: 33.333%; /* 3 per row */
+        }
+    }
+
+    .actions {
+        margin-top: auto;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+
+    .actions .icon-btn {
+        width: 50px;
+        height: 50px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background-color: #ffffff;
+        border: 1px solid #ddd;
+        border-radius: 50%;
+        color: #333;
+        text-decoration: none;
+        transition: all 0.3s ease;
+        flex-shrink: 0;
+    }
+
+    .product-style1 .vs-btn {
+        background-color: var(--vs-secondary-color, #e0d5f0);
+        padding: 17px 15px;
+        flex: 1;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        white-space: nowrap;
+    }
+
+    @media (max-width: 991px) {
+        .product-img {
+            height: 240px;
+        }
+    }
+
+    @media (max-width: 575px) {
+        .product-img {
+            height: 200px;
+            border-radius: 20px 20px 0 0;
+        }
+
+        .product-content {
+            padding: 8px !important;
+        }
+
+        .actions {
+            flex-direction: column;
+        }
+
+        .actions .icon-btn {
+            width: 45px;
+            height: 45px;
+        }
+
+        .product-title a {
+            font-size: 14px;
+        }
+        
+        .product-price {
+            font-size: 14px;
+            margin-bottom: 12px !important;
+        }
+
+        .product-style1 .vs-btn {
+            font-size: 12px;
+            padding: 12px 10px;
+        }
+        .shop-page-section .row .product-item,
+        .shop-product-card {
+            width: 50% !important;
+            max-width: 50% !important;
+            flex: 0 0 50% !important;
+            padding: 5px !important;
+        }
+
+    }
+</style>
+
 <!-- Mobile Filter Modal -->
-<div class="modal fade d-lg-none" id="filterModal" tabindex="-1" aria-labelledby="filterModalLabel" aria-hidden="true" style="z-index: 9999;">
+{{-- <div class="modal fade d-lg-none" id="filterModal" tabindex="-1" aria-labelledby="filterModalLabel" aria-hidden="true" style="z-index: 9999;">
     <div class="modal-dialog modal-fullscreen">
         <div class="modal-content">
             <div class="modal-header">
@@ -219,7 +419,7 @@
             </div>
         </div>
     </div>
-</div>
+</div> --}}
 
 <style>
     .filter-sidebar {
