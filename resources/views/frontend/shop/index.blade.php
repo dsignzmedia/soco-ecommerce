@@ -80,7 +80,11 @@
                                     <span class="option-label">{{ $displayName }}</span>
                                 </label>
                             @endforeach
+<<<<<<< HEAD
                         </div>
+                    </div>
+=======
+                        </ul>
                     </div>
                 </div>
             </div> --}}
@@ -91,8 +95,21 @@
                     <p class="woocommerce-result-count mb-0">
                         Showing {{ $products->firstItem() }}–{{ $products->lastItem() }} of {{ $products->total() }} results
                     </p>
+>>>>>>> e8fe7e54bda89d05c14581d71cae2f8386f4c987
+                </div>
+            </div> --}}
+
+<<<<<<< HEAD
+            <!-- Product Grid -->
+            <div class="col-lg-12 col-xl-12">
+                <div class="vs-sort-bar d-flex justify-content-between align-items-center mb-3">
+                    <p class="woocommerce-result-count mb-0">
+                        Showing {{ $products->firstItem() }}–{{ $products->lastItem() }} of {{ $products->total() }} results
+                    </p>
                 </div>
 
+=======
+>>>>>>> e8fe7e54bda89d05c14581d71cae2f8386f4c987
                 <div class="row justify-content-start align-items-stretch g-2 g-md-3" id="productsContainer">
                     @forelse($products as $product)
                     <div class="shop-product-card product-item"
@@ -172,7 +189,11 @@
     }
 
     /* Copied from Store page for consistent 2-column mobile layout */
+<<<<<<< HEAD
     
+=======
+
+>>>>>>> e8fe7e54bda89d05c14581d71cae2f8386f4c987
     .product-img {
         position: relative;
         overflow: hidden;
@@ -330,7 +351,11 @@
         .product-title a {
             font-size: 14px;
         }
+<<<<<<< HEAD
         
+=======
+
+>>>>>>> e8fe7e54bda89d05c14581d71cae2f8386f4c987
         .product-price {
             font-size: 14px;
             margin-bottom: 12px !important;

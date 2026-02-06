@@ -2153,6 +2153,10 @@ class AuthController extends Controller
                 // STRICT FILTER: Only show products assigned to THIS specific school.
                 // Global products (school_id = NULL) are EXCLUDED from the School Store page.
                 ->where('school_id', $school->id);
+<<<<<<< HEAD
+=======
+
+>>>>>>> e8fe7e54bda89d05c14581d71cae2f8386f4c987
 
             // Filter by grade if available in profile
             // Note: Grade filter only applies to school products (authorized/optional)
