@@ -33,21 +33,22 @@
 
             <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:24px;margin-bottom:24px;">
                 <label>
-                    <span>Name *</span>
-                    <input type="text" name="name" value="{{ old('name', $productType->name) }}" required placeholder="e.g., Back to School, Merchandise">
-                    <small style="color:#6b7280;font-size:12px;margin-top:4px;display:block;">Display name shown in dropdowns</small>
+                    <span style="font-weight: 500; font-size: 14px; color: #4b5563; margin-bottom: 6px; display: block;">Name *</span>
+                    <input type="text" name="name" value="{{ old('name', $productType->name) }}" required placeholder="e.g., Back to School, Merchandise" style="width: 100%; border: 1px solid #d1d5db; border-radius: 6px; padding: 10px 12px; font-size: 14px; transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;">
+                    <small style="color:#6b7280;font-size:12px;margin-top:4px;display:block;">Display name shown in dropdowns and filters</small>
                 </label>
+
                 <label>
-                    <span>Sort Order</span>
-                    <input type="number" name="sort_order" value="{{ old('sort_order', $productType->sort_order ?? 0) }}" min="0" placeholder="0">
-                    <small style="color:#6b7280;font-size:12px;margin-top:4px;display:block;">Lower numbers appear first</small>
+                    <span>Product Tag</span>
+                    <input type="text" name="product_tag" value="{{ old('product_tag', $productType->product_tag) }}" placeholder="e.g., NEW ARRIVAL">
+                    <small style="color:#6b7280;font-size:12px;margin-top:4px;display:block;">Tag displayed on product card (if enabled)</small>
                 </label>
             </div>
 
-            <div style="margin-bottom:24px;">
-                <label style="display:flex;align-items:center;gap:8px;">
-                    <input type="checkbox" name="is_active" value="1" @checked(old('is_active', $productType->is_active ?? true)) style="width:auto;">
-                    <span>Active (visible in dropdowns)</span>
+            <div style="margin-bottom:24px;display:flex;flex-wrap:wrap;gap:24px;">
+                <label style="display:flex;align-items:center;gap:8px;cursor: pointer;">
+                    <input type="checkbox" name="is_active" value="1" @checked(old('is_active', $productType->is_active ?? true)) style="width: 16px; height: 16px; border-radius: 4px; border: 1px solid #d1d5db; cursor: pointer;">
+                    <span style="font-size: 14px; color: #374151;">Active (visible in dropdowns)</span>
                 </label>
             </div>
 

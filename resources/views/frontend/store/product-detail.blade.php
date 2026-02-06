@@ -38,6 +38,9 @@
                             $mediaUrl = \Illuminate\Support\Str::startsWith($image, 'http') ? $image : asset('storage/' . $image);
                         @endphp
                         <div class="img">
+                                @if(isset($product['show_product_tag']) && $product['show_product_tag'] && !empty($product['product_tag']))
+                                    <span class="product-tag-badge main-product-badge">{{ $product['product_tag'] }}</span>
+                                @endif
                                 @if($isVideo)
                                     <video controls style="width: 100%; height: 100%; object-fit: contain; border-radius: 12px;">
                                         <source src="{{ $mediaUrl }}" type="video/mp4">
@@ -212,6 +215,9 @@
                         <div class="col-md-6 col-lg-3 col-xl-3">
                             <div class="vs-product product-style1">
                                 <div class="product-img">
+                                    @if(isset($relatedProduct['show_product_tag']) && $relatedProduct['show_product_tag'] && !empty($relatedProduct['product_tag']))
+                                        <span class="product-tag-badge related-product-badge">{{ $relatedProduct['product_tag'] }}</span>
+                                    @endif
                                     <a href="{{ route('frontend.parent.product-detail', ['productId' => $relatedProduct['id'], 'profile_id' => $selectedProfile['id'] ?? '']) }}">
                                         @if(isset($relatedProduct['image']) && $relatedProduct['image'])
                                             <img src="{{ $relatedProduct['image'] }}" alt="{{ $relatedProduct['name'] }}" class="w-100" onerror="this.onerror=null; this.src='{{ asset('assets/img/no image/no_image.png') }}';">
@@ -394,6 +400,28 @@
 </div>
 
 <style>
+    .product-tag-badge {
+        position: absolute;
+        top: 15px;
+        right: 15px;
+        background-color: #ef4444;
+        color: white;
+        padding: 5px 12px;
+        border-radius: 4px;
+        font-size: 13px;
+        font-weight: 600;
+        z-index: 10;
+        box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        text-transform: uppercase;
+    }
+    
+    .product-tag-badge.main-product-badge {
+        top: 20px;
+        right: 20px;
+        font-size: 14px;
+        padding: 6px 14px;
+    }
+
     /* Product Image Carousel */
     .product-big-img {
         margin-bottom: 15px;

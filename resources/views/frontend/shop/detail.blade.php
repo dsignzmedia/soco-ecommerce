@@ -211,6 +211,9 @@
                                             <img src="{{ asset('assets/img/no image/no_image.png') }}" alt="{{ $relatedProduct['name'] }}" class="w-100">
                                         @endif
                                     </a>
+                                    @if(isset($relatedProduct['show_product_tag']) && $relatedProduct['show_product_tag'] && !empty($relatedProduct['product_tag']))
+                                        <span class="product-tag-badge">{{ $relatedProduct['product_tag'] }}</span>
+                                    @endif
                             </div>
                                 <div class="product-content">
                                     <span class="product-price">
@@ -405,6 +408,22 @@
 </div>
 
 <style>
+    .product-tag-badge {
+        position: absolute;
+        top: 10px;
+        left: 10px;
+        background-color: #490D59;
+        color: #ffffff;
+        padding: 4px 10px;
+        font-size: 10px;
+        font-weight: 700;
+        border-radius: 4px;
+        z-index: 2;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+    }
+
     /* Product Image Carousel */
     .product-big-img {
         margin-bottom: 15px;

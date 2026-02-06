@@ -116,6 +116,18 @@
             <p style="margin:0;color:var(--text);font-size:14px;">Create backups of database and files, restore from previous backups.</p>
         </a>
 
+        <a href="{{ route('master.admin.settings.maintenance') }}" class="card" style="display:block;text-decoration:none;color:inherit;transition:transform 0.2s,box-shadow 0.2s;" onmouseover="this.style.transform='translateY(-4px)';this.style.boxShadow='0 16px 40px rgba(15,23,42,0.1)'" onmouseout="this.style.transform='';this.style.boxShadow=''">
+            <div style="display:flex;align-items:center;gap:16px;margin-bottom:12px;">
+                <div style="width:48px;height:48px;border-radius:12px;background:#fef2f2;display:grid;place-items:center;color:#dc2626;">
+                    <svg width="24" height="24" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+                    </svg>
+                </div>
+                <h3 style="margin:0;color:var(--heading);font-size:18px;">Maintenance Mode</h3>
+            </div>
+            <p style="margin:0;color:var(--text);font-size:14px;">Enable "Coming Soon" mode for Back to School or Merchandise sections.</p>
+        </a>
+
         <a href="{{ route('master.admin.settings.audit-logs') }}" class="card" style="display:block;text-decoration:none;color:inherit;transition:transform 0.2s,box-shadow 0.2s;" onmouseover="this.style.transform='translateY(-4px)';this.style.boxShadow='0 16px 40px rgba(15,23,42,0.1)'" onmouseout="this.style.transform='';this.style.boxShadow=''">
             <div style="display:flex;align-items:center;gap:16px;margin-bottom:12px;">
                 <div style="width:48px;height:48px;border-radius:12px;background:#eef2ff;display:grid;place-items:center;color:#6366f1;">

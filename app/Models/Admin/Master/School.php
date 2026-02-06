@@ -26,6 +26,12 @@ class School extends Model
         'contact_phone',
         'notes',
         'shipping_zone_id',
+        'coupon_enabled',
+        'coupon_code',
+    ];
+
+    protected $casts = [
+        'coupon_enabled' => 'boolean',
     ];
 
     /**

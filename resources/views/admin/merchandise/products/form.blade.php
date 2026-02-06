@@ -262,8 +262,7 @@
                     </h3>
                     
                     <div style="display:flex;flex-direction:column;gap:16px;">
-                        {{-- Commented out - can be enabled later if needed --}}
-                        {{-- <label>
+                        <label>
                             <span>School</span>
                             <select name="school_id">
                                 <option value="">All Schools (Global) - Default</option>
@@ -272,7 +271,7 @@
                                 @endforeach
                             </select>
                         </label>
-                        <label>
+                        {{-- <label>
                             <span>Grade</span>
                             <select name="grade">
                                 <option value="">All grades</option>
@@ -283,7 +282,7 @@
                                 @endforeach
                             </select>
                         </label> --}}
-                        <label id="category-label" style="display: block !important; position: relative; z-index: 100;">
+                        {{-- <label id="category-label" style="display: block !important; position: relative; z-index: 100;">
                             <span>Category</span>
                             <select name="category" id="category-select" style="width: 100%; padding: 10px 14px; border: 1px solid #d1d5db; border-radius: 8px; font-size: 14px; background: white; position: relative; z-index: 100;">
                                 <option value="">Select Category</option>
@@ -291,9 +290,74 @@
                                     <option value="{{ $key }}" @selected(old('category', $product->category) === $key)>{{ $label }}</option>
                                 @endforeach
                             </select>
-                        </label>
+                        </label> --}}
                         <input type="hidden" name="product_type" value="merchandise">
                         <input type="hidden" name="gender" value="unisex">
+                        
+                        <!-- Product Tag Field -->
+                        <!-- Product Tag Field -->
+                        <div style="margin-top:20px; border:1px solid #e5e7eb; padding:16px; border-radius:12px; background:#f9fafb;">
+                            <style>
+                                .custom-toggle { position: relative; display: inline-block; width: 50px; height: 26px; margin-bottom: 0; }
+                                .custom-toggle input { opacity: 0; width: 0; height: 0; }
+                                .custom-toggle .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #ccc; transition: .4s; border-radius: 34px; }
+                                .custom-toggle .slider:before { position: absolute; content: ""; height: 18px; width: 18px; left: 4px; bottom: 4px; background-color: white; transition: .4s; border-radius: 50%; }
+                                .custom-toggle input:checked + .slider { background-color: #490D59; }
+                                .custom-toggle input:focus + .slider { box-shadow: 0 0 1px #490D59; }
+                                .custom-toggle input:checked + .slider:before { transform: translateX(24px); }
+                            </style>
+                            
+                            <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:12px;">
+                                <div>
+                                    <h6 style="margin:0; font-weight:600; color:#111827; font-size:14px;">Product Tag</h6>
+                                    <p style="margin:2px 0 0; font-size:12px; color:#6b7280;">Show a badge on the product card.</p>
+                                </div>
+                                <label class="custom-toggle">
+                                    <input type="checkbox" name="show_product_tag" id="show_product_tag_toggle" value="1" @checked(old('show_product_tag', $product->show_product_tag ?? false))>
+                                    <span class="slider"></span>
+                                </label>
+                            </div>
+                            
+                            <div id="product_tag_container" style="display: {{ old('show_product_tag', $product->show_product_tag ?? false) ? 'block' : 'none' }}; border-top: 1px solid #e5e7eb; padding-top: 12px; margin-top: 12px;">
+                                <label style="display:block; font-size:13px; font-weight:500; color:#374151; margin-bottom:6px;">Tag Text</label>
+                                <input type="text" name="product_tag" id="product_tag_input" value="{{ old('product_tag', $product->product_tag) }}" placeholder="e.g. NEW ARRIVAL" style="width:100%; padding:10px 12px; border:1px solid #d1d5db; border-radius:8px; font-size:14px; color:#111827;">
+                            </div>
+                        </div>
+
+                        <script>
+                            document.addEventListener('DOMContentLoaded', function() {
+                                const productTypeTags = @json($productTypeTags ?? []);
+                                const productTypeInput = document.querySelector('input[name="product_type"]');
+                                const tagInput = document.getElementById('product_tag_input');
+                                const tagToggle = document.getElementById('show_product_tag_toggle');
+                                const tagContainer = document.getElementById('product_tag_container');
+
+                                // Handle Toggle Change
+                                tagToggle.addEventListener('change', function() {
+                                    if (this.checked) {
+                                        tagContainer.style.display = 'block';
+                                    } else {
+                                        tagContainer.style.display = 'none';
+                                    }
+                                });
+
+                                // Initial Check
+                                if (productTypeInput) {
+                                    let type = productTypeInput.value;
+                                    // Fix: Controller uses 'merchandised', form uses 'merchandise'. Map it.
+                                    if (type === 'merchandise' && !productTypeTags[type] && productTypeTags['merchandised']) {
+                                        type = 'merchandised';
+                                    }
+
+                                    // Only set default if field is empty (new product)
+                                    if (tagInput.value.trim() === '' && productTypeTags[type]) {
+                                         tagInput.value = productTypeTags[type];
+                                         tagToggle.checked = true;
+                                         tagContainer.style.display = 'block';
+                                    }
+                                }
+                            });
+                        </script>
                        
                     </div>
                 </div>
@@ -320,13 +384,13 @@
                         <button type="submit" name="status" value="live" style="width:100%;padding:12px;border:none;border-radius:8px;background:#490d59;color:#fff;font-weight:600;cursor:pointer;">
                             Publish Product
                         </button>
-                        <button type="submit" name="status" value="draft" style="width:100%;padding:12px;border-radius:8px;border:1px solid #d0d5dd;background:#fff;color:#475467;cursor:pointer;">
+                        {{-- <button type="submit" name="status" value="draft" style="width:100%;padding:12px;border-radius:8px;border:1px solid #d0d5dd;background:#fff;color:#475467;cursor:pointer;">
                             Save Draft
-                        </button>
+                        </button> --}}
                         @if($isEdit)
-                            <button type="submit" name="status" value="archived" style="width:100%;padding:12px;border-radius:8px;border:1px solid #d0d5dd;background:#fff;color:#b42318;cursor:pointer;">
+                            {{-- <button type="submit" name="status" value="archived" style="width:100%;padding:12px;border-radius:8px;border:1px solid #d0d5dd;background:#fff;color:#b42318;cursor:pointer;">
                                 Archive Product
-                            </button>
+                            </button> --}}
                         @endif
                         <a href="{{ route('admin.merchandise.products.index') }}" style="text-align:center;padding:12px;color:#475467;text-decoration:none;">Cancel</a>
                     </div>

@@ -180,8 +180,22 @@
                                             </div>
                                         @endforeach
                                     @endforeach
+                                    </div>
+                                 
+                                <!-- Coupon Code Section -->
+                                <div class="mb-4" style="padding-bottom: 16px; border-bottom: 1px solid #e9ecef;">
+                                    <label class="mb-2" style="color: #666; font-size: 0.9rem; font-weight: 500;">Have a Coupon Code?</label>
+                                    <div class="input-group">
+                                        <input type="text" class="form-control" name="coupon_code" id="coupon_code" placeholder="Enter code" style="border: 1px solid #e9ecef; border-right: none; border-radius: 8px 0 0 8px;" value="{{ request('coupon_code') }}">
+                                        <button type="button" class="btn" id="applyCouponBtn" onclick="applyCoupon()" style="background-color: #490D59; color: #fff; border: none; border-radius: 0 8px 8px 0; padding: 0 20px; font-weight: 500;">Apply</button>
+                                    </div>
+                                    @if(isset($couponMessage))
+                                        <div class="mt-2 small" style="color: {{ $couponStatus === 'success' ? '#28a745' : '#dc3545' }}; font-weight: 500;">
+                                            <i class="fas fa-{{ $couponStatus === 'success' ? 'check-circle' : 'exclamation-circle' }} me-1"></i>
+                                            {{ $couponMessage }}
+                                        </div>
+                                    @endif
                                 </div>
-                                
                                 <!-- Summary -->
                                 <div class="mb-3">
                                     @if(isset($hasInclusiveTax) && $hasInclusiveTax)
@@ -218,23 +232,27 @@
                                 
                                 <hr style="margin: 20px 0;">
                                 
-    <div class="d-flex justify-content-between mb-4">
+                                    <div class="d-flex justify-content-between mb-4">
                                     <strong style="color: #333; font-size: 1.1rem;">Total:</strong>
                                     <strong style="color: #dc3545; font-size: 1.1rem;">₹{{ number_format($totalWithShipping ?? $total) }}</strong>
                                 </div>
                                 
                                 @if(isset($razorpayEnabled) && $razorpayEnabled)
-    <button type="button" class="vs-btn w-100 mb-2" id="payWithRazorpayBtn" onclick="initiatePayment()">
-        <i class="fas fa-credit-card me-2"></i> Pay with Razorpay
-    </button>
-@endif                                
+                                    <button type="button" class="vs-btn w-100 mb-2" id="payWithRazorpayBtn" onclick="initiatePayment()">
+                                       <i class="fas fa-credit-card me-2"></i> Pay with Razorpay
+                                    </button>
+                                @endif                                
                                 <button type="submit" class="vs-btn w-100 mb-2" id="placeOrderBtn" onclick="preventDoubleSubmit(this)" style="background-color: #2C3E50; color: #ffffff; border-color: #2C3E50;">
                                     <i class="fas fa-money-bill-wave me-2"></i> Pay Now 
                                 </button>
                                 
                                 <a href="{{ route('frontend.parent.cart') }}" class="btn w-100" style="background-color: #6c757d; color: #ffffff; border: none; border-radius: 8px; padding: 12px; text-decoration: none; display: flex; align-items: center; justify-content: center; transition: all 0.3s ease;" onmouseover="this.style.backgroundColor='#5a6268';" onmouseout="this.style.backgroundColor='#6c757d';">
                                     <i class="fas fa-arrow-left me-2"></i> Back to Cart
-                                </a>
+                                </a>   
+                                </div>
+
+                                
+                                
                             </div>
                         </div>
                     </div>
@@ -454,7 +472,27 @@ document.addEventListener('DOMContentLoaded', function() {
         const index = checkedCheckbox.value;
         selectSavedAddress(index);
     }
+
+    // Pre-fill coupon code if exists in URL
+    const urlParams = new URLSearchParams(window.location.search);
+    const couponCode = urlParams.get('coupon_code');
+    if (couponCode) {
+        document.getElementById('coupon_code').value = couponCode;
+    }
 });
+
+function applyCoupon() {
+    const code = document.getElementById('coupon_code').value.trim();
+    if (!code) {
+        alert('Please enter a coupon code');
+        return;
+    }
+    
+    // Redirect with coupon code while preserving other params
+    const url = new URL(window.location.href);
+    url.searchParams.set('coupon_code', code);
+    window.location.href = url.toString();
+}
 </script>
 
 <style>

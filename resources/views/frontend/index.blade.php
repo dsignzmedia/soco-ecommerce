@@ -402,9 +402,7 @@ Shop by Category Area
         transform: scale(0.8);
         transform-origin: center;
     }
-    .space-top-mobile {
-        padding-top: 2px !important;
-    }
+
 }
 
 /* Fix for Service Card Height Consistency */
@@ -424,25 +422,28 @@ Shop by Category Area
 <!--==============================
 Product Category Boxes Area
 ==============================-->
+@php
+    $branding = \App\Models\Admin\Master\AppBranding::current();
+    $btsMaintenance = $branding->maintenance_bts ?? false;
+    $merchMaintenance = $branding->maintenance_merch ?? false;
+@endphp
 <section class="product-category-boxes" style="background-color:#ffffff;">
     <div class="container">
         <div class="category-boxes-row">
-            <!-- Back to School Products Box -->
-            <a href="{{ route('frontend.shop.index', ['product_type' => 'back_to_school']) }}" class="category-box-link">
-                <!-- Desktop: Show image -->
+            <a href="{{ $btsMaintenance ? 'javascript:void(0)' : route('frontend.shop.index', ['product_type' => 'back_to_school']) }}" 
+               class="category-box-link {{ $btsMaintenance ? 'maintenance-trigger' : '' }}"
+               data-maintenance-title="Back to School Products">
                 <img src="{{ asset('assets/img/others/bts_product.png') }}" alt="Back to School Products" class="category-box-image desktop-only">
-                <!-- Tablet/Mobile: Show card -->
                 <div class="category-box-content category-box-content--bg category-box-content--bts mobile-tablet-only">
                     <h3 class="category-box-title">BACK TO SCHOOL PRODUCTS</h3>
                     <p class="category-box-tagline">School essentials, beyond the ordinary.</p>
                 </div>
             </a>
 
-            <!-- Merchandised Products Box -->
-            <a href="{{ route('frontend.shop.index', ['product_type' => 'merchandised']) }}" class="category-box-link">
-                <!-- Desktop: Show image -->
+            <a href="{{ $merchMaintenance ? 'javascript:void(0)' : route('frontend.shop.index', ['product_type' => 'merchandised']) }}" 
+               class="category-box-link {{ $merchMaintenance ? 'maintenance-trigger' : '' }}"
+               data-maintenance-title="Custom Campus Merchandise">
                 <img src="{{ asset('assets/img/others/merch_product.png') }}" alt="Custom Campus Merchandise" class="category-box-image desktop-only">
-                <!-- Tablet/Mobile: Show card -->
                 <div class="category-box-content category-box-content--bg category-box-content--merch mobile-tablet-only">
                     <h3 class="category-box-title">CUSTOM CAMPUS MERCHANDISE</h3>
                     <p class="category-box-tagline">We print exactly what you want — made to match your style.</p>
@@ -793,7 +794,8 @@ Product Category Boxes Area
 <!--==============================
 About Area
 ==============================--> 
-<section class=" space-extra-bottom space-top-mobile" style="background-color: #ffffff;">
+
+<section id="aboutAreaSection" class="space-extra-bottom">
     <div class="container">
         <div class="row gx-70 align-items-center">
 
@@ -1601,4 +1603,36 @@ document.addEventListener('DOMContentLoaded', function () {
 });
 </script>
 
+<!-- Maintenance Modal -->
+<div class="modal fade" id="maintenanceModal" tabindex="-1" aria-hidden="true" style="z-index: 10000;">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content text-center p-4 border-0 shadow-lg" style="border-radius: 15px;">
+            <div class="modal-body position-relative">
+                <h3 class="mt-2 h4 mb-3" id="maintenanceTitle" style="color: #490D59; font-weight: 700;">Coming Soon!</h3>
+                <p class="text-muted mb-4" style="font-size: 16px;">Products will be added soon....</p>
+                <button type="button" class="vs-btn style1" data-bs-dismiss="modal" style="padding: 10px 30px;">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const maintenanceTriggers = document.querySelectorAll('.maintenance-trigger');
+    const maintenanceModal = new bootstrap.Modal(document.getElementById('maintenanceModal'));
+    const modalTitle = document.getElementById('maintenanceTitle');
+
+    maintenanceTriggers.forEach(trigger => {
+        trigger.addEventListener('click', function(e) {
+            e.preventDefault();
+            const title = this.getAttribute('data-maintenance-title');
+            if(title) {
+                // modalTitle.textContent = title + " - Coming Soon!";
+                // Keeping it simple as per request or just generic
+            }
+            maintenanceModal.show();
+        });
+    });
+});
+</script>
 @endsection

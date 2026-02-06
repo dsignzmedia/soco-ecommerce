@@ -66,6 +66,44 @@
                 </label>
             </div>
 
+            <div style="margin-top:24px; margin-bottom: 24px;">
+                <h3 style="margin:0 0 16px;font-size:16px;font-weight:600;color:#1f2937;border-bottom:2px solid #e5e7eb;padding-bottom:10px;">
+                    Promotions & Discounts
+                </h3>
+                <div style="background-color: #f9fafb; padding: 20px; border-radius: 12px; border: 1px solid #e5e7eb;">
+                    <div style="margin-bottom:16px;">
+                        <label style="cursor:pointer;">
+                            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px;">
+                                <span style="font-size: 14px; font-weight: 600; color: #1f2937;">Enable Free Delivery Coupon</span>
+                                <div style="position: relative; flex-shrink: 0;">
+                                    <input type="hidden" name="coupon_enabled" value="0">
+                                    <input type="checkbox" name="coupon_enabled" value="1" id="couponEnabled" 
+                                           @checked(old('coupon_enabled', $school->coupon_enabled ?? false))
+                                           style="position: absolute; opacity: 0; width: 0; height: 0;">
+                                    <div class="toggle-switch" style="width: 48px; height: 24px; background-color: #d1d5db; border-radius: 12px; position: relative; transition: background-color 0.3s;">
+                                        <div class="toggle-slider" style="width: 20px; height: 20px; background-color: white; border-radius: 50%; position: absolute; top: 2px; left: 2px; transition: transform 0.3s; box-shadow: 0 2px 4px rgba(0,0,0,0.2);"></div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div style="font-size: 12px; color: #6b7280; line-height: 1.4;">Allow students from this school to use a coupon code for free shipping</div>
+                        </label>
+                    </div>
+
+                    <div id="couponCodeContainer" style="{{ old('coupon_enabled', $school->coupon_enabled ?? false) ? '' : 'display:none;' }} padding-top: 12px; border-top: 1px solid #e5e7eb;">
+                        <label>
+                            <span style="font-size: 13px; font-weight: 500; color: #374151; margin-bottom: 6px; display: block;">Coupon Code</span>
+                            <input type="text" name="coupon_code" value="{{ old('coupon_code', $school->coupon_code) }}" 
+                                   placeholder="e.g. SCHOOLFREESHIP" 
+                                   style="max-width: 400px; text-transform: uppercase; font-family: 'Courier New', monospace; font-weight: 600; letter-spacing: 0.5px;">
+                            <small style="color:#6b7280;font-size:11px;margin-top:4px;display:block;">
+                                <i class="fas fa-info-circle" style="margin-right: 4px;"></i>
+                                Students of this school can use this code for free shipping at checkout.
+                            </small>
+                        </label>
+                    </div>
+                </div>
+            </div>
+
             <h3 style="margin:24px 0 16px;font-size:16px;color:#374151;border-bottom:1px solid #e5e7eb;padding-bottom:8px;">Contact Information</h3>
             
             <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:24px;margin-bottom:24px;">
@@ -96,4 +134,45 @@
         </form>
     </div>
 @endsection
+
+@push('scripts')
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const couponCheckbox = document.getElementById('couponEnabled');
+        const couponContainer = document.getElementById('couponCodeContainer');
+        const toggleSwitch = document.querySelector('.toggle-switch');
+        const toggleSlider = document.querySelector('.toggle-slider');
+
+        // Function to update toggle appearance
+        function updateToggle(isChecked) {
+            if (isChecked) {
+                toggleSwitch.style.backgroundColor = '#490D59';
+                toggleSlider.style.transform = 'translateX(24px)';
+                couponContainer.style.display = 'block';
+            } else {
+                toggleSwitch.style.backgroundColor = '#d1d5db';
+                toggleSlider.style.transform = 'translateX(0)';
+                couponContainer.style.display = 'none';
+            }
+        }
+
+        // Initialize toggle state on page load
+        if (couponCheckbox && toggleSwitch) {
+            updateToggle(couponCheckbox.checked);
+
+            // Handle toggle click
+            toggleSwitch.parentElement.parentElement.addEventListener('click', function(e) {
+                e.preventDefault();
+                couponCheckbox.checked = !couponCheckbox.checked;
+                updateToggle(couponCheckbox.checked);
+            });
+
+            // Handle checkbox change (for form validation/reset)
+            couponCheckbox.addEventListener('change', function() {
+                updateToggle(this.checked);
+            });
+        }
+    });
+</script>
+@endpush
 

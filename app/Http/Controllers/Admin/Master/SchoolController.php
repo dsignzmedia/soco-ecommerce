@@ -130,6 +130,8 @@ class SchoolController extends Controller
             'contact_phone' => ['nullable', 'string', 'max:50'],
             'notes' => ['nullable', 'string'],
             'shipping_zone_id' => ['nullable', 'exists:shipping_zones,id'],
+            'coupon_enabled' => ['boolean'],
+            'coupon_code' => ['nullable', 'string', 'max:50'],
         ]);
     }
 

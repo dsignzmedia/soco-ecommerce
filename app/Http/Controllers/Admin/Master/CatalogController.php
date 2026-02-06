@@ -23,10 +23,10 @@ class CatalogController extends Controller
         
         // Exclude BTS and Merchandise products from Master Admin catalog
         // Master Admin should only see school-specific catalog products
-        $query->where(function($q) {
-            $q->whereNotIn('product_type', ['back_to_school', 'merchandised'])
-              ->orWhereNull('product_type'); // Include legacy products without product_type
-        });
+        // $query->where(function($q) {
+        //     $q->whereNotIn('product_type', ['back_to_school', 'merchandised'])
+        //       ->orWhereNull('product_type'); // Include legacy products without product_type
+        // });
         
         $this->applyFilters($query, $filters);
 
@@ -97,8 +97,8 @@ class CatalogController extends Controller
 
         // Remove BTS and Merchandise from product types filter in Master Admin
         // Master Admin should only manage school-specific catalog products
-        unset($productTypes['merchandised']);
-        unset($productTypes['back_to_school']);
+        // unset($productTypes['merchandised']);
+        // unset($productTypes['back_to_school']);
 
         return view('admin.catalog.index', [
             'mappings' => $mappings,
@@ -177,13 +177,16 @@ class CatalogController extends Controller
         }
 
         // Hide specific types in Master Admin
-        unset($productTypes['merchandised']);
-        unset($productTypes['back_to_school']);
+        // unset($productTypes['merchandised']);
+        // unset($productTypes['back_to_school']);
 
         // Load grade pricing if editing
         if ($mode === 'edit') {
             $product->load('gradePricing');
         }
+
+        // Fetch product type tags for JS population
+        $productTypeTags = \App\Models\Admin\Master\ProductType::getActive()->pluck('product_tag', 'slug')->toArray();
 
         return view('admin.catalog.form', [
             'product' => $product,
@@ -192,12 +195,14 @@ class CatalogController extends Controller
             'grades' => $grades,
             'categories' => $categories,
             'productTypes' => $productTypes,
+            'productTypeTags' => $productTypeTags,
         ]);
     }
 
     public function store(Request $request): RedirectResponse
     {
         $data = $this->validatedData($request);
+        $data['show_product_tag'] = $request->has('show_product_tag') ? 1 : 0;
         
         // Handle video file upload (independent of video_url)
         if ($request->hasFile('video_file')) {
@@ -276,6 +281,7 @@ class CatalogController extends Controller
     {
         $originalPricing = $productMapping->only(['price_regular', 'price_sale', 'price_tax']);
         $data = $this->validatedData($request, $productMapping);
+        $data['show_product_tag'] = $request->has('show_product_tag') ? 1 : 0;
         
         $productMapping->update($data);
 
@@ -476,6 +482,7 @@ class CatalogController extends Controller
             'price_inclusive_tax' => ['nullable', 'boolean'],
             'product_weight' => ['nullable', 'numeric', 'min:0'],
             'tag_name' => ['nullable', 'string', 'max:255'],
+            'product_tag' => ['nullable', 'string', 'max:255'],
             'inventory_stock' => ['required', 'integer', 'min:0'],
             'low_stock_threshold' => ['required', 'integer', 'min:0'],
             'media_gallery' => ['nullable', 'string'],
@@ -1412,6 +1419,7 @@ class CatalogController extends Controller
 <th class="col-grade-pricing">Variants</th>
 <th>Stock</th>
 <th>Low Stock</th>
+<th>Delivery Duration</th>
 <th class="col-status">Status</th>
 <th class="col-stock-status">Stock Status</th>
 </tr>
@@ -1507,6 +1515,9 @@ class CatalogController extends Controller
             // Low Stock - Right aligned
             $lowStockVal = (int)($product->low_stock_threshold ?? 0);
             $html .= '<td class="col-right">' . ($lowStockVal == 0 ? '<span class="text-zero">0</span>' : number_format($lowStockVal)) . '</td>';
+            
+            // Delivery Duration
+            $html .= '<td class="col-left">' . htmlspecialchars($product->delivery_duration ?? 'N/A') . '</td>';
             
             // Status - Center aligned with color coding, narrower column
             $statusLabel = ucfirst($product->status ?? 'N/A');

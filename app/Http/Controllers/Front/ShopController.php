@@ -131,6 +131,14 @@ class ShopController extends Controller
         if (!empty($dbProduct->category)) {
             $relatedProductsQuery->where('category', $dbProduct->category);
         }
+
+        // Strict filtering for School Products
+        if ($dbProduct->school_id) {
+            $relatedProductsQuery->where('school_id', $dbProduct->school_id);
+        } else {
+            // For general products (Merch/BTS without school), only show other general products
+            $relatedProductsQuery->whereNull('school_id');
+        }
         
         $relatedProductsModels = $relatedProductsQuery->inRandomOrder()->take(4)->get();
         
@@ -159,6 +167,8 @@ class ShopController extends Controller
                 'price' => ($p->price_sale > 0 && $p->price_sale < $p->price_regular) ? $p->price_sale : $p->price_regular,
                 'original_price' => $p->price_regular,
                 'image' => $p->featured_image ? (Str::startsWith($p->featured_image, 'http') ? $p->featured_image : asset('storage/' . $p->featured_image)) : asset('assets/img/product/product1-1.png'),
+                'product_tag' => $p->product_tag,
+                'show_product_tag' => $p->show_product_tag,
              ];
         });
 

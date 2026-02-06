@@ -397,7 +397,7 @@
                                 @endforeach
                             </select>
                         </label>
-                        <label id="category-label" style="display: block !important; position: relative; z-index: 100;">
+                        {{-- <label id="category-label" style="display: block !important; position: relative; z-index: 100;">
                             <span>Category</span>
                             <select name="category" id="category-select" style="width: 100%; padding: 10px 14px; border: 1px solid #d1d5db; border-radius: 8px; font-size: 14px; background: white; position: relative; z-index: 100;">
                                 <option value="">Select Category</option>
@@ -405,7 +405,7 @@
                                     <option value="{{ $key }}" @selected(old('category', $product->category) === $key)>{{ $label }}</option>
                                 @endforeach
                             </select>
-                        </label>
+                        </label> --}}
                         <label>
                             <span>Product Type</span>
                             <select name="product_type">
@@ -415,6 +415,76 @@
                                 @endforeach
                             </select>
                         </label>
+                        
+                        <!-- Product Tag Field -->
+                        <!-- Product Tag Field (Commented out as per request) -->
+                        {{-- 
+                        <div style="margin-top:10px; border:1px solid #e5e7eb; padding:10px; border-radius:8px; background:#f9fafb;">
+                            <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:8px;">
+                                <span style="font-weight:600; font-size:13px; color:#374151;">Show Product Tag on Card?</span>
+                                <label class="switch" style="position:relative; display:inline-block; width:36px; height:20px; margin-bottom:0;">
+                                    <input type="checkbox" name="show_product_tag" id="show_product_tag_toggle" value="1" @checked(old('show_product_tag', $product->show_product_tag ?? false)) style="opacity:0; width:0; height:0;">
+                                    <span class="slider round" style="position:absolute; cursor:pointer; top:0; left:0; right:0; bottom:0; background-color:#ccc; transition:.4s; border-radius:34px;"></span>
+                                </label>
+                            </div>
+                            <style>
+                                .switch input:checked + .slider { background-color: #490d59; }
+                                .switch input:checked + .slider:before { transform: translateX(16px); }
+                                .slider:before { position: absolute; content: ""; height: 16px; width: 16px; left: 2px; bottom: 2px; background-color: white; transition: .4s; border-radius: 50%; }
+                            </style>
+                            <div id="product_tag_container" style="display: {{ old('show_product_tag', $product->show_product_tag ?? false) ? 'block' : 'none' }};">
+                                <input type="text" name="product_tag" id="product_tag_input" value="{{ old('product_tag', $product->product_tag) }}" placeholder="e.g. NEW ARRIVAL" style="width:100%; box-sizing:border-box;">
+                                <small style="color:#6b7280; font-size:11px; margin-top:4px; display:block;">Enter text to display on the product card.</small>
+                            </div>
+                        </div>
+                        --}}
+
+                        <script>
+                            document.addEventListener('DOMContentLoaded', function() {
+                                const productTypeTags = @json($productTypeTags ?? []);
+                                const productTypeSelect = document.querySelector('select[name="product_type"]');
+                                const tagInput = document.getElementById('product_tag_input');
+                                const tagToggle = document.getElementById('show_product_tag_toggle');
+                                const tagContainer = document.getElementById('product_tag_container');
+
+                                // Handle Toggle Change
+                                tagToggle.addEventListener('change', function() {
+                                    if (this.checked) {
+                                        tagContainer.style.display = 'block';
+                                    } else {
+                                        tagContainer.style.display = 'none';
+                                    }
+                                });
+
+                                // Handle Product Type Change
+                                if (productTypeSelect) {
+                                    productTypeSelect.addEventListener('change', function() {
+                                        const selectedType = this.value;
+                                        if (selectedType && productTypeTags[selectedType]) {
+                                            // Only auto-fill if the user hasn't manually entered something differently (optional check, but safer to just update as per requirement)
+                                            // The requirement says: "defaultly accordingo that product te initially defaulty take that value"
+                                            // We will auto-fill it.
+                                            tagInput.value = productTypeTags[selectedType];
+                                            tagToggle.checked = true;
+                                            tagToggle.dispatchEvent(new Event('change'));
+                                        } else {
+                                            // If no default tag, user said "make it empty"
+                                            // Only empty if it's strictly driven by type? 
+                                            // Let's safe-guard: if the input was matching a previous type default or empty, clear it.
+                                            // For now, simpler: Clear it if no default tag found for this type, or leave as is if user typed custom?
+                                            // User said: "on that tag if there was not make it empty make it ike that"
+                                            // So I will clear it.
+                                            tagInput.value = '';
+                                            // Should we turn off toggle? Maybe not, just clear value. 
+                                            // Or maybe turn off toggle if empty? 
+                                            // Let's keep toggle state but value empty.
+                                            // Or maybe default behavior should be off if no tag?
+                                            // Let's just clear the value.
+                                        }
+                                    });
+                                }
+                            });
+                        </script>
                         <label>
                             <span>Gender *</span>
                             <select name="gender" required>
@@ -449,13 +519,13 @@
                         <button type="submit" name="status" value="live" style="width:100%;padding:12px;border:none;border-radius:8px;background:#490d59;color:#fff;font-weight:600;cursor:pointer;">
                             Publish Product
                         </button>
-                        <button type="submit" name="status" value="draft" style="width:100%;padding:12px;border-radius:8px;border:1px solid #d0d5dd;background:#fff;color:#475467;cursor:pointer;">
+                        {{-- <button type="submit" name="status" value="draft" style="width:100%;padding:12px;border-radius:8px;border:1px solid #d0d5dd;background:#fff;color:#475467;cursor:pointer;">
                             Save Draft
-                        </button>
+                        </button> --}}
                         @if($isEdit)
-                            <button type="submit" name="status" value="archived" style="width:100%;padding:12px;border-radius:8px;border:1px solid #d0d5dd;background:#fff;color:#b42318;cursor:pointer;">
+                            {{-- <button type="submit" name="status" value="archived" style="width:100%;padding:12px;border-radius:8px;border:1px solid #d0d5dd;background:#fff;color:#b42318;cursor:pointer;">
                                 Archive Product
-                            </button>
+                            </button> --}}
                         @endif
                         <a href="{{ route('master.admin.catalog.index') }}" style="text-align:center;padding:12px;color:#475467;text-decoration:none;">Cancel</a>
                     </div>

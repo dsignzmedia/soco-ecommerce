@@ -17,6 +17,8 @@ class ProductMapping extends Model
         'grade_id',
         'grade',
         'product_name',
+        'product_tag',
+        'show_product_tag',
         'sku',
         'category',
         'product_type',
