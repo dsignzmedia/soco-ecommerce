@@ -545,7 +545,7 @@
                                  src="{{ asset('assets/img/soco_logo/logo_voilet_v.png') }}" alt="logo"></a></div>
                     <div class="col-lg-auto">
                         <h3 class="h5 mb-0 text-white">
-                                Shop Your School’s Uniform & Essentials in one place.</h3>
+                                Shop Your School’s Uniforms & Essentials in one place.</h3>
                     </div>
                     <div class="col-lg-auto"><a href="{{ route('login') }}" class="vs-btn">Shop Now</a></div>
                 </div>
