@@ -431,7 +431,11 @@
                                 @endif
                             </td>
                             <td>
-                                <span class="status-pill status-{{ $mapping->status }}">{{ ucfirst($mapping->status) }}</span>
+                                <select class="status-select" data-id="{{ $mapping->id }}" style="padding:4px 8px;border-radius:999px;font-size:12px;font-weight:600;border:none;background-color:{{ $mapping->status === 'live' ? '#ecfdf3' : ($mapping->status === 'draft' ? '#f2f4f7' : '#fef3f2') }};color:{{ $mapping->status === 'live' ? '#027a48' : ($mapping->status === 'draft' ? '#475467' : '#b42318') }};cursor:pointer;">
+                                    <option value="live" {{ $mapping->status === 'live' ? 'selected' : '' }}>Live</option>
+                                    <option value="draft" {{ $mapping->status === 'draft' ? 'selected' : '' }}>Draft</option>
+                                    <option value="archived" {{ $mapping->status === 'archived' ? 'selected' : '' }}>Archived</option>
+                                </select>
                             </td>
                             <td style="text-align:right;">
                                 <div style="display:flex;justify-content:flex-end;gap:6px;">
@@ -717,6 +721,59 @@
         
         gridBtn.addEventListener('click', function() {
             switchView('grid');
+        });
+
+        // Status Update Logic
+        const statusSelects = document.querySelectorAll('.status-select');
+        statusSelects.forEach(select => {
+            select.addEventListener('change', function() {
+                const productId = this.getAttribute('data-id');
+                const newStatus = this.value;
+                const originalColor = this.style.color;
+                const originalBg = this.style.backgroundColor;
+
+                // Update styling immediately for feedback
+                if (newStatus === 'live') {
+                    this.style.backgroundColor = '#ecfdf3';
+                    this.style.color = '#027a48';
+                } else if (newStatus === 'draft') {
+                    this.style.backgroundColor = '#f2f4f7';
+                    this.style.color = '#475467';
+                } else {
+                    this.style.backgroundColor = '#fef3f2';
+                    this.style.color = '#b42318';
+                }
+
+                // AJAX Request
+                fetch('{{ route('master.admin.catalog.update-status') }}', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+                    },
+                    body: JSON.stringify({
+                        id: productId,
+                        status: newStatus
+                    })
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        console.log('Status updated');
+                    } else {
+                        alert('Failed to update status.');
+                        // Revert style
+                        this.style.backgroundColor = originalBg;
+                        this.style.color = originalColor;
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('An error occurred.');
+                    this.style.backgroundColor = originalBg;
+                    this.style.color = originalColor;
+                });
+            });
         });
     });
 </script>

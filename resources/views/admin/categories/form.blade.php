@@ -26,16 +26,6 @@
                 @method('PUT')
             @endif
 
-            @if($errors->any())
-                <div style="margin-bottom:16px;padding:12px 16px;background:#fef2f2;color:#991b1b;border-radius:8px;border:1px solid #ef4444;">
-                    <strong>Please fix the following errors:</strong>
-                    <ul style="margin:8px 0 0 20px;">
-                        @foreach($errors->all() as $error)
-                            <li>{{ $error }}</li>
-                        @endforeach
-                    </ul>
-                </div>
-            @endif
 
             <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:24px;margin-bottom:24px;">
                 <label>

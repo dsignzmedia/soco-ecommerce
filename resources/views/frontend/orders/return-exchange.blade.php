@@ -19,7 +19,7 @@
                 </div>
             </div>
 
-            <form action="{{ route('frontend.parent.request-return-exchange') }}" method="POST" enctype="multipart/form-data">
+            <form id="return-exchange-form" action="{{ route('frontend.parent.request-return-exchange') }}" method="POST" enctype="multipart/form-data">
                 @csrf
                 <div class="row">
                     <div class="col-12">
@@ -32,13 +32,25 @@
                                     <label class="form-label fw-bold">
                                         <span class="step-number">1.</span> Select Reason
                                     </label>
-                                    <select class="form-select" name="reason" required>
+                                    <select class="form-select" id="reason-select" required onchange="toggleOtherReason(this)">
                                         <option value="">Choose a reason</option>
                                         <option value="WRONG SIZE">Wrong Size</option>
                                         <option value="WRONG ITEM">Wrong Item</option>
                                         <option value="DAMAGED PRODUCT">Damaged Product</option>
                                         <option value="OTHER">Other</option>
                                     </select>
+                                    {{-- Hidden input that carries the final reason value to the server --}}
+                                    <input type="hidden" name="reason" id="reason-hidden" value="">
+
+                                    <!-- Other reason text box (hidden by default) -->
+                                    <div id="other-reason-box" style="display:none; margin-top:12px;">
+                                        <label class="small fw-semibold text-dark mb-1 d-block">Please describe your reason <span class="text-danger">*</span></label>
+                                        <textarea id="other-reason-text" rows="3"
+                                            name="other_reason"
+                                            class="form-control"
+                                            placeholder="Tell us more about why you want to exchange this item..."
+                                            style="resize:vertical;border-radius:8px;">{{ old('other_reason') }}</textarea>
+                                    </div>
                                 </div>
 
                                 <!-- 2. Choose Quantity -->
@@ -728,29 +740,113 @@
         }
         
         // Form submission validation
-        document.querySelector('form').addEventListener('submit', function(e) {
-            const checkedBoxes = document.querySelectorAll('.item-checkbox:checked');
-            let isValid = true;
-            
-            checkedBoxes.forEach(checkbox => {
-                const itemId = checkbox.value;
-                const quantityInput = document.getElementById(`quantity-${itemId}`);
-                const maxQty = parseInt(checkbox.getAttribute('data-available-qty')) || 1;
+        const returnForm = document.getElementById('return-exchange-form');
+        if (returnForm) {
+            returnForm.addEventListener('submit', function(e) {
+                console.log('Form submission started');
+                const checkedBoxes = document.querySelectorAll('.item-checkbox:checked');
+                console.log('Checked boxes count:', checkedBoxes.length);
                 
-                if (quantityInput) {
-                    const value = parseInt(quantityInput.value) || 0;
-                    if (value < 1 || value > maxQty) {
-                        isValid = false;
-                        validateQuantity(itemId, maxQty);
+                if (checkedBoxes.length === 0) {
+                    console.log('No items selected');
+                    e.preventDefault();
+                    alert('Please select at least one item to exchange.');
+                    return;
+                }
+
+                let isValid = true;
+
+                // Handle "Other" reason — copy textarea into hidden input
+                const reasonSelect = document.getElementById('reason-select');
+                const hiddenReason = document.getElementById('reason-hidden');
+                const otherTextarea = document.getElementById('other-reason-text');
+                
+                console.log('Selected reason dropdown value:', reasonSelect.value);
+                
+                if (reasonSelect.value === 'OTHER') {
+                    const otherText = otherTextarea ? otherTextarea.value.trim() : '';
+                    console.log('Other reason text field content:', otherText);
+                    if (!otherText) {
+                        console.log('Validation failed: Other reason is empty');
+                        e.preventDefault();
+                        otherTextarea.focus();
+                        otherTextarea.style.borderColor = '#dc3545';
+                        alert('Please describe your reason before submitting.');
+                        return;
                     }
+                    hiddenReason.value = otherText;
+                } else {
+                    hiddenReason.value = reasonSelect.value;
+                }
+                
+                console.log('Final reason being sent:', hiddenReason.value);
+                
+                checkedBoxes.forEach(checkbox => {
+                    const itemId = checkbox.value;
+                    const quantityInput = document.getElementById(`quantity-${itemId}`);
+                    const maxQty = parseInt(checkbox.getAttribute('data-available-qty')) || 1;
+                    
+                    if (quantityInput) {
+                        const value = parseInt(quantityInput.value) || 0;
+                        console.log(`Checking item ${itemId}: Requested Qty=${value}, Max=${maxQty}`);
+                        if (value < 1 || value > maxQty) {
+                            console.log(`Validation failed: Invalid quantity for item ${itemId}`);
+                            isValid = false;
+                            validateQuantity(itemId, maxQty);
+                        }
+                    }
+                });
+                
+                console.log('Form overall validity:', isValid);
+                
+                if (!isValid) {
+                    e.preventDefault();
+                    alert('Please correct the quantity values before submitting.');
+                } else {
+                    console.log('All validations passed. Form is submitting to server...');
                 }
             });
+        } else {
+            console.error('Error: return-exchange-form not found in DOM');
+        }
+
+        const updateSubmit = () => {
+            const acceptTerms = document.getElementById('accept_terms');
+            const acceptSize = document.getElementById('accept_size_change');
+            const submitBtn = document.getElementById('submit-btn');
+            const checkedBoxes = document.querySelectorAll('.item-checkbox:checked');
             
-            if (!isValid) {
-                e.preventDefault();
-                alert('Please correct the quantity values before submitting.');
+            const isTermsAccepted = acceptTerms && acceptTerms.checked;
+            const isSizeAccepted = acceptSize && acceptSize.checked;
+            const hasItemsSelected = checkedBoxes.length > 0;
+            
+            const shouldDisable = !(isTermsAccepted && isSizeAccepted && hasItemsSelected);
+            submitBtn.disabled = shouldDisable;
+            
+            console.log('Submit button update:', {
+                terms: isTermsAccepted,
+                sizeAck: isSizeAccepted,
+                itemsSelected: hasItemsSelected,
+                buttonDisabled: shouldDisable
+            });
+        };
+
+        function toggleOtherReason(select) {
+            console.log('Toggling other reason for value:', select.value);
+            const box = document.getElementById('other-reason-box');
+            const textarea = document.getElementById('other-reason-text');
+            const hiddenReason = document.getElementById('reason-hidden');
+            if (select.value === 'OTHER') {
+                box.style.display = 'block';
+                textarea.required = true;
+                hiddenReason.value = '';
+            } else {
+                box.style.display = 'none';
+                textarea.required = false;
+                textarea.value = '';
+                hiddenReason.value = select.value;
             }
-        });
+        }
         
         // Multiple Photo Upload Preview
         const photoInput = document.getElementById('photo-input');

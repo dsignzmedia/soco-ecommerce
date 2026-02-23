@@ -23,7 +23,9 @@ class ProductController extends Controller
         }
 
         if ($request->filled('school_id')) {
-            $query->where('school_id', $request->school_id);
+            $query->whereHas('schools', function($q) use ($request) {
+                $q->where('schools.id', $request->school_id);
+            });
         }
 
         // Apply shared filters
@@ -69,7 +71,9 @@ class ProductController extends Controller
         }
 
         if ($request->filled('school_id')) {
-            $query->where('school_id', $request->school_id);
+            $query->whereHas('schools', function($q) use ($request) {
+                $q->where('schools.id', $request->school_id);
+            });
         }
 
         if ($request->filled('grade')) {
@@ -787,9 +791,7 @@ class ProductController extends Controller
         $categories = \App\Models\Admin\Master\Category::where('type', 'merchandise')
             ->where('is_active', true)
             ->orderBy('sort_order', 'asc')
-            ->orderBy('name', 'asc')
-            ->pluck('name', 'slug')
-            ->toArray();
+            ->get(['name', 'slug', 'type']);
 
         if (empty($categories)) {
             $categories = ['T-Shirts' => 'T-Shirts', 'Hoodies' => 'Hoodies', 'Caps' => 'Caps', 'Mugs' => 'Mugs', 'Accessories' => 'Accessories'];
@@ -811,7 +813,9 @@ class ProductController extends Controller
             'grades' => $grades,
             'categories' => $categories,
             'productTypes' => $productTypes,
-            'productTypeTags' => \App\Models\Admin\Master\ProductType::getActive()->pluck('product_tag', 'slug')->toArray()
+            'productTypeTags' => \App\Models\Admin\Master\ProductType::getActive()->pluck('product_tag', 'slug')->toArray(),
+            'selectedSchoolIds' => old('school_ids', []),
+            'allSchoolsCount' => $schools->count()
         ]);
     }
 
@@ -824,7 +828,9 @@ class ProductController extends Controller
             'product_name' => 'required|string|max:255',
             'category' => 'nullable|string',
             'grade' => 'nullable|string',
-            'school_id' => 'nullable|exists:schools,id',
+            'school_ids' => 'nullable|array',
+            'school_ids.*' => 'exists:schools,id',
+            'school_id' => 'nullable', // Legacy
             'gender' => 'nullable|string',
             'tag_name' => 'nullable|string',
             'product_tag' => 'nullable|string|max:255',
@@ -970,6 +976,15 @@ class ProductController extends Controller
             $this->saveVariants($product, $request->input('variants'));
         }
 
+        // Handle Schools
+        if ($request->has('school_ids')) {
+            $product->schools()->sync($request->school_ids);
+            // Update legacy school_id
+            $firstSchool = $request->input('school_ids')[0] ?? null;
+            $product->school_id = $firstSchool;
+            $product->saveQuietly();
+        }
+
         return redirect()->route('admin.merchandise.products.index')->with('success', 'Product created successfully.');
     }
 
@@ -1004,9 +1019,7 @@ class ProductController extends Controller
         $categories = \App\Models\Admin\Master\Category::where('type', 'merchandise')
             ->where('is_active', true)
             ->orderBy('sort_order', 'asc')
-            ->orderBy('name', 'asc')
-            ->pluck('name', 'slug')
-            ->toArray();
+            ->get(['name', 'slug', 'type']);
 
         if (empty($categories)) {
             $categories = ['T-Shirts' => 'T-Shirts', 'Hoodies' => 'Hoodies', 'Caps' => 'Caps', 'Mugs' => 'Mugs', 'Accessories' => 'Accessories'];
@@ -1024,7 +1037,9 @@ class ProductController extends Controller
             'grades' => $grades,
             'categories' => $categories,
             'productTypes' => $productTypes,
-            'productTypeTags' => \App\Models\Admin\Master\ProductType::getActive()->pluck('product_tag', 'slug')->toArray()
+            'productTypeTags' => \App\Models\Admin\Master\ProductType::getActive()->pluck('product_tag', 'slug')->toArray(),
+            'selectedSchoolIds' => old('school_ids', $product->schools->pluck('id')->toArray()),
+            'allSchoolsCount' => $schools->count()
         ]);
     }
 
@@ -1039,7 +1054,9 @@ class ProductController extends Controller
             'product_name' => 'required|string|max:255',
             'category' => 'nullable|string',
             'grade' => 'nullable|string',
-            'school_id' => 'nullable|exists:schools,id',
+            'school_ids' => 'nullable|array',
+            'school_ids.*' => 'exists:schools,id',
+            'school_id' => 'nullable', // Legacy
             'gender' => 'nullable|string',
             'tag_name' => 'nullable|string',
             'product_tag' => 'nullable|string|max:255',
@@ -1205,6 +1222,15 @@ class ProductController extends Controller
 
         if ($request->has('variants')) {
             $this->saveVariants($product, $request->input('variants'));
+        }
+
+        // Handle Schools
+        if ($request->has('school_ids')) {
+            $product->schools()->sync($request->school_ids);
+            // Update legacy school_id
+            $firstSchool = $request->input('school_ids')[0] ?? null;
+            $product->school_id = $firstSchool;
+            $product->saveQuietly();
         }
 
         return redirect()->route('admin.merchandise.products.index')->with('success', 'Product updated successfully.');

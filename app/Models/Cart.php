@@ -18,6 +18,9 @@ class Cart extends Model
         'quantity',
         'custom_text',
         'custom_design_path',
+        'student_name',
+        'school_name',
+        'grade',
     ];
 
     protected $casts = [

@@ -44,6 +44,18 @@
             <p style="margin:0;color:var(--text);font-size:14px;">Configure payment providers like Stripe, Razorpay, PayPal, and manage credentials.</p>
         </a>
 
+        <a href="{{ route('master.admin.coupons.index') }}" class="card" style="display:block;text-decoration:none;color:inherit;transition:transform 0.2s,box-shadow 0.2s;" onmouseover="this.style.transform='translateY(-4px)';this.style.boxShadow='0 16px 40px rgba(15,23,42,0.1)'" onmouseout="this.style.transform='';this.style.boxShadow=''">
+            <div style="display:flex;align-items:center;gap:16px;margin-bottom:12px;">
+                <div style="width:48px;height:48px;border-radius:12px;background:#fdf4ff;display:grid;place-items:center;color:#d946ef;">
+                    <svg width="24" height="24" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 5v2m0 4v2m0 4v2M5 5a2 2 0 00-2 2v3a2 2 0 110 4v3a2 2 0 002 2h14a2 2 0 002-2v-3a2 2 0 110-4V7a2 2 0 00-2-2H5z"/>
+                    </svg>
+                </div>
+                <h3 style="margin:0;color:var(--heading);font-size:18px;">Global Coupons</h3>
+            </div>
+            <p style="margin:0;color:var(--text);font-size:14px;">Create promotional codes for free shipping or discounts usable by any customer.</p>
+        </a>
+
         <a href="{{ route('master.admin.settings.invoice-templates') }}" class="card" style="display:block;text-decoration:none;color:inherit;transition:transform 0.2s,box-shadow 0.2s;" onmouseover="this.style.transform='translateY(-4px)';this.style.boxShadow='0 16px 40px rgba(15,23,42,0.1)'" onmouseout="this.style.transform='';this.style.boxShadow=''">
             <div style="display:flex;align-items:center;gap:16px;margin-bottom:12px;">
                 <div style="width:48px;height:48px;border-radius:12px;background:#f0fdf4;display:grid;place-items:center;color:#22c55e;">
@@ -102,6 +114,42 @@
                 <h3 style="margin:0;color:var(--heading);font-size:18px;">Exchange Template</h3>
             </div>
             <p style="margin:0;color:var(--text);font-size:14px;">Edit and manage the Return-Exchange Policy page content.</p>
+        </a>
+
+        <a href="{{ route('master.admin.settings.privacy-policy') }}" class="card" style="display:block;text-decoration:none;color:inherit;transition:transform 0.2s,box-shadow 0.2s;" onmouseover="this.style.transform='translateY(-4px)';this.style.boxShadow='0 16px 40px rgba(15,23,42,0.1)'" onmouseout="this.style.transform='';this.style.boxShadow=''">
+            <div style="display:flex;align-items:center;gap:16px;margin-bottom:12px;">
+                <div style="width:48px;height:48px;border-radius:12px;background:#f0fdf4;display:grid;place-items:center;color:#16a34a;">
+                    <svg width="24" height="24" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/>
+                    </svg>
+                </div>
+                <h3 style="margin:0;color:var(--heading);font-size:18px;">Privacy Policy</h3>
+            </div>
+            <p style="margin:0;color:var(--text);font-size:14px;">Edit and manage the Privacy Policy page content.</p>
+        </a>
+
+        <a href="{{ route('master.admin.settings.shipping-policy') }}" class="card" style="display:block;text-decoration:none;color:inherit;transition:transform 0.2s,box-shadow 0.2s;" onmouseover="this.style.transform='translateY(-4px)';this.style.boxShadow='0 16px 40px rgba(15,23,42,0.1)'" onmouseout="this.style.transform='';this.style.boxShadow=''">
+            <div style="display:flex;align-items:center;gap:16px;margin-bottom:12px;">
+                <div style="width:48px;height:48px;border-radius:12px;background:#f0f9ff;display:grid;place-items:center;color:#0284c7;">
+                    <svg width="24" height="24" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4"/>
+                    </svg>
+                </div>
+                <h3 style="margin:0;color:var(--heading);font-size:18px;">Shipping Policy</h3>
+            </div>
+            <p style="margin:0;color:var(--text);font-size:14px;">Edit and manage the Shipping Policy page content.</p>
+        </a>
+
+        <a href="{{ route('master.admin.settings.terms-conditions') }}" class="card" style="display:block;text-decoration:none;color:inherit;transition:transform 0.2s,box-shadow 0.2s;" onmouseover="this.style.transform='translateY(-4px)';this.style.boxShadow='0 16px 40px rgba(15,23,42,0.1)'" onmouseout="this.style.transform='';this.style.boxShadow=''">
+            <div style="display:flex;align-items:center;gap:16px;margin-bottom:12px;">
+                <div style="width:48px;height:48px;border-radius:12px;background:#fdf4ff;display:grid;place-items:center;color:#9333ea;">
+                    <svg width="24" height="24" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
+                    </svg>
+                </div>
+                <h3 style="margin:0;color:var(--heading);font-size:18px;">Terms &amp; Conditions</h3>
+            </div>
+            <p style="margin:0;color:var(--text);font-size:14px;">Edit and manage the Terms &amp; Conditions page content.</p>
         </a>
 
         <a href="{{ route('master.admin.settings.backups') }}" class="card" style="display:block;text-decoration:none;color:inherit;transition:transform 0.2s,box-shadow 0.2s;" onmouseover="this.style.transform='translateY(-4px)';this.style.boxShadow='0 16px 40px rgba(15,23,42,0.1)'" onmouseout="this.style.transform='';this.style.boxShadow=''">

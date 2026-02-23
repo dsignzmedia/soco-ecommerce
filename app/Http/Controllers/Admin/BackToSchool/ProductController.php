@@ -24,7 +24,9 @@ class ProductController extends Controller
         }
         
         if ($request->filled('school_id')) {
-            $query->where('school_id', $request->school_id);
+            $query->whereHas('schools', function($q) use ($request) {
+                $q->where('schools.id', $request->school_id);
+            });
         }
 
         // Apply other filters if needed (grade, category, etc.)
@@ -70,7 +72,9 @@ class ProductController extends Controller
         }
         
         if ($request->filled('school_id')) {
-            $query->where('school_id', $request->school_id);
+            $query->whereHas('schools', function($q) use ($request) {
+                $q->where('schools.id', $request->school_id);
+            });
         }
 
         if ($request->filled('grade')) {
@@ -788,8 +792,7 @@ class ProductController extends Controller
             ->where('is_active', true)
             ->orderBy('sort_order', 'asc')
             ->orderBy('name', 'asc')
-            ->pluck('name', 'slug')
-            ->toArray();
+            ->get(['name', 'slug', 'type']);
 
         if (empty($categories)) {
             $categories = ['Uniform' => 'Uniform', 'Shoes' => 'Shoes', 'Bags' => 'Bags', 'Stationery' => 'Stationery', 'Food Container' => 'Food Container', 'Drinkware' => 'Drinkware', 'School-Day Essentials' => 'School-Day Essentials'];
@@ -809,7 +812,9 @@ class ProductController extends Controller
             'mode' => 'create',
             'grades' => $grades,
             'categories' => $categories,
-            'productTypes' => $productTypes
+            'productTypes' => $productTypes,
+            'selectedSchoolIds' => old('school_ids', []),
+            'allSchoolsCount' => $schools->count()
         ]);
     }
 
@@ -821,7 +826,9 @@ class ProductController extends Controller
         // Simplified validation for School products
         $validationRules = [
             'product_name' => 'required|string|max:255',
-            'school_id' => 'nullable|exists:schools,id', // Allow null for global products
+            'school_ids' => 'nullable|array',
+            'school_ids.*' => 'exists:schools,id',
+            'school_id' => 'nullable', // Legacy
             'grade' => 'nullable|string',
             'category' => 'nullable|string', // Made nullable
             'product_type' => 'nullable|string', 
@@ -840,6 +847,8 @@ class ProductController extends Controller
             'video_url' => 'nullable|url',
             'video_file' => 'nullable|file|mimes:mp4,webm,ogg,mov,avi,wmv,flv,mkv|max:102400', // 100MB max
             'tag_name' => 'nullable|string',
+            'product_tag' => 'nullable|string',
+            'show_product_tag' => 'nullable|boolean',
             'availability_label' => 'nullable|string',
             'delivery_duration' => 'nullable|string|max:255',
             'featured_image' => [
@@ -869,6 +878,7 @@ class ProductController extends Controller
         
         // Handle checkbox
         $data['price_inclusive_tax'] = $request->has('price_inclusive_tax') ? 1 : 0;
+        $data['show_product_tag'] = $request->has('show_product_tag') ? 1 : 0;
         
         // Validate variant prices when variant-based pricing is enabled
         if ($variantBasedPricing && $request->has('variants')) {
@@ -972,6 +982,15 @@ class ProductController extends Controller
             $this->saveVariants($product, $request->input('variants'));
         }
 
+        // Handle Schools
+        if ($request->has('school_ids')) {
+            $product->schools()->sync($request->school_ids);
+            // Update legacy school_id
+            $firstSchool = $request->input('school_ids')[0] ?? null;
+            $product->school_id = $firstSchool;
+            $product->saveQuietly();
+        }
+
         return redirect()->route('admin.back_to_school.products.index')->with('success', 'Product created successfully.');
     }
 
@@ -1007,9 +1026,7 @@ class ProductController extends Controller
         $categories = \App\Models\Admin\Master\Category::where('type', 'back_to_school')
             ->where('is_active', true)
             ->orderBy('sort_order', 'asc')
-            ->orderBy('name', 'asc')
-            ->pluck('name', 'slug')
-            ->toArray();
+            ->get(['name', 'slug', 'type']);
 
         if (empty($categories)) {
             $categories = ['Uniform' => 'Uniform', 'Shoes' => 'Shoes', 'Bags' => 'Bags', 'Stationery' => 'Stationery', 'Food Container' => 'Food Container', 'Drinkware' => 'Drinkware', 'School-Day Essentials' => 'School-Day Essentials'];
@@ -1026,7 +1043,9 @@ class ProductController extends Controller
             'mode' => 'edit',
             'grades' => $grades,
             'categories' => $categories,
-            'productTypes' => $productTypes
+            'productTypes' => $productTypes,
+            'selectedSchoolIds' => old('school_ids', $product->schools->pluck('id')->toArray()),
+            'allSchoolsCount' => $schools->count()
         ]);
     }
 
@@ -1039,7 +1058,9 @@ class ProductController extends Controller
 
         $validationRules = [
             'product_name' => 'required|string|max:255',
-            'school_id' => 'nullable|exists:schools,id', // Allow null
+            'school_ids' => 'nullable|array',
+            'school_ids.*' => 'exists:schools,id',
+            'school_id' => 'nullable', // Legacy
             'grade' => 'nullable|string',
             'category' => 'nullable|string', // Made nullable
             'product_type' => 'nullable|string', 
@@ -1057,6 +1078,8 @@ class ProductController extends Controller
             'video_url' => 'nullable|url',
             'video_file' => 'nullable|file|mimes:mp4,webm,ogg,mov,avi,wmv,flv,mkv|max:102400', // 100MB max
             'tag_name' => 'nullable|string',
+            'product_tag' => 'nullable|string',
+            'show_product_tag' => 'nullable|boolean',
             'availability_label' => 'nullable|string',
             'delivery_duration' => 'nullable|string|max:255',
             'variants' => 'nullable|array',
@@ -1075,6 +1098,7 @@ class ProductController extends Controller
         
         // Handle checkbox
         $data['price_inclusive_tax'] = $request->has('price_inclusive_tax') ? 1 : 0;
+        $data['show_product_tag'] = $request->has('show_product_tag') ? 1 : 0;
         
         // Validate variant prices when variant-based pricing is enabled
         if ($variantBasedPricing && $request->has('variants')) {
@@ -1212,6 +1236,15 @@ class ProductController extends Controller
 
         if ($request->has('variants')) {
             $this->saveVariants($product, $request->input('variants'));
+        }
+
+        // Handle Schools
+        if ($request->has('school_ids')) {
+            $product->schools()->sync($request->school_ids);
+            // Update legacy school_id
+            $firstSchool = $request->input('school_ids')[0] ?? null;
+            $product->school_id = $firstSchool;
+            $product->saveQuietly();
         }
 
         return redirect()->route('admin.back_to_school.products.index')->with('success', 'Product updated successfully.');

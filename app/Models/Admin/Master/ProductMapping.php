@@ -4,6 +4,7 @@ namespace App\Models\Admin\Master;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Builder;
@@ -64,9 +65,9 @@ class ProductMapping extends Model
         static::addGlobalScope('activeSchool', function (Builder $builder) {
             $builder->where(function($q) {
                 // Allow products that are not linked to any school (Global/Merchandise)
-                $q->whereNull('school_id')
+                $q->whereDoesntHave('schools')
                   // OR products linked to an active school
-                  ->orWhereHas('school', function ($query) {
+                  ->orWhereHas('schools', function ($query) {
                       // School model's global scope will automatically filter has_deleted = 0
                   });
             });
@@ -98,9 +99,9 @@ class ProductMapping extends Model
             $prefix = 'BTS';
         } elseif ($product->product_type === 'merchandised') {
             $prefix = 'MER';
-        } elseif ($product->school_id) {
+        } elseif ($product->schools()->exists()) {
             // Get school name and extract first 3 letters
-            $school = School::withoutGlobalScopes()->find($product->school_id);
+            $school = $product->schools()->withoutGlobalScopes()->first();
             if ($school && $school->name) {
                 $schoolName = $school->name;
                 // Remove special characters and spaces, convert to uppercase
@@ -167,6 +168,11 @@ class ProductMapping extends Model
     public function school(): BelongsTo
     {
         return $this->belongsTo(School::class);
+    }
+
+    public function schools(): BelongsToMany
+    {
+        return $this->belongsToMany(School::class, 'product_mapping_school', 'product_mapping_id', 'school_id');
     }
 
     public function grade(): BelongsTo

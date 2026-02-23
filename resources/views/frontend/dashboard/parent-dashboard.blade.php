@@ -346,6 +346,13 @@
             <form id="addStudentForm">
             <div class="modal-body" style="padding: 0;">
                 <div class="modal-scrollable">
+                        <div class="px-4 pt-2 pb-0">
+                            <p style="font-size: 13px; color: #666; margin-bottom: 8px;">Follow these points to buy accurate uniforms:</p>
+                            <ul style="font-size: 13px; color: #666; margin-bottom: 12px; padding-left: 20px;">
+                                <li>Add all your children (siblings) as separate student profiles.</li>
+                                <li>Ensure the grade is selected correctly for each student.</li>
+                            </ul>
+                        </div>
 
                         <input type="hidden" id="modalProfileId" name="profile_id" value="">
                         <div class="mb-3">
@@ -366,21 +373,21 @@
                         <label for="modalGrade" class="form-label" style="font-weight: 500; color: #333; margin-bottom: 8px;">Grade <span style="color: red;">*</span></label>
                         <select id="modalGrade" name="grade" class="form-select" required style="border: 1px solid #ddd; border-radius: 6px; padding: 10px 12px;">
                             <option value="">Select Grade</option>
-                            <option value="PKG">Pre-KG</option>
+                            <option value="Pre-KG">Pre-KG</option>
                             <option value="LKG">LKG</option>
                             <option value="UKG">UKG</option>
-                            <option value="1">Grade 1</option>
-                            <option value="2">Grade 2</option>
-                            <option value="3">Grade 3</option>
-                            <option value="4">Grade 4</option>
-                            <option value="5">Grade 5</option>
-                            <option value="6">Grade 6</option>
-                            <option value="7">Grade 7</option>
-                            <option value="8">Grade 8</option>
-                            <option value="9">Grade 9</option>
-                            <option value="10">Grade 10</option>
-                            <option value="11">Grade 11</option>
-                            <option value="12">Grade 12</option>
+                            <option value="1">Class 1</option>
+                            <option value="2">Class 2</option>
+                            <option value="3">Class 3</option>
+                            <option value="4">Class 4</option>
+                            <option value="5">Class 5</option>
+                            <option value="6">Class 6</option>
+                            <option value="7">Class 7</option>
+                            <option value="8">Class 8</option>
+                            <option value="9">Class 9</option>
+                            <option value="10">Class 10</option>
+                            <option value="11">Class 11</option>
+                            <option value="12">Class 12</option>
                         </select>
                     </div>
                     <div class="mb-3">

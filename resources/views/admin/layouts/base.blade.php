@@ -696,10 +696,12 @@
                             'master.admin.settings.invoice-templates*',
                             'master.admin.settings.email-templates*',
                             'master.admin.settings.sms-templates*',
+                            // 'master.admin.coupons.*', // Removed as it has its own tab now
                             'master.admin.settings.exchange-template*',
                             'master.admin.settings.app-branding*',
                             'master.admin.settings.backups*'
                         ], 'icon' => 'fas fa-cog'],
+                        ['label' => 'Global Coupons', 'route' => 'master.admin.coupons.index', 'active' => 'master.admin.coupons.*', 'icon' => 'fas fa-ticket-alt'],
                         ['label' => 'Audit Logs', 'route' => 'master.admin.settings.audit-logs', 'active' => 'master.admin.settings.audit-logs', 'icon' => 'fas fa-clipboard-list'],
                     ];
                 @endphp

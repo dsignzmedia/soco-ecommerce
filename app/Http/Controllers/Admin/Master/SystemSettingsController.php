@@ -8,6 +8,9 @@ use App\Models\Admin\Master\AuditLog;
 use App\Models\Admin\Master\Backup;
 use App\Models\Admin\Master\EmailTemplate;
 use App\Models\Admin\Master\ExchangePolicy;
+use App\Models\Admin\Master\PrivacyPolicy;
+use App\Models\Admin\Master\ShippingPolicy;
+use App\Models\Admin\Master\TermsConditions;
 use App\Models\Admin\Master\InvoiceTemplate;
 use App\Models\Admin\Master\PaymentGateway;
 use App\Models\Admin\Master\SmsTemplate;
@@ -390,6 +393,51 @@ class SystemSettingsController extends Controller
         ]);
 
         return back()->with('status', 'Exchange template updated successfully.');
+    }
+
+    // Privacy Policy
+    public function privacyPolicy(): View
+    {
+        $policy = PrivacyPolicy::current();
+        $content = $policy->content ?? '';
+        return view('admin.settings.privacy-policy', compact('content'));
+    }
+
+    public function updatePrivacyPolicy(Request $request): RedirectResponse
+    {
+        $data = $request->validate(['content' => ['required', 'string']]);
+        PrivacyPolicy::current()->update(['content' => $data['content']]);
+        return back()->with('status', 'Privacy Policy updated successfully.');
+    }
+
+    // Shipping Policy
+    public function shippingPolicy(): View
+    {
+        $policy = ShippingPolicy::current();
+        $content = $policy->content ?? '';
+        return view('admin.settings.shipping-policy', compact('content'));
+    }
+
+    public function updateShippingPolicy(Request $request): RedirectResponse
+    {
+        $data = $request->validate(['content' => ['required', 'string']]);
+        ShippingPolicy::current()->update(['content' => $data['content']]);
+        return back()->with('status', 'Shipping Policy updated successfully.');
+    }
+
+    // Terms & Conditions
+    public function termsConditions(): View
+    {
+        $policy = TermsConditions::current();
+        $content = $policy->content ?? '';
+        return view('admin.settings.terms-conditions', compact('content'));
+    }
+
+    public function updateTermsConditions(Request $request): RedirectResponse
+    {
+        $data = $request->validate(['content' => ['required', 'string']]);
+        TermsConditions::current()->update(['content' => $data['content']]);
+        return back()->with('status', 'Terms & Conditions updated successfully.');
     }
 
     // Backup & Restore

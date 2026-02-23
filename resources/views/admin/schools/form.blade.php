@@ -74,7 +74,7 @@
                     <div style="margin-bottom:16px;">
                         <label style="cursor:pointer;">
                             <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px;">
-                                <span style="font-size: 14px; font-weight: 600; color: #1f2937;">Enable Free Delivery Coupon</span>
+                                <span style="font-size: 14px; font-weight: 600; color: #1f2937;">Enable School-Wide Free Delivery</span>
                                 <div style="position: relative; flex-shrink: 0;">
                                     <input type="hidden" name="coupon_enabled" value="0">
                                     <input type="checkbox" name="coupon_enabled" value="1" id="couponEnabled" 
@@ -85,20 +85,7 @@
                                     </div>
                                 </div>
                             </div>
-                            <div style="font-size: 12px; color: #6b7280; line-height: 1.4;">Allow students from this school to use a coupon code for free shipping</div>
-                        </label>
-                    </div>
-
-                    <div id="couponCodeContainer" style="{{ old('coupon_enabled', $school->coupon_enabled ?? false) ? '' : 'display:none;' }} padding-top: 12px; border-top: 1px solid #e5e7eb;">
-                        <label>
-                            <span style="font-size: 13px; font-weight: 500; color: #374151; margin-bottom: 6px; display: block;">Coupon Code</span>
-                            <input type="text" name="coupon_code" value="{{ old('coupon_code', $school->coupon_code) }}" 
-                                   placeholder="e.g. SCHOOLFREESHIP" 
-                                   style="max-width: 400px; text-transform: uppercase; font-family: 'Courier New', monospace; font-weight: 600; letter-spacing: 0.5px;">
-                            <small style="color:#6b7280;font-size:11px;margin-top:4px;display:block;">
-                                <i class="fas fa-info-circle" style="margin-right: 4px;"></i>
-                                Students of this school can use this code for free shipping at checkout.
-                            </small>
+                            <div style="font-size: 12px; color: #6b7280; line-height: 1.4;">Automatically apply free shipping for all orders from this school. No coupon code required.</div>
                         </label>
                     </div>
                 </div>
@@ -139,7 +126,6 @@
 <script>
     document.addEventListener('DOMContentLoaded', function() {
         const couponCheckbox = document.getElementById('couponEnabled');
-        const couponContainer = document.getElementById('couponCodeContainer');
         const toggleSwitch = document.querySelector('.toggle-switch');
         const toggleSlider = document.querySelector('.toggle-slider');
 
@@ -148,11 +134,9 @@
             if (isChecked) {
                 toggleSwitch.style.backgroundColor = '#490D59';
                 toggleSlider.style.transform = 'translateX(24px)';
-                couponContainer.style.display = 'block';
             } else {
                 toggleSwitch.style.backgroundColor = '#d1d5db';
                 toggleSlider.style.transform = 'translateX(0)';
-                couponContainer.style.display = 'none';
             }
         }
 

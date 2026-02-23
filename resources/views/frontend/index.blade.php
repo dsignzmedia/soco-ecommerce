@@ -814,7 +814,7 @@ About Area
             </div>
 
             <div class="col-lg-6 text-center text-lg-start">
-                <span class="sec-subtitle">7+ years, trusted quality,</span>
+                <span class="sec-subtitle">10+ years, trusted quality,</span>
                 <h2 class="sec-title">Your Easy, All in one destination for school Uniform and Essentials.</h2>
                 <p class="sec-text pe-xl-5 mb-4 pb-xl-3">We make school uniform shopping easy and hassle-free. As a
                     trusted uniform
@@ -860,7 +860,7 @@ About Area
                             <div class="media-icon"><img src="{{ asset('assets/img/icon/coun-1-4.svg') }}" alt="icon">
                             </div>
                             <div class="media-body">
-                                <p class="media-label">7+</p>
+                                <p class="media-label">10+</p>
                                 <p class="media-title">Years</p>
                             </div>
                         </div>

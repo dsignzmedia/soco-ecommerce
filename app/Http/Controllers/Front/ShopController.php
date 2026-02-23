@@ -16,15 +16,22 @@ class ShopController extends Controller
         $allowedTypes = ['merchandised', 'back_to_school'];
 
         // Filter by product type if provided
-        if ($request->has('product_type') && in_array($request->product_type, $allowedTypes)) {
-            $allowedTypes = [$request->product_type];
+        if ($request->has('product_type')) {
+            $typesInput = is_array($request->product_type) ? $request->product_type : [$request->product_type];
+            $validTypes = array_intersect($typesInput, $allowedTypes);
+            
+            if (!empty($validTypes)) {
+                $allowedTypes = array_values($validTypes);
+            }
         }
 
+        // Fetch all products matching types, regardless of school_id (Global + School Specific)
         $query = ProductMapping::whereIn('product_type', $allowedTypes)
             ->where('status', 'live');
 
         if ($request->has('category')) {
-             $query->where('category', $request->category);
+             $categoriesFilter = is_array($request->category) ? $request->category : [$request->category];
+             $query->whereIn('category', $categoriesFilter);
         }
 
         // Get categories that have at least one product matching the filtered product types
@@ -35,14 +42,16 @@ class ShopController extends Controller
             ->orderBy('category')
             ->pluck('category');
         
-        $products = $query->paginate(12);
+        $products = $query->paginate(48);
 
         return view('frontend.shop.index', compact('products', 'categories'));
     }
 
     public function show($id): View
     {
-        $dbProduct = ProductMapping::with('variants')->findOrFail($id);
+        $dbProduct = ProductMapping::with('variants')
+            ->where('status', 'live')
+            ->findOrFail($id);
 
         // Determine image URL
         $image = $dbProduct->featured_image
@@ -121,9 +130,7 @@ class ShopController extends Controller
             'variants' => $dbProduct->variants,
         ];
 
-        // Fetch related products (same category)
-        // Fetch related products (same category, fallback to random)
-        // Fetch related products (same category, fallback to random)
+        // Fetch related products (same category, same school, same grade)
         $relatedProductsQuery = ProductMapping::where('id', '!=', $id)
             ->where('status', 'live')
             ->where('product_type', $dbProduct->product_type);
@@ -139,22 +146,38 @@ class ShopController extends Controller
             // For general products (Merch/BTS without school), only show other general products
             $relatedProductsQuery->whereNull('school_id');
         }
+
+        // Grade-wise filtering: only show products for the same grade
+        if (!empty($dbProduct->grade)) {
+            $relatedProductsQuery->where('grade', $dbProduct->grade);
+        }
         
         $relatedProductsModels = $relatedProductsQuery->inRandomOrder()->take(4)->get();
         
-        // Fallback if not enough products found
+        // Fallback if not enough products found — broaden to same school+grade but any category
         if ($relatedProductsModels->count() < 4) {
             $fetchedIds = $relatedProductsModels->pluck('id')->toArray();
             $fetchedIds[] = $id; 
             
             $limit = 4 - $relatedProductsModels->count();
             
-            $otherProducts = ProductMapping::whereNotIn('id', $fetchedIds)
+            $fallbackQuery = ProductMapping::whereNotIn('id', $fetchedIds)
                 ->where('status', 'live')
-                ->where('product_type', $dbProduct->product_type)
-                ->inRandomOrder()
-                ->take($limit)
-                ->get();
+                ->where('product_type', $dbProduct->product_type);
+
+            // Keep same school constraint
+            if ($dbProduct->school_id) {
+                $fallbackQuery->where('school_id', $dbProduct->school_id);
+            } else {
+                $fallbackQuery->whereNull('school_id');
+            }
+
+            // Keep same grade constraint in fallback too
+            if (!empty($dbProduct->grade)) {
+                $fallbackQuery->where('grade', $dbProduct->grade);
+            }
+                
+            $otherProducts = $fallbackQuery->inRandomOrder()->take($limit)->get();
                 
             $relatedProductsModels = $relatedProductsModels->merge($otherProducts);
         }

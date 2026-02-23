@@ -22,14 +22,14 @@
     <div class="container">
         <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
             <h2 class="h4 mb-0">Store</h2>
-            {{-- <button class="vs-btn btn-sm style-outline d-lg-none" id="toggleFilters" data-bs-toggle="modal" data-bs-target="#filterModal" style="padding: 10px 20px; border: 1px solid #490D59; color: #490D59; background: transparent;">
+            <button class="vs-btn btn-sm style-outline d-lg-none" id="toggleFilters" data-bs-toggle="modal" data-bs-target="#filterModal" style="padding: 10px 20px; border: 1px solid #490D59; color: #490D59; background: transparent;">
                 <i class="fas fa-sliders-h me-2"></i> <span>Filter</span>
-            </button> --}}
+            </button>
         </div>
 
         <div class="row">
             <!-- Sidebar Filters -->
-            {{-- <div class="col-lg-3 col-xl-3 mb-lg-0 d-none d-lg-block">
+            <div class="col-lg-3 col-xl-3 mb-lg-0 d-none d-lg-block">
                 <div class="filter-sidebar" id="filterSidebar">
                     <div class="filter-header">
                         <i class="fas fa-filter me-2"></i>
@@ -47,24 +47,22 @@
                     </div>
 
                     <!-- Product Type -->
-                    @if(!request()->has('product_type'))
                     <div class="filter-section">
                         <h6 class="filter-title">Product Type</h6>
                         <div class="filter-options">
                             <label class="filter-option">
-                                <input type="checkbox" name="product_type" value="merchandised" class="filter-checkbox" checked>
+                                <input type="checkbox" name="product_type[]" value="merchandised" class="filter-checkbox" {{ (!request()->has('product_type') || in_array('merchandised', (array)request('product_type', []))) ? 'checked' : '' }}>
                                 <span class="checkbox-mark"></span>
                                 <span class="option-label">Merchandised Product</span>
                             </label>
                             <label class="filter-option">
-                                <input type="checkbox" name="product_type" value="back_to_school" class="filter-checkbox" checked>
+                                <input type="checkbox" name="product_type[]" value="back_to_school" class="filter-checkbox" {{ (!request()->has('product_type') || in_array('back_to_school', (array)request('product_type', []))) ? 'checked' : '' }}>
                                 <span class="checkbox-mark"></span>
                                 <span class="option-label">Back to School Product</span>
                             </label>
                         </div>
                         <div class="filter-divider"></div>
                     </div>
-                    @endif
 
                     <!-- Categories -->
                     <div class="filter-section">
@@ -73,43 +71,33 @@
                             @foreach($categories as $cat)
                                 @php
                                     $displayName = ucwords(str_replace('_', ' ', $cat));
+                                    $val = strtolower($cat);
+                                    // Default checked if no filter, or if in filter array
+                                    $categoryFilter = request('category', []);
+                                    $categoryFilter = is_array($categoryFilter) ? $categoryFilter : [$categoryFilter];
+                                    $categoryFilter = array_map('strtolower', $categoryFilter);
+                                    
+                                    $isChecked = !request()->has('category') || in_array($val, $categoryFilter);
                                 @endphp
                                 <label class="filter-option">
-                                    <input type="checkbox" name="category" value="{{ strtolower($cat) }}" class="filter-checkbox" checked>
+                                    <input type="checkbox" name="category[]" value="{{ $val }}" class="filter-checkbox" {{ $isChecked ? 'checked' : '' }}>
                                     <span class="checkbox-mark"></span>
                                     <span class="option-label">{{ $displayName }}</span>
                                 </label>
                             @endforeach
-<<<<<<< HEAD
                         </div>
                     </div>
-=======
-                        </ul>
-                    </div>
                 </div>
-            </div> --}}
+            </div>
 
             <!-- Product Grid -->
-            <div class="col-lg-12 col-xl-12">
-                <div class="vs-sort-bar d-flex justify-content-between align-items-center mb-3">
-                    <p class="woocommerce-result-count mb-0">
-                        Showing {{ $products->firstItem() }}–{{ $products->lastItem() }} of {{ $products->total() }} results
-                    </p>
->>>>>>> e8fe7e54bda89d05c14581d71cae2f8386f4c987
-                </div>
-            </div> --}}
-
-<<<<<<< HEAD
-            <!-- Product Grid -->
-            <div class="col-lg-12 col-xl-12">
+            <div class="col-lg-9 col-xl-9">
                 <div class="vs-sort-bar d-flex justify-content-between align-items-center mb-3">
                     <p class="woocommerce-result-count mb-0">
                         Showing {{ $products->firstItem() }}–{{ $products->lastItem() }} of {{ $products->total() }} results
                     </p>
                 </div>
 
-=======
->>>>>>> e8fe7e54bda89d05c14581d71cae2f8386f4c987
                 <div class="row justify-content-start align-items-stretch g-2 g-md-3" id="productsContainer">
                     @forelse($products as $product)
                     <div class="shop-product-card product-item"
@@ -189,11 +177,7 @@
     }
 
     /* Copied from Store page for consistent 2-column mobile layout */
-<<<<<<< HEAD
-    
-=======
 
->>>>>>> e8fe7e54bda89d05c14581d71cae2f8386f4c987
     .product-img {
         position: relative;
         overflow: hidden;
@@ -209,7 +193,7 @@
     .product-img img {
         width: 100%;
         height: 100%;
-        object-fit: contain;
+        object-fit: cover;
         padding: 0;
     }
 
@@ -351,11 +335,7 @@
         .product-title a {
             font-size: 14px;
         }
-<<<<<<< HEAD
-        
-=======
 
->>>>>>> e8fe7e54bda89d05c14581d71cae2f8386f4c987
         .product-price {
             font-size: 14px;
             margin-bottom: 12px !important;
@@ -377,7 +357,7 @@
 </style>
 
 <!-- Mobile Filter Modal -->
-{{-- <div class="modal fade d-lg-none" id="filterModal" tabindex="-1" aria-labelledby="filterModalLabel" aria-hidden="true" style="z-index: 9999;">
+<div class="modal fade d-lg-none" id="filterModal" tabindex="-1" aria-labelledby="filterModalLabel" aria-hidden="true" style="z-index: 9999;">
     <div class="modal-dialog modal-fullscreen">
         <div class="modal-content">
             <div class="modal-header">
@@ -398,24 +378,22 @@
                 </div>
 
                 <!-- Product Type -->
-                @if(!request()->has('product_type'))
                 <div class="filter-section">
                     <h6 class="filter-title">Product Type</h6>
                     <div class="filter-options">
                         <label class="filter-option">
-                            <input type="checkbox" name="product_type_mobile" value="merchandised" class="filter-checkbox-mobile" checked>
+                            <input type="checkbox" name="product_type_mobile[]" value="merchandised" class="filter-checkbox-mobile" {{ (!request()->has('product_type') || in_array('merchandised', (array)request('product_type', []))) ? 'checked' : '' }}>
                             <span class="checkbox-mark"></span>
                             <span class="option-label">Merchandised Product</span>
                         </label>
                         <label class="filter-option">
-                            <input type="checkbox" name="product_type_mobile" value="back_to_school" class="filter-checkbox-mobile" checked>
+                            <input type="checkbox" name="product_type_mobile[]" value="back_to_school" class="filter-checkbox-mobile" {{ (!request()->has('product_type') || in_array('back_to_school', (array)request('product_type', []))) ? 'checked' : '' }}>
                             <span class="checkbox-mark"></span>
                             <span class="option-label">Back to School Product</span>
                         </label>
                     </div>
                     <div class="filter-divider"></div>
                 </div>
-                @endif
 
                 <!-- Categories -->
                 <div class="filter-section">
@@ -424,9 +402,14 @@
                         @foreach($categories as $cat)
                             @php
                                 $displayName = ucwords(str_replace('_', ' ', $cat));
+                                $val = strtolower($cat);
+                                $categoryFilter = request('category', []);
+                                $categoryFilter = is_array($categoryFilter) ? $categoryFilter : [$categoryFilter];
+                                $categoryFilter = array_map('strtolower', $categoryFilter);
+                                $isChecked = !request()->has('category') || in_array($val, $categoryFilter);
                             @endphp
                             <label class="filter-option">
-                                <input type="checkbox" name="category_mobile" value="{{ strtolower($cat) }}" class="filter-checkbox-mobile" checked>
+                                <input type="checkbox" name="category_mobile[]" value="{{ $val }}" class="filter-checkbox-mobile" {{ $isChecked ? 'checked' : '' }}>
                                 <span class="checkbox-mark"></span>
                                 <span class="option-label">{{ $displayName }}</span>
                             </label>
@@ -444,7 +427,7 @@
             </div>
         </div>
     </div>
-</div> --}}
+</div>
 
 <style>
     .filter-sidebar {
@@ -722,7 +705,7 @@
     .product-img img {
         width: 100%;
         height: 100%;
-        object-fit: contain;
+        object-fit: cover;
         padding: 0;
     }
 
@@ -989,16 +972,16 @@
 <script>
 document.addEventListener('DOMContentLoaded', function() {
     const productItems = document.querySelectorAll('.product-item');
-    const productTypeCheckboxes = document.querySelectorAll('input[name="product_type"]');
-    const categoryCheckboxes = document.querySelectorAll('input[name="category"]');
+    const productTypeCheckboxes = document.querySelectorAll('input[name^="product_type"]');
+    const categoryCheckboxes = document.querySelectorAll('input[name^="category"]');
     const searchInput = document.getElementById('productSearch');
     const clearSearchBtn = document.getElementById('clearSearch');
     const filterSidebar = document.getElementById('filterSidebar');
     const toggleFiltersBtn = document.getElementById('toggleFilters');
 
     // Mobile filter elements
-    const productTypeCheckboxesMobile = document.querySelectorAll('input[name="product_type_mobile"]');
-    const categoryCheckboxesMobile = document.querySelectorAll('input[name="category_mobile"]');
+    const productTypeCheckboxesMobile = document.querySelectorAll('input[name^="product_type_mobile"]');
+    const categoryCheckboxesMobile = document.querySelectorAll('input[name^="category_mobile"]');
     const searchInputMobile = document.getElementById('productSearchMobile');
     const clearSearchBtnMobile = document.getElementById('clearSearchMobile');
     const applyFiltersBtnMobile = document.getElementById('applyFiltersMobile');

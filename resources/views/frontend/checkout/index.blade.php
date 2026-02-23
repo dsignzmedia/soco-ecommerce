@@ -184,7 +184,7 @@
                                  
                                 <!-- Coupon Code Section -->
                                 <div class="mb-4" style="padding-bottom: 16px; border-bottom: 1px solid #e9ecef;">
-                                    <label class="mb-2" style="color: #666; font-size: 0.9rem; font-weight: 500;">Have a Coupon Code?</label>
+                                    <label class="mb-2" style="color: #666; font-size: 0.9rem; font-weight: 500;">Only for soco office purpose</label>
                                     <div class="input-group">
                                         <input type="text" class="form-control" name="coupon_code" id="coupon_code" placeholder="Enter code" style="border: 1px solid #e9ecef; border-right: none; border-radius: 8px 0 0 8px;" value="{{ request('coupon_code') }}">
                                         <button type="button" class="btn" id="applyCouponBtn" onclick="applyCoupon()" style="background-color: #490D59; color: #fff; border: none; border-radius: 0 8px 8px 0; padding: 0 20px; font-weight: 500;">Apply</button>
@@ -228,6 +228,13 @@
                                             <span style="color: #28a745; font-weight: 500;">Free</span>
                                         @endif
                                     </div>
+
+                                    @if(isset($discountAmount) && $discountAmount > 0)
+                                        <div class="d-flex justify-content-between mb-2">
+                                            <span style="color: #28a745;">Discount:</span>
+                                            <span style="color: #28a745; font-weight: 500;">-₹{{ number_format($discountAmount, 2) }}</span>
+                                        </div>
+                                    @endif
                                 </div>
                                 
                                 <hr style="margin: 20px 0;">

@@ -137,9 +137,16 @@
                     value="{{ $filters['date_to'] ?? '' }}">
             </div>
 
-            <div style="grid-column: 1 / -1; display: flex; justify-content: flex-end; gap: 10px;">
-                <button type="submit" style="width: auto; min-width: 120px;">Apply Filter</button>
-                <a href="{{ route('admin.merchandise.orders.index') }}" class="reset" style="width: auto; min-width: 100px;">Reset</a>
+            <div style="grid-column: 1 / -1; display: flex; justify-content: space-between; align-items: center; gap: 10px;">
+                <div class="export-links" style="display:flex;gap:8px;flex-wrap:wrap;">
+                    <a href="{{ route('admin.merchandise.orders.export', array_merge(request()->query(), ['export_type' => 'csv'])) }}" style="border: 1px solid #d0d5dd; border-radius: 999px; padding: 8px 14px; font-size: 13px; font-weight: 600; color: #490d59; text-decoration: none;">Export Sheet</a>
+                    <a href="{{ route('admin.merchandise.orders.export', array_merge(request()->query(), ['export_type' => 'excel'])) }}" style="border: 1px solid #d0d5dd; border-radius: 999px; padding: 8px 14px; font-size: 13px; font-weight: 600; color: #490d59; text-decoration: none;">Export Excel</a>
+                    <a href="{{ route('admin.merchandise.orders.export', array_merge(request()->query(), ['export_type' => 'pdf'])) }}" style="border: 1px solid #d0d5dd; border-radius: 999px; padding: 8px 14px; font-size: 13px; font-weight: 600; color: #490d59; text-decoration: none;">Export PDF</a>
+                </div>
+                <div style="display:flex;gap:10px;">
+                    <button type="submit" style="width: auto; min-width: 120px;">Apply Filter</button>
+                    <a href="{{ route('admin.merchandise.orders.index') }}" class="reset" style="width: auto; min-width: 100px;">Reset</a>
+                </div>
             </div>
         </form>
     </section>

@@ -67,70 +67,82 @@
             <!-- Left Sidebar Filters -->
             <div class="col-lg-3 mb-lg-0">
 
-                <div class="filter-sidebar" id="filterSidebar">
-                    <div class="filter-header">
-                        <i class="fas fa-filter me-2"></i>
-                        <h5 class="mb-0">Filters</h5>
-                    </div>
-
-                    <!-- Search -->
-                    <div class="filter-section">
-                        <div class="search-box">
-                            <input type="text" id="productSearch" class="form-control" placeholder="Search...">
-                            <button type="button" class="search-clear" id="clearSearch" style="display: none;">
-                                <i class="fas fa-times"></i>
-                            </button>
+                <form action="{{ route('frontend.parent.store') }}" method="GET" id="filterForm">
+                    <input type="hidden" name="profile_id" value="{{ $selectedProfile['id'] }}">
+                    <div class="filter-sidebar" id="filterSidebar">
+                        <div class="filter-header">
+                            <i class="fas fa-filter me-2"></i>
+                            <h5 class="mb-0">Filters</h5>
                         </div>
-                    </div>
+
+                        <!-- Search -->
+                        <div class="filter-section">
+                            <div class="search-box">
+                                <input type="text" name="search" value="{{ request('search') }}" class="form-control" placeholder="Search..." onkeydown="if(event.key==='Enter'){event.preventDefault();this.form.submit();}">
+                                @if(request('search'))
+                                    <button type="button" class="search-clear" onclick="window.location.href='{{ route('frontend.parent.store', ['profile_id' => $selectedProfile['id']]) }}'" style="display: block;">
+                                        <i class="fas fa-times"></i>
+                                    </button>
+                                @endif
+                            </div>
+                        </div>
 
 
-
-
-                    <!-- Product Type -->
-                    <div class="filter-section">
-                        <h6 class="filter-title">Product Type</h6>
-                        <div class="filter-options">
-                            @foreach($productTypes as $typeObj)
+                        <!-- Product Type -->
+                        <div class="filter-section">
+                            <h6 class="filter-title">Product Type</h6>
+                            <div class="filter-options">
                                 @php
-                                    $typeSlug = $typeObj->slug;
-                                    $label = $typeObj->label;
-                                    
-
-                                    
-                                    // Default checked for all displayed types (including new ones)
-                                    $isChecked = true;
-                                    
-                                    // Helper: skip bts and merch for filters as requested
-                                    // if(in_array($typeSlug, ['merchandised', 'back_to_school'])) continue;
+                                    $allSlugs = $productTypes->pluck('slug')->toArray();
+                                    $requestTypes = request('product_type');
+                                    // If request is empty, check all? Or check none?
+                                    // Standard: If request is empty (initial load), check all.
+                                    // But since we want to allow "Apply Filter" explicitly, we can check all as default.
+                                    $isInitialLoad = is_null($requestTypes);
                                 @endphp
-                                <label class="filter-option">
-                                    <input type="checkbox" name="product_type" value="{{ $typeSlug }}" class="filter-checkbox" {{ $isChecked ? 'checked' : '' }}>
-                                    <span class="checkbox-mark"></span>
-                                    <span class="option-label">{{ $label }}</span>
-                                </label>
-                            @endforeach
+
+                                @foreach($productTypes as $typeObj)
+                                    @php
+                                        $typeSlug = $typeObj->slug;
+                                        $label = $typeObj->label;
+                                        
+                                        $isChecked = $isInitialLoad || (is_array($requestTypes) && in_array($typeSlug, $requestTypes));
+                                    @endphp
+                                    <div class="filter-group-item mb-3">
+                                        <label class="filter-option mb-2">
+                                            <input type="checkbox" name="product_type[]" value="{{ $typeSlug }}" class="filter-checkbox" {{ $isChecked ? 'checked' : '' }}>
+                                            <span class="checkbox-mark"></span>
+                                            <span class="option-label"><strong>{{ $label }}</strong></span>
+                                        </label>
+
+                                        <!-- Nested Categories -->
+                                        @if(isset($productTypeCategories) && isset($productTypeCategories[$typeSlug]) && count($productTypeCategories[$typeSlug]) > 0)
+                                            <div class="nested-categories ms-4 ps-1" style="border-left: 2px solid #f0f0f0;">
+                                                @foreach($productTypeCategories[$typeSlug] as $cat)
+                                                     @php
+                                                         // Default to checked if no category filter exists, OR if explicitly selected
+                                                         $catChecked = !request()->has('category') || (is_array(request('category')) && in_array($cat->slug, request('category')));
+                                                     @endphp
+                                                    <label class="filter-option mb-2 ps-3">
+                                                        <input type="checkbox" name="category[]" value="{{ $cat->slug }}" class="filter-checkbox" {{ $catChecked ? 'checked' : '' }}>
+                                                        <span class="checkbox-mark" style="width: 16px; height: 16px;"></span>
+                                                        <span class="option-label" style="font-size: 13px; color: #555;">{{ $cat->name }}</span>
+                                                    </label>
+                                                @endforeach
+                                            </div>
+                                        @endif
+                                    </div>
+                                @endforeach
+                            </div>
+                            <div class="filter-divider"></div>
                         </div>
-                        <div class="filter-divider"></div>
-                    </div>
-
-                    <!-- Categories -->
-                    <!-- Categories (Commented out as per request)
-                    <div class="filter-section">
-                        <h6 class="filter-title">Categories</h6>
-                        <div class="filter-options">
-                            @foreach($categories as $category)
-                                <label class="filter-option">
-                                    <input type="checkbox" name="category" value="{{ $category->slug }}" class="filter-checkbox" checked>
-                                    <span class="checkbox-mark"></span>
-                                    <span class="option-label">{{ $category->name }}</span>
-                                </label>
-                            @endforeach
+                        
+                        <!-- Apply Button (Only needed if live filtering fails or on specific mobile views where sidebar is used) -->
+                        <div class="filter-section mt-3 d-lg-none">
+                            <button type="submit" class="vs-btn w-100">Apply Filter</button>
                         </div>
                     </div>
-                    -->
-
-
-                </div>
+                </form>
             </div>
 
             <!-- Products Grid -->
@@ -147,7 +159,7 @@
                                 // Fix for glitch: Don't even render these products to avoid flash
                                 // if(in_array($pType, ['merchandised', 'back_to_school'])) continue;
                             @endphp
-                            <div class="col-6 col-md-4 col-lg-3 product-item"
+                            <div class="col-6 col-md-4 col-lg-3 product-item" style="display: none;"
                                  data-product-type="{{ strtolower($product['type'] ?? '') }}"
                                  data-product-name="{{ strtolower($product['name']) }}"
                                  data-product-category="{{ strtolower($product['category'] ?? 'regular_uniforms') }}"
@@ -245,9 +257,8 @@
                     @endif
                 </div>
 
-                <div class="vs-pagination pt-40 text-center">
-                    {{ $allProducts->links() }}
-                </div>
+                <!-- Client-Side Pagination Container -->
+                <div id="js-pagination-container" class="vs-pagination pt-40 text-center"></div>
         </div>
     </div>
 </section>
@@ -284,19 +295,36 @@
                                 $typeSlug = $typeObj->slug;
                                 $label = $typeObj->label;
                                 
-
-                                
                                 // Default checked for all displayed types (including new ones)
                                 $isChecked = true;
                                 
                                 // Helper: skip bts and merch for filters as requested
-                                if(in_array($typeSlug, ['merchandised', 'back_to_school'])) continue;
+                                // if(in_array($typeSlug, ['merchandised', 'back_to_school'])) continue;
                             @endphp
-                            <label class="filter-option">
-                                <input type="checkbox" name="product_type_mobile" value="{{ $typeSlug }}" class="filter-checkbox-mobile" {{ $isChecked ? 'checked' : '' }}>
-                                <span class="checkbox-mark"></span>
-                                <span class="option-label">{{ $label }}</span>
-                            </label>
+                            <div class="filter-group-item mb-3">
+                                <label class="filter-option mb-2">
+                                    <input type="checkbox" name="product_type_mobile[]" value="{{ $typeSlug }}" class="filter-checkbox-mobile" {{ $isChecked ? 'checked' : '' }}>
+                                    <span class="checkbox-mark"></span>
+                                    <span class="option-label"><strong>{{ $label }}</strong></span>
+                                </label>
+                                
+                                <!-- Nested Categories Mobile -->
+                                @if(isset($productTypeCategories) && isset($productTypeCategories[$typeSlug]) && count($productTypeCategories[$typeSlug]) > 0)
+                                    <div class="nested-categories ms-4 ps-1" style="border-left: 2px solid #f0f0f0;">
+                                        @foreach($productTypeCategories[$typeSlug] as $cat)
+                                             @php
+                                                 // Check if this category is active in request, default to TRUE if no filter
+                                                 $catChecked = !request()->has('category') || (is_array(request('category')) && in_array($cat->slug, request('category')));
+                                             @endphp
+                                            <label class="filter-option mb-2 ps-3">
+                                                <input type="checkbox" name="category_mobile[]" value="{{ $cat->slug }}" class="filter-checkbox-mobile" {{ $catChecked ? 'checked' : '' }}>
+                                                <span class="checkbox-mark" style="width: 16px; height: 16px;"></span>
+                                                <span class="option-label" style="font-size: 13px; color: #555;">{{ $cat->name }}</span>
+                                            </label>
+                                        @endforeach
+                                    </div>
+                                @endif
+                            </div>
                         @endforeach
 
 
@@ -530,7 +558,7 @@
     .product-img img {
         width: 100%;
         height: 100%;
-        object-fit: contain;
+        object-fit: cover;
         padding: 0;
     }
 
@@ -1074,15 +1102,17 @@ document.addEventListener('DOMContentLoaded', function() {
 <script>
 document.addEventListener('DOMContentLoaded', function() {
     const productItems = document.querySelectorAll('.product-item');
-    const productTypeCheckboxes = document.querySelectorAll('input[name="product_type"]');
-    const categoryCheckboxes = document.querySelectorAll('input[name="category"]');
+    // Updated selectors to match Server-Side Form names
+    const productTypeCheckboxes = document.querySelectorAll('input[name="product_type[]"]');
+    const categoryCheckboxes = document.querySelectorAll('input[name="category[]"]');
     const genderCheckboxes = document.querySelectorAll('input[name="gender"]');
-    const searchInput = document.getElementById('productSearch');
+    const searchInput = document.querySelector('input[name="search"]');
     const clearSearchBtn = document.getElementById('clearSearch');
 
     // Mobile filter elements
-    const productTypeCheckboxesMobile = document.querySelectorAll('input[name="product_type_mobile"]');
-    const categoryCheckboxesMobile = document.querySelectorAll('input[name="category_mobile"]');
+    // Updated selectors to match actual input names within the mobile modal
+    const productTypeCheckboxesMobile = document.querySelectorAll('#filterModal input[name="product_type_mobile[]"]');
+    const categoryCheckboxesMobile = document.querySelectorAll('#filterModal input[name="category_mobile[]"]');
     const searchInputMobile = document.getElementById('productSearchMobile');
     const clearSearchBtnMobile = document.getElementById('clearSearchMobile');
     const applyFiltersBtnMobile = document.getElementById('applyFiltersMobile');
@@ -1091,9 +1121,55 @@ document.addEventListener('DOMContentLoaded', function() {
     // Check if mobile view
     const isMobile = window.innerWidth < 992;
 
-    function filterProducts(useMobileFilters = false) {
+    // Pagination State
+    let currentPage = 1;
+    const itemsPerPage = 12;
+
+    function renderPaginationControls(totalPages) {
+        const container = document.getElementById('js-pagination-container');
+        if (!container) return;
+        
+        let html = '';
+        if (totalPages > 1) {
+            html += '<ul>';
+            
+            // Previous
+            if (currentPage > 1) {
+                html += `<li><a href="javascript:void(0)" onclick="window.goToPage(${currentPage - 1})"><i class="fas fa-chevron-left"></i></a></li>`;
+            }
+
+            // Pages
+            for (let i = 1; i <= totalPages; i++) {
+                 if (i === currentPage) {
+                     html += `<li><span class="page-numbers current">${i}</span></li>`;
+                 } else {
+                     html += `<li><a href="javascript:void(0)" onclick="window.goToPage(${i})" class="page-numbers">${i}</a></li>`;
+                 }
+            }
+
+            // Next
+            if (currentPage < totalPages) {
+                html += `<li><a href="javascript:void(0)" onclick="window.goToPage(${currentPage + 1})"><i class="fas fa-chevron-right"></i></a></li>`;
+            }
+            html += '</ul>';
+        }
+        container.innerHTML = html;
+    }
+    
+    // Global function for pagination clicks
+    window.goToPage = function(page) {
+        currentPage = page;
+        filterProducts(false, false); // Don't reset page
+        const container = document.getElementById('productsContainer');
+        if(container) container.scrollIntoView({ behavior: 'smooth' });
+    };
+
+    function filterProducts(useMobileFilters = false, resetPage = true) {
+        if (resetPage) currentPage = 1;
+
         let selectedTypes, selectedCategories, selectedGenders, searchTerm, hasAnyTypeChecked, hasAnyCategoryChecked, hasAnyGenderChecked;
         let visibleCategories = new Set();
+        let matchedItems = [];
 
         if (useMobileFilters && isMobile) {
             // Use mobile filter values
@@ -1117,10 +1193,12 @@ document.addEventListener('DOMContentLoaded', function() {
 
         // If no product types are checked OR no categories are checked, hide all products
         if (!hasAnyTypeChecked || !hasAnyCategoryChecked) {
+            // Hide all and clear pagination
             productItems.forEach(item => {
                 item.style.display = 'none';
                 item.classList.add('hidden');
             });
+            renderPaginationControls(0);
             return; // Exit early - no products should be shown
         }
 
@@ -1135,17 +1213,18 @@ document.addEventListener('DOMContentLoaded', function() {
             // Filter by product type (must match at least one selected type)
             const matchesType = selectedTypes.some(type => {
                 const typeLower = type.toLowerCase();
-                // Handle different type formats
-                if (typeLower === 'merchandised' && selectedTypes.some(t => t.toLowerCase() === 'merchandised') && (productType.includes('merchandise') || productType === 'merchandised')) {
+                 // Handle different type formats as per original logic
+                if (typeLower === 'merchandised' && (productType.includes('merchandise') || productType === 'merchandised')) {
                     return true;
                 }
-                if (typeLower === 'back_to_school' && selectedTypes.some(t => t.toLowerCase() === 'back_to_school') && (productType.includes('back') || productType.includes('school') || productType === 'back_to_school')) {
+                if (typeLower === 'back_to_school' && (productType.includes('back') || productType.includes('school') || productType === 'back_to_school')) {
                     return true;
                 }
-                if (typeLower === 'authorized' && (productType === 'authorized' || productType.includes('authorized'))) {
+                // Authorized matches 'authorized' type OR 'regular' category (Core Uniforms)
+                if (typeLower === 'authorized' && (productType.includes('authorized') || productCategory.includes('regular'))) {
                     return true;
                 }
-                if (typeLower === 'optional' && (productType === 'optional' || productType.includes('optional'))) {
+                if (typeLower === 'optional' && (productType.includes('optional') || productType === 'optional')) {
                     return true;
                 }
                 return productType === typeLower;
@@ -1155,29 +1234,61 @@ document.addEventListener('DOMContentLoaded', function() {
             }
 
             // Collect categories that should be visible based on *checked product types*
-            // We do this by checking if the product matches the currently selected TYPES.
             if (matchesType) {
-                // This product is of a type that is currently checked.
-                // So its category is valid and should be shown in the filters.
                 visibleCategories.add(productCategory);
             }
 
-            // Filter by category (must match at least one selected category)
-            // Only apply if we actually have category filters active
-            if (selectedCategories.length > 0 || (useMobileFilters && categoryCheckboxesMobile.length > 0) || (!useMobileFilters && categoryCheckboxes.length > 0)) {
-                 const matchesCategory = selectedCategories.some(cat => {
-                    const catLower = cat.toLowerCase();
-                    // Try exact match first, then partial match
-                    return productCategory === catLower || productCategory.includes(catLower) || catLower.includes(productCategory);
-                });
-                // If filters exist but don't match, hide. If no filters exist (checklist empty/hidden), allow.
-                if (!matchesCategory && ((useMobileFilters && categoryCheckboxesMobile.length > 0) || (!useMobileFilters && categoryCheckboxes.length > 0))) {
-                    show = false;
+            // Collect all available category values from the checkboxes to know what can be filtered
+            const allAvailableCategories = new Set(
+                Array.from(useMobileFilters && isMobile ? categoryCheckboxesMobile : categoryCheckboxes)
+                .map(cb => cb.value.toLowerCase())
+            );
+
+            // Filter by category (must match at least one selected category, if the product's category is filterable)
+            // Logic: If the product's category is NOT in the list of available filters, we show it (it's not filterable).
+            // If it IS in the list, we show it only if it's selected.
+            let matchesCategory = true;
+            
+            // Check if we have any active category filters
+            const hasActiveCategoryFilters = selectedCategories.length > 0;
+            const filterableCategoriesExist = allAvailableCategories.size > 0;
+
+            if (filterableCategoriesExist) {
+                // effectiveCategory is the category we act on (could be 'regular_uniforms' fallback)
+                const currentProdCat = productCategory; 
+                
+                // Check if this product's category is one of the options in the filter list
+                // We check if currentProdCat is matched by any available category (exact or substring match as per previous logic)
+                const isFilterable = Array.from(allAvailableCategories).some(availCat => 
+                    currentProdCat === availCat || currentProdCat.includes(availCat) || availCat.includes(currentProdCat)
+                );
+
+                if (isFilterable) {
+                    // It is filterable, so it MUST match a selected category
+                     if (hasActiveCategoryFilters) {
+                        matchesCategory = selectedCategories.some(cat => {
+                            const catLower = cat.toLowerCase();
+                            return currentProdCat === catLower || currentProdCat.includes(catLower) || catLower.includes(currentProdCat);
+                        });
+                     } else {
+                         // Filterable but no categories selected? Usually shouldn't happen if default checked.
+                         // If nothing selected, typically means show nothing (or show all? user said "checked on always")
+                         // If we assume "nothing selected = show nothing", then false.
+                         matchesCategory = false;
+                     }
+                } else {
+                    // Not filterable (e.g. 'regular_uniforms' when no checkbox exists for it)
+                    // Always show it
+                    matchesCategory = true;
                 }
             }
+            
+            if (!matchesCategory) {
+                show = false;
+            }
 
-
-            // Filter by gender (optional - only filter if genders are checked)
+            
+            // Filter by gender
             if (hasAnyGenderChecked) {
                 const matchesGender = selectedGenders.some(gender => {
                     const genderLower = gender.toLowerCase();
@@ -1192,111 +1303,130 @@ document.addEventListener('DOMContentLoaded', function() {
             if (searchTerm && !productName.includes(searchTerm)) {
                 show = false;
             }
-
-            // Show or hide the product
-            if (show) {
-                item.style.display = '';
-                item.classList.remove('hidden');
-            } else {
-                item.style.display = 'none';
-                item.classList.add('hidden');
-            }
-        });
-
-        // UPDATE CATEGORY VISIBILITY IN SIDEBAR
-        // We hide category filters that don't have any products in the currently selected TYPES.
-        const checkboxesToUpdate = useMobileFilters && isMobile ? categoryCheckboxesMobile : categoryCheckboxes;
-        
-        checkboxesToUpdate.forEach(cb => {
-            const catSlug = cb.value.toLowerCase();
-            const parentLabel = cb.closest('.filter-option');
             
-            // Check if this category exists in our "visibleCategories" set
-            // We use simple loose matching (includes) to be safe with slugs/names
-            let isVisible = false;
-            for (let validCat of visibleCategories) {
-                 if (validCat === catSlug || validCat.includes(catSlug) || catSlug.includes(validCat)) {
-                     isVisible = true;
-                     break;
-                 }
+            // Console Log
+            console.log(`[Filter Debug] Product: "${productName}" | Type: "${productType}" | Category: "${productCategory}" | Filterable: ${allAvailableCategories.has(productCategory) || 'partial'} | MatchedCategory: ${matchesCategory} | Show: ${show}`);
+
+            if (show) {
+                matchedItems.push(item);
+            }
+            // Always hide initially, let pagination show relevant ones
+            item.style.display = 'none';
+            item.classList.add('hidden');
+        });
+
+        // UPDATE CATEGORY VISIBILITY IN SIDEBAR (Optional: Keep or remove based on needs. Keeping for now)
+        /* 
+        const checkboxesToUpdate = useMobileFilters && isMobile ? categoryCheckboxesMobile : categoryCheckboxes;
+        checkboxesToUpdate.forEach(cb => {
+            // ... (Simple visibility toggle based on visibleCategories set earlier)
+        });
+        */
+
+        // PAGINATION LOGIC
+        const totalPages = Math.ceil(matchedItems.length / itemsPerPage);
+        if (currentPage > totalPages) currentPage = 1;
+        if (currentPage < 1) currentPage = 1;
+
+        const startIndex = (currentPage - 1) * itemsPerPage;
+        const endIndex = startIndex + itemsPerPage;
+        const itemsToShow = matchedItems.slice(startIndex, endIndex);
+
+        itemsToShow.forEach(item => {
+            item.style.display = '';
+            item.classList.remove('hidden');
+        });
+        
+        console.log(`[Pagination] Showing ${itemsToShow.length} of ${matchedItems.length} items. Page ${currentPage}/${totalPages === 0 ? 1 : totalPages}`);
+
+        renderPaginationControls(totalPages);
+    }
+    
+     // --- DEBUGGING & LOGGING ---
+    console.log("--- Store Page Logic Initialized ---");
+    // Note: $allProducts is a PHP variable, rendered here.
+    console.log("Total Products Count (Server-Side): {{ $allProducts->total() }}");
+    
+    // Live Console Log & Immediate Client-Side Filtering
+    productTypeCheckboxes.forEach(checkbox => {
+        checkbox.addEventListener('change', function() {
+            // Auto-select/deselect nested categories
+            const filterGroup = this.closest('.filter-group-item');
+            if (filterGroup) {
+                const nestedCheckboxes = filterGroup.querySelectorAll('.nested-categories input[type="checkbox"]');
+                nestedCheckboxes.forEach(childCb => {
+                    childCb.checked = this.checked;
+                    // Trigger change to update set of selected categories
+                    // childCb.dispatchEvent(new Event('change')); // Prevent recursion loop if we add logic there, but standard handling is fine
+                });
             }
 
-            if (isVisible) {
-                parentLabel.style.display = '';
-            } else {
-                parentLabel.style.display = 'none';
-            }
+            // 1. Log to Console
+            console.log('Filter Changed: ' + this.value + ' -> ' + (this.checked ? 'Checked' : 'Unchecked'));
+            const activeNow = Array.from(productTypeCheckboxes).filter(cb => cb.checked).map(cb => cb.value);
+            console.log('Current Selected Filters:', activeNow);
+            
+            // 2. Update Product Grid Immediately (Client-Side)
+            filterProducts(false, true); // Reset Page
+        });
+    });
+
+    // Add listeners for Categories
+    categoryCheckboxes.forEach(checkbox => {
+        checkbox.addEventListener('change', function() {
+            console.log('Category Filter Changed: ' + this.value);
+            filterProducts(false, true);
+        });
+    });
+
+    // Add listeners for Gender
+    genderCheckboxes.forEach(checkbox => {
+        checkbox.addEventListener('change', function() {
+            console.log('Gender Filter Changed: ' + this.value);
+            filterProducts(false, true);
+        });
+    });
+
+    // Initialize View with Pagination
+    filterProducts(false, true);
+
+    // Form Submit Logger
+    const fForm = document.getElementById('filterForm');
+    if (fForm) {
+        fForm.addEventListener('submit', function() {
+            console.log("--- Submitting Filters ---");
+            const selected = Array.from(productTypeCheckboxes).filter(cb => cb.checked).map(cb => cb.value);
+            console.log("Selected Types:", selected);
+            console.log("Search:", searchInput ? searchInput.value : '');
         });
     }
 
-    // Desktop: Apply filters immediately
-    if (!isMobile) {
-        productTypeCheckboxes.forEach(checkbox => {
-            checkbox.addEventListener('change', () => filterProducts(false));
-        });
-
-        categoryCheckboxes.forEach(checkbox => {
-            checkbox.addEventListener('change', () => filterProducts(false));
-        });
-
-        genderCheckboxes.forEach(checkbox => {
-            checkbox.addEventListener('change', () => filterProducts(false));
-        });
-
-        searchInput.addEventListener('input', function() {
-            if (this.value.trim()) {
-                clearSearchBtn.style.display = 'block';
-            } else {
-                clearSearchBtn.style.display = 'none';
-            }
-            filterProducts(false);
-        });
-
-        clearSearchBtn.addEventListener('click', function() {
-            searchInput.value = '';
-            this.style.display = 'none';
-            filterProducts(false);
-        });
-    }
+    // DISABLING CLIENT-SIDE FILTERING LISTENERS
+    // We rely on the 'Apply Filter' button (form submission) now.
+    /* 
+    Legacy listeners removed to prevent conflict.
+    */
 
     // Mobile: Sync desktop filters to mobile when modal opens
     if (isMobile && filterModal) {
         filterModal.addEventListener('show.bs.modal', function() {
+            console.log('Mobile Filter Modal Opening');
             // Sync desktop filter values to mobile filters
             productTypeCheckboxes.forEach((desktopCb) => {
-                const matchingMobile = Array.from(productTypeCheckboxesMobile).find(mc => mc.value === desktopCb.value);
-                if (matchingMobile) {
-                    matchingMobile.checked = desktopCb.checked;
-                    // Trigger change event to update visual state
-                    matchingMobile.dispatchEvent(new Event('change'));
-                }
+                // Find matching mobile checkbox(es) and sync
+                const matchingMobiles = Array.from(productTypeCheckboxesMobile).filter(mc => mc.value === desktopCb.value);
+                matchingMobiles.forEach(mc => {
+                     mc.checked = desktopCb.checked;
+                     mc.dispatchEvent(new Event('change'));
+                });
             });
+            // ... (sync category if needed) ...
             categoryCheckboxes.forEach((desktopCb) => {
-                const matchingMobile = Array.from(categoryCheckboxesMobile).find(mc => mc.value === desktopCb.value);
-                if (matchingMobile) {
-                    matchingMobile.checked = desktopCb.checked;
-                    // Trigger change event to update visual state
-                    matchingMobile.dispatchEvent(new Event('change'));
-                }
-            });
-            if (searchInput && searchInputMobile) {
-                searchInputMobile.value = searchInput.value;
-                clearSearchBtnMobile.style.display = searchInputMobile.value.trim() ? 'block' : 'none';
-            }
-        });
-
-        // Also ensure all checkboxes are checked on initial load
-        filterModal.addEventListener('shown.bs.modal', function() {
-            // Force update visual state of all checkboxes
-            productTypeCheckboxesMobile.forEach(cb => {
-                if (cb.checked) {
-                    cb.dispatchEvent(new Event('change'));
-                }
-            });
-            categoryCheckboxesMobile.forEach(cb => {
-                if (cb.checked) {
-                    cb.dispatchEvent(new Event('change'));
-                }
+                const matchingMobiles = Array.from(categoryCheckboxesMobile).filter(mc => mc.value === desktopCb.value);
+                matchingMobiles.forEach(mc => {
+                     mc.checked = desktopCb.checked;
+                     mc.dispatchEvent(new Event('change'));
+                });
             });
         });
     }
@@ -1304,50 +1434,34 @@ document.addEventListener('DOMContentLoaded', function() {
     // Mobile: Apply filters only when Apply button is clicked
     if (isMobile && applyFiltersBtnMobile) {
         applyFiltersBtnMobile.addEventListener('click', function() {
-            // Sync mobile filter values to desktop filters
+            console.log('Mobile Apply Clicked');
+            // Sync mobile filter values back to desktop (form) filters
             productTypeCheckboxesMobile.forEach((mobileCb) => {
-                const matchingDesktop = Array.from(productTypeCheckboxes).find(dc => dc.value === mobileCb.value);
-                if (matchingDesktop) {
-                    matchingDesktop.checked = mobileCb.checked;
-                }
+                const matchingDesktops = Array.from(productTypeCheckboxes).filter(dc => dc.value === mobileCb.value);
+                matchingDesktops.forEach(dc => dc.checked = mobileCb.checked);
             });
             categoryCheckboxesMobile.forEach((mobileCb) => {
-                const matchingDesktop = Array.from(categoryCheckboxes).find(dc => dc.value === mobileCb.value);
-                if (matchingDesktop) {
-                    matchingDesktop.checked = mobileCb.checked;
-                }
+                const matchingDesktops = Array.from(categoryCheckboxes).filter(dc => dc.value === mobileCb.value);
+                matchingDesktops.forEach(dc => dc.checked = mobileCb.checked);
             });
-            if (searchInput && searchInputMobile) {
-                searchInput.value = searchInputMobile.value;
-            }
+            
+            // Log active filters
+            const activeTypes = Array.from(productTypeCheckboxes).filter(cb => cb.checked).map(cb => cb.value);
+            console.log('Applying Filters:', activeTypes);
 
-            // Apply filters
-            filterProducts(true);
-
-            // Close modal
-            if (filterModal) {
-                const bsModal = bootstrap.Modal.getInstance(filterModal);
-                if (bsModal) {
-                    bsModal.hide();
-                }
+            // Submit Form
+            const form = document.getElementById('filterForm');
+            if(form) {
+                console.log('Submitting Filter Form');
+                form.submit();
+            } else {
+                console.error('Filter Form not found!');
             }
         });
-
-        // Mobile search clear button
-        if (searchInputMobile && clearSearchBtnMobile) {
-            searchInputMobile.addEventListener('input', function() {
-                clearSearchBtnMobile.style.display = this.value.trim() ? 'block' : 'none';
-            });
-
-            clearSearchBtnMobile.addEventListener('click', function() {
-                searchInputMobile.value = '';
-                this.style.display = 'none';
-            });
-        }
     }
 
-    // Initialize filters
-    filterProducts(false);
+    // Initialize filters - DISABLED (Server Side handled)
+    // filterProducts(false);
 
     // Make product cards clickable
     document.querySelectorAll('.product-card-clickable').forEach(card => {

@@ -56,21 +56,6 @@
     <div class="card profile-form">
         <div class="profile-avatar">A</div>
 
-        @if(session('status'))
-            <div style="margin-bottom:16px;padding:12px;border-radius:8px;background:#ecfdf3;color:#065f46;">
-                {{ session('status') }}
-            </div>
-        @endif
-
-        @if($errors->any())
-            <div style="margin-bottom:16px;padding:12px;border-radius:8px;background:#fef3f2;color:#b42318;">
-                <ul style="margin:0;padding-left:18px;">
-                    @foreach($errors->all() as $error)
-                        <li>{{ $error }}</li>
-                    @endforeach
-                </ul>
-            </div>
-        @endif
 
         <div style="margin-bottom:24px;">
             <h3 style="margin:0 0 12px;color:#111827;">Change Password</h3>

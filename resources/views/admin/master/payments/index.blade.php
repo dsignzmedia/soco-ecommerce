@@ -267,7 +267,7 @@
             </table>
         </div>
         <div class="pagination-container">
-            {{ $payments->appends(request()->all())->onEachSide(1)->links() }}
+            {{ $payments->appends(request()->all())->onEachSide(1)->links('pagination::custom') }}
         </div>
     </section>
 @endsection

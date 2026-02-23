@@ -8,10 +8,16 @@ use Illuminate\Http\Request;
 use Illuminate\View\View;
 use Illuminate\Http\RedirectResponse;
 use App\Traits\DtdcShipmentTrait;
+use PhpOffice\PhpSpreadsheet\Spreadsheet;
+use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
+use PhpOffice\PhpSpreadsheet\Style\Fill;
+use PhpOffice\PhpSpreadsheet\Style\Border;
+use PhpOffice\PhpSpreadsheet\Style\Alignment;
+use PhpOffice\PhpSpreadsheet\Style\NumberFormat;
 
 class OrderController extends Controller
 {
-    use DtdcShipmentTrait;
+    use DtdcShipmentTrait, OrderExcelExportTrait;
     public function index(Request $request): View
     {
         $query = Order::with(['school', 'product'])->latest();
@@ -85,15 +91,152 @@ class OrderController extends Controller
 
         // Send Order Status Update Email if order status changed (including delivered status)
         if ($previousOrderStatus !== $order->order_status && !empty($order->customer_email)) {
-            try {
-                \Illuminate\Support\Facades\Mail::to($order->customer_email)->send(new \App\Mail\OrderStatusUpdateMail($order, $previousOrderStatus));
-                \Illuminate\Support\Facades\Log::info("Order status update email sent to {$order->customer_email} for order {$order->order_number} - Status: {$order->order_status}");
-            } catch (\Exception $e) {
-                \Illuminate\Support\Facades\Log::error("Failed to send order status update email for order {$order->order_number}: " . $e->getMessage());
-            }
+             try {
+                 \Illuminate\Support\Facades\Mail::to($order->customer_email)->send(new \App\Mail\OrderStatusUpdateMail($order, $previousOrderStatus));
+                 \Illuminate\Support\Facades\Log::info("Order status update email sent to {$order->customer_email} for order {$order->order_number} - Status: {$order->order_status}");
+             } catch (\Exception $e) {
+                 \Illuminate\Support\Facades\Log::error("Failed to send order status update email for order {$order->order_number}: " . $e->getMessage());
+             }
         }
 
         return back()->with('success', 'Order status updated.');
+    }
+
+    public function export(Request $request) 
+    {
+        $filters = $request->all();
+        
+        $type = $request->input('export_type', 'excel');
+        
+        // Build query with filters
+        $query = Order::with(['school', 'product'])->latest();
+        
+        if (!empty($filters['school_id'])) {
+            $query->where('school_id', $filters['school_id']);
+        }
+        if (!empty($filters['grade'])) {
+            $query->where('grade', $filters['grade']);
+        }
+        if (!empty($filters['category'])) {
+            $query->where('category', $filters['category']);
+        }
+        if (!empty($filters['order_status'])) {
+            $query->where('order_status', $filters['order_status']);
+        }
+        if (!empty($filters['order_number'])) {
+            $query->where('order_number', 'like', '%' . $filters['order_number'] . '%');
+        }
+        if (!empty($filters['date_from'])) {
+            $query->whereDate('created_at', '>=', $filters['date_from']);
+        }
+        if (!empty($filters['date_to'])) {
+            $query->whereDate('created_at', '<=', $filters['date_to']);
+        }
+        
+        $orders = $query->get();
+        
+        switch (strtolower($type)) {
+            case 'csv':
+                return $this->downloadOrdersCsv($orders);
+            
+            case 'excel':
+                return $this->downloadOrdersExcel($orders);
+            
+            case 'pdf':
+                return $this->downloadOrdersPdf($orders);
+            
+            default:
+                return redirect()->route('admin.back_to_school.orders.index')
+                    ->with('error', 'Invalid export type.');
+        }
+    }
+    
+    protected function downloadOrdersCsv($orders)
+    {
+        $filename = 'bts-orders-' . date('Y-m-d') . '.csv';
+        $contentType = 'text/csv';
+        
+        return response()->streamDownload(function () use ($orders) {
+            $handle = fopen('php://output', 'w');
+            
+            // Add BOM for Excel UTF-8 support
+            fprintf($handle, chr(0xEF).chr(0xBB).chr(0xBF));
+            
+            // Headers - Priority columns first with S.No
+            fputcsv($handle, [
+                'S.No',
+                'Order Number',
+                'Order Date',
+                'Customer Name',
+                'Customer Phone',
+                'Customer Email',
+                'Item Name',
+                'Size',
+                'Qty',
+                'Total Amount (Rs)',
+                'Shipping Cost (Rs)',
+                'Payment Status',
+                'Order Status',
+                'School',
+                'Student Name',
+                'Grade',
+                'Category',
+                'Tracking Number',
+            ]);
+            
+            // Data rows - Clean formatting with S.No
+            $sno = 1;
+            foreach ($orders as $order) {
+                fputcsv($handle, [
+                    $sno,
+                    $order->order_number,
+                    $order->order_date ? $order->order_date->format('d-M-Y') : ($order->created_at ? $order->created_at->format('d-M-Y') : ''),
+                    $order->customer_name,
+                    "'" . $order->customer_phone, // Prefix with ' to prevent scientific notation
+                    $order->customer_email,
+                    $order->item_name,
+                    $order->size,
+                    $order->quantity,
+                    number_format($order->total_amount, 2),
+                    number_format($order->shipping_cost, 2),
+                    ucfirst(str_replace('_', ' ', $order->payment_status)),
+                    ucfirst(str_replace('_', ' ', $order->order_status)),
+                    $order->school ? $order->school->name : '',
+                    $order->student_name,
+                    $order->grade ?? '',
+                    $order->category ?? '',
+                    "'" . ($order->tracking_number ?? ''), // Prefix with ' to prevent scientific notation
+                ]);
+                $sno++;
+            }
+            
+            fclose($handle);
+        }, $filename, ['Content-Type' => $contentType]);
+    }
+    
+    protected function downloadOrdersPdf($orders)
+    {
+        // Simple PDF generation using DomPDF
+        $html = view('admin.orders.export-pdf', compact('orders'))->render();
+        
+        if (class_exists(\Dompdf\Dompdf::class)) {
+            $dompdf = new \Dompdf\Dompdf();
+            $options = new \Dompdf\Options();
+            $options->set('isRemoteEnabled', true);
+            $options->set('defaultFont', 'sans-serif');
+            $dompdf->setOptions($options);
+            
+            $dompdf->loadHtml($html);
+            $dompdf->setPaper('A4', 'landscape');
+            $dompdf->render();
+            
+            return response()->streamDownload(function() use ($dompdf) {
+                echo $dompdf->output();
+            }, 'bts-orders-' . date('Y-m-d') . '.pdf');
+        }
+        
+        return redirect()->route('admin.back_to_school.orders.index')
+            ->with('error', 'PDF generation not available.');
     }
     public function invoiceView($id): View
     {

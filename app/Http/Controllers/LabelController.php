@@ -23,25 +23,34 @@ class LabelController extends Controller
     public function generate(Request $request, $reference)
     {
         try {
-            $response = $this->dtdcService->generateLabel($reference, 'pdf');
+            $env = $request->query('env', 'production');
+            $response = $this->dtdcService->generateLabel($reference, 'pdf', $env);
 
-            // Assuming response contains a URL or Base64
-            // Example handling: If base64 is returned:
-            if (isset($response['data']['label_content'])) {
-                 $pdfContent = base64_decode($response['data']['label_content']);
-                 return response($pdfContent)
+            // 1. If response is a raw string (PDF content)
+            if (is_string($response) && (str_starts_with($response, '%PDF') || strlen($response) > 100)) {
+                 return response($response)
                     ->header('Content-Type', 'application/pdf')
-                    ->header('Content-Disposition', 'attachment; filename="label-'.$reference.'.pdf"');
-            }
-            
-            // If URL is returned
-            if (isset($response['data']['label_url'])) {
-                return redirect($response['data']['label_url']);
+                    ->header('Content-Disposition', 'inline; filename="label-'.$reference.'.pdf"');
             }
 
-            return back()->with('error', 'Label generated but content not found in response.');
+            // 2. If response is JSON array
+            if (is_array($response)) {
+                if (isset($response['data']['label_content'])) {
+                     $pdfContent = base64_decode($response['data']['label_content']);
+                     return response($pdfContent)
+                        ->header('Content-Type', 'application/pdf')
+                        ->header('Content-Disposition', 'inline; filename="label-'.$reference.'.pdf"');
+                }
+                
+                if (isset($response['success']) && !$response['success']) {
+                    return back()->with('error', 'Label API Message: ' . ($response['message'] ?? 'Unknown Error'));
+                }
+            }
+
+            return back()->with('error', 'Label generated but format not recognized.');
 
         } catch (\Exception $e) {
+            Log::error("Label Gen Error: " . $e->getMessage());
             return back()->with('error', 'Label Generation Failed: ' . $e->getMessage());
         }
     }

@@ -564,7 +564,7 @@
                                         <div class="initiative-row">
                                             <p class="initiative-text">An Initiative of</p>
                                             <div class="gallery-thumb">
-                                                <img src="{{ asset('assets/img/icon/initiative_soco.png') }}"
+                                                <img src="{{ asset('assets/img/soco_logo/logo_r_soco.png') }}"
                                                     alt="SOCO Logo">
                                             </div>
                                         </div>

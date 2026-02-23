@@ -41,6 +41,13 @@ class TrackingController extends Controller
             $error = $e->getMessage();
         }
 
+        if (isset($trackingData['raw']['strError'])) {
+             $error = "API Error: " . $trackingData['raw']['strError'];
+        }
+        if (isset($trackingData['raw']['errorDetails'][0]['strError'])) {
+             $error = "API Error: " . $trackingData['raw']['errorDetails'][0]['strError'];
+        }
+
         return view('tracking.show', [
             'trackingData' => $trackingData,
             'awb' => $request->awb,

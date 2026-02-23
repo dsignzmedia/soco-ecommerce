@@ -145,12 +145,11 @@ class CatalogController extends Controller
         ];
 
         // Fetch categories scoped to 'school'
-        $categories = \App\Models\Admin\Master\Category::where('type', 'school')
-            ->where('is_active', true)
+        // Fetch all categories for dynamic filtering
+        $categories = \App\Models\Admin\Master\Category::where('is_active', true)
             ->orderBy('sort_order', 'asc')
             ->orderBy('name', 'asc')
-            ->pluck('name', 'slug')
-            ->toArray();
+            ->get(['name', 'slug', 'type']);
 
         if (empty($categories)) {
             $categories = [
@@ -196,6 +195,8 @@ class CatalogController extends Controller
             'categories' => $categories,
             'productTypes' => $productTypes,
             'productTypeTags' => $productTypeTags,
+            'selectedSchoolIds' => old('school_ids', $product->schools->pluck('id')->toArray()),
+            'allSchoolsCount' => $schools->count()
         ]);
     }
 
@@ -226,6 +227,17 @@ class CatalogController extends Controller
                 }
             }
             $product->updateTotalStock();
+        }
+
+        // Handle Schools
+        if ($request->has('school_ids')) {
+            $product->schools()->sync($request->school_ids);
+            // Update legacy school_id for backward compatibility (set to first selected or null)
+            $firstSchool = $request->input('school_ids')[0] ?? null;
+            if ($firstSchool) {
+               $product->school_id = $firstSchool;
+               $product->saveQuietly();
+            }
         }
 
         // Handle Grade Pricing (Range-based)
@@ -326,6 +338,20 @@ class CatalogController extends Controller
              // Or maybe the form didn't send it? 
              // Let's assume if it's not present, we don't touch it, UNLESS we know the form always sends it.
              // We'll rely on the form sending 'variants' array even if empty or ensuring we check logic.
+        }
+
+        // Handle Schools
+        if ($request->has('school_ids')) {
+            $productMapping->schools()->sync($request->school_ids);
+            // Update legacy school_id for backward compatibility
+            $firstSchool = $request->input('school_ids')[0] ?? null;
+            if ($firstSchool) {
+               $productMapping->school_id = $firstSchool;
+               $productMapping->saveQuietly();
+            } elseif (empty($request->input('school_ids'))) {
+                $productMapping->school_id = null;
+                $productMapping->saveQuietly();
+            }
         }
 
         // Handle Grade Pricing (Range-based)
@@ -458,13 +484,29 @@ class CatalogController extends Controller
         }
     }
 
+    public function updateStatus(Request $request)
+    {
+        $request->validate([
+            'id' => 'required|exists:product_mappings,id',
+            'status' => 'required|in:live,draft,archived',
+        ]);
+
+        $product = ProductMapping::findOrFail($request->id);
+        $product->status = $request->status;
+        $product->save();
+
+        return response()->json(['success' => true, 'message' => 'Status updated successfully.']);
+    }
+
     protected function validatedData(Request $request, ?ProductMapping $product = null): array
     {
         // Check if variant-based pricing is enabled
         $variantBasedPricing = $request->has('variant_based_pricing') && $request->input('variant_based_pricing') == '1';
         
         $rules = [
-            'school_id' => ['required', 'exists:schools,id'],
+            'school_ids' => ['required', 'array'],
+            'school_ids.*' => ['exists:schools,id'],
+            'school_id' => ['nullable'], // Legacy, can be ignored or mapped
             'grade' => ['nullable', 'string'],
             'product_name' => ['required', 'string', 'max:255'],
             'category' => ['nullable', 'string', 'max:255'],
@@ -744,7 +786,9 @@ class CatalogController extends Controller
     protected function applyFilters(Builder $query, array $filters): void
     {
         if (! empty($filters['school_id'])) {
-            $query->where('school_id', $filters['school_id']);
+            $query->whereHas('schools', function($q) use ($filters) {
+                $q->where('schools.id', $filters['school_id']);
+            });
         }
 
         if (! empty($filters['grade_id'])) {

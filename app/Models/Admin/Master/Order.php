@@ -41,7 +41,16 @@ class Order extends Model
         'payment_id',
         'amount_paid',
         'payment_details',
+        'coupon_id',
     ];
+
+    /**
+     * Get the coupon associated with the order.
+     */
+    public function coupon(): BelongsTo
+    {
+        return $this->belongsTo(Coupon::class);
+    }
 
     protected $casts = [
         'order_date' => 'date',

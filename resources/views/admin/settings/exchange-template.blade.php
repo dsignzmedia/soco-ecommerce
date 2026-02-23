@@ -15,11 +15,6 @@
             </div>
         </div>
 
-        @if(session('status'))
-            <div style="padding:12px 16px;border-radius:8px;background:#ecfdf3;color:#027a48;margin-bottom:20px;border:1px solid #a7f3d0;">
-                {{ session('status') }}
-            </div>
-        @endif
 
         <form method="POST" action="{{ route('master.admin.settings.exchange-template.update') }}">
             @csrf

@@ -18,7 +18,7 @@
                 <li><a href="{{ route('frontend.index') }}">Home</a></li>
                 <li><a href="{{ route('frontend.parent.dashboard') }}">Parent Dashboard</a></li>
                 <li><a href="{{ route('frontend.parent.orders') }}">My Orders</a></li>
-                <li>Order #SOCO-{{ $order['id'] }}</li>
+                <li>Order #{{ $order['id'] }}</li>
             </ul>
         </div>
     </div>
@@ -54,7 +54,7 @@
                 <!-- Order ID Header -->
                 <div class="d-flex align-items-center justify-content-between mb-3">
                     <div>
-                        <span class="text-muted small">Order #SOCO-{{ $order['id'] }}</span>
+                        <span class="text-muted small">Order #{{ $order['id'] }}</span>
                     </div>
                     <button class="btn btn-sm btn-link p-0" onclick="copyOrderId()" style="color: #490D59; text-decoration: none; font-weight: 500;">
                         <i class="fas fa-copy me-1"></i> Copy
@@ -446,17 +446,12 @@
                                 
                                 <div class="d-flex justify-content-between mb-2">
                                     <span class="text-muted">Order ID</span>
-                                    <span style="font-weight: 500;">#SOCO-{{ $order['id'] }}</span>
+                                    <span style="font-weight: 500;">#{{ $order['id'] }}</span>
                                 </div>
 
                                 <div class="d-flex justify-content-between mb-2">
-                                    <span class="text-muted">Listing price</span>
+                                    <span class="text-muted">Subtotal (Inc. Tax)</span>
                                     <span style="font-weight: 500;">&#8377;{{ number_format($order['subtotal'] ?? $order['total']) }}</span>
-                                </div>
-
-                                <div class="d-flex justify-content-between mb-2">
-                                    <span class="text-muted">Tax</span>
-                                    <span style="font-weight: 500;">&#8377;{{ number_format($order['tax'] ?? 0) }}</span>
                                 </div>
                                 
                                 <hr style="margin: 10px 0; border-color: #e0e0e0;">

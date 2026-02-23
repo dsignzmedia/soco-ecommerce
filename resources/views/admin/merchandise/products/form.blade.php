@@ -262,15 +262,57 @@
                     </h3>
                     
                     <div style="display:flex;flex-direction:column;gap:16px;">
-                        <label>
-                            <span>School</span>
-                            <select name="school_id">
-                                <option value="">All Schools (Global) - Default</option>
-                                @foreach($schools as $school)
-                                    <option value="{{ $school->id }}" @selected(old('school_id', $product->school_id) == $school->id)>{{ $school->name }}</option>
-                                @endforeach
-                            </select>
-                        </label>
+                            <div style="margin-bottom: 16px;">
+                                <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:4px;">
+                                    <span style="font-size:14px; font-weight:600; color:#374151;">School *</span>
+                                    <label style="display:flex; align-items:center; gap:8px; cursor:pointer;" title="Select All Schools">
+                                        <span style="font-size:12px; font-weight:600; color:#490d59;">Select All</span>
+                                        <label class="custom-toggle" style="margin:0;">
+                                            <input type="checkbox" id="select-all-schools-toggle" onchange="toggleAllSchools(this)">
+                                            <span class="slider"></span>
+                                        </label>
+                                    </label>
+                                </div>
+                                <p style="font-size:12px; color:#6b7280; margin: 0 0 10px 0;">Hold Ctrl/Cmd to select multiple schools</p>
+                                
+                                <div id="school-selection-container" style="{{ (count((array)$selectedSchoolIds) > 0 && count((array)$selectedSchoolIds) === (int)$allSchoolsCount) ? 'display:none;' : 'display:block;' }}">
+                                    <select name="school_ids[]" id="school-ids-select" required multiple style="width: 100%; min-height: 120px; padding: 10px; border: 1px solid #d1d5db; border-radius: 8px; font-size: 14px; background: white; box-sizing: border-box;">
+                                        @foreach($schools as $school)
+                                            <option value="{{ $school->id }}" @selected(in_array($school->id, (array)$selectedSchoolIds))>{{ $school->name }}</option>
+                                        @endforeach
+                                    </select>
+                                </div>
+                            </div>
+                        <script>
+                             function toggleAllSchools(toggle) {
+                                 const sel = document.getElementById('school-ids-select');
+                                 const container = document.getElementById('school-selection-container');
+                                 if (!sel || !container) return;
+                                 
+                                 if (toggle.checked) {
+                                     // Select all options
+                                     Array.from(sel.options).forEach(o => o.selected = true);
+                                     container.style.display = 'none';
+                                 } else {
+                                     // Deselect all
+                                     Array.from(sel.options).forEach(o => o.selected = false);
+                                     container.style.display = 'block';
+                                 }
+                             }
+                            document.addEventListener('DOMContentLoaded', function() {
+                                 const sel = document.getElementById('school-ids-select');
+                                 const toggle = document.getElementById('select-all-schools-toggle');
+                                 const container = document.getElementById('school-selection-container');
+                                 
+                                 if (sel && toggle && container && sel.options.length > 0) {
+                                     const allSelected = Array.from(sel.options).every(o => o.selected);
+                                     if (allSelected) {
+                                         toggle.checked = true;
+                                         container.style.display = 'none';
+                                     }
+                                 }
+                            });
+                        </script>
                         {{-- <label>
                             <span>Grade</span>
                             <select name="grade">
@@ -282,15 +324,19 @@
                                 @endforeach
                             </select>
                         </label> --}}
-                        {{-- <label id="category-label" style="display: block !important; position: relative; z-index: 100;">
+                        <label id="category-label" style="display: block !important; position: relative; z-index: 100;">
                             <span>Category</span>
                             <select name="category" id="category-select" style="width: 100%; padding: 10px 14px; border: 1px solid #d1d5db; border-radius: 8px; font-size: 14px; background: white; position: relative; z-index: 100;">
                                 <option value="">Select Category</option>
-                                @foreach($categories as $key => $label)
-                                    <option value="{{ $key }}" @selected(old('category', $product->category) === $key)>{{ $label }}</option>
+                                @foreach($categories as $key => $cat)
+                                    @if(is_object($cat))
+                                        <option value="{{ $cat->slug }}" data-type="{{ $cat->type }}" @selected(old('category', $product->category) === $cat->slug)>{{ $cat->name }}</option>
+                                    @else
+                                        <option value="{{ $key }}" @selected(old('category', $product->category) === $key)>{{ $cat }}</option>
+                                    @endif
                                 @endforeach
                             </select>
-                        </label> --}}
+                        </label>
                         <input type="hidden" name="product_type" value="merchandise">
                         <input type="hidden" name="gender" value="unisex">
                         
@@ -384,13 +430,13 @@
                         <button type="submit" name="status" value="live" style="width:100%;padding:12px;border:none;border-radius:8px;background:#490d59;color:#fff;font-weight:600;cursor:pointer;">
                             Publish Product
                         </button>
-                        {{-- <button type="submit" name="status" value="draft" style="width:100%;padding:12px;border-radius:8px;border:1px solid #d0d5dd;background:#fff;color:#475467;cursor:pointer;">
+                        <button type="submit" name="status" value="draft" style="width:100%;padding:12px;border-radius:8px;border:1px solid #d0d5dd;background:#fff;color:#475467;cursor:pointer;">
                             Save Draft
-                        </button> --}}
+                        </button>
                         @if($isEdit)
-                            {{-- <button type="submit" name="status" value="archived" style="width:100%;padding:12px;border-radius:8px;border:1px solid #d0d5dd;background:#fff;color:#b42318;cursor:pointer;">
+                            <button type="submit" name="status" value="archived" style="width:100%;padding:12px;border-radius:8px;border:1px solid #d0d5dd;background:#fff;color:#b42318;cursor:pointer;">
                                 Archive Product
-                            </button> --}}
+                            </button>
                         @endif
                         <a href="{{ route('admin.merchandise.products.index') }}" style="text-align:center;padding:12px;color:#475467;text-decoration:none;">Cancel</a>
                     </div>

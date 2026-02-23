@@ -135,11 +135,14 @@
                             <select name="exchange_size" required style="padding:8px;border:1px solid #e5e7eb;border-radius:8px;">
                                 <option value="">Select available size...</option>
                                 @foreach($sizes as $variant)
-                                    <option value="{{ $variant->option }}">{{ $variant->option }} ({{ $variant->stock }} in stock)</option>
+                                    <option value="{{ $variant->option }}" {{ $returnRequest->exchange_size === $variant->option ? 'selected' : '' }}>{{ $variant->option }} ({{ $variant->stock }} in stock)</option>
                                 @endforeach
                             </select>
+                            @if($returnRequest->exchange_size)
+                                <small style="color:#490d59;font-weight:500;margin-top:4px;display:block;"><i class="fas fa-user me-1"></i>Customer requested: <strong>{{ $returnRequest->exchange_size }}</strong></small>
+                            @endif
                         @else
-                            <input type="text" name="exchange_size" placeholder="Enter size manually" style="padding:8px;border:1px solid #e5e7eb;border-radius:8px;">
+                            <input type="text" name="exchange_size" value="{{ $returnRequest->exchange_size ?? '' }}" placeholder="Enter size manually" style="padding:8px;border:1px solid #e5e7eb;border-radius:8px;">
                         @endif
                     </div>
 

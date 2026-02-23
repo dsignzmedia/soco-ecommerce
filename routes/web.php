@@ -160,6 +160,7 @@ Route::prefix('MasterAdmin')->name('master.admin.')->group(function () {
         Route::get('/catalog/{productMapping}/edit', [CatalogController::class, 'edit'])->name('catalog.edit');
         Route::put('/catalog/{productMapping}', [CatalogController::class, 'update'])->name('catalog.update');
         Route::get('/catalog/{productMapping}', [CatalogController::class, 'show'])->name('catalog.show');
+        Route::post('/catalog/update-status', [CatalogController::class, 'updateStatus'])->name('catalog.update-status');
         Route::delete('/catalog/{productMapping}', [CatalogController::class, 'destroy'])->name('catalog.destroy');
 
         Route::get('/shipping', [ShippingController::class, 'edit'])->name('shipping.edit');
@@ -170,6 +171,7 @@ Route::prefix('MasterAdmin')->name('master.admin.')->group(function () {
 
 
         Route::get('/orders', [OrderController::class, 'index'])->name('orders.index');
+        Route::get('/orders/export', [OrderController::class, 'export'])->name('orders.export');
         Route::get('/orders/{order}/invoice/download', [OrderController::class, 'invoiceDownload'])->name('orders.invoice.download');
         Route::get('/orders/{order}/invoice', [OrderController::class, 'invoiceView'])->name('orders.invoice');
         Route::post('/orders/{order}/status', [OrderController::class, 'updateStatus'])->name('orders.status');
@@ -198,6 +200,9 @@ Route::prefix('MasterAdmin')->name('master.admin.')->group(function () {
         Route::get('/settings/maintenance', [SystemSettingsController::class, 'maintenance'])->name('settings.maintenance');
         Route::put('/settings/maintenance', [SystemSettingsController::class, 'updateMaintenance'])->name('settings.maintenance.update');
 
+        // Coupon Management (Free Delivery Codes)
+        Route::resource('coupons', \App\Http\Controllers\Admin\Master\CouponController::class);
+
         // Payment Gateways
         Route::get('/settings/payment-gateways', [SystemSettingsController::class, 'paymentGateways'])->name('settings.payment-gateways');
         Route::post('/settings/payment-gateways', [SystemSettingsController::class, 'storePaymentGateway'])->name('settings.payment-gateways.store');
@@ -223,6 +228,14 @@ Route::prefix('MasterAdmin')->name('master.admin.')->group(function () {
         // Exchange Template
         Route::get('/settings/exchange-template', [SystemSettingsController::class, 'exchangeTemplate'])->name('settings.exchange-template');
         Route::post('/settings/exchange-template', [SystemSettingsController::class, 'updateExchangeTemplate'])->name('settings.exchange-template.update');
+
+        // Policy Pages
+        Route::get('/settings/privacy-policy', [SystemSettingsController::class, 'privacyPolicy'])->name('settings.privacy-policy');
+        Route::post('/settings/privacy-policy', [SystemSettingsController::class, 'updatePrivacyPolicy'])->name('settings.privacy-policy.update');
+        Route::get('/settings/shipping-policy', [SystemSettingsController::class, 'shippingPolicy'])->name('settings.shipping-policy');
+        Route::post('/settings/shipping-policy', [SystemSettingsController::class, 'updateShippingPolicy'])->name('settings.shipping-policy.update');
+        Route::get('/settings/terms-conditions', [SystemSettingsController::class, 'termsConditions'])->name('settings.terms-conditions');
+        Route::post('/settings/terms-conditions', [SystemSettingsController::class, 'updateTermsConditions'])->name('settings.terms-conditions.update');
         Route::put('/settings/sms-templates/{smsTemplate}', [SystemSettingsController::class, 'updateSmsTemplate'])->name('settings.sms-templates.update');
         Route::delete('/settings/sms-templates/{smsTemplate}', [SystemSettingsController::class, 'destroySmsTemplate'])->name('settings.sms-templates.destroy');
 
@@ -359,6 +372,7 @@ Route::prefix('BackToSchoolAdmin')->name('admin.back_to_school.')->group(functio
 
         Route::get('/products/export', [App\Http\Controllers\Admin\BackToSchool\ProductController::class, 'export'])->name('products.export');
         Route::resource('products', App\Http\Controllers\Admin\BackToSchool\ProductController::class);
+        Route::get('/orders/export', [App\Http\Controllers\Admin\BackToSchool\OrderController::class, 'export'])->name('orders.export');
         Route::get('/orders/{order}/invoice/download', [App\Http\Controllers\Admin\BackToSchool\OrderController::class, 'invoiceDownload'])->name('orders.invoice.download');
         Route::get('/orders/{order}/invoice', [App\Http\Controllers\Admin\BackToSchool\OrderController::class, 'invoiceView'])->name('orders.invoice');
         Route::post('/orders/{order}/status', [App\Http\Controllers\Admin\BackToSchool\OrderController::class, 'updateStatus'])->name('orders.status');
@@ -408,6 +422,7 @@ Route::prefix('MerchandiseAdmin')->name('admin.merchandise.')->group(function ()
         Route::post('/inventory/{product}/variant-stock', [App\Http\Controllers\Admin\Merchandise\InventoryController::class, 'updateVariantStock'])->name('inventory.variant-stock.update');
         Route::get('/products/export', [App\Http\Controllers\Admin\Merchandise\ProductController::class, 'export'])->name('products.export');
         Route::resource('products', App\Http\Controllers\Admin\Merchandise\ProductController::class);
+        Route::get('/orders/export', [App\Http\Controllers\Admin\Merchandise\OrderController::class, 'export'])->name('orders.export');
         Route::get('/orders/{order}/invoice/download', [App\Http\Controllers\Admin\Merchandise\OrderController::class, 'invoiceDownload'])->name('orders.invoice.download');
         Route::get('/orders/{order}/invoice', [App\Http\Controllers\Admin\Merchandise\OrderController::class, 'invoiceView'])->name('orders.invoice');
 
@@ -455,4 +470,5 @@ Route::middleware(['web'])->group(function () {
     Route::get('/track', [App\Http\Controllers\TrackingController::class, 'index'])->name('tracking.index');
     Route::post('/track', [App\Http\Controllers\TrackingController::class, 'track'])->name('tracking.check');
 });
+
 

@@ -34,7 +34,7 @@
                 </div>
                 <div class="about-intro">
                 <!-- First paragraph wraps around the image -->
-                <p>At TheSkoolStore, we make school uniform shopping easy and hassle-free. As a <strong>trusted uniform manufacturer with over 7 years of experience</strong>, we have been supplying high-quality school uniforms in Coimbatore and beyond. Now, we're bringing our expertise online, making it simpler for parents to order uniforms with just a few clicks.</p>
+                <p>At TheSkoolStore, we make school uniform shopping easy and hassle-free. As a <strong>trusted uniform manufacturer with over 10 years of experience</strong>, we have been supplying high-quality school uniforms in Coimbatore and beyond. Now, we're bringing our expertise online, making it simpler for parents to order uniforms with just a few clicks.</p>
                 </div>
                 
                 <!-- Remaining content flows below in full width -->

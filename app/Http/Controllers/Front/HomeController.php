@@ -4,6 +4,9 @@ namespace App\Http\Controllers\Front;
 
 use App\Http\Controllers\Controller;
 use App\Models\Admin\Master\ExchangePolicy;
+use App\Models\Admin\Master\PrivacyPolicy;
+use App\Models\Admin\Master\ShippingPolicy;
+use App\Models\Admin\Master\TermsConditions;
 use Illuminate\Http\Request;
 
 class HomeController extends Controller
@@ -53,17 +56,20 @@ class HomeController extends Controller
 
     public function privacyPolicy()
     {
-        return view('frontend.policies.privacy-policy');
+        $policy = PrivacyPolicy::current();
+        return view('frontend.policies.privacy-policy', compact('policy'));
     }
 
     public function shippingPolicy()
     {
-        return view('frontend.policies.shipping-policy');
+        $policy = ShippingPolicy::current();
+        return view('frontend.policies.shipping-policy', compact('policy'));
     }
 
     public function termsConditions()
     {
-        return view('frontend.policies.terms-conditions');
+        $policy = TermsConditions::current();
+        return view('frontend.policies.terms-conditions', compact('policy'));
     }
 }
 

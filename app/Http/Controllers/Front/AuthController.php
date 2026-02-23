@@ -2148,15 +2148,10 @@ class AuthController extends Controller
 
         if ($school) {
             $dbProductsQuery = \App\Models\Admin\Master\ProductMapping::with('variants')
-                ->where('status', 'live')
-                // Show: authorized/optional (school products), merchandised, and back_to_school products
-                // STRICT FILTER: Only show products assigned to THIS specific school.
-                // Global products (school_id = NULL) are EXCLUDED from the School Store page.
-                ->where('school_id', $school->id);
-<<<<<<< HEAD
-=======
-
->>>>>>> e8fe7e54bda89d05c14581d71cae2f8386f4c987
+                // Show products assigned to THIS specific school.
+                // Reverted logic to exclude Global products as per request: "in store only the selected school bts product should be visible"
+                ->where('school_id', $school->id)
+                ->where('status', 'live');
 
             // Filter by grade if available in profile
             // Note: Grade filter only applies to school products (authorized/optional)
@@ -2221,6 +2216,38 @@ class AuthController extends Controller
                       ->orWhereNull('gender')
                       ->orWhere('gender', '');
                 });
+            }
+
+            // Search Filter
+            if ($request->has('search') && !empty($request->search)) {
+                $term = $request->search;
+                $dbProductsQuery->where(function($q) use ($term) {
+                    $q->where('product_name', 'LIKE', "%{$term}%")
+                      ->orWhere('description', 'LIKE', "%{$term}%");
+                });
+            }
+
+            // Product Type Filter
+            if ($request->has('product_type')) {
+                $selectedTypes = (array) $request->input('product_type');
+                if (count($selectedTypes) > 0) {
+                    $dbTypes = [];
+                    foreach($selectedTypes as $t) {
+                        $dbTypes[] = $t;
+                        if($t === 'authorized') { $dbTypes[] = 'authorized_product'; }
+                        if($t === 'optional') { $dbTypes[] = 'optional_product'; }
+                    }
+                    $dbProductsQuery->whereIn('product_type', $dbTypes);
+                }
+            }
+
+            // Category Filter
+            if ($request->has('category')) {
+                $selectedCategories = (array) $request->input('category');
+                if (count($selectedCategories) > 0) {
+                     // Normalize categories if needed, but assuming slugs are passed
+                    $dbProductsQuery->whereIn('category', $selectedCategories);
+                }
             }
 
             $dbProducts = $dbProductsQuery->with('gradePricing')->get();
@@ -2299,6 +2326,16 @@ class AuthController extends Controller
                 'bts_count' => $dbProducts->where('product_type', 'back_to_school')->count(),
                 'merchandised_count' => $dbProducts->where('product_type', 'merchandised')->count()
             ]);
+
+            // Detailed Product Logging
+            foreach($dbProducts as $p) {
+                 \Log::info('[Store Page] Product Debug Item', [
+                     'id' => $p->id,
+                     'name' => $p->product_name,
+                     'type_raw' => $p->product_type,
+                     'category' => $p->category
+                 ]);
+            }
 
             foreach ($dbProducts as $dbProduct) {
                 // Note: Products with grade-wise pricing will still show, but will use regular price
@@ -2502,39 +2539,146 @@ class AuthController extends Controller
 
         // Get available product types from the loaded products
         // Get available product types from the loaded products and fetch their full objects for labels
-        $productTypeSlugs = collect($allProducts)
-            ->pluck('type')
-            ->unique()
-            ->values()
+        // Fetch all active product types for filters
+        // Fetch product types actually used by this school's products
+        // Query must be distinct and specific to this school
+        $usedTypes = \App\Models\Admin\Master\ProductMapping::where('school_id', $school->id)
+            ->where('status', 'live')
+            ->select('product_type')
+            ->distinct()
+            ->pluck('product_type')
             ->toArray();
+
+        // Normalize used types to slugs (e.g. "back_to_school" stays "back_to_school", "Authorized Product" -> "authorized")
+        $normalizedUsedTypes = [];
+        foreach($usedTypes as $ut) {
+             // Handle duplicates/variations just like before
+             $slug = $ut;
+             if(in_array($ut, ['authorized_product', 'authorized-product', 'Authorized Product', 'Authorized'])) { $slug = 'authorized'; }
+             elseif(in_array($ut, ['optional_product', 'optional-product', 'Optional Product', 'Optional'])) { $slug = 'optional'; }
+             elseif(in_array($ut, ['merchandise', 'merchandise_products', 'merchandised_products', 'Merchandised', 'Merchandise'])) { $slug = 'merchandised'; }
+             elseif(in_array($ut, ['back_to_school', 'back-to-school', 'Back to School'])) { $slug = 'back_to_school'; }
+             
+             if ($slug) {
+                $normalizedUsedTypes[] = $slug;
+             }
+        }
+        $normalizedUsedTypes = array_unique($normalizedUsedTypes);
+        
+        // Fetch All Active Types definitions
+        $dbTypes = \App\Models\Admin\Master\ProductType::where('is_active', true)
+            ->orderBy('sort_order')
+            ->get();
             
-        // Fetch product type objects to get custom labels
-        // Fallback to simpler object structure if ProductType not found
-        $productTypes = \App\Models\Admin\Master\ProductType::whereIn('slug', $productTypeSlugs)
-            ->get()
-            ->map(function($pt) {
-                return (object)[
-                    'slug' => $pt->slug,
-                    'label' => $pt->name, // Use name as label since 'label' column is removed
-                    'name' => $pt->name,
-                    'product_tag' => $pt->product_tag
-                ];
-            });
-            
-        // Add any types that might be in products but not in ProductType table (legacy/fallback)
-        foreach ($productTypeSlugs as $slug) {
-            if (!$productTypes->contains('slug', $slug)) {
-                $productTypes->push((object)[
-                    'slug' => $slug,
-                    'label' => ucwords(str_replace('_', ' ', $slug)),
-                    'name' => ucwords(str_replace('_', ' ', $slug))
+        $normalizedTypes = collect();
+        
+        foreach($dbTypes as $type) {
+             $slug = $type->slug;
+             $label = $type->name;
+             
+             // Normalize Duplicates
+             if(in_array($slug, ['authorized_product', 'authorized-product', 'Authorized Product', 'Authorized'])) {
+                 $slug = 'authorized';
+                 $label = 'Authorized';
+             }
+             elseif(in_array($slug, ['optional_product', 'optional-product', 'Optional Product', 'Optional'])) {
+                 $slug = 'optional';
+                 $label = 'Optional';
+             }
+             elseif(in_array($slug, ['merchandise', 'merchandise_products', 'merchandised_products', 'Merchandised', 'Merchandise'])) {
+                 $slug = 'merchandised';
+                 $label = 'Merchandised';
+             }
+             elseif(in_array($slug, ['back_to_school', 'back-to-school', 'Back to School'])) {
+                 $slug = 'back_to_school';
+                 $label = 'Back to School';
+             }
+             
+             // ONLY ADD IF IT EXISTS IN THE SCHOOL'S USED TYPES
+             if(in_array($slug, $normalizedUsedTypes)) {
+                 $normalizedTypes->push((object)[
+                     'slug' => $slug,
+                     'label' => $label,
+                     'name' => $label,
+                     'product_tag' => $type->product_tag
+                 ]);
+             }
+        }
+        
+        // Add manual types only if present/used but missing from DB definitions
+        // (Unlikely, but good safety)
+        foreach($normalizedUsedTypes as $m) {
+            if(!$normalizedTypes->contains('slug', $m)) {
+                $normalizedTypes->push((object)[
+                    'slug' => $m,
+                    'label' => ucwords(str_replace('_', ' ', $m)),
+                    'name' => ucwords(str_replace('_', ' ', $m))
                 ]);
             }
+        }
+        
+        // Deduplicate by slug
+        $productTypes = $normalizedTypes->unique('slug')->values();
+
+        // Build Hierarchy: Product Type -> Categories
+        // We need to know which categories belong to which product type for the sidebar UI
+        $productTypeCategories = [];
+        
+        // Fetch all distinct pairs for this school (ignoring current filters to show full tree)
+        $hierarchyQuery = \App\Models\Admin\Master\ProductMapping::where('status', 'live')
+            ->select('product_type', 'category');
+            
+        if ($school) {
+            $hierarchyQuery->where('school_id', $school->id);
+        } else {
+            $hierarchyQuery->whereNull('school_id');
+        }
+            
+        $distinctPairs = $hierarchyQuery->distinct()->get();
+        
+        // Collect all unique categories to fetch their details once
+        $allTreeCategorySlugs = $distinctPairs->pluck('category')->unique()->filter()->toArray();
+        $treeCategories = \App\Models\Admin\Master\Category::whereIn('slug', $allTreeCategorySlugs)
+            ->get()
+            ->keyBy('slug');
+            
+        foreach ($distinctPairs as $pair) {
+            // Handle empty/null categories by defaulting to 'regular_uniforms'
+            $catSlug = $pair->category;
+            if (empty($catSlug)) {
+                $catSlug = 'regular_uniforms';
+            }
+            
+            // Normalize product type (same logic as above)
+            $pType = $pair->product_type;
+            $slug = $pType;
+             if(in_array($pType, ['authorized_product', 'authorized-product', 'Authorized Product', 'Authorized'])) { $slug = 'authorized'; }
+             elseif(in_array($pType, ['optional_product', 'optional-product', 'Optional Product', 'Optional'])) { $slug = 'optional'; }
+             elseif(in_array($pType, ['merchandise', 'merchandise_products', 'merchandised_products', 'Merchandised', 'Merchandise'])) { $slug = 'merchandised'; }
+             elseif(in_array($pType, ['back_to_school', 'back-to-school', 'Back to School'])) { $slug = 'back_to_school'; }
+            
+             // Skip if no slug derived
+             if (!$slug) continue;
+             
+             // Get Category Name
+             $catName = isset($treeCategories[$catSlug]) ? $treeCategories[$catSlug]->name : ucfirst(str_replace(['_', '-'], ' ', $catSlug));
+             
+             $productTypeCategories[$slug][] = (object)[
+                 'slug' => $catSlug,
+                 'name' => $catName
+             ];
+        }
+        
+        // Deduplicate categories within each type
+        foreach($productTypeCategories as $slug => $cats) {
+            $productTypeCategories[$slug] = collect($cats)->unique('slug')->values()->all();
         }
 
         // Manual Pagination for Array
         $page = \Illuminate\Pagination\Paginator::resolveCurrentPage() ?: 1;
-        $perPage = 12;
+        // Increased from 12 to 100 to ensure BTS products (sorted last) appear on the first page
+        // so client-side filtering works as expected for typical school catalog sizes.
+        $perPage = 100;
         $items = collect($allProducts);
         $paginatedProducts = new \Illuminate\Pagination\LengthAwarePaginator(
             $items->forPage($page, $perPage),
@@ -2548,7 +2692,7 @@ class AuthController extends Controller
         // Ideally we rename to products to match Shop view, but let's keep allProducts to avoid breaking view for now
         $allProducts = $paginatedProducts;
 
-        return view('frontend.store.index', compact('selectedProfile', 'allProducts', 'categories', 'productTypes'));
+        return view('frontend.store.index', compact('selectedProfile', 'allProducts', 'categories', 'productTypes', 'productTypeCategories'));
     }
 
     public function storeDebug(Request $request)
@@ -2653,7 +2797,9 @@ class AuthController extends Controller
         }
 
         // Fetch real product from database with grade pricing
-        $dbProduct = \App\Models\Admin\Master\ProductMapping::with(['variants', 'gradePricing'])->find($productId);
+        $dbProduct = \App\Models\Admin\Master\ProductMapping::with(['variants', 'gradePricing'])
+            ->where('status', 'live')
+            ->find($productId);
 
         if (!$dbProduct) {
             return redirect()->route('frontend.parent.store', ['profile_id' => $profileId])
@@ -2905,13 +3051,18 @@ class AuthController extends Controller
             }
         }
 
-        // Check if the same product with same size and profile already exists in cart
-        // Note: Unique constraint exists on [user, profile, product, size], so we must update if exists
+        // Check if the same product+size+profile already exists in cart (update vs create)
         $existingItem = \App\Models\Cart::where('user_id', $user->id)
             ->where('product_id', $request->product_id)
             ->where('profile_id', $request->profile_id)
             ->where('size', $request->size)
             ->first();
+
+        // Lookup the student profile to snapshot their info into the cart
+        $studentProfile = $user->studentProfiles->firstWhere('id', (int)$request->profile_id);
+        $snapshotName   = $studentProfile?->student_name ?? 'Unknown';
+        $snapshotSchool = $studentProfile?->school_name  ?? null;
+        $snapshotGrade  = $studentProfile?->grade         ?? null;
 
         if ($existingItem) {
              // Check if adding more exceeds stock
@@ -2925,21 +3076,32 @@ class AuthController extends Controller
                  return back()->with('error', 'Cannot add more items. Exceeds available stock.');
              }
 
-            // Update quantity of existing item
-            $existingItem->increment('quantity', $request->quantity);
+            // Update quantity; also refresh snapshot in case profile details changed
+            $existingItem->update([
+                'quantity'     => $existingItem->quantity + $request->quantity,
+                'student_name' => $snapshotName,
+                'school_name'  => $snapshotSchool,
+                'grade'        => $snapshotGrade,
+            ]);
         } else {
-            // Add new item to cart
+            // Add new item to cart with student snapshot
             \App\Models\Cart::create([
-                'user_id' => $user->id,
-                'product_id' => $request->product_id,
-                'profile_id' => $request->profile_id,
-                'size' => $request->size,
-                'quantity' => $request->quantity,
+                'user_id'      => $user->id,
+                'product_id'   => $request->product_id,
+                'profile_id'   => $request->profile_id,
+                'size'         => $request->size,
+                'quantity'     => $request->quantity,
+                'student_name' => $snapshotName,
+                'school_name'  => $snapshotSchool,
+                'grade'        => $snapshotGrade,
             ]);
         }
 
-        // Redirect to cart page to show all items
-        return redirect()->route('frontend.parent.cart')
+        // Store the active student profile in session so cart page knows which student was shopping
+        session(['active_cart_profile_id' => $request->profile_id]);
+
+        // Redirect to cart page, carrying the active profile so 'Buy More' links correctly
+        return redirect()->route('frontend.parent.cart', ['profile_id' => $request->profile_id])
             ->with('success', 'Product added to cart successfully!');
     }
 
@@ -3095,8 +3257,14 @@ class AuthController extends Controller
                 ->delete();
         }
 
-        // For the view's "Buy More" link
-        $profileId = $request->get('profile_id', $cartDbItems->first()?->profile_id);
+        // For the view's "Buy More" link — resolve the active student profile in priority order:
+        // 1. URL query param (e.g. from addToCart redirect or direct link)
+        // 2. Session-stored profile (set when user clicks 'Shop Now' or 'Add to Cart')
+        // 3. Most recently modified cart item's profile (avoids defaulting to first/wrong student)
+        $profileId = $request->get('profile_id')
+            ?? session('active_cart_profile_id')
+            ?? $cartDbItems->sortByDesc('updated_at')->first()?->profile_id;
+
         $selectedProfile = null;
         if ($profileId) {
             $selectedProfile = $profiles->firstWhere('id', (int)$profileId);
@@ -3350,18 +3518,40 @@ class AuthController extends Controller
 
         if ($couponCode) {
             // User explicitly entered a coupon code
-            if ($selectedSchool && $selectedSchool->coupon_enabled && 
-                strcasecmp($selectedSchool->coupon_code, $couponCode) === 0) {
-                // Coupon valid
+            if ($selectedSchool && $selectedSchool->coupon_enabled) {
+                // School has global free shipping enabled (new behaviour)
                 $couponStatus = 'success';
-                $couponMessage = 'Coupon applied: Free Delivery activated!';
+                $couponMessage = 'Free shipping is active for your school!';
                 session(['applied_coupon' => $couponCode]);
             } else {
-                // Coupon invalid
-                $couponStatus = 'error';
-                $couponMessage = 'Invalid coupon code for your school.';
-                $couponCode = null; // Reset if invalid so calculation ignores it
-                session()->forget('applied_coupon');
+                // Check if it matches school code
+                if ($selectedSchool && !empty($selectedSchool->coupon_code) && 
+                    strcasecmp($selectedSchool->coupon_code, $couponCode) === 0) {
+                    // Legacy coupon check
+                    $couponStatus = 'success';
+                    $couponMessage = 'Coupon applied: Free Delivery activated!';
+                    session(['applied_coupon' => $couponCode]);
+                } else {
+                     // Check Global Coupon
+                     $globalCoupon = \App\Models\Admin\Master\Coupon::where('code', $couponCode)->first();
+                     if ($globalCoupon && $globalCoupon->isValid()) {
+                         $couponStatus = 'success';
+                         if ($globalCoupon->type === 'free_shipping') {
+                             $couponMessage = 'Global Coupon applied: Free Shipping!';
+                         } elseif ($globalCoupon->type === 'fixed') {
+                             $couponMessage = 'Global Coupon applied: ₹' . number_format($globalCoupon->discount_amount, 2) . ' Off!';
+                         } elseif ($globalCoupon->type === 'percentage') {
+                             $couponMessage = 'Global Coupon applied: ' . $globalCoupon->discount_percentage . '% Off!';
+                         }
+                         session(['applied_coupon' => $couponCode]);
+                     } else {
+                        // Coupon invalid
+                        $couponStatus = 'error';
+                        $couponMessage = 'Invalid or expired coupon code.';
+                        $couponCode = null; // Reset if invalid so calculation ignores it
+                        session()->forget('applied_coupon');
+                     }
+                }
             }
         } else {
             // No coupon in request - clear any old session coupon
@@ -3370,8 +3560,15 @@ class AuthController extends Controller
             $couponCode = null;
         }
 
-        $shippingCost = $this->calculateShippingCost($selectedSchool, $subtotal, $couponCode);
-        $totalWithShipping = $total + $shippingCost;
+        $shippingResult = $this->calculateShippingCost($selectedSchool, $subtotal, $couponCode);
+        
+        $shippingCost = $shippingResult['shipping_cost'];
+        $discountAmount = $shippingResult['discount_amount'];
+
+        $totalWithShipping = ($total - $discountAmount) + $shippingCost;
+        if ($totalWithShipping < 0) {
+            $totalWithShipping = 0;
+        }
 
         // Get saved addresses from database instead of session
         $savedAddresses = $user->addresses;
@@ -3390,7 +3587,7 @@ class AuthController extends Controller
         return view('frontend.checkout.index', compact(
             'cartItems', 'total', 'totalWithShipping', 'shippingCost', 'subtotal', 'totalTax', 
             'profiles', 'selectedProfile', 'savedAddresses', 'razorpayEnabled', 'hasInclusiveTax',
-            'couponMessage', 'couponStatus'
+            'couponMessage', 'couponStatus', 'discountAmount'
         ));
     }
 
@@ -3520,6 +3717,9 @@ class AuthController extends Controller
             // Determine shipping cost once for this checkout (apply to first order row only)
             $firstItem = $filteredCartItems->first();
             $shippingCost = 0.0;
+            $remainingDiscount = 0.0;
+            $couponIdToIncrement = null;
+
             if ($firstItem) {
                 $profile = $profiles->firstWhere('id', (int) $firstItem->profile_id);
                 $school = null;
@@ -3531,11 +3731,20 @@ class AuthController extends Controller
                 
                 // Check for applied coupon in session
                 $couponCode = session('applied_coupon');
-                $shippingCost = $this->calculateShippingCost($school, $checkoutSubtotal, $couponCode);
+                $shippingResult = $this->calculateShippingCost($school, $checkoutSubtotal, $couponCode);
+                
+                $shippingCost = $shippingResult['shipping_cost'];
+                $remainingDiscount = $shippingResult['discount_amount'];
+                $couponIdToIncrement = $shippingResult['coupon_id'];
             }
 
             // DB Transaction to ensure data consistency
             \Illuminate\Support\Facades\DB::beginTransaction();
+
+            // Increment Coupon Usage if applicable
+            if ($couponIdToIncrement) {
+                \App\Models\Admin\Master\Coupon::where('id', $couponIdToIncrement)->increment('used_count');
+            }
 
             $processedCartIds = [];
             foreach ($filteredCartItems as $index => $item) {
@@ -3546,8 +3755,17 @@ class AuthController extends Controller
                     continue; // Skip if product not found
                 }
 
-                // Find student profile for this item
+                // Find student profile for this item; fall back to cart-item snapshot if profile was deleted
                 $studentProfile = $profiles->firstWhere('id', (int)$item->profile_id);
+                if (!$studentProfile) {
+                    // Profile no longer exists — use the snapshot saved at add-to-cart time
+                    $studentProfile = (object)[
+                        'student_name' => $item->student_name ?? 'Unknown',
+                        'school_name'  => $item->school_name  ?? null,
+                        'grade'        => $item->grade         ?? null,
+                        'id'           => $item->profile_id,
+                    ];
+                }
 
                 // Get school_id - lookup school by name from student profile
                 $schoolId = null;
@@ -3608,15 +3826,30 @@ class AuthController extends Controller
                 $itemTax = ($itemSubtotal * $taxPercentage) / 100;
                 $itemTotal = $itemSubtotal + $itemTax;
 
+                // Apply applicable discount to this item (distribute until exhausted)
+                $itemDiscount = 0.0;
+                if ($remainingDiscount > 0) {
+                    if ($remainingDiscount >= $itemTotal) {
+                        $itemDiscount = $itemTotal;
+                        $remainingDiscount -= $itemTotal;
+                    } else {
+                        $itemDiscount = $remainingDiscount;
+                        $remainingDiscount = 0;
+                    }
+                }
+
                 // Calculate weight for shipping
                 $itemWeight = ($product->product_weight ?? 0.5) * $item->quantity; // Default to 0.5kg if missing
                 $totalWeight += $itemWeight;
 
                 $rowShipping = ($index === 0) ? $shippingCost : 0;
-                $rowTotalWithShipping = $itemTotal + $rowShipping;
+                $rowTotalWithShipping = ($itemTotal - $itemDiscount) + $rowShipping;
+
+                // Ensure no negative total
+                if ($rowTotalWithShipping < 0) $rowTotalWithShipping = 0;
 
                 $order = \App\Models\Admin\Master\Order::create([
-                    'order_number' => $uniqueOrderNumber,
+                    'order_number' => 'SOCO-TMP-' . uniqid(), // Temporary; replaced below
                     'user_id' => $user->id,
                     'school_id' => $schoolId,
                     'order_date' => now(),
@@ -3640,7 +3873,12 @@ class AuthController extends Controller
                     'payment_id' => session('payment_id'),
                     'amount_paid' => session('payment_method') === 'razorpay' ? $rowTotalWithShipping : 0,
                     'payment_details' => session('payment_details'),
+                    'coupon_id' => $couponIdToIncrement,
                 ]);
+
+                // Update order number to short SOCO-XXXXX format using the DB auto-increment ID
+                $shortOrderNumber = 'SOCO-' . str_pad($order->id, 5, '0', STR_PAD_LEFT);
+                $order->update(['order_number' => $shortOrderNumber]);
 
                 // Create Payment Record
                 if (session('payment_method') === 'razorpay' && session('payment_id')) {
@@ -3769,7 +4007,7 @@ class AuthController extends Controller
                                  $isSuccess = true;
                              } elseif (isset($firstItem['awb'])) {
                                  // Some responses might just return the object
-                                 $awb = $firstItem['awb'];
+                                 $awb = $firstItem['  '];
                                  $isSuccess = true;
                              }
                         }
@@ -3810,26 +4048,35 @@ class AuthController extends Controller
                 })
                 ->exists();
 
+            // Determine the display order number (use the first short ID if available, otherwise fallback to group ID)
+            $displayOrderNumber = $orderNumber;
+            if (!empty($createdOrderIds)) {
+                $firstCreatedOrder = \App\Models\Admin\Master\Order::where('id', $createdOrderIds[0])->first();
+                if ($firstCreatedOrder) {
+                    $displayOrderNumber = $firstCreatedOrder->order_number;
+                }
+            }
+
             if ($hasRegularOrders) {
                 // Create Notification for Master Admins
                 \App\Models\Notification::create([
                     'type' => 'new_order',
                     'title' => 'New Order Received',
-                    'message' => "Order #{$orderNumber} placed by {$shippingAddress['name']}",
+                    'message' => "Order #{$displayOrderNumber} placed by {$shippingAddress['name']}",
                     'target_role' => 'master',
-                    'data' => ['order_number' => $orderNumber],
+                    'data' => ['order_number' => $displayOrderNumber],
                 ]);
                 // Create Notification for Inventory Admins
                 \App\Models\Notification::create([
                     'type' => 'new_order',
                     'title' => 'New Order Received',
-                    'message' => "Order #{$orderNumber} placed by {$shippingAddress['name']}",
+                    'message' => "Order #{$displayOrderNumber} placed by {$shippingAddress['name']}",
                     'target_role' => 'inventory',
-                    'data' => ['order_number' => $orderNumber],
+                    'data' => ['order_number' => $displayOrderNumber],
                 ]);
             }
 
-            return redirect()->route('frontend.parent.orders')->with('success', 'Order placed successfully! Order # ' . $orderNumber);
+            return redirect()->route('frontend.parent.orders')->with('success', 'Order placed successfully! Order # ' . $displayOrderNumber);
 
         } catch (\Illuminate\Validation\ValidationException $e) {
             return redirect()->back()
@@ -3852,16 +4099,55 @@ class AuthController extends Controller
      * Calculate shipping cost for checkout based on school's shipping zone.
      * Fallback: ShippingSetting default_cost.
      */
-    protected function calculateShippingCost(?\App\Models\Admin\Master\School $school, float $orderSubtotal, ?string $couponCode = null): float
+    protected function calculateShippingCost(?\App\Models\Admin\Master\School $school, float $orderSubtotal, ?string $couponCode = null)
     {
-        // First, check if a valid coupon code is provided for this school
-        if ($school && $school->coupon_enabled && $couponCode && !empty($school->coupon_code)) {
+        $result = [
+            'shipping_cost' => 0.0,
+            'discount_amount' => 0.0,
+            'coupon_type' => null,
+            'coupon_id' => null
+        ];
+
+        // 1. School-Wide Free Delivery (Highest Priority)
+        if ($school && $school->coupon_enabled) {
+            $result['shipping_cost'] = 0.0;
+            return $result;
+        }
+
+        // 2. Global Coupon Logic
+        if ($couponCode) {
+            $coupon = \App\Models\Admin\Master\Coupon::where('code', $couponCode)->first();
+            
+            if ($coupon && $coupon->isValid()) {
+                if ($coupon->type === 'free_shipping') {
+                    $result['shipping_cost'] = 0.0;
+                    $result['coupon_type'] = 'free_shipping';
+                    $result['coupon_id'] = $coupon->id;
+                    return $result;
+                } elseif ($coupon->type === 'fixed') {
+                    $result['discount_amount'] = (float) $coupon->discount_amount;
+                    $result['coupon_type'] = 'fixed';
+                    $result['coupon_id'] = $coupon->id;
+                } elseif ($coupon->type === 'percentage') {
+                    $discount = ($orderSubtotal * $coupon->discount_percentage) / 100;
+                    $result['discount_amount'] = $discount;
+                    $result['coupon_type'] = 'percentage';
+                    $result['coupon_id'] = $coupon->id;
+                }
+            }
+        }
+        
+        // 3. Legacy Coupon Check (if school still uses it and no global coupon matched)
+        if ($school && $couponCode && !empty($school->coupon_code)) {
             if (strcasecmp($school->coupon_code, $couponCode) === 0) {
-                return 0.0; // Free Shipping!
+                $result['shipping_cost'] = 0.0;
+                return $result;
             }
         }
 
+        // 4. Standard Shipping Logic (Zones/Settings)
         $settings = \App\Models\Admin\Master\ShippingSetting::current();
+        $shippingCost = (float) ($settings->default_cost ?? 0);
 
         if ($school && $school->shippingZone) {
             $zone = $school->shippingZone;
@@ -3870,14 +4156,18 @@ class AuthController extends Controller
             if ($zone->free_shipping) {
                 $threshold = (float) ($zone->free_threshold ?? 0);
                 if ($threshold <= 0 || $orderSubtotal >= $threshold) {
-                    return 0.0;
+                    $shippingCost = 0.0;
+                } else {
+                    $shippingCost = (float) ($zone->cost ?? 0);
                 }
+            } else {
+                 $shippingCost = (float) ($zone->cost ?? 0);
             }
-
-            return (float) ($zone->cost ?? 0);
         }
-
-        return (float) ($settings->default_cost ?? 0);
+        
+        $result['shipping_cost'] = $shippingCost;
+        
+        return $result;
     }
 
     /**
@@ -3932,17 +4222,20 @@ class AuthController extends Controller
             ->orderByDesc('created_at')
             ->get();
 
-        // Group orders by the base order number (SOCO-ID-Index -> ID)
-        // Group orders by the base order number (SOCO-ID-Timestamp -> ID-Timestamp)
+        // Group orders by their order_number
+        // New format: SC-XXXXX (each item has its own unique number)
+        // Old format: SOCO-{UserID}-{Timestamp}-{Index} (grouped by UserID-Timestamp)
         $groupedOrders = $orders->groupBy(function ($order) {
-            $parts = explode('-', $order->order_number);
-            // Expected format: SOCO-{UserID}-{Timestamp}-{Index}
-            // We want to group by {UserID}-{Timestamp}
+            $num = $order->order_number;
+            // Legacy SOCO-{UserID}-{Timestamp}-{Index} format: group by UserID-Timestamp portion
+            $parts = explode('-', $num);
             if (count($parts) >= 3) {
                 return $parts[1] . '-' . $parts[2];
             }
-            // Fallback for unexpected formats
-            return isset($parts[1]) ? $parts[1] : $parts[0];
+            
+            // Short format: SOCO-XXXXX or SC-XXXXX — each row is its own order
+            // This covers both the new standardized format and the previous SC- prefix
+            return $num;
         });
 
         // Fetch all exchange orders (orders created from exchange requests)
@@ -4051,7 +4344,9 @@ class AuthController extends Controller
                 // Regular order tracking
                 $orders->where(function($q) use ($orderId) {
                     $q->where('order_number', 'like', 'SOCO-' . $orderId . '-%')
-                      ->orWhere('order_number', 'like', 'SOCO-' . $orderId);
+                      ->orWhere('order_number', 'like', 'SOCO-' . $orderId)
+                      ->orWhere('order_number', $orderId) // Standard match (SOCO-XXXXX or SC-XXXXX)
+                      ->orWhere('order_number', 'like', $orderId . '%'); // Prefix match
                 });
 
                 // If itemId is provided, filter to show only that specific item
@@ -4472,14 +4767,16 @@ class AuthController extends Controller
                 continue; // Skip if there's already a pending/approved request
             }
 
+            $reason = ($request->reason === 'OTHER') ? ($request->other_reason ?? 'OTHER') : $request->reason;
+
             $returnRequest = \App\Models\Admin\Master\ReturnExchangeRequest::create([
                 'order_id' => $order->id,
                 'requested_quantity' => $requestedQty,
                 'type' => $request->action,
-                'reason' => $request->reason,
+                'reason' => $reason,
                 'photo_path' => $photoPath,
                 'status' => 'pending',
-                'customer_notes' => $request->reason,
+                'customer_notes' => $reason,
                 'exchange_size' => $request->exchange_sizes[$order->id] ?? null,
             ]);
             // Send Exchange Request Submitted Email

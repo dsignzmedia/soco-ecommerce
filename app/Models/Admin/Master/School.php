@@ -5,6 +5,7 @@ namespace App\Models\Admin\Master;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Builder;
 
@@ -50,9 +51,9 @@ class School extends Model
         return $this->hasMany(Grade::class)->orderBy('display_order');
     }
 
-    public function productMappings(): HasMany
+    public function productMappings(): BelongsToMany
     {
-        return $this->hasMany(ProductMapping::class);
+        return $this->belongsToMany(ProductMapping::class, 'product_mapping_school');
     }
 
     public function shippingZone(): BelongsTo
