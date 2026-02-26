@@ -45,10 +45,10 @@ class InventoryController extends Controller
                 $q->whereNotIn('product_type', ['back_to_school', 'merchandised'])
                   ->orWhereNull('product_type');
             })
-            ->when($filters['product_type'] ?? null, fn($q, $type) => $q->where('product_type', $type))
-            ->when($filters['school_id'] ?? null, fn($q, $school) => $q->where('school_id', $school))
-            ->when($filters['category'] ?? null, fn($q, $category) => $q->where('category', $category))
-            ->when($filters['status'] ?? null, fn($q, $status) => $q->where('status', $status))
+            ->when($filters['product_type'] ?? null, fn($q, $type) => $q->whereIn('product_type', (array)$type))
+            ->when($filters['school_id'] ?? null, fn($q, $school) => $q->whereIn('school_id', (array)$school))
+            ->when($filters['category'] ?? null, fn($q, $category) => $q->whereIn('category', (array)$category))
+            ->when($filters['status'] ?? null, fn($q, $status) => $q->whereIn('status', (array)$status))
             ->when($filters['q'] ?? null, fn($q, $term) => $q->where('product_name', 'like', '%'.$term.'%'))
             ->orderBy('product_name')
             ->paginate(15)
@@ -199,8 +199,8 @@ class InventoryController extends Controller
 
         // Base query callback for reusable filtering
         $applyFilters = function ($query) use ($filters) {
-            $query->when($filters['school_id'] ?? null, fn($q, $id) => $q->where('school_id', $id))
-                  ->when($filters['category'] ?? null, fn($q, $cat) => $q->where('category', $cat));
+            $query->when($filters['school_id'] ?? null, fn($q, $id) => $q->whereIn('school_id', (array)$id))
+                  ->when($filters['category'] ?? null, fn($q, $cat) => $q->whereIn('category', (array)$cat));
         };
 
         // 1. Low Stock

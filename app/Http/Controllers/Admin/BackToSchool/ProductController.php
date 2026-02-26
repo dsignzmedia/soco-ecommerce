@@ -847,6 +847,7 @@ class ProductController extends Controller
             'video_url' => 'nullable|url',
             'video_file' => 'nullable|file|mimes:mp4,webm,ogg,mov,avi,wmv,flv,mkv|max:102400', // 100MB max
             'tag_name' => 'nullable|string',
+            'hsn_code' => 'nullable|string|max:20',
             'product_tag' => 'nullable|string',
             'show_product_tag' => 'nullable|boolean',
             'availability_label' => 'nullable|string',
@@ -1072,12 +1073,13 @@ class ProductController extends Controller
             'product_weight' => 'nullable|numeric|min:0',
             'delivery_price' => 'nullable|numeric|min:0',
             'inventory_stock' => 'required|integer|min:0',
-            'status' => 'required|in:live,draft',
+            'status' => 'required|in:live,draft,archived',
             'description' => 'nullable|string',
             'size_chart_path' => 'nullable|image',
             'video_url' => 'nullable|url',
             'video_file' => 'nullable|file|mimes:mp4,webm,ogg,mov,avi,wmv,flv,mkv|max:102400', // 100MB max
             'tag_name' => 'nullable|string',
+            'hsn_code' => 'nullable|string|max:20',
             'product_tag' => 'nullable|string',
             'show_product_tag' => 'nullable|boolean',
             'availability_label' => 'nullable|string',

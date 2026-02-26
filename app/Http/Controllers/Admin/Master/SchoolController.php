@@ -17,7 +17,7 @@ class SchoolController extends Controller
         $schools = School::query()
             // Global scope automatically filters has_deleted = 0
             ->withCount(['grades', 'productMappings'])
-            ->when($request->get('status'), fn($q, $status) => $q->where('status', $status))
+            ->when($request->get('status'), fn($q, $status) => $q->whereIn('status', (array)$status))
             ->orderBy('name')
             ->paginate(10)
             ->withQueryString();

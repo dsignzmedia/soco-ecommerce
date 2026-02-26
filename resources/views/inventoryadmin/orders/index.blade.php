@@ -12,7 +12,6 @@
         td small { color:#6b7280; display:block; font-size: 12px; margin-top: 2px; }
         tr:hover td { background-color: #f9fafb; }
         
-        /* Unified Filter Styling */
         .filters { 
             display: grid; 
             grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); 
@@ -35,11 +34,12 @@
             font-family: inherit;
         }
         .filters input:focus {
-            border-color: #490d59;
-            box-shadow: 0 0 0 4px rgba(73, 13, 89, 0.1);
+            border-color: #111827;
+            box-shadow: 0 0 0 4px rgba(17, 24, 39, 0.1);
         }
 
         .filters .date-group { width: 100%; display: block; }
+        .filters .date-group label { display: none; }
 
         .filters button, .filters a.reset { 
             width: 100%; 
@@ -57,12 +57,12 @@
             cursor: pointer;
         }
         .filters button { 
-            border: none; 
-            background: #490d59; 
-            color: #fff; 
+            border: 1px solid #d1d5db; 
+            background: #ffffff; 
+            color: #111827; 
             box-shadow: 0 1px 2px rgba(16, 24, 40, 0.05); 
         }
-        .filters button:hover { background: #370a43; }
+        .filters button:hover { background: #f9fafb; border-color: #9ca3af; }
         
         .filters a.reset { 
             border: 1px solid #e5e7eb; 
@@ -76,13 +76,15 @@
             color: #111827;
         }
 
-        /* Pagination Containers and Buttons */
+        .btn-vs-sm { padding: 6px 12px; font-size: 12px; border-radius: 6px; text-decoration: none; border: 1px solid #d0d5dd; background: white; color: #111827; font-weight: 500; display: inline-flex; align-items: center; gap: 4px; transition: all 0.2s; }
+        .btn-vs-sm:hover { background-color: #111827; border-color: #111827; text-decoration: none; color: #fff; transform: translateY(-1px); box-shadow: 0 2px 4px rgba(0, 0, 0, 0.15); }
+
         .pagination-container {
             padding: 12px 20px;
             border-top: 1px solid #e5e7eb;
             background: #fff;
         }
-        .pagination-container nav > div:first-child { display: none !important; } /* Hide mobile text */
+        .pagination-container nav > div:first-child { display: none !important; }
         .pagination-container nav > div:last-child {
             display: flex !important;
             justify-content: space-between;
@@ -117,8 +119,8 @@
             box-sizing: border-box !important;
         }
         .pagination-container nav span[aria-current="page"] > span {
-            background-color: #490d59 !important;
-            border-color: #490d59 !important;
+            background-color: #111827 !important;
+            border-color: #111827 !important;
             color: white !important;
         }
         .pagination-container nav span[aria-disabled] {
@@ -127,13 +129,11 @@
             background: #f9fafb;
         }
         .pagination-container nav a:hover {
-            background-color: #f3e8f5;
-            border-color: #490d59 !important;
-            color: #490d59;
+            background-color: #f9fafb;
+            border-color: #d1d5db !important;
+            color: #111827;
         }
         .pagination-container nav svg { width: 16px; height: 16px; }
-
-        .status-pill { padding:4px 10px; border-radius:999px; font-size:12px; font-weight:600; text-transform:capitalize; display: inline-block; }
     </style>
 @endpush
 
@@ -143,35 +143,49 @@
             <h3 style="margin:0; font-size: 18px; font-weight: 600; color:#111827;">Order Filters</h3>
         </div>
         <form class="filters" method="GET">
-            <select name="school_id">
-                <option value="">All Schools</option>
+            <select name="school_id[]" multiple placeholder="Select School">
                 @foreach($schools as $school)
-                    <option value="{{ $school->id }}" @selected(($filters['school_id'] ?? '') == $school->id)>{{ $school->name }}</option>
+                    <option value="{{ $school->id }}" @selected(in_array($school->id, (array)($filters['school_id'] ?? [])))>{{ $school->name }}</option>
                 @endforeach
             </select>
-            <select name="order_status">
-                <option value="">Order Status</option>
+            
+            <select name="product_type[]" multiple placeholder="Select Product Type">
+                @foreach($productTypes as $type)
+                     @php
+                        $label = $type;
+                        if($type === 'merchandised') $label = 'Merchandise';
+                        if($type === 'back_to_school') $label = 'Back To School';
+                    @endphp
+                    <option value="{{ $type }}" @selected(in_array($type, (array)($filters['product_type'] ?? [])))>{{ ucfirst($label) }}</option>
+                @endforeach
+            </select>
+
+            <select name="order_status[]" multiple placeholder="Order Status">
                 @foreach($statuses as $key => $label)
-                    <option value="{{ $key }}" @selected(($filters['order_status'] ?? '') === $key)>{{ $label }}</option>
+                    <option value="{{ $key }}" @selected(in_array($key, (array)($filters['order_status'] ?? [])))>{{ $label }}</option>
                 @endforeach
             </select>
+            <select name="payment_status[]" multiple placeholder="Payment Status">
+                @foreach(['pending','paid','failed','refunded'] as $status)
+                    <option value="{{ $status }}" @selected(in_array($status, (array)($filters['payment_status'] ?? [])))>{{ ucfirst($status) }}</option>
+                @endforeach
+            </select>
+
             <input type="text" name="order_number" placeholder="Order #" value="{{ $filters['order_number'] ?? '' }}">
             
             <div class="date-group">
-                <input type="text" 
-                    onfocus="(this.type='date')" 
-                    onblur="(this.value ? this.type='date' : this.type='text')"
+                <input type="date" 
+                    onclick="this.showPicker()"
                     name="date_from" 
-                    placeholder="Start Date"
+                    placeholder="From Date"
                     value="{{ $filters['date_from'] ?? '' }}">
             </div>
             
             <div class="date-group">
-                <input type="text" 
-                    onfocus="(this.type='date')" 
-                    onblur="(this.value ? this.type='date' : this.type='text')"
+                <input type="date" 
+                    onclick="this.showPicker()"
                     name="date_to" 
-                    placeholder="End Date"
+                    placeholder="To Date"
                     value="{{ $filters['date_to'] ?? '' }}">
             </div>
 
@@ -189,12 +203,13 @@
                     <tr>
                         <th style="width: 40px;">#</th>
                         <th style="width: 60px;">Image</th>
-                        <th>Order ID</th>
-                        <th>Date</th>
-                        <th>Customer / Address</th>
-                        <th>School / Grade</th>
-                        <th>Item / Qty</th>
-                        <th>Status</th>
+                        <th>Order Details</th>
+                        <th>School / Student</th>
+                        <th>Item Details</th>
+                        <th>Customer</th>
+                        <th style="text-align:right;">Amount</th>
+                        <th style="text-align:center;">Payment</th>
+                        <th style="min-width: 140px;">Order Status</th>
                         <th>Tracking</th>
                         <th style="text-align:right;">Actions</th>
                     </tr>
@@ -216,54 +231,57 @@
                                 @endif
                             </td>
                             <td>
-                                <strong style="color:#490d59;">{{ $order->order_number }}</strong>
-                            </td>
-                            <td>{{ optional($order->order_date)->format('d M Y') }}</td>
-                            <td>
-                                <div style="font-weight:500;">{{ $order->customer_name }}</div>
-                                <small>{{ Str::limit($order->customer_address, 40) }}</small>
+                                <a href="{{ route('inventory.admin.orders.show', $order) }}" style="color:#111827; font-weight:600; text-decoration:none;">{{ $order->order_number }}</a>
+                                <small>{{ optional($order->order_date)->format('d M Y') }}</small>
                             </td>
                             <td>
-                                <div style="font-weight:500;">{{ $order->school?->name ?? '—' }}</div>
-                                <small>Grade {{ $order->grade }}</small>
+                                <div style="font-weight:500; color:#111827;">{{ $order->school?->name ?? '—' }}</div>
+                                <small>{{ $order->student_name }} ({{ $order->grade ?? '-' }})</small>
                             </td>
                             <td>
-                                <div style="font-weight:500;">{{ $order->item_name }}</div>
+                                <div style="color:#111827; font-weight:500;">{{ Str::limit($order->item_name, 30) }}</div>
                                 <small>Size: {{ $order->size }} | Qty: {{ $order->quantity }}</small>
+                                <small>{{ $order->category ?? '' }}</small>
+                            </td>
+                            <td>
+                                <div style="font-weight:500; color:#111827;">{{ $order->customer_name }}</div>
+                                <small>{{ $order->customer_phone ?? '—' }}</small>
+                            </td>
+                            <td style="text-align:right;">
+                                <div style="font-weight:600; color:#111827;">₹{{ number_format($order->total_amount, 2) }}</div>
+                                @if($order->shipping_cost > 0)
+                                    <small>+ Ship: ₹{{ number_format($order->shipping_cost, 0) }}</small>
+                                @endif
+                            </td>
+                            <td style="text-align:center;">
+                                <span style="
+                                    padding: 2px 8px;
+                                    border-radius: 12px;
+                                    font-size: 11px;
+                                    font-weight: 600;
+                                    background: {{ $order->payment_status === 'paid' ? '#ecfdf5' : ($order->payment_status === 'failed' ? '#fef2f2' : '#fff7ed') }};
+                                    color: {{ $order->payment_status === 'paid' ? '#047857' : ($order->payment_status === 'failed' ? '#b91c1c' : '#c2410c') }};
+                                ">{{ ucfirst($order->payment_status) }}</span>
                             </td>
                             <td>
                                 <form action="{{ route('inventory.admin.orders.status', $order) }}" method="POST">
                                     @csrf
-
-                                    <select name="order_status" class="no-tom" onchange="this.form.submit()" style="
+                                    <select name="order_status" onchange="this.form.submit()" class="no-tom" style="
                                         padding: 6px 10px;
                                         border-radius: 6px;
-                                        font-size: 11px;
-                                        font-weight: 700;
-                                        color: white;
-                                        border: none;
+                                        font-size: 12px;
+                                        font-weight: 500;
+                                        color: #1f2937;
+                                        border: 1px solid #d1d5db;
                                         cursor: pointer;
                                         width: 100%;
-                                        text-transform: uppercase;
-                                        background-color: 
-                                            @if($order->order_status == 'order_placed') #6b7280
-                                            @elseif($order->order_status == 'processing') #22c55e
-                                            @elseif($order->order_status == 'packed') #3b82f6
-                                            @elseif($order->order_status == 'shipped') #0ea5e9
-                                            @elseif($order->order_status == 'delivered') #10b981
-                                            @elseif($order->order_status == 'cancelled') #ef4444
-                                            @else #6b7280 @endif;
+                                        background-color: #fff;
+                                        box-shadow: 0 1px 2px rgba(0,0,0,0.05);
                                     ">
-                                        @foreach([
-                                            'order_placed' => 'ORDER PLACED',
-                                            'processing' => 'PROCESSING',
-                                            'packed' => 'PACKED',
-                                            'shipped' => 'SHIPPED',
-                                            'delivered' => 'DELIVERED',
-                                            'cancelled' => 'CANCEL SHIPMENT'
-                                        ] as $value => $label)
-                                            <option value="{{ $value }}" @selected($order->order_status == $value) style="background-color: white; color: black;">{{ $label }}</option>
+                                        @foreach($statuses as $value => $label)
+                                            <option value="{{ $value }}" @selected($order->order_status == $value)>{{ $label }}</option>
                                         @endforeach
+                                        <option value="cancelled" @selected($order->order_status == 'cancelled')>Cancel Shipment</option>
                                     </select>
                                 </form>
                             </td>
@@ -277,16 +295,22 @@
                                 @endif
                             </td>
                             <td style="text-align:right;">
-                                <div style="display:flex; justify-content:flex-end; gap:8px;">
-                                    <a href="{{ route('inventory.admin.orders.show', $order) }}" class="btn-vs-sm" title="Manage Order"><i class="fas fa-eye"></i></a>
-                                    <a href="{{ route('inventory.admin.orders.packing-slip', $order) }}" class="btn-vs-sm" title="Packing Slip"><i class="fas fa-box-open"></i></a>
-                                    <a href="{{ route('inventory.admin.orders.print-label', $order) }}" class="btn-vs-sm" title="Print Label"><i class="fas fa-print"></i></a>
+                                <div style="display:flex; justify-content:flex-end; gap:6px;">
+                                    <a href="{{ route('inventory.admin.orders.show', $order) }}" class="btn-vs-sm" title="View Details">
+                                        <i class="fas fa-eye"></i>
+                                    </a>
+                                    <a href="{{ route('inventory.admin.orders.invoice', $order) }}" class="btn-vs-sm" title="View Invoice">
+                                        <i class="fas fa-file-invoice"></i>
+                                    </a>
+                                    <a href="{{ route('inventory.admin.orders.invoice-download', $order) }}" class="btn-vs-sm" title="Download Invoice">
+                                        <i class="fas fa-download"></i>
+                                    </a>
                                 </div>
                             </td>
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="9" style="text-align:center; padding: 40px; color: #6b7280;">
+                            <td colspan="11" style="text-align:center; padding: 40px; color: #6b7280;">
                                 <div style="margin-bottom: 8px; font-size: 24px; color: #d1d5db;"><i class="fas fa-search"></i></div>
                                 No orders found matching your filters.
                             </td>
@@ -297,7 +321,7 @@
         </div>
 
         <div class="pagination-container">
-            {{ $orders->links() }}
+            {{ $orders->onEachSide(1)->links() }}
         </div>
     </div>
 @endsection

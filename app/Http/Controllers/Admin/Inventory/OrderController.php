@@ -20,14 +20,18 @@ class OrderController extends Controller
         $filters = $request->only([
             'school_id',
             'order_status',
+            'payment_status',
+            'product_type',
             'date_from',
             'date_to',
             'order_number',
         ]);
 
         $orders = Order::with(['school', 'product'])
-            ->when($filters['school_id'] ?? null, fn($query, $school) => $query->where('school_id', $school))
-            ->when($filters['order_status'] ?? null, fn($query, $status) => $query->where('order_status', $status))
+            ->when($filters['school_id'] ?? null, fn($query, $school) => $query->whereIn('school_id', (array)$school))
+            ->when($filters['order_status'] ?? null, fn($query, $status) => $query->whereIn('order_status', (array)$status))
+            ->when($filters['payment_status'] ?? null, fn($query, $status) => $query->whereIn('payment_status', (array)$status))
+            ->when($filters['product_type'] ?? null, fn($query, $type) => $query->whereIn('product_type', (array)$type))
             ->when($filters['order_number'] ?? null, fn($query, $number) => $query->where('order_number', 'like', '%' . $number . '%'))
             ->when($filters['date_from'] ?? null, fn($query, $from) => $query->whereDate('order_date', '>=', Carbon::parse($from)))
             ->when($filters['date_to'] ?? null, fn($query, $to) => $query->whereDate('order_date', '<=', Carbon::parse($to)))
@@ -36,6 +40,7 @@ class OrderController extends Controller
             ->withQueryString();
 
         $schools = School::orderBy('name')->get();
+        $productTypes = Order::whereNotNull('product_type')->distinct()->pluck('product_type')->sort();
         
         // Statuses relevant to inventory - ordered by workflow sequence
         $statuses = [
@@ -46,7 +51,7 @@ class OrderController extends Controller
             'delivered' => 'Delivered',
         ];
 
-        return view('inventoryadmin.orders.index', compact('orders', 'schools', 'statuses', 'filters'));
+        return view('inventoryadmin.orders.index', compact('orders', 'schools', 'statuses', 'filters', 'productTypes'));
     }
 
     public function show(Order $order): View
@@ -130,31 +135,120 @@ class OrderController extends Controller
     public function packingSlip(Order $order)
     {
         $order->load('school');
-        // Reuse the PDF generation logic from Master Admin but tailored for Packing Slip
-        $lines = [
-            'PACKING SLIP',
-            'Order #' . $order->order_number,
-            'Date: ' . optional($order->order_date)->format('d M Y'),
-            '----------------------------------------',
-            'Ship To:',
-            $order->customer_name,
-            $order->customer_address,
-            'Phone: ' . $order->customer_phone,
-            '----------------------------------------',
-            'Items:',
-            $order->item_name . ' (' . $order->size . ') x ' . $order->quantity,
-            'Category: ' . $order->category,
-            'School: ' . optional($order->school)->name,
-            'Student: ' . $order->student_name . ' (' . $order->grade . ')',
-            '----------------------------------------',
-            'Notes: ' . ($order->notes ?? 'None'),
-        ];
+        
+        // Items - for now just the single order row? 
+        // In Master Admin we consolidated by transaction, but packing slips are usually per item or per shipment.
+        // Let's stick to transaction prefix grouping for consistency if it's multiple items in one order.
+        $parts = explode('-', $order->order_number);
+        if (count($parts) >= 3) {
+            $transactionPrefix = $parts[0] . '-' . $parts[1] . '-' . $parts[2];
+            $orders = Order::where('order_number', 'like', $transactionPrefix . '%')->get();
+        } else {
+            $orders = collect([$order]);
+        }
 
-        $pdf = $this->buildSimplePdf($lines);
+        try {
+            if (class_exists(\Dompdf\Dompdf::class)) {
+                $dompdf = new \Dompdf\Dompdf();
+                $options = new \Dompdf\Options();
+                $options->set('isRemoteEnabled', true);
+                $options->set('defaultFont', 'sans-serif');
+                $dompdf->setOptions($options);
+                
+                // We'll reuse the master layout or a clean one if available. 
+                // For now, let's create a minimal HTML view for the packing slip or use the master admin's invoice-pdf but labeled as Packing Slip?
+                // Actually the user just wanted to fix the error. The original code was trying to call buildSimplePdf.
+                $html = view('inventoryadmin.orders.packing-slip-pdf', compact('order', 'orders'))->render();
+                $dompdf->loadHtml($html);
+                $dompdf->setPaper('A4', 'portrait');
+                $dompdf->render();
+                
+                return response()->streamDownload(fn () => print($dompdf->output()), $order->order_number . '-packing-slip.pdf', [
+                    'Content-Type' => 'application/pdf',
+                ]);
+            }
+        } catch (\Exception $e) {
+            \Illuminate\Support\Facades\Log::error("Packing slip generation error: " . $e->getMessage());
+            return back()->with('error', 'Failed to generate packing slip.');
+        }
 
-        return response()->streamDownload(fn () => print($pdf), $order->order_number . '-packing-slip.pdf', [
-            'Content-Type' => 'application/pdf',
-        ]);
+        return back()->with('error', 'PDF generation not available.');
+    }
+
+    public function invoiceView(Order $order): View
+    {
+        $order->load('school');
+        
+        // Extract transaction prefix (SOCO-USERID-TIMESTAMP) from order number
+        $parts = explode('-', $order->order_number);
+        if (count($parts) >= 3) {
+            $transactionPrefix = $parts[0] . '-' . $parts[1] . '-' . $parts[2];
+            // Include ALL items in the transaction, but prioritize paid ones if they exist.
+            // Actually, we should include the items even if not paid for tax invoice preview purposes.
+            $orders = Order::where('order_number', 'like', $transactionPrefix . '%')
+                ->get();
+        } else {
+            $orders = collect([$order]);
+        }
+            
+        // Use the dedicated inventory invoice view
+        return view('inventoryadmin.orders.invoice', compact('order', 'orders'));
+    }
+
+    public function invoiceDownload(Order $order)
+    {
+        try {
+             $order->load('school');
+             
+             $parts = explode('-', $order->order_number);
+             if (count($parts) >= 3) {
+                 $transactionPrefix = $parts[0] . '-' . $parts[1] . '-' . $parts[2];
+                 $orders = Order::where('order_number', 'like', $transactionPrefix . '%')
+                     ->get();
+             } else {
+                 $orders = collect([$order]);
+             }
+             
+             if (class_exists(\Dompdf\Dompdf::class)) {
+                  $dompdf = new \Dompdf\Dompdf();
+                  $options = new \Dompdf\Options();
+                  $options->set('isRemoteEnabled', true);    
+                  $options->set('defaultFont', 'sans-serif');
+                  $dompdf->setOptions($options);
+                  
+                  $html = view('admin.orders.invoice-pdf', compact('order', 'orders'))->render();
+                  $dompdf->loadHtml($html);
+                  $dompdf->setPaper('A4', 'portrait');
+                  $dompdf->render();
+                  
+                  return response()->streamDownload(fn() => print($dompdf->output()), 'Invoice-' . $order->order_number . '.pdf');
+             }
+        } catch (\Exception $e) {
+             \Log::error("Invoice download error: " . $e->getMessage());
+             return back()->with('error', 'Failed to generate invoice.');
+        }
+        
+        return back()->with('error', 'PDF generation not available.');
+    }
+
+    /**
+     * Helper to build a simple PDF from lines (Fallback or simplified version)
+     */
+    protected function buildSimplePdf(array $lines)
+    {
+        $html = "<html><body style='font-family:sans-serif;'>";
+        foreach ($lines as $line) {
+            $html .= "<div>" . e($line) . "</div>";
+        }
+        $html .= "</body></html>";
+
+        if (class_exists(\Dompdf\Dompdf::class)) {
+            $dompdf = new \Dompdf\Dompdf();
+            $dompdf->loadHtml($html);
+            $dompdf->render();
+            return $dompdf->output();
+        }
+        return null;
     }
 
     public function printLabel(Order $order)

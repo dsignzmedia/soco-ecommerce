@@ -879,26 +879,27 @@
 @section('content')
     <section class="card" style="margin-bottom:20px;">
         <form method="GET" class="filters">
-            <select name="school_id">
-                <option value="">All Schools</option>
+            <select name="school_id[]" multiple placeholder="Select School">
                 @foreach($schools as $school)
-                    <option value="{{ $school->id }}" @selected(($filters['school_id'] ?? '') == $school->id)>{{ $school->name }}</option>
+                    <option value="{{ $school->id }}" @selected(in_array($school->id, (array)($filters['school_id'] ?? [])))>{{ $school->name }}</option>
                 @endforeach
             </select>
-            <input type="text" name="grade" placeholder="Grade (All)" value="{{ $filters['grade'] ?? '' }}">
-            <select name="category">
-                <option value="">All Categories</option>
+            <select name="grade[]" multiple placeholder="Select Grade">
+                @foreach($grades as $grade)
+                    <option value="{{ $grade }}" @selected(in_array($grade, (array)($filters['grade'] ?? [])))>{{ $grade }}</option>
+                @endforeach
+            </select>
+            <select name="category[]" multiple placeholder="Select Category">
                 @foreach($categories as $category)
-                    <option value="{{ $category }}" @selected(($filters['category'] ?? '') === $category)>{{ $category }}</option>
+                    <option value="{{ $category }}" @selected(in_array($category, (array)($filters['category'] ?? [])))>{{ $category }}</option>
                 @endforeach
             </select>
             <input type="date" name="date_from" value="{{ $filters['date_from'] ?? '' }}" placeholder="From Date">
             <input type="date" name="date_to" value="{{ $filters['date_to'] ?? '' }}" placeholder="To Date">
             <input type="text" name="product_name" placeholder="Product name" value="{{ $filters['product_name'] ?? '' }}">
-            <select name="status">
-                <option value="">All Status</option>
+            <select name="status[]" multiple placeholder="Order Status">
                 @foreach(['processing','shipped','delivered','returned','cancelled'] as $status)
-                    <option value="{{ $status }}" @selected(($filters['status'] ?? '') === $status)>{{ ucfirst($status) }}</option>
+                    <option value="{{ $status }}" @selected(in_array($status, (array)($filters['status'] ?? [])))>{{ ucfirst($status) }}</option>
                 @endforeach
             </select>
             <button type="submit">Apply Filters</button>

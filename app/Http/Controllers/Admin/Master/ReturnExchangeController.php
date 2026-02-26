@@ -48,16 +48,16 @@ class ReturnExchangeController extends Controller
                     ->where('product_type', '!=', 'back_to_school')
                     ->where('product_type', '!=', 'merchandised');
             })
-            ->when($filters['type'] ?? null, fn($q, $type) => $q->where('type', $type))
-            ->when($filters['status'] ?? null, fn($q, $status) => $q->where('status', $status))
+            ->when($filters['type'] ?? null, fn($q, $type) => $q->whereIn('type', (array)$type))
+            ->when($filters['status'] ?? null, fn($q, $status) => $q->whereIn('status', (array)$status))
             ->when($filters['school_id'] ?? null, function ($q, $schoolId) {
                 $q->whereHas('order', function ($oq) use ($schoolId) {
-                    $oq->withoutGlobalScopes()->where('school_id', $schoolId);
+                    $oq->withoutGlobalScopes()->whereIn('school_id', (array)$schoolId);
                 });
             })
             ->when($filters['grade'] ?? null, function ($q, $grade) {
                 $q->whereHas('order', function ($oq) use ($grade) {
-                    $oq->withoutGlobalScopes()->where('grade', $grade);
+                    $oq->withoutGlobalScopes()->whereIn('grade', (array)$grade);
                 });
             })
             ->when($filters['q'] ?? null, function ($q, $term) {

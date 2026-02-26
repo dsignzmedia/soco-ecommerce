@@ -57,30 +57,9 @@ class Order extends Model
         'payment_details' => 'array',
     ];
 
-    /**
-     * The "booted" method of the model.
-     * Add global scope to hide orders from deleted schools
-     * Allow orders with NULL school_id (for BTS/Merchandise global products)
-     */
     protected static function booted(): void
     {
-        static::addGlobalScope('activeSchool', function (Builder $builder) {
-            $builder->where(function($q) {
-                // Allow orders that are not linked to any school (BTS/Merchandise global products)
-                $q->whereNull('school_id')
-                  // OR orders linked to an active school
-                  ->orWhereHas('school', function ($query) {
-                      // School model's global scope will automatically filter has_deleted = 0
-                  });
-            });
-        });
-
-        static::addGlobalScope('school_orders_only', function (Builder $builder) {
-            $builder->where(function($q) {
-                $q->whereNotIn('product_type', ['back_to_school', 'merchandised'])
-                  ->orWhereNull('product_type');
-            });
-        });
+        // No global scopes for base Order model to allow global visibility in Master/Inventory Admin
     }
 
     public function school(): BelongsTo
@@ -96,6 +75,36 @@ class Order extends Model
     public function payments()
     {
         return $this->hasMany(\App\Models\Payment::class);
+    }
+
+    /**
+     * Get tax breakdown for the order (CGST/SGST vs IGST)
+     */
+    public function getTaxBreakdown(): array
+    {
+        $taxAmount = (float)($this->tax_amount ?? 0);
+        $sellerState = 'Tamil Nadu';
+        
+        // Extract state from address (simple match for now)
+        $isIntraState = str_contains(strtolower($this->customer_address), strtolower($sellerState));
+        
+        if ($isIntraState) {
+            return [
+                'type' => 'intra',
+                'cgst_rate' => null, // Derived from item match if needed, but splits 50/50
+                'cgst_amount' => $taxAmount / 2,
+                'sgst_rate' => null,
+                'sgst_amount' => $taxAmount / 2,
+                'igst_amount' => 0,
+            ];
+        }
+
+        return [
+            'type' => 'inter',
+            'cgst_amount' => 0,
+            'sgst_amount' => 0,
+            'igst_amount' => $taxAmount,
+        ];
     }
 }
 

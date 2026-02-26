@@ -127,6 +127,8 @@ class ShopController extends Controller
             'delivery_duration' => $dbProduct->delivery_duration,
             'tags' => $dbProduct->tag_name ? explode(',', $dbProduct->tag_name) : [],
             'sku' => $dbProduct->sku ?? $dbProduct->id,
+            'gender' => $dbProduct->gender,
+            'grade' => $dbProduct->grade,
             'variants' => $dbProduct->variants,
         ];
 
@@ -150,6 +152,11 @@ class ShopController extends Controller
         // Grade-wise filtering: only show products for the same grade
         if (!empty($dbProduct->grade)) {
             $relatedProductsQuery->where('grade', $dbProduct->grade);
+        }
+
+        // Gender filtering: only show products for the same gender
+        if (!empty($dbProduct->gender)) {
+            $relatedProductsQuery->where('gender', $dbProduct->gender);
         }
         
         $relatedProductsModels = $relatedProductsQuery->inRandomOrder()->take(4)->get();
@@ -176,6 +183,11 @@ class ShopController extends Controller
             if (!empty($dbProduct->grade)) {
                 $fallbackQuery->where('grade', $dbProduct->grade);
             }
+
+            // Keep same gender constraint in fallback too
+            if (!empty($dbProduct->gender)) {
+                $fallbackQuery->where('gender', $dbProduct->gender);
+            }
                 
             $otherProducts = $fallbackQuery->inRandomOrder()->take($limit)->get();
                 
@@ -192,6 +204,8 @@ class ShopController extends Controller
                 'image' => $p->featured_image ? (Str::startsWith($p->featured_image, 'http') ? $p->featured_image : asset('storage/' . $p->featured_image)) : asset('assets/img/product/product1-1.png'),
                 'product_tag' => $p->product_tag,
                 'show_product_tag' => $p->show_product_tag,
+                'gender' => $p->gender,
+                'grade' => $p->grade,
              ];
         });
 

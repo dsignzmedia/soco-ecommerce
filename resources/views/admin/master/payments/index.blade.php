@@ -47,8 +47,8 @@
         }
 
         .filters input:focus, .filters select:focus {
-            border-color: #490d59;
-            box-shadow: 0 0 0 4px rgba(73, 13, 89, 0.1);
+            border-color: #111827;
+            box-shadow: 0 0 0 4px rgba(17, 24, 39, 0.1);
         }
 
         /* Buttons matching the inputs */
@@ -68,12 +68,12 @@
             cursor: pointer;
         }
         .filters button { 
-            border: none; 
-            background: #490d59; 
-            color: #fff; 
+            border: 1px solid #d1d5db; 
+            background: #ffffff; 
+            color: #111827; 
             box-shadow: 0 1px 2px rgba(16, 24, 40, 0.05); 
         }
-        .filters button:hover { background: #370a43; }
+        .filters button:hover { background: #f9fafb; border-color: #9ca3af; }
         
         .filters a.reset { 
             border: 1px solid #e5e7eb; 
@@ -87,8 +87,8 @@
             color: #111827;
         }
 
-        .btn-vs-sm { padding: 6px 12px; font-size: 12px; border-radius: 6px; text-decoration: none; border: 1px solid #d0d5dd; background: white; color: #490d59; font-weight: 500; display: inline-flex; align-items: center; gap: 4px; }
-        .btn-vs-sm:hover { background-color: #490d59 ; border-color: #490d59; text-decoration: none; color: #490d59; }
+        .btn-vs-sm { padding: 6px 12px; font-size: 12px; border-radius: 6px; text-decoration: none; border: 1px solid #d0d5dd; background: white; color: #111827; font-weight: 500; display: inline-flex; align-items: center; gap: 4px; }
+        .btn-vs-sm:hover { background-color: #111827 ; border-color: #111827; text-decoration: none; color: #fff; }
 
         /* Custom Pagination Styling */
         .pagination-container {
@@ -115,7 +115,7 @@
             font-size: 13px; font-weight: 500; text-decoration: none; width: 36px !important; height: 36px !important;
             margin: 0 !important; cursor: pointer; box-sizing: border-box !important;
         }
-        .pagination-container nav span[aria-current="page"] > span { background-color: #490d59 !important; border-color: #490d59 !important; color: white !important; }
+        .pagination-container nav span[aria-current="page"] > span { background-color: #f9fafb !important; border-color: #d1d5db !important; color: #111827 !important; font-weight: 600 !important; }
         .pagination-container nav span[aria-disabled] { opacity: 0.6; cursor: not-allowed; background: #f9fafb; }
         .pagination-container nav a:hover { background-color: #f9fafb; border-color: #d1d5db !important; color: #111827; }
         .pagination-container nav svg { width: 16px; height: 16px; }
@@ -132,19 +132,19 @@
              <input type="text" name="search" placeholder="Order No / Payment ID" value="{{ request('search') }}">
 
              <!-- Status -->
-             <select name="status">
+             <select name="status[]" multiple placeholder="Payment Status">
                 <option value="">Payment Status (All)</option>
-                <option value="paid" {{ request('status') == 'paid' ? 'selected' : '' }}>Paid</option>
-                <option value="pending" {{ request('status') == 'pending' ? 'selected' : '' }}>Pending</option>
-                <option value="failed" {{ request('status') == 'failed' ? 'selected' : '' }}>Failed</option>
-                <option value="refunded" {{ request('status') == 'refunded' ? 'selected' : '' }}>Refunded</option>
+                <option value="paid" @selected(in_array('paid', (array)request('status')))>Paid</option>
+                <option value="pending" @selected(in_array('pending', (array)request('status')))>Pending</option>
+                <option value="failed" @selected(in_array('failed', (array)request('status')))>Failed</option>
+                <option value="refunded" @selected(in_array('refunded', (array)request('status')))>Refunded</option>
              </select>
 
              <!-- Method -->
-             <select name="payment_method">
+             <select name="payment_method[]" multiple placeholder="Payment Method">
                 <option value="">Payment Method (All)</option>
-                <option value="razorpay" {{ request('payment_method') == 'razorpay' ? 'selected' : '' }}>Razorpay</option>
-                <option value="cod" {{ request('payment_method') == 'cod' ? 'selected' : '' }}>COD</option>
+                <option value="razorpay" @selected(in_array('razorpay', (array)request('payment_method')))>Razorpay</option>
+                <option value="cod" @selected(in_array('cod', (array)request('payment_method')))>COD</option>
              </select>
 
              <!-- Date From -->
@@ -216,7 +216,7 @@
                                 };
                             @endphp
                             @if($payment->order)
-                                <a href="{{ route($orderShowRoute, $payment->order->id) }}" style="color:#490d59; font-weight:600; text-decoration:none;">
+                                <a href="{{ route($orderShowRoute, $payment->order->id) }}" style="color:#111827; font-weight:600; text-decoration:none;">
                                     {{ $payment->order->order_number }}
                                 </a>
                             @else

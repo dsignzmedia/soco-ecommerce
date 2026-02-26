@@ -60,7 +60,7 @@
         }
         .btn-reset {
             background: #ffffff;
-            border: 1px solid #e2e8f0;
+            border: 1px solid #e5e7eb;
             color: #475467;
             text-decoration: none;
         }
@@ -179,21 +179,38 @@
     <div class="filters-card">
         <form method="GET" action="{{ route('inventory.admin.returns-exchange.index') }}" class="filter-form-grid">
             <div style="flex:1; min-width: 150px;">
-                <select name="type" class="filter-input-rounded no-tom" style="width:100%;">
-                    <option value="">All Types</option>
-                    <option value="return" {{ ($filters['type'] ?? '') === 'return' ? 'selected' : '' }}>Return</option>
-                    <option value="exchange" {{ ($filters['type'] ?? '') === 'exchange' ? 'selected' : '' }}>Exchange</option>
+                <select name="type[]" multiple class="filter-input-rounded" style="width:100%;" placeholder="Request Type">
+                    <option value="return" @selected(in_array('return', (array)($filters['type'] ?? [])))>Return</option>
+                    <option value="exchange" @selected(in_array('exchange', (array)($filters['type'] ?? [])))>Exchange</option>
                 </select>
             </div>
             <div style="flex:1; min-width: 150px;">
-                <select name="status" class="filter-input-rounded no-tom" style="width:100%;">
-                    <option value="">All Status</option>
-                    @foreach(['pending','approved','rejected','received_restocked','received_discarded','completed'] as $st)
-                        <option value="{{ $st }}" {{ ($filters['status'] ?? '') === $st ? 'selected' : '' }} style="text-transform:capitalize;">{{ str_replace('_',' ', $st) }}</option>
+                <select name="school_id[]" multiple class="filter-input-rounded" style="width:100%;" placeholder="School">
+                    @foreach(($schools ?? []) as $school)
+                        <option value="{{ $school->id }}" @selected(in_array($school->id, (array)($filters['school_id'] ?? [])))>{{ $school->name }}</option>
                     @endforeach
                 </select>
             </div>
-            <div style="flex:2; min-width: 200px;">
+            <div style="flex:1; min-width: 150px;">
+                <select name="status[]" multiple class="filter-input-rounded" style="width:100%;" placeholder="Request Status">
+                    @foreach(['pending','approved','rejected','received_restocked','received_discarded','completed'] as $st)
+                        <option value="{{ $st }}" @selected(in_array($st, (array)($filters['status'] ?? []))) style="text-transform:capitalize;">{{ str_replace('_',' ', $st) }}</option>
+                    @endforeach
+                </select>
+            </div>
+            <div style="flex:1; min-width: 150px;">
+                <select name="product_type[]" multiple class="filter-input-rounded" style="width:100%;" placeholder="Product Type">
+                    @foreach(($productTypes ?? []) as $type)
+                        @php
+                            $label = $type;
+                            if($type === 'merchandised') $label = 'Merchandise';
+                            if($type === 'back_to_school') $label = 'Back To School';
+                        @endphp
+                        <option value="{{ $type }}" @selected(in_array($type, (array)($filters['product_type'] ?? [])))>{{ ucfirst($label) }}</option>
+                    @endforeach
+                </select>
+            </div>
+            <div style="flex:1; min-width: 150px;">
                 <input type="text" name="q" value="{{ $filters['q'] ?? '' }}" placeholder="Search order# or item" class="filter-input-rounded" style="width:100%;">
             </div>
             

@@ -20,19 +20,19 @@ class OrderController extends Controller
             $query->where('order_number', 'like', '%' . $request->order_number . '%');
         }
 
-        if ($request->has('status')) {
-            $query->where('order_status', $request->status);
+        if ($request->has('order_status')) {
+            $query->whereIn('order_status', (array)$request->order_status);
         }
 
         // Apply filters if passed, similar to BTS
         if ($request->filled('school_id')) {
-            $query->where('school_id', $request->school_id);
+            $query->whereIn('school_id', (array)$request->school_id);
         }
         if ($request->filled('grade')) {
-            $query->where('grade', $request->grade);
+            $query->whereIn('grade', (array)$request->grade);
         }
         if ($request->filled('category')) {
-            $query->where('category', $request->category);
+            $query->whereIn('category', (array)$request->category);
         }
         if ($request->filled('date_from')) {
             $query->whereDate('created_at', '>=', $request->date_from);
@@ -239,8 +239,17 @@ class OrderController extends Controller
                  $options->set('defaultFont', 'sans-serif');
                  $dompdf->setOptions($options);
                  
+                 // Extract transaction prefix (SOCO-USERID-TIMESTAMP) from order number
+                 $parts = explode('-', $order->order_number);
+                 if (count($parts) >= 3) {
+                     $transactionPrefix = $parts[0] . '-' . $parts[1] . '-' . $parts[2];
+                     $orders = Order::where('order_number', 'like', $transactionPrefix . '%')->get();
+                 } else {
+                     $orders = collect([$order]);
+                 }
+
                  // Reuse the generic PDF view as it has no dependencies on layout
-                 $html = view('admin.orders.invoice-pdf', compact('order'))->render();
+                 $html = view('admin.orders.invoice-pdf', compact('order', 'orders'))->render();
                  $dompdf->loadHtml($html);
                  $dompdf->setPaper('A4', 'portrait');
                  $dompdf->render();
@@ -249,7 +258,7 @@ class OrderController extends Controller
                      echo $dompdf->output();
                  }, $order->order_number . '-invoice.pdf');
             } elseif (class_exists(\Barryvdh\DomPDF\Facade\Pdf::class)) {
-                 $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('admin.orders.invoice-pdf', compact('order'));
+            $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('admin.orders.invoice-pdf', compact('order', 'orders'));
                  return $pdf->download($order->order_number . '-invoice.pdf');
             } else {
                  throw new \Exception("DomPDF classes not found. Please verify vendor libraries are uploaded.");

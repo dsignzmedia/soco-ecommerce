@@ -100,7 +100,7 @@
         }
         .btn-reset {
             background: #ffffff;
-            border: 1px solid #e2e8f0;
+            border: 1px solid #e5e7eb;
             color: #475467;
             padding: 0 24px;
             height: 46px;

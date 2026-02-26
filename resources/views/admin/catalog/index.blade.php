@@ -279,45 +279,38 @@
             <h3 style="margin:0; font-size: 18px; font-weight: 600; color:#111827;">Product Filters</h3>
         </div>
         <form class="filters" method="GET">
-            <select name="school_id">
-                <option value="">School (All)</option>
+            <select name="school_id[]" multiple placeholder="Select School">
                 @foreach($schools as $school)
-                    <option value="{{ $school->id }}" @selected(($filters['school_id'] ?? '') == $school->id)>{{ $school->name }}</option>
+                    <option value="{{ $school->id }}" @selected(in_array($school->id, (array)($filters['school_id'] ?? [])))>{{ $school->name }}</option>
                 @endforeach
             </select>
-            <select name="grade">
-                <option value="">Grade (All)</option>
+            <select name="grade[]" multiple placeholder="Select Grade">
                 @foreach($grades as $key => $label)
-                    <option value="{{ $key }}" @selected(($filters['grade'] ?? '') == $key)>{{ $label }}</option>
+                    <option value="{{ $key }}" @selected(in_array($key, (array)($filters['grade'] ?? [])))>{{ $label }}</option>
                 @endforeach
             </select>
-            <select name="category">
-                <option value="">Category (All)</option>
+            <select name="category[]" multiple placeholder="Select Category">
                 @foreach($categories as $key => $label)
-                    <option value="{{ $key }}" @selected(($filters['category'] ?? '') === $key)>{{ $label }}</option>
+                    <option value="{{ $key }}" @selected(in_array($key, (array)($filters['category'] ?? [])))>{{ $label }}</option>
                 @endforeach
             </select>
-            <select name="product_type">
-                <option value="">Product type</option>
+            <select name="product_type[]" multiple placeholder="Product Type">
                 @foreach($productTypes as $key => $label)
-                    <option value="{{ $key }}" @selected(($filters['product_type'] ?? '') === $key)>{{ $label }}</option>
+                    <option value="{{ $key }}" @selected(in_array($key, (array)($filters['product_type'] ?? [])))>{{ $label }}</option>
                 @endforeach
             </select>
-            <select name="stock_status">
-                <option value="">Stock status</option>
-                <option value="in_stock" @selected(($filters['stock_status'] ?? '') === 'in_stock')>In stock</option>
-                <option value="out_of_stock" @selected(($filters['stock_status'] ?? '') === 'out_of_stock')>Out of stock</option>
+            <select name="stock_status[]" multiple placeholder="Stock Status">
+                <option value="in_stock" @selected(in_array('in_stock', (array)($filters['stock_status'] ?? [])))>In stock</option>
+                <option value="out_of_stock" @selected(in_array('out_of_stock', (array)($filters['stock_status'] ?? [])))>Out of stock</option>
             </select>
-            <select name="status">
-                <option value="">Status</option>
+            <select name="status[]" multiple placeholder="Listing Status">
                 @foreach(['live','draft','archived'] as $status)
-                    <option value="{{ $status }}" @selected(($filters['status'] ?? '') === $status)>{{ ucfirst($status) }}</option>
+                    <option value="{{ $status }}" @selected(in_array($status, (array)($filters['status'] ?? [])))>{{ ucfirst($status) }}</option>
                 @endforeach
             </select>
-            <select name="gender">
-                <option value="">Gender</option>
+            <select name="gender[]" multiple placeholder="Gender">
                 @foreach(['male','female','unisex'] as $gender)
-                    <option value="{{ $gender }}" @selected(($filters['gender'] ?? '') === $gender)>{{ ucfirst($gender) }}</option>
+                    <option value="{{ $gender }}" @selected(in_array($gender, (array)($filters['gender'] ?? [])))>{{ ucfirst($gender) }}</option>
                 @endforeach
             </select>
             <input type="text" name="q" placeholder="Product Name / SKU" value="{{ $filters['q'] ?? '' }}">
@@ -467,7 +460,7 @@
             </table>
         </div>
 
-        <div class="pagination-container" style="padding:12px 20px;border-top:1px solid #e5e7eb;background:#fff;">
+        <div class="pagination-container" style="padding:12px 20px;border-top:1px solid #ffffff;background:#fff;">
             {{ $mappings->onEachSide(1)->links() }}
         </div>
     </section>
@@ -572,7 +565,7 @@
     /* Custom Pagination Styling */
     .pagination-container {
         padding: 12px 20px;
-        border-top: 1px solid #e5e7eb;
+        border-top: 1px solid #ffffff;
         background: #fff;
     }
     

@@ -169,8 +169,17 @@
                     </div>
                 
                 <div class="product_meta">
+                        @if(!empty($product['gender']))
+                            <span><strong>Gender:</strong> {{ ucfirst($product['gender']) }}</span>
+                        @endif
+                        @if(!empty($product['grade']))
+                            <span><strong>Grade:</strong> {{ $product['grade'] }}</span>
+                        @endif
+                        @if(isset($product['category']))
+                            <span><strong>Category:</strong> {{ $product['category'] }}</span>
+                        @endif
                         @if(isset($product['tags']) && count($product['tags']) > 0)
-                            <span>Tags: 
+                            <span><strong>Tags:</strong> 
                                 @foreach($product['tags'] as $tag)
                                     <a href="#" rel="tag">{{ $tag }}</a>
                                 @endforeach
@@ -227,6 +236,14 @@
                                             {{ $relatedProduct['name'] }}
                                         </a>
                                     </h3>
+                                    <div class="product-info-meta mb-3" style="font-size: 12px; color: #666;">
+                                        @if(!empty($relatedProduct['gender']))
+                                            <span class="me-2"><i class="fas fa-venus-mars me-1"></i> {{ ucfirst($relatedProduct['gender']) }}</span>
+                                        @endif
+                                        @if(!empty($relatedProduct['grade']))
+                                            <span><i class="fas fa-graduation-cap me-1"></i> {{ $relatedProduct['grade'] }}</span>
+                                        @endif
+                                    </div>
                                     <div class="actions">
                                         <a href="{{ route('frontend.shop.detail', $relatedProduct['id']) }}" class="vs-btn">
                                             <i class="far fa-shopping-cart"></i>Add to Cart

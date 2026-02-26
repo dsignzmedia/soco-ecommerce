@@ -26,22 +26,19 @@
 
 <section class="card" style="margin-bottom:16px;">
     <form method="GET" class="filters">
-        <select name="category">
-            <option value="">Category</option>
+        <select name="category[]" multiple placeholder="Select Category">
             @foreach($categories as $category)
-                <option value="{{ $category }}" @selected(($filters['category'] ?? '') === $category)>{{ $category }}</option>
+                <option value="{{ $category }}" @selected(in_array($category, (array)($filters['category'] ?? [])))>{{ $category }}</option>
             @endforeach
         </select>
-        <select name="product_type">
-            <option value="">Product Type (All)</option>
+        <select name="product_type[]" multiple placeholder="Product Type">
             @foreach($productTypes as $type)
-                <option value="{{ $type }}" @selected(($filters['product_type'] ?? '') === $type)>{{ ucwords(str_replace('_', ' ', $type)) }}</option>
+                <option value="{{ $type }}" @selected(in_array($type, (array)($filters['product_type'] ?? [])))>{{ ucwords(str_replace('_', ' ', $type)) }}</option>
             @endforeach
         </select>
-        <select name="status">
-            <option value="">Status</option>
+        <select name="status[]" multiple placeholder="Listing Status">
             @foreach(['live','draft','archived'] as $status)
-                <option value="{{ $status }}" @selected(($filters['status'] ?? '') === $status)>{{ ucfirst($status) }}</option>
+                <option value="{{ $status }}" @selected(in_array($status, (array)($filters['status'] ?? [])))>{{ ucfirst($status) }}</option>
             @endforeach
         </select>
         <input type="text" name="q" placeholder="Search product" value="{{ $filters['q'] ?? '' }}">

@@ -194,6 +194,28 @@
                         <img src="{{ asset('assets/img/widget/cards-2.png') }}" alt="cards">
                     </div>
 
+                    <div class="product_meta" style="margin-top: 20px; padding-top: 20px; border-top: 1px solid #eee;">
+                        @if(!empty($product['gender']))
+                            <span style="display: block; margin-bottom: 5px; color: #666;">
+                                <strong>Gender:</strong> {{ ucfirst($product['gender']) }}
+                            </span>
+                        @endif
+                        @if(isset($selectedProfile['grade']) && !empty($selectedProfile['grade']))
+                            <span style="display: block; margin-bottom: 5px; color: #666;">
+                                <strong>Grade:</strong> {{ $selectedProfile['grade'] }}
+                            </span>
+                        @elseif(isset($product['grade']) && !empty($product['grade']))
+                            <span style="display: block; margin-bottom: 5px; color: #666;">
+                                <strong>Grade:</strong> {{ $product['grade'] }}
+                            </span>
+                        @endif
+                        @if(isset($product['type']))
+                            <span style="display: block; margin-bottom: 5px; color: #666;">
+                                <strong>Category:</strong> {{ ucfirst(str_replace('_', ' ', $product['type'])) }}
+                            </span>
+                        @endif
+                    </div>
+
                     
                 </div>
             </div>
@@ -238,6 +260,14 @@
                                             {{ $relatedProduct['name'] }}
                                         </a>
                                     </h3>
+                                    <div class="product-info-meta mb-3" style="font-size: 12px; color: #666;">
+                                        @if(!empty($relatedProduct['gender']))
+                                            <span class="me-2"><i class="fas fa-venus-mars me-1"></i> {{ ucfirst($relatedProduct['gender']) }}</span>
+                                        @endif
+                                        @if(!empty($relatedProduct['grade']))
+                                            <span><i class="fas fa-graduation-cap me-1"></i> {{ $relatedProduct['grade'] }}</span>
+                                        @endif
+                                    </div>
                                     <div class="actions">
                                         <a href="{{ route('frontend.parent.product-detail', ['productId' => $relatedProduct['id'], 'profile_id' => $selectedProfile['id'] ?? '']) }}" class="vs-btn">
                                             <i class="far fa-shopping-cart"></i>Add to Cart

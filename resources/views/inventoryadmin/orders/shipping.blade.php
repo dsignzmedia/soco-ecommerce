@@ -102,7 +102,7 @@
             </thead>
             <tbody>
                 @forelse($orders as $order)
-                    <tr style="border-bottom:1px solid #f1f5f9;">
+                    <tr style="border-bottom:1px solid #e5e7eb;">
                         <td style="padding:16px 12px;">
                             <strong>{{ $order->order_number }}</strong>
                             <div style="font-size:13px;color:#64748b;margin-top:4px;">{{ optional($order->order_date)->format('d M Y') }}</div>

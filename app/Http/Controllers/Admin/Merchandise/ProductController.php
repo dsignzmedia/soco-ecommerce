@@ -833,6 +833,7 @@ class ProductController extends Controller
             'school_id' => 'nullable', // Legacy
             'gender' => 'nullable|string',
             'tag_name' => 'nullable|string',
+            'hsn_code' => 'nullable|string|max:20',
             'product_tag' => 'nullable|string|max:255',
             'price_regular' => $variantBasedPricing ? 'nullable|numeric|min:0' : 'required|numeric|min:0',
             'price_tax' => 'nullable|numeric|min:0',
@@ -1059,6 +1060,7 @@ class ProductController extends Controller
             'school_id' => 'nullable', // Legacy
             'gender' => 'nullable|string',
             'tag_name' => 'nullable|string',
+            'hsn_code' => 'nullable|string|max:20',
             'product_tag' => 'nullable|string|max:255',
             'price_regular' => $variantBasedPricing ? 'nullable|numeric|min:0' : 'required|numeric|min:0',
             'price_tax' => 'nullable|numeric|min:0',

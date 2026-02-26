@@ -18,7 +18,7 @@
             --accent: #4f46e5;
             --surface: #f5f7fb;
             --card: #ffffff;
-            --border: rgba(15, 23, 42, 0.08);
+            --border: #e5e7eb;
             --text: #475467;
             --heading: #0f172a;
         }
@@ -55,7 +55,7 @@
             text-decoration: none;
             border: 1px solid #d0d5dd;
             background: white;
-            color: #490d59;
+            color: #111827;
             font-weight: 500;
             display: inline-flex;
             align-items: center;
@@ -63,10 +63,10 @@
             transition: all 0.2s;
         }
         .btn-vs-sm:hover {
-            background-color: #f3e8f5;
-            border-color: #490d59;
+            background-color: #f9fafb;
+            border-color: #111827;
             text-decoration: none;
-            color: #490d59;
+            color: #111827;
             transform: none;
             box-shadow: none;
         }
@@ -74,20 +74,57 @@
 
         /* Tom Select Customization */
         .ts-control {
-            border-radius: 12px !important;
-            border: 1px solid #e5e7eb !important;
-            padding: 10px 16px !important;
-            height: 46px !important;
-            font-size: 14px !important;
-            box-shadow: none !important;
-            background-color: #fff !important;
+            min-height: 30px !important;
+            height: auto !important;
             display: flex;
             align-items: center;
+            flex-wrap: wrap !important;
+            gap: 4px !important;
+            border: 1px solid #d1d5db !important;
+            border-radius: 8px !important;
+            padding: 4px 12px !important;
+            font-size: 13px !important; /* Added from original */
+            box-shadow: none !important; /* Added from original */
+            background-color: #fff !important; /* Added from original */
         }
+        .ts-control > input {
+            border: none !important;
+            box-shadow: none !important;
+            padding: 0 !important;
+            margin: 0 !important;
+            height: 22px !important;
+            line-height: 22px !important;
+        }
+        .ts-wrapper {
+            border: none !important;
+            box-shadow: none !important;
+        }
+        .ts-control:focus, .ts-control.focus {
+            border-color: #111827 !important;
+            box-shadow: 0 0 0 4px rgba(17, 24, 39, 0.1) !important;
+        }
+        .ts-wrapper.multi .ts-control > div,
         .ts-control .item {
-            font-size: 14px !important;
-            color: #374151 !important;
-            font-weight: 500;
+            background: #c3c3c3 !important; /* Added from original */
+            border: 1px solid #b0b0b0 !important; /* Added from original */
+            border-radius: 6px !important;
+            padding: 2px 8px !important;
+            margin: 2px !important;
+            font-size: 13px !important;
+            color: #303030 !important;
+            font-weight: 500 !important;
+            display: flex !important;
+            align-items: center !important;
+        }
+        .ts-control .item .remove {
+            border-left: 1px solid #cbd5e1 !important;
+            margin-left: 6px !important;
+            padding-left: 4px !important;
+            opacity: 0.7;
+        }
+        .ts-control .item .remove:hover {
+            background: rgba(241, 245, 249, 0.5) !important;
+            opacity: 1;
         }
         .ts-dropdown {
             border-radius: 12px !important;
@@ -105,18 +142,21 @@
             color: #374151;
         }
         .ts-dropdown .option.active, .ts-dropdown .option:hover {
-            background-color: #f3e8f5 !important;
-            color: #490d59 !important;
+            background-color: #f9fafb !important;
+            color: #111827 !important;
         }
         .ts-dropdown .option.selected {
-            background-color: #490d59 !important;
-            color: #fff !important;
+            background-color: #f9fafb !important;
+            color: #111827 !important;
+            font-weight: 600 !important;
         }
         /* Hide clear button */
         .ts-control .clear-button { display: none !important; }
         
-        /* Hide input inside control */
-        .ts-control input { display: none !important; }
+        /* Ensure placeholder is visible */
+        .ts-control input::placeholder { color: #9ca3af !important; }
+        .ts-wrapper.multi .ts-control > input { display: inline-block !important; width: 100% !important; opacity: 1 !important; position: relative !important; }
+        .ts-wrapper.multi.has-items .ts-control > input { width: 0 !important; opacity: 0 !important; position: absolute !important; }
 
         /* Scrollbar styles for better UI */
         .ts-dropdown-content::-webkit-scrollbar {
@@ -584,10 +624,11 @@
                     // Skip sorting for order_status dropdowns to maintain workflow order
                     const shouldSort = !el.name || el.name !== 'order_status';
                    new TomSelect(el, {
+                        placeholder: el.getAttribute('placeholder') || 'Select...',
                         plugins: [],
                         allowEmptyOption: true,
                         create: false,
-                        controlInput: null, // Disable input in control
+                        // controlInput: null, // Removed to allow placeholder visibility
                         sortField: shouldSort ? {
                             field: "text",
                             direction: "asc"

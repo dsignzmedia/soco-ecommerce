@@ -2910,6 +2910,7 @@ class AuthController extends Controller
             'product_tag' => $dbProduct->product_tag,
             'show_product_tag' => $dbProduct->show_product_tag,
             'sku' => $dbProduct->id,
+            'gender' => $dbProduct->gender,
             'variants' => $dbProduct->variants, // Pass full variants for stock checking if needed later
         ];
 
@@ -2963,9 +2964,9 @@ class AuthController extends Controller
         // Get student grade for grade-based pricing
         $studentGrade = $selectedProfile->grade ?? null;
 
-        // Filter related products by grade-wise pricing
-        $relatedProductsModels = $relatedProductsModels->filter(function($rp) use ($studentGrade) {
-            // If product has grade-wise pricing, check if student's grade has pricing
+        // Filter related products by grade-wise pricing and gender
+        $relatedProductsModels = $relatedProductsModels->filter(function($rp) use ($studentGrade, $selectedProfile) {
+            // 1. Grade-wise filtering
             if ($rp->gradePricing && $rp->gradePricing->count() > 0) {
                 if ($studentGrade) {
                     // Check if there's pricing for this student's grade
@@ -2987,14 +2988,24 @@ class AuthController extends Controller
                         }
                     }
 
-                    // Return false to filter out if no pricing exists for that grade
-                    return $hasPricingForGrade;
+                    // If no pricing found for grade, filter it out
+                    if (!$hasPricingForGrade) {
+                        return false;
+                    }
                 } else {
                     // Student has no grade, filter out products with grade-wise pricing
                     return false;
                 }
             }
-            // Product doesn't have grade-wise pricing, include it
+
+            // 2. Gender filtering
+            $studentGender = strtolower($selectedProfile->gender ?? '');
+            $productGender = strtolower($rp->gender ?? 'unisex');
+
+            if ($productGender !== 'unisex' && $studentGender && $productGender !== $studentGender) {
+                return false;
+            }
+
             return true;
         })->take(4); // Take only 4 after filtering
 
@@ -3014,6 +3025,8 @@ class AuthController extends Controller
                 'image' => $img,
                 'product_tag' => $rp->product_tag,
                 'show_product_tag' => $rp->show_product_tag,
+                'gender' => $rp->gender,
+                'grade' => $rp->grade,
             ];
         })->toArray();
 
@@ -3691,10 +3704,10 @@ class AuthController extends Controller
 
             // Allow multiple students in one order
 
-            // Create order with unique ID based on timestamp
-            // Format: SOCO-[UserID]-[Timestamp]
-            $timestamp = now()->format('ymdHis'); // YYMMDDHHmmss
-            $orderNumber = 'SOCO-' . $user->id . '-' . $timestamp;
+            // Create order with unique ID based on the next available ID
+            // Format: SOCO-[UserID]-[NextID]
+            $nextId = \App\Models\Admin\Master\Order::max('id') + 1;
+            $orderNumber = 'SOCO-' . $user->id . '-' . $nextId;
 
             // Get profiles from database
             $profiles = $user->studentProfiles;
@@ -3849,7 +3862,7 @@ class AuthController extends Controller
                 if ($rowTotalWithShipping < 0) $rowTotalWithShipping = 0;
 
                 $order = \App\Models\Admin\Master\Order::create([
-                    'order_number' => 'SOCO-TMP-' . uniqid(), // Temporary; replaced below
+                    'order_number' => $uniqueOrderNumber,
                     'user_id' => $user->id,
                     'school_id' => $schoolId,
                     'order_date' => now(),
@@ -3875,10 +3888,6 @@ class AuthController extends Controller
                     'payment_details' => session('payment_details'),
                     'coupon_id' => $couponIdToIncrement,
                 ]);
-
-                // Update order number to short SOCO-XXXXX format using the DB auto-increment ID
-                $shortOrderNumber = 'SOCO-' . str_pad($order->id, 5, '0', STR_PAD_LEFT);
-                $order->update(['order_number' => $shortOrderNumber]);
 
                 // Create Payment Record
                 if (session('payment_method') === 'razorpay' && session('payment_id')) {
@@ -3943,8 +3952,13 @@ class AuthController extends Controller
                     try {
                         \Illuminate\Support\Facades\Mail::to($order->customer_email)->send(new \App\Mail\PaymentSuccessMail($order, session('payment_details', [])));
                         \Illuminate\Support\Facades\Log::info("Payment success email sent to {$order->customer_email} for order {$order->order_number}");
+                        
+                        // NEW: Send separate Invoice PDF email
+                        \Illuminate\Support\Facades\Mail::to($order->customer_email)->send(new \App\Mail\OrderInvoiceMail($order));
+                        \Illuminate\Support\Facades\Log::info("Separate invoice email sent to {$order->customer_email} for order {$order->order_number}");
+                        
                     } catch (\Exception $e) {
-                        \Illuminate\Support\Facades\Log::error("Failed to send payment success email: " . $e->getMessage());
+                        \Illuminate\Support\Facades\Log::error("Failed to send payment success/invoice email: " . $e->getMessage());
                     }
                 }
             }
@@ -4695,7 +4709,7 @@ class AuthController extends Controller
             'reason' => 'required|string',
             'action' => 'required|in:exchange',
             'accept_terms' => 'accepted',
-            'accept_size_change' => 'accepted',
+            // 'accept_size_change' => 'accepted',
             'exchange_sizes' => 'nullable|array',
             'exchange_sizes.*' => 'nullable|string|max:50',
             'photos' => 'nullable|array',

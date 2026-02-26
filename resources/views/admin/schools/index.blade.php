@@ -275,11 +275,23 @@
 @endpush
 
 @section('content')
-    <div class="card" style="margin-bottom:24px; display:flex; justify-content:space-between; align-items:center;">
-        <div>
+    <div class="card" style="margin-bottom:24px; display:flex; justify-content:space-between; align-items:center; flex-wrap: wrap; gap: 16px;">
+        <div style="flex: 1; min-width: 300px;">
             <p style="margin:0;color:#475467;">Track every partner institution in one table.</p>
         </div>
-        <a href="{{ route('master.admin.schools.create') }}" class="nav__item" style="background:#490d59;color:#fff;border-radius:9999px;padding:8px 16px;width:auto;font-size:13px;font-weight:600;">+ Add School</a>
+        <div style="display: flex; align-items: center; gap: 12px; flex-wrap: wrap;">
+            <form method="GET" style="display: flex; align-items: center; gap: 8px;">
+                <select name="status[]" multiple class="filter-input-rounded" style="height: 38px; padding: 0 30px 0 12px; font-size: 13px; min-width: 150px; border: 1px solid #d0d5dd; border-radius: 8px; appearance: none; background-image: url('data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' fill=\'none\' viewBox=\'0 0 24 24\' stroke=\'%236B7280\' stroke-width=\'2\'%3E%3Cpath stroke-linecap=\'round\' stroke-linejoin=\'round\' d=\'M19 9l-7 7-7-7\'%3E%3C/path%3E%3C/svg%3E'); background-repeat: no-repeat; background-position: right 10px center; background-size: 14px;" placeholder="Listing Status">
+                    <option value="">All Statuses</option>
+                    @foreach(['active', 'pending', 'inactive'] as $st)
+                        <option value="{{ $st }}" @selected(in_array($st, (array)request('status')))>{{ ucfirst($st) }}</option>
+                    @endforeach
+                </select>
+                <button type="submit" style="padding: 8px 16px; background: #490d59; color: white; border: none; border-radius: 8px; font-size: 13px; font-weight: 600; cursor: pointer;">Filter</button>
+                <a href="{{ route('master.admin.schools.index') }}" style="padding: 8px 16px; background: white; color: #475467; border: 1px solid #d0d5dd; border-radius: 8px; font-size: 13px; font-weight: 600; text-decoration: none;">Reset</a>
+            </form>
+            <a href="{{ route('master.admin.schools.create') }}" class="nav__item" style="background:#490d59;color:#fff;border-radius:9999px;padding:8px 16px;width:auto;font-size:13px;font-weight:600; margin: 0;">+ Add School</a>
+        </div>
     </div>
 
     <div class="card">

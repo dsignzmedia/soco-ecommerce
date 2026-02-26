@@ -485,20 +485,25 @@ document.addEventListener('DOMContentLoaded', function() {
     };
 
     if (modalSchoolInput) {
-        // Strict Validation: On blur, check if the value matches a school name exactly
+        // Strict Validation: On blur, check if the value matches a school name (case-insensitive & trimmed)
         modalSchoolInput.addEventListener('blur', function() {
             // Delay slightly to allow click event on suggestion to fire first
             setTimeout(() => {
                 const currentVal = this.value.trim();
-                const isValid = schools.some(s => s.name === currentVal);
+                // Find matching school by trimmed, case-insensitive name
+                const validSchool = schools.find(s => s.name.trim().toLowerCase() === currentVal.toLowerCase());
 
-                if (currentVal && !isValid) {
+                if (currentVal && !validSchool) {
                     this.classList.add('is-invalid');
                     this.value = ''; // Clear invalid input
+                } else if (validSchool) {
+                    this.classList.remove('is-invalid');
+                    // Force canonical name from our schools list
+                    this.value = validSchool.name;
                 } else {
                     this.classList.remove('is-invalid');
                 }
-            }, 200);
+            }, 250);
         });
 
         modalSchoolInput.addEventListener('input', function() {
@@ -592,8 +597,9 @@ document.addEventListener('DOMContentLoaded', function() {
                 return;
             }
 
-            // Double check school validity on submit
-            const isSchoolValid = schools.some(s => s.name === schoolName);
+            // Double check school validity on submit with robust trimming and case-insensitive check
+            const schoolNameTrimmed = schoolName.trim();
+            const isSchoolValid = schools.some(s => s.name.trim().toLowerCase() === schoolNameTrimmed.toLowerCase());
             if (!isSchoolValid) {
                  const schoolInput = document.getElementById('modalSchoolName');
                  schoolInput.classList.add('is-invalid');

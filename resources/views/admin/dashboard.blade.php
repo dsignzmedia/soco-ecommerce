@@ -483,24 +483,25 @@
             font-family: inherit;
         }
         .filter-input-rounded:focus {
-            border-color: #490d59;
-            box-shadow: 0 0 0 4px rgba(73, 13, 89, 0.1); /* Consistent focus ring */
+            border-color: #111827;
+            box-shadow: 0 0 0 4px rgba(17, 24, 39, 0.1); /* Consistent focus ring */
         }
         .btn-purple-solid {
-            background-color: #4c1d95; /* Deep purple */
-            color: #ffffff;
-            border: none;
+            background-color: #ffffff; /* White */
+            color: #111827;
+            border: 1px solid #d1d5db;
             border-radius: 12px; /* Standard rounded box */
             padding: 0 24px;
             height: 46px; /* Match Select height */
             font-weight: 600;
             font-size: 14px;
             cursor: pointer;
-            transition: background 0.2s;
+            transition: all 0.2s;
             width: 100%; /* Fill grid cell */
         }
         .btn-purple-solid:hover {
-            background-color: #3b0a48;
+            background-color: #f9fafb;
+            border-color: #9ca3af;
         }
     </style>
 

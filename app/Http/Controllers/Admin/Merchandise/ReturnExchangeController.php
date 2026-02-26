@@ -22,8 +22,8 @@ class ReturnExchangeController extends Controller
             ->whereHas('order', function($q) {
                 $q->where('product_type', 'merchandised');
             })
-            ->when($filters['type'] ?? null, fn($q, $type) => $q->where('type', $type))
-            ->when($filters['status'] ?? null, fn($q, $status) => $q->where('status', $status))
+            ->when($filters['type'] ?? null, fn($q, $type) => $q->whereIn('type', (array)$type))
+            ->when($filters['status'] ?? null, fn($q, $status) => $q->whereIn('status', (array)$status))
             ->when($filters['q'] ?? null, function ($q, $term) {
                 $q->whereHas('order', function ($oq) use ($term) {
                     $oq->where('order_number', 'like', '%'.$term.'%')

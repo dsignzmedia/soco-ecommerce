@@ -21,14 +21,14 @@
             flex-wrap: wrap;
         }
         .filter-input-rounded {
-            padding: 10px 16px;
-            border: 1px solid #e5e7eb;
-            border-radius: 12px;
-            font-size: 14px;
+            width: 100%;
+            height: 42px;
+            padding: 0 12px;
+            border-radius: 8px !important;
+            font-size: 13px;
             color: #374151;
             outline: none;
             background-color: #fff;
-            height: 46px;
             font-family: inherit;
             min-width: 150px;
             flex: 1;
@@ -228,17 +228,17 @@
     <div class="filters-card">
         <form method="GET" action="{{ route('admin.merchandise.returns-exchange.index') }}" class="filter-form-grid">
             <div style="flex:1; min-width: 150px;">
-                <select name="type" class="filter-input-rounded no-tom" style="width:100%;">
+                <select name="type[]" multiple class="filter-input-rounded" style="width:100%;" placeholder="Select Type">
                     <option value="">All Types</option>
-                    <option value="return" {{ ($filters['type'] ?? '') === 'return' ? 'selected' : '' }}>Return</option>
-                    <option value="exchange" {{ ($filters['type'] ?? '') === 'exchange' ? 'selected' : '' }}>Exchange</option>
+                    <option value="return" @selected(in_array('return', (array)($filters['type'] ?? [])))>Return</option>
+                    <option value="exchange" @selected(in_array('exchange', (array)($filters['type'] ?? [])))>Exchange</option>
                 </select>
             </div>
             <div style="flex:1; min-width: 150px;">
-                <select name="status" class="filter-input-rounded no-tom" style="width:100%;">
+                <select name="status[]" multiple class="filter-input-rounded" style="width:100%;" placeholder="Select Status">
                     <option value="">All Status</option>
                     @foreach(['pending','approved','rejected','received_restocked','received_discarded','completed'] as $st)
-                        <option value="{{ $st }}" {{ ($filters['status'] ?? '') === $st ? 'selected' : '' }} style="text-transform:capitalize;">{{ str_replace('_',' ', $st) }}</option>
+                        <option value="{{ $st }}" @selected(in_array($st, (array)($filters['status'] ?? []))) style="text-transform:capitalize;">{{ str_replace('_',' ', $st) }}</option>
                     @endforeach
                 </select>
             </div>

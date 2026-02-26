@@ -93,29 +93,26 @@
             <h3 style="margin:0; font-size: 18px; font-weight: 600; color:#111827;">Order Filters</h3>
         </div>
         <form class="filters" method="GET">
-            <select name="school_id">
-                <option value="">All Schools</option>
+            <select name="school_id[]" multiple placeholder="Select School">
                 @foreach($schools as $school)
-                    <option value="{{ $school->id }}" @selected(($filters['school_id'] ?? '') == $school->id)>{{ $school->name }}</option>
+                    <option value="{{ $school->id }}" @selected(in_array($school->id, (array)($filters['school_id'] ?? [])))>{{ $school->name }}</option>
                 @endforeach
             </select>
-            <select name="grade">
-                <option value="">All Grades</option>
+            <select name="grade[]" multiple placeholder="Select Grade">
                 @foreach($grades as $grade)
-                    <option value="{{ $grade }}" @selected(($filters['grade'] ?? '') === $grade)>{{ $grade }}</option>
+                    <option value="{{ $grade }}" @selected(in_array($grade, (array)($filters['grade'] ?? [])))>{{ $grade }}</option>
                 @endforeach
             </select>
-            <select name="category">
-                <option value="">All Categories</option>
+            <select name="category[]" multiple placeholder="Select Category">
                 @foreach($categories as $category)
-                    <option value="{{ $category }}" @selected(($filters['category'] ?? '') === $category)>{{ $category }}</option>
+                    <option value="{{ $category }}" @selected(in_array($category, (array)($filters['category'] ?? [])))>{{ $category }}</option>
                 @endforeach
             </select>
-            <select name="order_status" class="no-sort">
+            <select name="order_status[]" multiple class="no-sort" placeholder="Order Status">
                 <option value="">Order Status</option>
                 {{-- Order statuses in workflow sequence: Order Placed -> Processing -> Packed -> Shipped -> Delivered --}}
                 @foreach(['order_placed' => 'Order Placed', 'processing' => 'Processing', 'packed' => 'Packed', 'shipped' => 'Shipped', 'delivered' => 'Delivered'] as $value => $label)
-                    <option value="{{ $value }}" @selected(($filters['order_status'] ?? '') === $value)>{{ $label }}</option>
+                    <option value="{{ $value }}" @selected(in_array($value, (array)($filters['order_status'] ?? [])))>{{ $label }}</option>
                 @endforeach
             </select>
 

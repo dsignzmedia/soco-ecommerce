@@ -787,34 +787,34 @@ class CatalogController extends Controller
     {
         if (! empty($filters['school_id'])) {
             $query->whereHas('schools', function($q) use ($filters) {
-                $q->where('schools.id', $filters['school_id']);
+                $q->whereIn('schools.id', (array)$filters['school_id']);
             });
         }
 
-        if (! empty($filters['grade_id'])) {
-            // Check if it's searching by ID or name (since grade searches might be mixed)
-            // Assuming grade is stored as string in product_mappings, matching 'grade' column
-            $query->where('grade', $filters['grade_id']);
+        if (! empty($filters['grade_id']) || ! empty($filters['grade'])) {
+            $grade = $filters['grade_id'] ?? $filters['grade'];
+            $query->whereIn('grade', (array)$grade);
         }
 
         if(! empty($filters['category'])) {
-            $query->where('category', $filters['category']);
+            $query->whereIn('category', (array)$filters['category']);
         }
 
         if(! empty($filters['product_type'])) {
-            $query->where('product_type', $filters['product_type']);
+            $query->whereIn('product_type', (array)$filters['product_type']);
         }
 
         if(! empty($filters['gender'])) {
-            $query->where('gender', $filters['gender']);
+            $query->whereIn('gender', (array)$filters['gender']);
         }
 
         if (! empty($filters['status'])) {
-            $query->where('status', $filters['status']);
+            $query->whereIn('status', (array)$filters['status']);
         }
 
         if (! empty($filters['stock_status'])) {
-            $query->where('stock_status', $filters['stock_status']);
+            $stockStatus = (array)$filters['stock_status'];
+            $query->whereIn('stock_status', $stockStatus);
         }
     }
 

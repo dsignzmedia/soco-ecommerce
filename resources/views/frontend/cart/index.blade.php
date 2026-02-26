@@ -283,6 +283,14 @@
         cursor: not-allowed !important;
     }
 }
+
+/* Reduced padding and font for summary buttons */
+.order-summary-card .vs-btn {
+    padding: 10px 20px !important;
+    font-size: 15px !important;
+    font-weight: 500 !important;
+}
+
 </style>
 
 <script>

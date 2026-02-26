@@ -53,8 +53,7 @@ class DashboardController extends Controller
 
         // Calculate refunds from Payment table for back to school
         $refundsQuery = \App\Models\Payment::where('payment_for', 'refund')
-            ->where('payment_status', 'refunded')
-            ->where('product_type', 'back_to_school');
+            ->where('payment_status', 'refunded');
         
         // Apply date filters to refunds if set
         if (!empty($filters['start_date'])) {

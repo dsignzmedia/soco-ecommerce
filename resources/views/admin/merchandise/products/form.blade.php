@@ -35,6 +35,11 @@
                         <span>Product Name *</span>
                         <input type="text" name="product_name" value="{{ old('product_name', $product->product_name) }}" required>
                     </label>
+
+                    <label style="margin-bottom:16px;">
+                        <span>HSN Code</span>
+                        <input type="text" name="hsn_code" value="{{ old('hsn_code', $product->hsn_code) }}" placeholder="e.g. 6103, 6203">
+                    </label>
                     
                     <label>
                         <span>Description</span>
@@ -262,21 +267,9 @@
                     </h3>
                     
                     <div style="display:flex;flex-direction:column;gap:16px;">
-                            <div style="margin-bottom: 16px;">
-                                <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:4px;">
-                                    <span style="font-size:14px; font-weight:600; color:#374151;">School *</span>
-                                    <label style="display:flex; align-items:center; gap:8px; cursor:pointer;" title="Select All Schools">
-                                        <span style="font-size:12px; font-weight:600; color:#490d59;">Select All</span>
-                                        <label class="custom-toggle" style="margin:0;">
-                                            <input type="checkbox" id="select-all-schools-toggle" onchange="toggleAllSchools(this)">
-                                            <span class="slider"></span>
-                                        </label>
-                                    </label>
-                                </div>
-                                <p style="font-size:12px; color:#6b7280; margin: 0 0 10px 0;">Hold Ctrl/Cmd to select multiple schools</p>
-                                
-                                <div id="school-selection-container" style="{{ (count((array)$selectedSchoolIds) > 0 && count((array)$selectedSchoolIds) === (int)$allSchoolsCount) ? 'display:none;' : 'display:block;' }}">
-                                    <select name="school_ids[]" id="school-ids-select" required multiple style="width: 100%; min-height: 120px; padding: 10px; border: 1px solid #d1d5db; border-radius: 8px; font-size: 14px; background: white; box-sizing: border-box;">
+                                <div id="school-selection-container">
+                                    <select name="school_ids[]" id="school-ids-select" required style="width: 100%;">
+                                        <option value="">Select School</option>
                                         @foreach($schools as $school)
                                             <option value="{{ $school->id }}" @selected(in_array($school->id, (array)$selectedSchoolIds))>{{ $school->name }}</option>
                                         @endforeach
@@ -284,34 +277,7 @@
                                 </div>
                             </div>
                         <script>
-                             function toggleAllSchools(toggle) {
-                                 const sel = document.getElementById('school-ids-select');
-                                 const container = document.getElementById('school-selection-container');
-                                 if (!sel || !container) return;
-                                 
-                                 if (toggle.checked) {
-                                     // Select all options
-                                     Array.from(sel.options).forEach(o => o.selected = true);
-                                     container.style.display = 'none';
-                                 } else {
-                                     // Deselect all
-                                     Array.from(sel.options).forEach(o => o.selected = false);
-                                     container.style.display = 'block';
-                                 }
-                             }
-                            document.addEventListener('DOMContentLoaded', function() {
-                                 const sel = document.getElementById('school-ids-select');
-                                 const toggle = document.getElementById('select-all-schools-toggle');
-                                 const container = document.getElementById('school-selection-container');
-                                 
-                                 if (sel && toggle && container && sel.options.length > 0) {
-                                     const allSelected = Array.from(sel.options).every(o => o.selected);
-                                     if (allSelected) {
-                                         toggle.checked = true;
-                                         container.style.display = 'none';
-                                     }
-                                 }
-                            });
+                        // On page load: ensure select is initialized
                         </script>
                         {{-- <label>
                             <span>Grade</span>

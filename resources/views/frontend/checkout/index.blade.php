@@ -532,5 +532,13 @@ function applyCoupon() {
 .vs-header {
     z-index: 1000 !important;
 }
+
+/* Reduced padding and font for summary/payment buttons */
+.col-lg-4 .vs-btn,
+.col-lg-4 .btn {
+    padding: 10px 20px !important;
+    font-size: 15px !important;
+    font-weight: 500 !important;
+}
 </style>
 @endsection

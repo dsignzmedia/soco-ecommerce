@@ -29,12 +29,12 @@ class PaymentController extends Controller
 
         // Filter by Status
         if ($request->filled('status')) {
-            $query->where('payment_status', $request->status);
+            $query->whereIn('payment_status', (array)$request->status);
         }
 
         // Filter by Payment Method
         if ($request->filled('payment_method')) {
-            $query->where('payment_method', $request->payment_method);
+            $query->whereIn('payment_method', (array)$request->payment_method);
         }
 
         // Filter by Date From

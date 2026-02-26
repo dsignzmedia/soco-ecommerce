@@ -26,23 +26,23 @@ class OrderController extends Controller
             $query->where('order_number', 'like', '%' . $request->order_number . '%');
         }
 
-        if ($request->has('status')) {
-            $query->where('order_status', $request->status);
+        if ($request->has('order_status')) {
+            $query->whereIn('order_status', (array)$request->order_status);
         }
 
         // Apply School Filter
         if ($request->filled('school_id')) {
-            $query->where('school_id', $request->school_id);
+            $query->whereIn('school_id', (array)$request->school_id);
         }
 
         // Apply Grade Filter
         if ($request->filled('grade')) {
-            $query->where('grade', $request->grade);
+            $query->whereIn('grade', (array)$request->grade);
         }
 
         // Apply Category Filter
         if ($request->filled('category')) {
-            $query->where('category', $request->category);
+            $query->whereIn('category', (array)$request->category);
         }
         
         // Apply Date Filters
@@ -59,9 +59,10 @@ class OrderController extends Controller
         // Fetch distinct grades and categories from orders for filter
         $grades = Order::whereNotNull('grade')->distinct()->pluck('grade')->sort();
         $categories = Order::whereNotNull('category')->distinct()->pluck('category')->sort();
+        $productTypes = Order::whereNotNull('product_type')->distinct()->pluck('product_type')->sort();
         $filters = $request->all();
 
-        return view('admin.back_to_school.orders.index', compact('orders', 'schools', 'grades', 'categories', 'filters'));
+        return view('admin.back_to_school.orders.index', compact('orders', 'schools', 'grades', 'categories', 'productTypes', 'filters'));
     }
 
     public function show($id): View
@@ -110,6 +111,10 @@ class OrderController extends Controller
         
         // Build query with filters
         $query = Order::with(['school', 'product'])->latest();
+        
+        if (!empty($filters['product_type'])) {
+            $query->where('product_type', $filters['product_type']);
+        }
         
         if (!empty($filters['school_id'])) {
             $query->where('school_id', $filters['school_id']);
@@ -257,8 +262,17 @@ class OrderController extends Controller
                  $options->set('defaultFont', 'sans-serif');
                  $dompdf->setOptions($options);
                  
+                 // Extract transaction prefix (SOCO-USERID-TIMESTAMP) from order number
+                 $parts = explode('-', $order->order_number);
+                 if (count($parts) >= 3) {
+                     $transactionPrefix = $parts[0] . '-' . $parts[1] . '-' . $parts[2];
+                     $orders = Order::where('order_number', 'like', $transactionPrefix . '%')->get();
+                 } else {
+                     $orders = collect([$order]);
+                 }
+
                  // Reuse the generic PDF view as it has no dependencies on layout
-                 $html = view('admin.orders.invoice-pdf', compact('order'))->render();
+                 $html = view('admin.orders.invoice-pdf', compact('order', 'orders'))->render();
                  $dompdf->loadHtml($html);
                  $dompdf->setPaper('A4', 'portrait');
                  $dompdf->render();
@@ -267,7 +281,7 @@ class OrderController extends Controller
                      echo $dompdf->output();
                  }, $order->order_number . '-invoice.pdf');
             } elseif (class_exists(\Barryvdh\DomPDF\Facade\Pdf::class)) {
-                 $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('admin.orders.invoice-pdf', compact('order'));
+            $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('admin.orders.invoice-pdf', compact('order', 'orders'));
                  return $pdf->download($order->order_number . '-invoice.pdf');
             } else {
                  throw new \Exception("DomPDF classes not found. Please verify vendor libraries are uploaded.");

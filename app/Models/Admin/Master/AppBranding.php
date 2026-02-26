@@ -25,6 +25,13 @@ class AppBranding extends Model
         'meta_keywords',
         'maintenance_bts',
         'maintenance_merch',
+        'seller_name',
+        'seller_address',
+        'seller_gstin',
+        'seller_fssai',
+        'seller_cin',
+        'seller_pan',
+        'signature_path',
     ];
 
     public static function current(): self

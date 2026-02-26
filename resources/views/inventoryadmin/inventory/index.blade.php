@@ -66,32 +66,28 @@
 
     <div class="card" style="margin-bottom:24px;">
         <form class="filters" method="GET">
-            <select name="school_id" style="padding:8px;border:1px solid #d0d5dd;border-radius:8px;">
-                <option value="">All Schools</option>
+            <select name="school_id[]" multiple style="padding:8px;border:1px solid #e5e7eb;border-radius:8px;" placeholder="Select School">
                 @foreach($schools as $school)
-                    <option value="{{ $school->id }}" @selected(($filters['school_id'] ?? '') == $school->id)>{{ $school->name }}</option>
+                    <option value="{{ $school->id }}" @selected(in_array($school->id, (array)($filters['school_id'] ?? [])))>{{ $school->name }}</option>
                 @endforeach
             </select>
-            <select name="product_type" style="padding:8px;border:1px solid #d0d5dd;border-radius:8px;">
-                <option value="">Product Type (All)</option>
+            <select name="product_type[]" multiple style="padding:8px;border:1px solid #e5e7eb;border-radius:8px;" placeholder="Product Type">
                 @foreach($productTypes as $type)
-                    <option value="{{ $type }}" {{ ($filters['product_type'] ?? '') == $type ? 'selected' : '' }}>
+                    <option value="{{ $type }}" @selected(in_array($type, (array)($filters['product_type'] ?? [])))>
                         {{ ucwords(str_replace('_', ' ', $type)) }}
                     </option>
                 @endforeach
             </select>
-            <select name="category" style="padding:8px;border:1px solid #d0d5dd;border-radius:8px;">
-                <option value="">All Categories</option>
+            <select name="category[]" multiple style="padding:8px;border:1px solid #e5e7eb;border-radius:8px;" placeholder="Select Category">
                 @foreach($categories as $category)
-                    <option value="{{ $category }}" @selected(($filters['category'] ?? '') === $category)>{{ $category }}</option>
+                    <option value="{{ $category }}" @selected(in_array($category, (array)($filters['category'] ?? [])))>{{ $category }}</option>
                 @endforeach
             </select>
-            <select name="status" style="padding:8px;border:1px solid #d0d5dd;border-radius:8px;">
-                <option value="">All Statuses</option>
-                <option value="active" @selected(($filters['status'] ?? '') === 'active')>Active</option>
-                <option value="inactive" @selected(($filters['status'] ?? '') === 'inactive')>Inactive</option>
+            <select name="status[]" multiple style="padding:8px;border:1px solid #e5e7eb;border-radius:8px;" placeholder="Inventory Status">
+                <option value="active" @selected(in_array('active', (array)($filters['status'] ?? [])))>Active</option>
+                <option value="inactive" @selected(in_array('inactive', (array)($filters['status'] ?? [])))>Inactive</option>
             </select>
-            <input type="text" name="q" placeholder="Search Product..." value="{{ $filters['q'] ?? '' }}" style="padding:8px;border:1px solid #d0d5dd;border-radius:8px;">
+            <input type="text" name="q" placeholder="Search Product..." value="{{ $filters['q'] ?? '' }}" style="padding:8px;border:1px solid #e5e7eb;border-radius:8px;">
             <div style="grid-column: 1 / -1; display: flex; justify-content: flex-end; gap: 10px;">
                 <button type="submit" style="width: auto; min-width: 120px;">Apply Filter</button>
                 <a class="reset" href="{{ route('inventory.admin.inventory.index') }}" style="width: auto; min-width: 100px;">Reset</a>
@@ -192,7 +188,7 @@
                                         </thead>
                                         <tbody>
                                             @foreach($product->variants as $variant)
-                                            <tr style="border-bottom: 1px solid #f3f4f6;">
+                                            <tr style="border-bottom: 1px solid #e5e7eb;">
                                                 <td style="padding: 10px 16px; font-size: 13px; font-weight: 500; color: #111827;">
                                                     {{ $variant->option }}
                                                 </td>
@@ -208,9 +204,9 @@
                                                         @csrf
                                                         <input type="hidden" name="variant_id" value="{{ $variant->id }}">
                                                         <input type="number" name="stock" value="{{ $variant->stock }}" min="0" required 
-                                                            style="width: 80px; padding: 6px 10px; border: 1px solid #d1d5db; border-radius: 6px; font-size: 13px; outline: none; transition: border-color 0.2s;" 
+                                                            style="width: 80px; padding: 6px 10px; border: 1px solid #e5e7eb; border-radius: 6px; font-size: 13px; outline: none; transition: border-color 0.2s;" 
                                                             id="stock-input-{{ $variant->id }}"
-                                                            onfocus="this.style.borderColor='#490d59'" onblur="this.style.borderColor='#d1d5db'">
+                                                            onfocus="this.style.borderColor='#490d59'" onblur="this.style.borderColor='#e5e7eb'">
                                                         <button type="submit" class="btn-vs-sm" style="margin:0; height: 32px; font-size: 11px; text-transform:uppercase; letter-spacing:0.5px;">Update</button>
                                                     </form>
                                                 </td>

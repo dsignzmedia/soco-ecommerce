@@ -32,12 +32,19 @@ class OrderController extends Controller
         ]);
 
         $orders = Order::with(['school', 'product'])
-            ->when($filters['school_id'] ?? null, fn($query, $school) => $query->where('school_id', $school))
-            ->when($filters['grade'] ?? null, fn($query, $grade) => $query->where('grade', $grade))
-            ->when($filters['category'] ?? null, fn($query, $category) => $query->where('category', $category))
-            ->when($filters['product_type'] ?? null, fn($query, $type) => $query->where('product_type', 'like', $type . '%'))
-            ->when($filters['order_status'] ?? null, fn($query, $status) => $query->where('order_status', $status))
-            ->when($filters['payment_status'] ?? null, fn($query, $status) => $query->where('payment_status', $status))
+            ->when($filters['school_id'] ?? null, fn($query, $school) => $query->whereIn('school_id', (array)$school))
+            ->when($filters['grade'] ?? null, fn($query, $grade) => $query->whereIn('grade', (array)$grade))
+            ->when($filters['category'] ?? null, fn($query, $category) => $query->whereIn('category', (array)$category))
+            ->when($filters['product_type'] ?? null, function($query, $types) {
+                $types = (array)$types;
+                return $query->where(function($q) use ($types) {
+                    foreach($types as $type) {
+                        $q->orWhere('product_type', 'like', $type . '%');
+                    }
+                });
+            })
+            ->when($filters['order_status'] ?? null, fn($query, $status) => $query->whereIn('order_status', (array)$status))
+            ->when($filters['payment_status'] ?? null, fn($query, $status) => $query->whereIn('payment_status', (array)$status))
             ->when($filters['order_number'] ?? null, fn($query, $number) => $query->where('order_number', 'like', '%' . $number . '%'))
             ->when($filters['date_from'] ?? null, fn($query, $from) => $query->whereDate('order_date', '>=', Carbon::parse($from)))
             ->when($filters['date_to'] ?? null, fn($query, $to) => $query->whereDate('order_date', '<=', Carbon::parse($to)))
@@ -273,35 +280,57 @@ class OrderController extends Controller
     public function invoiceView(Order $order): View
     {
         $order->load('school');
-        return view('admin.orders.invoice', compact('order'));
+        
+        // Extract transaction prefix (SOCO-USERID-TIMESTAMP) from order number
+        $parts = explode('-', $order->order_number);
+        if (count($parts) >= 3) {
+            $transactionPrefix = $parts[0] . '-' . $parts[1] . '-' . $parts[2];
+            $orders = Order::where('order_number', 'like', $transactionPrefix . '%')
+                ->get();
+        } else {
+            // Fallback for short format or missing prefix
+            $orders = collect([$order]);
+        }
+            
+        return view('admin.orders.invoice', compact('order', 'orders'));
     }
 
     public function invoiceDownload(Order $order)
     {
         try {
-            $order->load('school');
-            
-            // Bypass container resolution and instantiate directly
-            // We check for the core Dompdf class first (cleanest), then the wrapper
-            if (class_exists(\Dompdf\Dompdf::class)) {
-                 $dompdf = new \Dompdf\Dompdf();
-                 $options = new \Dompdf\Options();
-                 $options->set('isRemoteEnabled', true);    
-                 $options->set('defaultFont', 'sans-serif');
-                 $dompdf->setOptions($options);
-                 
-                 // Render view to HTML
-                 $html = view('admin.orders.invoice-pdf', compact('order'))->render();
-                 $dompdf->loadHtml($html);
-                 $dompdf->setPaper('A4', 'portrait');
-                 $dompdf->render();
-                 
-                 return response()->streamDownload(function() use ($dompdf) {
-                     echo $dompdf->output();
-                 }, $order->order_number . '-invoice.pdf');
-            } elseif (class_exists(\Barryvdh\DomPDF\Facade\Pdf::class)) {
-                 $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('admin.orders.invoice-pdf', compact('order'));
-                 return $pdf->download($order->order_number . '-invoice.pdf');
+             $order->load('school');
+             
+             // Extract transaction prefix (SOCO-USERID-TIMESTAMP) from order number
+             $parts = explode('-', $order->order_number);
+             if (count($parts) >= 3) {
+                 $transactionPrefix = $parts[0] . '-' . $parts[1] . '-' . $parts[2];
+                 $orders = Order::where('order_number', 'like', $transactionPrefix . '%')
+                     ->get();
+             } else {
+                 $orders = collect([$order]);
+             }
+             
+             // Bypass container resolution and instantiate directly
+             // We check for the core Dompdf class first (cleanest), then the wrapper
+             if (class_exists(\Dompdf\Dompdf::class)) {
+                  $dompdf = new \Dompdf\Dompdf();
+                  $options = new \Dompdf\Options();
+                  $options->set('isRemoteEnabled', true);    
+                  $options->set('defaultFont', 'sans-serif');
+                  $dompdf->setOptions($options);
+                  
+                  // Render view to HTML
+                  $html = view('admin.orders.invoice-pdf', compact('order', 'orders'))->render();
+                  $dompdf->loadHtml($html);
+                  $dompdf->setPaper('A4', 'portrait');
+                  $dompdf->render();
+                  
+                  return response()->streamDownload(function() use ($dompdf) {
+                      echo $dompdf->output();
+                  }, $order->order_number . '-invoice.pdf');
+             } elseif (class_exists(\Barryvdh\DomPDF\Facade\Pdf::class)) {
+                  $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('admin.orders.invoice-pdf', compact('order', 'orders'));
+                  return $pdf->download($order->order_number . '-invoice.pdf');
             } else {
                  throw new \Exception("DomPDF classes not found. Please verify vendor libraries are uploaded.");
             }

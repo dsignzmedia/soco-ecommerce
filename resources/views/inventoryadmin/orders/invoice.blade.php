@@ -1,17 +1,17 @@
-@extends('admin.layouts.base')
+@extends('inventoryadmin.layouts.base')
 
 @section('title', 'Invoice ' . $order->order_number)
 
 @section('content')
 <div style="max-width: 1000px; margin: 20px auto; padding: 0 20px;">
     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px;">
-        <a href="{{ route('master.admin.orders.show', $order) }}" class="btn-back-outline" style="text-decoration: none; color: #475467; display: inline-flex; align-items: center; gap: 8px; font-weight: 500;">
+        <a href="{{ route('inventory.admin.orders.show', $order) }}" class="btn-back-outline" style="text-decoration: none; color: #475467; display: inline-flex; align-items: center; gap: 8px; font-weight: 500;">
             <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
                 <path d="M12.5 5L7.5 10L12.5 15" stroke="currentColor" stroke-width="1.67" stroke-linecap="round" stroke-linejoin="round"/>
             </svg>
             Back to order
         </a>
-        <a href="{{ route('master.admin.orders.invoice.download', $order) }}" class="btn btn-primary" style="background: #490d59; border-color: #490d59; color: white; padding: 10px 20px; border-radius: 8px; text-decoration: none; font-weight: 600;">
+        <a href="{{ route('inventory.admin.orders.invoice-download', $order) }}" class="btn btn-primary" style="background: #490d59; border-color: #490d59; color: white; padding: 10px 20px; border-radius: 8px; text-decoration: none; font-weight: 600;">
             Download PDF
         </a>
     </div>
@@ -169,7 +169,7 @@
             <div style="text-align: right;">
                 <div style="font-size: 28px; font-weight: 900; color: #000;">TAX INVOICE</div>
                 <div style="margin-top: 8px;">
-                    <span class="badge">PAID</span>
+                    <span class="badge">{{ strtoupper($order->payment_status) }}</span>
                 </div>
                 <div style="margin-top: 16px; font-size: 12px;">
                     Invoice #: <span style="font-weight: 700;">{{ $order->order_number }}</span><br>

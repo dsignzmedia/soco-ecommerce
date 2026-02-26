@@ -88,18 +88,16 @@
     <div class="filters-card">
         <form method="GET" class="filter-form-grid">
             <div style="flex:1; min-width: 200px;">
-                <select name="school_id" class="filter-input-rounded no-tom" style="width:100%;">
-                    <option value="">All Schools</option>
+                <select name="school_id[]" multiple class="filter-input-rounded" style="width:100%;" placeholder="Select School">
                     @foreach($schools as $school)
-                        <option value="{{ $school->id }}" @selected(($filters['school_id'] ?? '') == $school->id)>{{ $school->name }}</option>
+                        <option value="{{ $school->id }}" @selected(in_array($school->id, (array)($filters['school_id'] ?? [])))>{{ $school->name }}</option>
                     @endforeach
                 </select>
             </div>
             <div style="flex:1; min-width: 200px;">
-                <select name="category" class="filter-input-rounded no-tom" style="width:100%;">
-                    <option value="">All Categories</option>
+                <select name="category[]" multiple class="filter-input-rounded" style="width:100%;" placeholder="Select Category">
                     @foreach($categories as $category)
-                        <option value="{{ $category }}" @selected(($filters['category'] ?? '') === $category)>{{ $category }}</option>
+                        <option value="{{ $category }}" @selected(in_array($category, (array)($filters['category'] ?? [])))>{{ $category }}</option>
                     @endforeach
                 </select>
             </div>

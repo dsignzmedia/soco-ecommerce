@@ -15,9 +15,9 @@ class InventoryController extends Controller
         $filters = $request->only(['category', 'status', 'q', 'product_type']);
 
         $query = Product::query()
-            ->when($filters['product_type'] ?? null, fn($q, $type) => $q->where('product_type', $type))
-            ->when($filters['category'] ?? null, fn($q, $category) => $q->where('category', $category))
-            ->when($filters['status'] ?? null, fn($q, $status) => $q->where('status', $status))
+            ->when($filters['product_type'] ?? null, fn($q, $type) => $q->whereIn('product_type', (array)$type))
+            ->when($filters['category'] ?? null, fn($q, $category) => $q->whereIn('category', (array)$category))
+            ->when($filters['status'] ?? null, fn($q, $status) => $q->whereIn('status', (array)$status))
             ->when($filters['q'] ?? null, fn($q, $term) => $q->where('product_name', 'like', '%'.$term.'%'));
 
         $products = $query->with('variants')->orderBy('product_name')->paginate(20)->withQueryString();

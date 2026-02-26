@@ -55,8 +55,9 @@ class ReportController extends Controller
         $orders = (clone $baseOrderQuery)->with('school')->latest()->paginate(20);
         $schools = School::orderBy('name')->get();
         $categories = ProductMapping::select('category')->whereNotNull('category')->distinct()->orderBy('category')->pluck('category');
+        $grades = Order::select('grade')->whereNotNull('grade')->distinct()->orderBy('grade')->pluck('grade');
 
-        return view('admin.reports.index', compact('reportTypes', 'reportData', 'filters', 'orders', 'schools', 'categories'));
+        return view('admin.reports.index', compact('reportTypes', 'reportData', 'filters', 'orders', 'schools', 'categories', 'grades'));
     }
 
     protected function buildOrderQuery(array $filters)
@@ -67,10 +68,10 @@ class ReportController extends Controller
                 $q->whereNull('return_exchange_status')
                   ->orWhere('return_exchange_status', '!=', 'exchange_created');
             })
-            ->when($filters['school_id'] ?? null, fn ($q, $school) => $q->where('school_id', $school))
-            ->when($filters['grade'] ?? null, fn ($q, $grade) => $q->where('grade', $grade))
-            ->when($filters['category'] ?? null, fn ($q, $category) => $q->where('category', $category))
-            ->when($filters['status'] ?? null, fn ($q, $status) => $q->where('order_status', $status))
+            ->when($filters['school_id'] ?? null, fn ($q, $school) => $q->whereIn('school_id', (array)$school))
+            ->when($filters['grade'] ?? null, fn ($q, $grade) => $q->whereIn('grade', (array)$grade))
+            ->when($filters['category'] ?? null, fn ($q, $category) => $q->whereIn('category', (array)$category))
+            ->when($filters['status'] ?? null, fn ($q, $status) => $q->whereIn('order_status', (array)$status))
             ->when($filters['product_name'] ?? null, fn ($q, $product) => $q->where('item_name', 'like', '%' . $product . '%'))
             ->when($filters['date_from'] ?? null, fn ($q, $from) => $q->whereDate('order_date', '>=', $from))
             ->when($filters['date_to'] ?? null, fn ($q, $to) => $q->whereDate('order_date', '<=', $to));
@@ -79,8 +80,8 @@ class ReportController extends Controller
     protected function buildProductQuery(array $filters)
     {
         return ProductMapping::query()
-            ->when($filters['school_id'] ?? null, fn ($q, $school) => $q->where('school_id', $school))
-            ->when($filters['category'] ?? null, fn ($q, $category) => $q->where('category', $category));
+            ->when($filters['school_id'] ?? null, fn ($q, $school) => $q->whereIn('school_id', (array)$school))
+            ->when($filters['category'] ?? null, fn ($q, $category) => $q->whereIn('category', (array)$category));
     }
 
     protected function getOrdersReport($query)
@@ -373,7 +374,7 @@ class ReportController extends Controller
                 $q->whereHas('order', fn($oq) => $oq->whereDate('order_date', '<=', $to));
             })
             ->when($filters['school_id'] ?? null, function ($q, $school) {
-                $q->whereHas('order', fn($oq) => $oq->where('school_id', $school));
+                $q->whereHas('order', fn($oq) => $oq->whereIn('school_id', (array)$school));
             });
 
         $total = $returnQuery->count();
@@ -447,10 +448,10 @@ class ReportController extends Controller
         $filters = $request->only(['school_id', 'grade', 'category', 'date_from', 'date_to', 'product_name', 'status']);
 
         $orders = Order::with('school')
-            ->when($filters['school_id'] ?? null, fn ($q, $school) => $q->where('school_id', $school))
-            ->when($filters['grade'] ?? null, fn ($q, $grade) => $q->where('grade', $grade))
-            ->when($filters['category'] ?? null, fn ($q, $category) => $q->where('category', $category))
-            ->when($filters['status'] ?? null, fn ($q, $status) => $q->where('order_status', $status))
+            ->when($filters['school_id'] ?? null, fn ($q, $school) => $q->whereIn('school_id', (array)$school))
+            ->when($filters['grade'] ?? null, fn ($q, $grade) => $q->whereIn('grade', (array)$grade))
+            ->when($filters['category'] ?? null, fn ($q, $category) => $q->whereIn('category', (array)$category))
+            ->when($filters['status'] ?? null, fn ($q, $status) => $q->whereIn('order_status', (array)$status))
             ->when($filters['product_name'] ?? null, fn ($q, $product) => $q->where('item_name', 'like', '%' . $product . '%'))
             ->when($filters['date_from'] ?? null, fn ($q, $from) => $q->whereDate('order_date', '>=', $from))
             ->when($filters['date_to'] ?? null, fn ($q, $to) => $q->whereDate('order_date', '<=', $to))

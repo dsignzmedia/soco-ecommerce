@@ -16,11 +16,21 @@ class ReturnExchangeController extends Controller
 {
     public function index(Request $request): View
     {
-        $filters = $request->only(['type', 'status', 'q']);
+        $filters = $request->only(['type', 'status', 'q', 'product_type', 'school_id']);
 
         $requests = ReturnExchangeRequest::with(['order' => fn($q) => $q->withoutGlobalScopes()])
-            ->when($filters['type'] ?? null, fn($q, $type) => $q->where('type', $type))
-            ->when($filters['status'] ?? null, fn($q, $status) => $q->where('status', $status))
+            ->when($filters['type'] ?? null, fn($q, $type) => $q->whereIn('type', (array)$type))
+            ->when($filters['status'] ?? null, fn($q, $status) => $q->whereIn('status', (array)$status))
+            ->when($filters['school_id'] ?? null, function ($q, $schoolId) {
+                $q->whereHas('order', function ($oq) use ($schoolId) {
+                    $oq->withoutGlobalScopes()->whereIn('school_id', (array)$schoolId);
+                });
+            })
+            ->when($filters['product_type'] ?? null, function ($q, $type) {
+                $q->whereHas('order', function ($oq) use ($type) {
+                    $oq->withoutGlobalScopes()->whereIn('product_type', (array)$type);
+                });
+            })
             ->when($filters['q'] ?? null, function ($q, $term) {
                 $q->whereHas('order', function ($oq) use ($term) {
                     $oq->withoutGlobalScopes()
@@ -59,7 +69,10 @@ class ReturnExchangeController extends Controller
             }
         }
 
-        return view('inventoryadmin.returns.index', compact('requests', 'filters', 'productImages'));
+        $productTypes = Order::whereNotNull('product_type')->distinct()->pluck('product_type')->sort();
+        $schools = \App\Models\Admin\Master\School::orderBy('name')->get();
+
+        return view('inventoryadmin.returns.index', compact('requests', 'filters', 'productImages', 'productTypes', 'schools'));
     }
 
     public function show(ReturnExchangeRequest $returnRequest): View

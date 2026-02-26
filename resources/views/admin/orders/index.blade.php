@@ -35,8 +35,8 @@
             font-family: inherit;
         }
         .filters input:focus {
-            border-color: #490d59;
-            box-shadow: 0 0 0 4px rgba(73, 13, 89, 0.1);
+            border-color: #111827;
+            box-shadow: 0 0 0 4px rgba(17, 24, 39, 0.1);
         }
 
         /* Remove old group styling if present */
@@ -63,12 +63,12 @@
             cursor: pointer;
         }
         .filters button { 
-            border: none; 
-            background: #490d59; 
-            color: #fff; 
+            border: 1px solid #d1d5db; 
+            background: #ffffff; 
+            color: #111827; 
             box-shadow: 0 1px 2px rgba(16, 24, 40, 0.05); 
         }
-        .filters button:hover { background: #370a43; }
+        .filters button:hover { background: #f9fafb; border-color: #9ca3af; }
         
         .filters a.reset { 
             border: 1px solid #e5e7eb; 
@@ -82,8 +82,8 @@
             color: #111827;
         }
 
-        .btn-vs-sm { padding: 6px 12px; font-size: 12px; border-radius: 6px; text-decoration: none; border: 1px solid #d0d5dd; background: white; color: #490d59; font-weight: 500; display: inline-flex; align-items: center; gap: 4px; transition: all 0.2s; }
-        .btn-vs-sm:hover { background-color: #490d59; border-color: #490d59; text-decoration: none; color: #490d59; transform: translateY(-1px); box-shadow: 0 2px 4px rgba(73, 13, 89, 0.15); }
+        .btn-vs-sm { padding: 6px 12px; font-size: 12px; border-radius: 6px; text-decoration: none; border: 1px solid #d0d5dd; background: white; color: #111827; font-weight: 500; display: inline-flex; align-items: center; gap: 4px; transition: all 0.2s; }
+        .btn-vs-sm:hover { background-color: #111827; border-color: #111827; text-decoration: none; color: #fff; transform: translateY(-1px); box-shadow: 0 2px 4px rgba(0, 0, 0, 0.15); }
         
         /* Delete button styling */
         .btn-delete { background: #fef2f2 !important; color: #dc2626 !important; border: 1px solid #fecaca !important; }
@@ -151,26 +151,22 @@
             <h3 style="margin:0; font-size: 18px; font-weight: 600; color:#111827;">Order Filters</h3>
         </div>
         <form class="filters" method="GET">
-            <select name="school_id">
-                <option value="">All Schools</option>
+            <select name="school_id[]" multiple placeholder="Select School">
                 @foreach($schools as $school)
-                    <option value="{{ $school->id }}" @selected(($filters['school_id'] ?? '') == $school->id)>{{ $school->name }}</option>
+                    <option value="{{ $school->id }}" @selected(in_array($school->id, (array)($filters['school_id'] ?? [])))>{{ $school->name }}</option>
                 @endforeach
             </select>
-            <select name="grade">
-                <option value="">All Grades</option>
+            <select name="grade[]" multiple placeholder="Select Grade">
                 @foreach($grades as $grade)
-                    <option value="{{ $grade }}" @selected(($filters['grade'] ?? '') === $grade)>{{ $grade }}</option>
+                    <option value="{{ $grade }}" @selected(in_array($grade, (array)($filters['grade'] ?? [])))>{{ $grade }}</option>
                 @endforeach
             </select>
-            <select name="category">
-                <option value="">All Categories</option>
+            <select name="category[]" multiple placeholder="Select Category">
                 @foreach($categories as $category)
-                    <option value="{{ $category }}" @selected(($filters['category'] ?? '') === $category)>{{ $category }}</option>
+                    <option value="{{ $category }}" @selected(in_array($category, (array)($filters['category'] ?? [])))>{{ $category }}</option>
                 @endforeach
             </select>
-            <select name="product_type">
-                <option value="">All Product Types</option>
+            <select name="product_type[]" multiple placeholder="Select Product Type">
                 @foreach($productTypes as $type)
                      @php
                         // Format cleaner labels if possible
@@ -178,20 +174,20 @@
                         if($type === 'merchandised') $label = 'Merchandise';
                         if($type === 'b2s') $label = 'Back To School';
                     @endphp
-                    <option value="{{ $type }}" @selected(($filters['product_type'] ?? '') === $type)>{{ ucfirst($label) }}</option>
+                    <option value="{{ $type }}" @selected(in_array($type, (array)($filters['product_type'] ?? [])))>{{ ucfirst($label) }}</option>
                 @endforeach
             </select>
-            <select name="order_status" class="no-sort">
+            <select name="order_status[]" class="no-sort" multiple placeholder="Order Status">
                 <option value="">Order Status</option>
                 {{-- Order statuses in workflow sequence: Order Placed -> Processing -> Packed -> Shipped -> Delivered --}}
                 @foreach(['order_placed' => 'Order Placed', 'processing' => 'Processing', 'packed' => 'Packed', 'shipped' => 'Shipped', 'delivered' => 'Delivered'] as $value => $label)
-                    <option value="{{ $value }}" @selected(($filters['order_status'] ?? '') === $value)>{{ $label }}</option>
+                    <option value="{{ $value }}" @selected(in_array($value, (array)($filters['order_status'] ?? [])))>{{ $label }}</option>
                 @endforeach
             </select>
-            <select name="payment_status">
+            <select name="payment_status[]" multiple placeholder="Payment Status">
                 <option value="">Payment Status</option>
                 @foreach(['pending','paid','failed','refunded'] as $status)
-                    <option value="{{ $status }}" @selected(($filters['payment_status'] ?? '') === $status)>{{ ucfirst($status) }}</option>
+                    <option value="{{ $status }}" @selected(in_array($status, (array)($filters['payment_status'] ?? [])))>{{ ucfirst($status) }}</option>
                 @endforeach
             </select>
             <input type="text" name="order_number" placeholder="Order #" value="{{ $filters['order_number'] ?? '' }}">

@@ -19,9 +19,6 @@ class ReportController extends Controller
         // Strict scope: explicit type only (exclude exchange orders)
         $query = Order::query()
             ->where(function($q) {
-                $q->where('product_type', 'back_to_school');
-            })
-            ->where(function($q) {
                 $q->whereNull('return_exchange_status')
                   ->orWhere('return_exchange_status', '!=', 'exchange_created');
             });
@@ -31,9 +28,6 @@ class ReportController extends Controller
         
         // Product-wise Sales (exclude exchange orders)
         $productSales = Order::selectRaw('item_name, SUM(quantity) as total_qty, SUM(total_amount) as total_revenue')
-            ->where(function($q) {
-                $q->where('product_type', 'back_to_school');
-            })
             ->where(function($q) {
                 $q->whereNull('return_exchange_status')
                   ->orWhere('return_exchange_status', '!=', 'exchange_created');

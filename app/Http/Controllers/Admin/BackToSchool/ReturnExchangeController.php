@@ -19,11 +19,8 @@ class ReturnExchangeController extends Controller
         $filters = $request->only(['type', 'status', 'q']);
 
         $requests = ReturnExchangeRequest::with('order')
-            ->whereHas('order', function($q) {
-                $q->where('product_type', 'back_to_school');
-            })
-            ->when($filters['type'] ?? null, fn($q, $type) => $q->where('type', $type))
-            ->when($filters['status'] ?? null, fn($q, $status) => $q->where('status', $status))
+            ->when($filters['type'] ?? null, fn($q, $type) => $q->whereIn('type', (array)$type))
+            ->when($filters['status'] ?? null, fn($q, $status) => $q->whereIn('status', (array)$status))
             ->when($filters['q'] ?? null, function ($q, $term) {
                 $q->whereHas('order', function ($oq) use ($term) {
                     $oq->where('order_number', 'like', '%'.$term.'%')
@@ -70,23 +67,16 @@ class ReturnExchangeController extends Controller
     {
         $returnRequest->load('order');
         
-        // Security check: ensure this request belongs to BTS products
-        if ($returnRequest->order && $returnRequest->order->product_type !== 'back_to_school') {
-            abort(403, 'This return/exchange request does not belong to Back to School products.');
-        }
-        
         $product = null;
         $sizes = collect();
         
         if ($returnRequest->order) {
             $product = ProductMapping::where('product_name', $returnRequest->order->item_name)
                 ->where('school_id', $returnRequest->order->school_id)
-                ->where('product_type', 'back_to_school')
                 ->first();
 
             if (!$product) {
                  $product = ProductMapping::where('product_name', $returnRequest->order->item_name)
-                     ->where('product_type', 'back_to_school')
                      ->first();
             }
                 
@@ -187,7 +177,6 @@ class ReturnExchangeController extends Controller
             
             $product = ProductMapping::where('product_name', $order->item_name)
                 ->where('school_id', $order->school_id)
-                ->where('product_type', 'back_to_school')
                 ->first();
 
             if ($product) {
@@ -271,7 +260,6 @@ class ReturnExchangeController extends Controller
 
         $product = ProductMapping::where('product_name', $data['exchange_product_name'])
             ->where('school_id', $order->school_id)
-            ->where('product_type', 'back_to_school')
             ->first();
 
         // Use requested_quantity for partial exchanges

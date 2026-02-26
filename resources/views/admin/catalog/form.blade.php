@@ -370,34 +370,27 @@
 
             <!-- Right Column (Sidebar Style) -->
             <div style="display:flex;flex-direction:column;gap:24px;">
-                <div class="card organization-card">
+                <div class="card organization-card" style="margin-bottom: 24px;">
                     <h3 style="margin:0 0 20px;color:#111827;display:flex;align-items:center;gap:10px;">
                         <i class="fas fa-sliders-h" style="color:#490d59;background:#f7f2fb;padding:8px;border-radius:8px;"></i>
                         Organization
                     </h3>
                     
                     <div style="display:flex;flex-direction:column;gap:16px;">
-                            <div style="margin-bottom: 20px;">
+                            <div style="margin-bottom: 4px;">
                                 <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:4px;">
                                     <span style="font-size:14px; font-weight:600; color:#374151;">School *</span>
-                                    <label style="display:flex; align-items:center; gap:8px; cursor:pointer;" title="Select All Schools">
-                                        <span style="font-size:12px; font-weight:600; color:#490d59;">Select All</span>
-                                        <label class="custom-toggle" style="margin:0;">
-                                            <input type="checkbox" id="select-all-schools-toggle" onchange="toggleAllSchools(this)">
-                                            <span class="slider"></span>
-                                        </label>
-                                    </label>
                                 </div>
-                                <p style="font-size:12px; color:#6b7280; margin: 0 0 10px 0;">Hold Ctrl/Cmd to select multiple schools</p>
+                                </div>
                                 
-                                <div id="school-selection-container" style="{{ (count((array)$selectedSchoolIds) > 0 && count((array)$selectedSchoolIds) === (int)$allSchoolsCount) ? 'display:none;' : 'display:block;' }}">
-                                    <select name="school_ids[]" id="school-select" required multiple style="width: 100%; min-height: 120px; padding: 10px; border: 1px solid #d1d5db; border-radius: 8px; font-size: 14px; background: white; box-sizing: border-box;">
+                                <div id="school-selection-container">
+                                    <select name="school_ids[]" id="school-select" required style="width: 100%;">
+                                        <option value="">Select School</option>
                                         @foreach($schools as $school)
                                             <option value="{{ $school->id }}" @selected(in_array($school->id, (array)$selectedSchoolIds))>{{ $school->name }}</option>
                                         @endforeach
                                     </select>
                                 </div>
-                            </div>
                         <label id="grade-select-label">
                             <span>Grade</span>
                             <select name="grade">
@@ -428,29 +421,6 @@
                             </select>
                         </label>
                         
-                        <!-- Product Tag Field -->
-                        <!-- Product Tag Field (Commented out as per request) -->
-                        {{-- 
-                        <div style="margin-top:10px; border:1px solid #e5e7eb; padding:10px; border-radius:8px; background:#f9fafb;">
-                            <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:8px;">
-                                <span style="font-weight:600; font-size:13px; color:#374151;">Show Product Tag on Card?</span>
-                                <label class="switch" style="position:relative; display:inline-block; width:36px; height:20px; margin-bottom:0;">
-                                    <input type="checkbox" name="show_product_tag" id="show_product_tag_toggle" value="1" @checked(old('show_product_tag', $product->show_product_tag ?? false)) style="opacity:0; width:0; height:0;">
-                                    <span class="slider round" style="position:absolute; cursor:pointer; top:0; left:0; right:0; bottom:0; background-color:#ccc; transition:.4s; border-radius:34px;"></span>
-                                </label>
-                            </div>
-                            <style>
-                                .switch input:checked + .slider { background-color: #490d59; }
-                                .switch input:checked + .slider:before { transform: translateX(16px); }
-                                .slider:before { position: absolute; content: ""; height: 16px; width: 16px; left: 2px; bottom: 2px; background-color: white; transition: .4s; border-radius: 50%; }
-                            </style>
-                            <div id="product_tag_container" style="display: {{ old('show_product_tag', $product->show_product_tag ?? false) ? 'block' : 'none' }};">
-                                <input type="text" name="product_tag" id="product_tag_input" value="{{ old('product_tag', $product->product_tag) }}" placeholder="e.g. NEW ARRIVAL" style="width:100%; box-sizing:border-box;">
-                                <small style="color:#6b7280; font-size:11px; margin-top:4px; display:block;">Enter text to display on the product card.</small>
-                            </div>
-                        </div>
-                        --}}
-
                         <script>
                             document.addEventListener('DOMContentLoaded', function() {
                                 const productTypeTags = @json($productTypeTags ?? []);
@@ -459,18 +429,17 @@
                                 const tagToggle = document.getElementById('show_product_tag_toggle');
                                 const tagContainer = document.getElementById('product_tag_container');
 
-                                // Handle Toggle Change
-                                tagToggle.addEventListener('change', function() {
-                                    if (this.checked) {
-                                        tagContainer.style.display = 'block';
-                                    } else {
-                                        tagContainer.style.display = 'none';
-                                    }
-                                });
+                                if (tagToggle) {
+                                    tagToggle.addEventListener('change', function() {
+                                        if (this.checked) {
+                                            tagContainer.style.display = 'block';
+                                        } else {
+                                            tagContainer.style.display = 'none';
+                                        }
+                                    });
+                                }
 
-                                // Handle Product Type Change
                                 if (productTypeSelect) {
-                                    // Function to filter categories
                                     function filterCategories(type) {
                                         const categorySelect = document.getElementById('category-select');
                                         if (!categorySelect) return;
@@ -479,16 +448,12 @@
                                         let firstVisible = null;
                                         let hasVisible = false;
 
-                                        // Define mapping from Product Type to Category Type
-                                        // Product Types: authorized, optional, merchandised, back_to_school
-                                        // Category Types: school, merchandise, back_to_school
-                                        let targetType = 'school'; // Default
+                                        let targetType = 'school'; 
                                         if (type === 'merchandised') targetType = 'merchandise';
                                         else if (type === 'back_to_school') targetType = 'back_to_school';
                                         
                                         options.forEach(opt => {
                                             const catType = opt.getAttribute('data-type');
-                                            // Show if types match
                                             if (catType === targetType) {
                                                 opt.style.display = '';
                                                 opt.disabled = false;
@@ -496,53 +461,34 @@
                                                 hasVisible = true;
                                             } else {
                                                 opt.style.display = 'none';
-                                                opt.disabled = true; // Also disable to prevent submitting hidden values if browser allows selection
+                                                opt.disabled = true; 
                                             }
                                         });
 
-                                        // Reset selection if current selection is now hidden
-                                        // Or if no selection, maybe select first visible?
-                                        // Let's check current value
                                         const currentVal = categorySelect.value;
                                         if (currentVal) {
                                             const selectedOpt = categorySelect.querySelector(`option[value="${currentVal}"]`);
                                             if (selectedOpt && selectedOpt.style.display === 'none') {
-                                                categorySelect.value = ''; // Reset
+                                                categorySelect.value = ''; 
                                             }
                                         }
                                     }
 
-                                    // Initial Filter (if value exists)
                                     if (productTypeSelect.value) {
                                         filterCategories(productTypeSelect.value);
                                     }
 
                                     productTypeSelect.addEventListener('change', function() {
                                         const selectedType = this.value;
-                                        
-                                        // Update Category Options
                                         filterCategories(selectedType);
-
                                         if (selectedType && productTypeTags[selectedType]) {
-                                            // Only auto-fill if the user hasn't manually entered something differently (optional check, but safer to just update as per requirement)
-                                            // The requirement says: "defaultly accordingo that product te initially defaulty take that value"
-                                            // We will auto-fill it.
-                                            tagInput.value = productTypeTags[selectedType];
-                                            tagToggle.checked = true;
-                                            tagToggle.dispatchEvent(new Event('change'));
+                                            if (tagInput) tagInput.value = productTypeTags[selectedType];
+                                            if (tagToggle) {
+                                                tagToggle.checked = true;
+                                                tagToggle.dispatchEvent(new Event('change'));
+                                            }
                                         } else {
-                                            // If no default tag, user said "make it empty"
-                                            // Only empty if it's strictly driven by type? 
-                                            // Let's safe-guard: if the input was matching a previous type default or empty, clear it.
-                                            // For now, simpler: Clear it if no default tag found for this type, or leave as is if user typed custom?
-                                            // User said: "on that tag if there was not make it empty make it ike that"
-                                            // So I will clear it.
-                                            tagInput.value = '';
-                                            // Should we turn off toggle? Maybe not, just clear value. 
-                                            // Or maybe turn off toggle if empty? 
-                                            // Let's keep toggle state but value empty.
-                                            // Or maybe default behavior should be off if no tag?
-                                            // Let's just clear the value.
+                                            if (tagInput) tagInput.value = '';
                                         }
                                     });
                                 }
@@ -2817,18 +2763,16 @@ document.addEventListener('DOMContentLoaded', function() {
 
 function toggleAllSchools(toggle) {
     const sel = document.getElementById('school-select');
-    const container = document.getElementById('school-selection-container');
-    if (!sel || !container) return;
+    if (!sel || !sel.tomselect) return;
     
     if (toggle.checked) {
         // Select all options
-        Array.from(sel.options).forEach(o => o.selected = true);
-        container.style.display = 'none';
+        const allValues = Array.from(sel.options).map(o => o.value).filter(v => v !== "");
+        sel.tomselect.setValue(allValues);
         sel.required = false;
     } else {
         // Deselect all options
-        Array.from(sel.options).forEach(o => o.selected = false);
-        container.style.display = 'block';
+        sel.tomselect.clear();
         sel.required = true;
     }
 }

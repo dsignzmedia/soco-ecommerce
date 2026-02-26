@@ -20,23 +20,62 @@
         .ts-control {
             border: 1px solid var(--border) !important;
             border-radius: 12px !important;
-            padding: 10px 14px !important;
+            padding: 4px 12px !important;
             font-family: inherit !important;
-            font-size: 14px !important;
+            font-size: 13px !important;
             color: var(--heading) !important;
             background-color: #fff !important;
             box-shadow: none !important;
-            min-height: 46px; /* Match standard input height */
+            min-height: 30px !important;
+        .ts-control {
+            min-height: 30px !important;
+            height: auto !important;
             display: flex;
             align-items: center;
+            flex-wrap: wrap !important;
+            gap: 4px !important;
+            border: 1px solid #d1d5db !important;
+            border-radius: 8px !important;
+            padding: 4px 12px !important;
+        }
+        .ts-control > input {
+            border: none !important;
+            box-shadow: none !important;
+            padding: 0 !important;
+            margin: 0 !important;
+            height: 22px !important;
+            line-height: 22px !important;
+        }
+        .ts-wrapper {
+            border: none !important;
+            box-shadow: none !important;
         }
         .ts-control:focus, .ts-control.focus {
-            border-color: var(--primary) !important;
-            box-shadow: 0 0 0 4px rgba(73, 13, 89, 0.1) !important;
+            border-color: #111827 !important;
+            box-shadow: 0 0 0 4px rgba(17, 24, 39, 0.1) !important;
         }
+        .ts-wrapper.multi .ts-control > div,
         .ts-control .item {
-            display: flex;
-            align-items: center;
+            display: flex !important;
+            align-items: center !important;
+            background: #c3c3c3 !important;
+            border: 1px solid #b0b0b0 !important;
+            border-radius: 6px !important;
+            padding: 2px 8px !important;
+            margin: 2px !important;
+            font-size: 13px !important;
+            color: #303030 !important;
+            font-weight: 500 !important;
+        }
+        .ts-control .item .remove {
+            border-left: 1px solid #cbd5e1 !important;
+            margin-left: 6px !important;
+            padding-left: 4px !important;
+            opacity: 0.7;
+        }
+        .ts-control .item .remove:hover {
+            background: rgba(241, 245, 249, 0.5) !important;
+            opacity: 1;
         }
         .ts-dropdown {
             border: 1px solid rgba(15, 23, 42, 0.05) !important;
@@ -74,13 +113,47 @@
             margin-bottom: 2px !important;
         }
         .ts-dropdown .active {
-            background-color: var(--primary-light) !important;
-            color: var(--primary) !important;
+            background-color: #f9fafb !important;
+            color: #111827 !important;
             font-weight: 500 !important;
         }
         .ts-dropdown .option.selected {
-            background-color: var(--primary) !important;
-            color: #fff !important;
+            background-color: #f9fafb !important;
+            color: #111827 !important;
+            font-weight: 600 !important;
+        }
+
+        /* Tag Styling for Multi-Select */
+        .ts-control .item {
+            display: inline-flex !important;
+            align-items: center !important;
+            gap: 6px !important;
+            color: #111827 !important;
+            font-size: 14px !important;
+            font-weight: 500 !important;
+            padding: 0 !important;
+            margin: 0 !important;
+            background: transparent !important;
+            border: none !important;
+        }
+        .ts-control .item .remove {
+            color: #111827 !important;
+            opacity: 0.7;
+            padding: 0 !important;
+            border: none !important;
+            margin-left: 2px !important;
+            font-size: 14px !important;
+            text-decoration: none !important;
+        }
+        .ts-control .item .remove:hover {
+            opacity: 1;
+            background: none !important;
+        }
+        /* Fix for multi-select height expansion */
+        .ts-control {
+            flex-wrap: wrap !important;
+            height: auto !important;
+            min-height: 46px !important;
         }
     </style>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -780,8 +853,8 @@
             document.querySelectorAll('select:not(.no-tom)').forEach((el) => {
                 // Skip sorting for order_status dropdowns to maintain workflow order
                 const shouldSort = !el.name || el.name !== 'order_status';
-                new TomSelect(el, {
-                    plugins: [],
+                const settings = {
+                    plugins: el.multiple ? ['remove_button'] : [],
                     // controlInput: null, // Removed to enable search
                     allowEmptyOption: true,
                     create: false,
@@ -835,7 +908,10 @@
                             window.removeEventListener('scroll', this.scrollListener, { capture: true });
                         }
                     }
-                });
+                };
+
+                // Store instance on the original element for access by other scripts
+                el.tomselect = new TomSelect(el, settings);
             });
         });
     </script>

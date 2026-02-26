@@ -320,7 +320,8 @@ Route::prefix('InventoryAdmin')->name('inventory.admin.')->group(function () {
         Route::get('/orders/{order}', [App\Http\Controllers\Admin\Inventory\OrderController::class, 'show'])->name('orders.show');
         Route::post('/orders/{order}/status', [App\Http\Controllers\Admin\Inventory\OrderController::class, 'updateStatus'])->name('orders.status');
         Route::get('/orders/{order}/packing-slip', [App\Http\Controllers\Admin\Inventory\OrderController::class, 'packingSlip'])->name('orders.packing-slip');
-
+        Route::get('/orders/{order}/invoice', [App\Http\Controllers\Admin\Inventory\OrderController::class, 'invoiceView'])->name('orders.invoice');
+        Route::get('/orders/{order}/invoice-download', [App\Http\Controllers\Admin\Inventory\OrderController::class, 'invoiceDownload'])->name('orders.invoice-download');
         Route::get('/orders/{order}/print-label', [App\Http\Controllers\Admin\Inventory\OrderController::class, 'printLabel'])->name('orders.print-label');
         Route::post('/orders/{order}/cancel-shipment', [App\Http\Controllers\Admin\Inventory\OrderController::class, 'cancelShipment'])->name('orders.cancel-shipment');
 

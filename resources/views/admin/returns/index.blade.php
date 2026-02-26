@@ -21,17 +21,19 @@
             flex-wrap: wrap; /* Allow wrap on small screens but keep side-by-side on large */
         }
         .filter-input-rounded {
-            padding: 10px 16px;
-            border: 1px solid #e5e7eb;
-            border-radius: 12px;
-            font-size: 14px;
+            width: 100%;
+            height: 42px;
+            padding: 0 12px;
+            border-radius: 8px !important;
+            font-size: 13px;
             color: #374151;
             outline: none;
             background-color: #fff;
-            height: 46px;
+            min-height: 30px;
+            height: auto;
             font-family: inherit;
-            min-width: 150px; /* Reduced min-width slightly to fit more */
-            flex: 1; /* Allow them to grow */
+            min-width: 150px;
+            flex: 1;
         }
         select.filter-input-rounded {
             appearance: none;
@@ -49,8 +51,8 @@
             box-shadow: 0 0 0 4px rgba(73, 13, 89, 0.1);
         }
         .btn-filter, .btn-reset {
-            height: 46px;
-            padding: 0 24px;
+            height: 30px;
+            padding: 0 16px;
             border-radius: 12px;
             font-weight: 600;
             font-size: 14px;
@@ -234,33 +236,33 @@
     <div class="filters-card">
         <form method="GET" action="{{ route('master.admin.returns-exchange.index') }}" class="filter-form-grid">
             <div style="flex:1; min-width: 150px;">
-                <select name="type" class="filter-input-rounded no-tom" style="width:100%;">
+                <select name="type[]" multiple class="filter-input-rounded" style="width:100%;" placeholder="Select Type">
                     <option value="">All Types</option>
-                    <option value="return" {{ ($filters['type'] ?? '') === 'return' ? 'selected' : '' }}>Return</option>
-                    <option value="exchange" {{ ($filters['type'] ?? '') === 'exchange' ? 'selected' : '' }}>Exchange</option>
+                    <option value="return" @selected(in_array('return', (array)($filters['type'] ?? [])))>Return</option>
+                    <option value="exchange" @selected(in_array('exchange', (array)($filters['type'] ?? [])))>Exchange</option>
                 </select>
             </div>
             <div style="flex:1; min-width: 150px;">
-                <select name="status" class="filter-input-rounded no-tom" style="width:100%;">
+                <select name="status[]" multiple class="filter-input-rounded" style="width:100%;" placeholder="Select Status">
                     <option value="">All Status</option>
                     @foreach(['pending','approved','rejected','received_restocked','received_discarded','completed'] as $st)
-                        <option value="{{ $st }}" {{ ($filters['status'] ?? '') === $st ? 'selected' : '' }} style="text-transform:capitalize;">{{ str_replace('_',' ', $st) }}</option>
+                        <option value="{{ $st }}" @selected(in_array($st, (array)($filters['status'] ?? []))) style="text-transform:capitalize;">{{ str_replace('_',' ', $st) }}</option>
                     @endforeach
                 </select>
             </div>
             <div style="flex:1; min-width: 150px;">
-                <select name="school_id" class="filter-input-rounded no-tom" style="width:100%;">
+                <select name="school_id[]" multiple class="filter-input-rounded" style="width:100%;" placeholder="Select School">
                     <option value="">All Schools</option>
                     @foreach($schools as $school)
-                        <option value="{{ $school->id }}" @selected(($filters['school_id'] ?? '') == $school->id)>{{ $school->name }}</option>
+                        <option value="{{ $school->id }}" @selected(in_array($school->id, (array)($filters['school_id'] ?? [])))>{{ $school->name }}</option>
                     @endforeach
                 </select>
             </div>
             <div style="flex:1; min-width: 150px;">
-                <select name="grade" class="filter-input-rounded no-tom" style="width:100%;">
+                <select name="grade[]" multiple class="filter-input-rounded" style="width:100%;" placeholder="Select Grade">
                     <option value="">All Grades</option>
                     @foreach($grades as $grade)
-                        <option value="{{ $grade }}" @selected(($filters['grade'] ?? '') === $grade)>{{ $grade }}</option>
+                        <option value="{{ $grade }}" @selected(in_array($grade, (array)($filters['grade'] ?? [])))>{{ $grade }}</option>
                     @endforeach
                 </select>
             </div>

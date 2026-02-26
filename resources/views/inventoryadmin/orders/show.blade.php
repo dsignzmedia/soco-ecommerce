@@ -5,116 +5,180 @@
 @section('page_subheading', 'Fulfillment details and status updates')
 
 @section('content')
-    <div style="margin-bottom:24px;">
-        <a href="{{ route('inventory.admin.orders.index') }}" style="color:#4f46e5;font-weight:600;text-decoration:none;">← Back to Orders List</a>
-    </div>
+<style>
+    .card{
+        margin-top:10px !important;
+    }
+    .action-btn {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        padding: 12px 20px;
+        border-radius: 12px;
+        font-weight: 600;
+        font-size: 14px;
+        text-decoration: none;
+        transition: all 0.2s ease;
+        border: none;
+        cursor: pointer;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+    }
+    .action-btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
+    }
+    .action-btn-primary {
+        background: #111827;
+        color: #ffffff;
+    }
+    .action-btn-primary:hover {
+        background: #1f2937;
+    }
+    .action-btn-secondary {
+        background: #ffffff;
+        color: #111827;
+        border: 2px solid #111827;
+    }
+    .action-btn-secondary:hover {
+        background: #f9fafb;
+    }
+    .action-btn-success {
+        background: #10b981;
+        color: #ffffff;
+    }
+    .action-btn-success:hover {
+        background: #059669;
+    }
+</style>
 
-    <div style="display:grid;grid-template-columns:2fr 1fr;gap:24px;">
-        <!-- Left Column: Order Details -->
-        <div style="display:flex;flex-direction:column;gap:24px;">
-            <!-- Items -->
-            <div class="card">
-                <h4 style="margin:0 0 16px;color:#0f172a;">Items to Fulfill</h4>
-                <table style="width:100%;border-collapse:collapse;">
-                    <thead>
-                        <tr style="border-bottom:1px solid #e5e7eb;">
-                            <th style="text-align:left;padding:8px;font-size:12px;color:#64748b;">Item</th>
-                            <th style="text-align:left;padding:8px;font-size:12px;color:#64748b;">Size</th>
-                            <th style="text-align:left;padding:8px;font-size:12px;color:#64748b;">Qty</th>
-                            <th style="text-align:left;padding:8px;font-size:12px;color:#64748b;">Category</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <tr>
-                            <td style="padding:12px 8px;font-weight:500;">{{ $order->item_name }}</td>
-                            <td style="padding:12px 8px;">{{ $order->size }}</td>
-                            <td style="padding:12px 8px;">{{ $order->quantity }}</td>
-                            <td style="padding:12px 8px;">{{ $order->category }}</td>
-                        </tr>
-                    </tbody>
-                </table>
-            </div>
-
-            <!-- Shipping Info -->
-            <div class="card">
-                <h4 style="margin:0 0 16px;color:#0f172a;">Shipping Information</h4>
-                <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
-                    <div>
-                        <p style="margin:0 0 4px;font-size:12px;color:#64748b;text-transform:uppercase;">Customer</p>
-                        <p style="margin:0;font-weight:500;">{{ $order->customer_name }}</p>
-                        <p style="margin:4px 0 0;font-size:14px;color:#475467;">{{ $order->customer_phone }}</p>
-                    </div>
-                    <div>
-                        <p style="margin:0 0 4px;font-size:12px;color:#64748b;text-transform:uppercase;">Address</p>
-                        <p style="margin:0;line-height:1.5;">{{ $order->customer_address }}</p>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Notes -->
-            <div class="card">
-                <h4 style="margin:0 0 16px;color:#0f172a;">Order Notes</h4>
-                <p style="margin:0;color:#475467;font-style:italic;">{{ $order->notes ?? 'No notes provided.' }}</p>
-            </div>
+    <section class="card" style="display:flex;justify-content:space-between;align-items:center;">
+        <div>
+            <p style="margin:0;color:#475467;">Placed on {{ optional($order->order_date)->format('d M Y') }} • {{ $order->school?->name ?? 'Unoffiliated school' }}</p>
         </div>
+        <a href="{{ route('inventory.admin.orders.index') }}" style="color:#111827;font-weight:600;text-decoration:none;">← Back to orders</a>
+    </section>
 
-        <!-- Right Column: Actions -->
-        <div style="display:flex;flex-direction:column;gap:24px;">
-            <!-- Status Update -->
-            <div class="card" style="background:#f8fafc;border:1px solid #e2e8f0;">
-                <h4 style="margin:0 0 16px;color:#0f172a;">Update Status</h4>
-                <form method="POST" action="{{ route('inventory.admin.orders.status', $order) }}">
-                    @csrf
-                    <div style="margin-bottom:16px;">
-                        <label style="display:block;font-size:13px;font-weight:500;margin-bottom:6px;">Current Status</label>
-                        <select name="order_status" style="width:100%;padding:8px;border:1px solid #cbd5e1;border-radius:6px;">
-                            <option value="order_placed" @selected($order->order_status == 'order_placed')>Order Placed</option>
-                            <option value="processing" @selected($order->order_status == 'processing')>Processing</option>
-                            <option value="packed" @selected($order->order_status == 'packed')>Packed</option>
-                            <option value="shipped" @selected($order->order_status == 'shipped')>Shipped</option>
-                            <option value="delivered" @selected($order->order_status == 'delivered')>Delivered</option>
-                        </select>
-                    </div>
-                    
-                    <div style="margin-bottom:16px;">
-                        <label style="display:block;font-size:13px;font-weight:500;margin-bottom:6px;">Tracking Number</label>
-                        <input type="text" name="tracking_number" value="{{ $order->tracking_number }}" placeholder="Enter tracking ID" style="width:100%;padding:8px;border:1px solid #cbd5e1;border-radius:6px;">
-                    </div>
-
-                    <div style="margin-bottom:16px;">
-                        <label style="display:block;font-size:13px;font-weight:500;margin-bottom:6px;">Courier Name</label>
-                        <input type="text" name="courier_name" value="{{ $order->courier_name }}" placeholder="e.g. FedEx, DHL" style="width:100%;padding:8px;border:1px solid #cbd5e1;border-radius:6px;">
-                    </div>
-
-                    <div style="margin-bottom:16px;">
-                        <label style="display:block;font-size:13px;font-weight:500;margin-bottom:6px;">Internal Notes</label>
-                        <textarea name="notes" rows="3" style="width:100%;padding:8px;border:1px solid #cbd5e1;border-radius:6px;">{{ $order->notes }}</textarea>
-                    </div>
-
-                    <button type="submit" style="width:100%;background:#4f46e5;color:#fff;border:none;padding:10px;border-radius:6px;font-weight:600;cursor:pointer;">Update Order</button>
-                </form>
-            </div>
-
-            <!-- Documents -->
-            <div class="card">
-                <h4 style="margin:0 0 16px;color:#0f172a;">Documents</h4>
-                <div style="display:flex;flex-direction:column;gap:12px;">
-                    <a href="{{ route('inventory.admin.orders.packing-slip', $order) }}" target="_blank" style="display:flex;align-items:center;gap:10px;text-decoration:none;color:#475467;padding:8px;border:1px solid #e2e8f0;border-radius:6px;transition:background 0.2s;">
-                        <span style="font-size:20px;">📄</span>
-                        <div>
-                            <span style="display:block;font-weight:500;color:#0f172a;">Packing Slip</span>
-                            <span style="font-size:12px;">Download PDF</span>
-                        </div>
-                    </a>
-                    <a href="{{ route('inventory.admin.orders.print-label', $order) }}" target="_blank" style="display:flex;align-items:center;gap:10px;text-decoration:none;color:#475467;padding:8px;border:1px solid #e2e8f0;border-radius:6px;transition:background 0.2s;">
-                        <span style="font-size:20px;">🏷️</span>
-                        <div>
-                            <span style="display:block;font-weight:500;color:#0f172a;">Shipping Label</span>
-                            <span style="font-size:12px;">Print Label</span>
-                        </div>
-                    </a>
-                </div>
-            </div>
+    <section class="card" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:16px;">
+        <div>
+            <h4 style="margin:0 0 8px;color:#111827;">Customer</h4>
+            <p style="margin:0;color:#475467;">
+                {{ $order->customer_name }}<br>
+                {{ $order->customer_phone }}<br>
+                {{ $order->customer_email ?? 'No email' }}<br>
+                {{ $order->customer_address }}
+            </p>
         </div>
-    </div>
+        <div>
+            <h4 style="margin:0 0 8px;color:#111827;">Student / School</h4>
+            <p style="margin:0;color:#475467;">
+                {{ $order->student_name ?? '—' }}<br>
+                Grade {{ $order->grade ?? '—' }}<br>
+                {{ $order->school?->name ?? '—' }}
+            </p>
+        </div>
+        <div>
+            <h4 style="margin:0 0 8px;color:#111827;">Status</h4>
+            <p style="margin:0;color:#475467;">
+                Order: {{ ucfirst(str_replace('_', ' ', $order->order_status)) }}<br>
+                Payment: {{ ucfirst($order->payment_status) }}<br>
+                Tracking: {{ $order->tracking_number ?? 'Pending' }}<br>
+                Returns/Exchange: {{ $order->return_exchange_status ?? '—' }}
+            </p>
+        </div>
+    </section>
+
+    <section class="card">
+        <h4 style="margin:0 0 12px;color:#111827;">Items</h4>
+        <table style="width:100%;border-collapse:collapse;">
+            <thead>
+                <tr>
+                    <th style="text-align:left;padding:8px;border-bottom:1px solid #e5e7eb;">Item</th>
+                    <th style="text-align:left;padding:8px;border-bottom:1px solid #e5e7eb;">Qty</th>
+                    <th style="text-align:left;padding:8px;border-bottom:1px solid #e5e7eb;">Size</th>
+                    <th style="text-align:left;padding:8px;border-bottom:1px solid #e5e7eb;">Category</th>
+                    <th style="text-align:right;padding:8px;border-bottom:1px solid #e5e7eb;">Total</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td style="padding:8px;">{{ $order->item_name }}</td>
+                    <td style="padding:8px;">{{ $order->quantity }}</td>
+                    <td style="padding:8px;">{{ $order->size }}</td>
+                    <td style="padding:8px;">{{ $order->category }}</td>
+                    <td style="padding:8px;text-align:right;">₹{{ number_format($order->total_amount, 2) }}</td>
+                </tr>
+            </tbody>
+        </table>
+    </section>
+
+    <section class="card" style="display:grid;grid-template-columns: 1fr 2fr; gap:24px;">
+        <div>
+            <h4 style="margin:0 0 8px;color:#111827;">Financials</h4>
+            <p style="margin:0;color:#475467;">
+                Subtotal (inc tax): ₹{{ number_format($order->total_amount, 2) }}<br>
+                Tax: ₹{{ number_format($order->tax_amount, 2) }}<br>
+                Shipping: ₹{{ number_format($order->shipping_cost, 2) }}
+            </p>
+            @if($order->notes)
+                <div style="margin-top:16px;">
+                    <h4 style="margin:0 0 4px;color:#111827;">Internal Notes</h4>
+                    <p style="margin:0;color:#475467;font-style:italic;">{{ $order->notes }}</p>
+                </div>
+            @endif
+        </div>
+        <div>
+            <h4 style="margin:0 0 8px;color:#111827;">Update status</h4>
+            <form method="POST" action="{{ route('inventory.admin.orders.status', $order) }}" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:10px;">
+                @csrf
+                <select name="order_status" style="width:100%;padding:10px;border:1px solid #d1d5db;border-radius:12px;">
+                    @foreach(['order_placed' => 'Order Placed', 'processing' => 'Processing', 'packed' => 'Packed', 'shipped' => 'Shipped', 'delivered' => 'Delivered'] as $value => $label)
+                        <option value="{{ $value }}" @selected($order->order_status === $value)>{{ $label }}</option>
+                    @endforeach
+                    <option value="cancelled" @selected($order->order_status === 'cancelled')>Cancel Shipment</option>
+                </select>
+                <input type="text" name="tracking_number" placeholder="Tracking number" value="{{ $order->tracking_number }}" style="width:100%;padding:10px;border:1px solid #d1d5db;border-radius:12px;">
+                <input type="text" name="courier_name" placeholder="Courier Name" value="{{ $order->courier_name }}" style="width:100%;padding:10px;border:1px solid #d1d5db;border-radius:12px;">
+                <textarea name="notes" placeholder="Add internal notes..." rows="1" style="width:100%;padding:10px;border:1px solid #d1d5db;border-radius:12px;grid-column: 1 / -1;">{{ $order->notes }}</textarea>
+                <button type="submit" style="grid-column: 1 / -1; border:none;background:#111827;color:#fff;border-radius:12px;padding:12px 16px;font-weight:600;cursor:pointer;">Update Order Details</button>
+            </form>
+        </div>
+    </section>
+
+    <section class="card" style="display:flex;gap:12px;flex-wrap:wrap;">
+        <a href="{{ route('inventory.admin.orders.invoice', $order) }}" class="action-btn action-btn-primary">
+            <i class="fas fa-file-invoice"></i>
+            View invoice
+        </a>
+        <a href="{{ route('inventory.admin.orders.invoice-download', $order) }}" class="action-btn action-btn-secondary">
+            <i class="fas fa-download"></i>
+            Download PDF
+        </a>
+        <a href="{{ route('inventory.admin.orders.packing-slip', $order) }}" class="action-btn action-btn-secondary">
+            <i class="fas fa-box-open"></i>
+            Packing Slip
+        </a>
+        <a href="{{ route('inventory.admin.orders.print-label', $order) }}" class="action-btn action-btn-secondary">
+            <i class="fas fa-barcode"></i>
+            Print Label
+        </a>
+        <button type="button" class="action-btn action-btn-success" onclick="markAsShipped()">
+            <i class="fas fa-shipping-fast"></i>
+            Mark shipped
+        </button>
+    </section>
+
+    <script>
+        function markAsShipped() {
+            if (confirm('Mark this order as shipped?')) {
+                const form = document.querySelector('form[action*="status"]');
+                if (form) {
+                    const orderStatusSelect = form.querySelector('select[name="order_status"]');
+                    if (orderStatusSelect) {
+                        orderStatusSelect.value = 'shipped';
+                        form.submit();
+                    }
+                }
+            }
+        }
+    </script>
 @endsection
