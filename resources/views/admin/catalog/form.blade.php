@@ -384,10 +384,10 @@
                                 </div>
                                 
                                 <div id="school-selection-container">
-                                    <select name="school_ids[]" id="school-select" required style="width: 100%;">
+                                    <select name="school_id" id="school-select" required style="width: 100%;">
                                         <option value="">Select School</option>
                                         @foreach($schools as $school)
-                                            <option value="{{ $school->id }}" @selected(in_array($school->id, (array)$selectedSchoolIds))>{{ $school->name }}</option>
+                                            <option value="{{ $school->id }}" @selected($school->id == $selectedSchoolId)>{{ $school->name }}</option>
                                         @endforeach
                                     </select>
                                 </div>

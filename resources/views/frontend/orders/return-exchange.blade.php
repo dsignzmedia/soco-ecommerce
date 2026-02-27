@@ -19,7 +19,7 @@
                 </div>
             </div>
 
-            <form action="{{ route('frontend.parent.request-return-exchange') }}" method="POST" enctype="multipart/form-data">
+            <form id="return-exchange-form" action="{{ route('frontend.parent.request-return-exchange') }}" method="POST" enctype="multipart/form-data">
                 @csrf
                 <div class="row">
                     <div class="col-12">
@@ -32,13 +32,25 @@
                                     <label class="form-label fw-bold">
                                         <span class="step-number">1.</span> Select Reason
                                     </label>
-                                    <select class="form-select" name="reason" required>
+                                    <select class="form-select" id="reason-select" required onchange="toggleOtherReason(this)">
                                         <option value="">Choose a reason</option>
                                         <option value="WRONG SIZE">Wrong Size</option>
                                         <option value="WRONG ITEM">Wrong Item</option>
                                         <option value="DAMAGED PRODUCT">Damaged Product</option>
                                         <option value="OTHER">Other</option>
                                     </select>
+                                    {{-- Hidden input that carries the final reason value to the server --}}
+                                    <input type="hidden" name="reason" id="reason-hidden" value="">
+
+                                    <!-- Other reason text box (hidden by default) -->
+                                    <div id="other-reason-box" style="display:none; margin-top:12px;">
+                                        <label class="small fw-semibold text-dark mb-1 d-block">Please describe your reason <span class="text-danger">*</span></label>
+                                        <textarea id="other-reason-text" rows="3"
+                                            name="other_reason"
+                                            class="form-control"
+                                            placeholder="Tell us more about why you want to exchange this item..."
+                                            style="resize:vertical;border-radius:8px;">{{ old('other_reason') }}</textarea>
+                                    </div>
                                 </div>
 
                                 <!-- 2. Choose Quantity -->
@@ -177,19 +189,24 @@
                                     </div>
                                 </div>
 
-                                <!-- Size change acknowledgement Toggle -->
-                           <!--      <div class="mb-4">
-                                    <div style="display: flex; align-items: center; gap: 12px;">
-                                        <label class="toggle-switch-label" style="display: flex; align-items: center; cursor: pointer; margin: 0;">
-                                            <input type="checkbox" name="accept_size_change" id="accept_size_change" value="1" required class="toggle-switch-input">
-                                            <span class="toggle-switch-slider"></span>
-                                        </label>
-                                        <span style="margin: 0;">
-                                            I confirm I am requesting an <strong>exchange</strong> and the <strong>size will be changed</strong> for the selected item(s).
-                                        </span>
-                                    </div>
-                                </div> -->
+                               
 
+                                <!-- Global Error Message Area -->
+                                @if($errors->any())
+                                    <div class="alert alert-danger mb-4" style="border-radius: 12px;">
+                                        <ul class="mb-0">
+                                            @foreach($errors->all() as $error)
+                                                <li>{{ $error }}</li>
+                                            @endforeach
+                                        </ul>
+                                    </div>
+                                @endif
+                                
+                                @if(session('error'))
+                                    <div class="alert alert-danger mb-4" style="border-radius: 12px;">
+                                        {{ session('error') }}
+                                    </div>
+                                @endif
 
                                 <button type="submit" class="vs-btn" id="submit-btn" disabled>
                                     <i class="fas fa-paper-plane me-2"></i> Submit Request
@@ -607,144 +624,81 @@
     </style>
 
     <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            const itemCheckboxes = document.querySelectorAll('.item-checkbox');
-            const acceptTermsCheckbox = document.getElementById('accept_terms');
-            const acceptSizeCheckbox = document.getElementById('accept_size_change');
-            const submitBtn = document.getElementById('submit-btn');
-            
-            // Enable/disable submit button based on checkboxes that exist
-            if (submitBtn) {
-                const updateSubmit = () => {
-                    let canSubmit = true;
-                    if (acceptTermsCheckbox) {
-                        canSubmit = canSubmit && acceptTermsCheckbox.checked;
-                    }
-                    if (acceptSizeCheckbox) {
-                        canSubmit = canSubmit && acceptSizeCheckbox.checked;
-                    }
-                    submitBtn.disabled = !canSubmit;
-                };
-                
-                if (acceptTermsCheckbox) acceptTermsCheckbox.addEventListener('change', updateSubmit);
-                if (acceptSizeCheckbox) acceptSizeCheckbox.addEventListener('change', updateSubmit);
-                updateSubmit();
-            }
-            
-            itemCheckboxes.forEach(checkbox => {
-                // Show quantity selector when item is checked
-                checkbox.addEventListener('change', function() {
-                    const itemId = this.value;
-                    toggleQuantityInput(itemId);
-                });
-            });
-            
-            // Initialize quantity selectors for all items (show them, enable/disable based on checkbox state)
-            itemCheckboxes.forEach(checkbox => {
-                toggleQuantityInput(checkbox.value);
-            });
+document.addEventListener('DOMContentLoaded', function() {
+
+    const itemCheckboxes = document.querySelectorAll('.item-checkbox');
+    const acceptTermsCheckbox = document.getElementById('accept_terms');
+    const submitBtn = document.getElementById('submit-btn');
+    const returnForm = document.getElementById('return-exchange-form');
+
+    /* ------------------------------
+       SUBMIT BUTTON CONTROL
+    ------------------------------ */
+
+    function updateSubmit() {
+        const checkedBoxes = document.querySelectorAll('.item-checkbox:checked');
+        const hasItemsSelected = checkedBoxes.length > 0;
+        const isTermsAccepted = acceptTermsCheckbox && acceptTermsCheckbox.checked;
+
+        submitBtn.disabled = !(hasItemsSelected && isTermsAccepted);
+    }
+
+    if (acceptTermsCheckbox) {
+        acceptTermsCheckbox.addEventListener('change', updateSubmit);
+    }
+
+    itemCheckboxes.forEach(cb => {
+        cb.addEventListener('change', function() {
+            toggleQuantityInput(this.value);
+            updateSubmit();
         });
-        
-        function toggleQuantityInput(itemId) {
-            const checkbox = document.querySelector(`input[value="${itemId}"].item-checkbox`);
-            const quantitySelector = document.getElementById(`quantity-selector-${itemId}`);
-            const quantityInput = document.getElementById(`quantity-${itemId}`);
-            const decrementBtn = document.getElementById(`decrement-${itemId}`);
-            const incrementBtn = document.getElementById(`increment-${itemId}`);
-            const exchangeSizeSelect = document.getElementById(`exchange-size-${itemId}`);
-            
-            if (checkbox && checkbox.checked) {
-                // Only show quantity selector if it exists (i.e., quantity > 1)
-                if (quantitySelector) {
-                    quantitySelector.style.display = 'block';
-                    if (quantityInput) {
-                        quantityInput.required = true;
-                        quantityInput.disabled = false;
-                        // Set max value from data attribute
-                        const maxQty = parseInt(checkbox.getAttribute('data-available-qty')) || 1;
-                        quantityInput.max = maxQty;
-                    }
-                    // Enable buttons
-                    if (decrementBtn) decrementBtn.disabled = false;
-                    if (incrementBtn) incrementBtn.disabled = false;
-                }
-                // If quantity selector doesn't exist, it means quantity is 1, so hidden input is already set
-                if (exchangeSizeSelect) {
-                    exchangeSizeSelect.disabled = false;
-                }
-            } else {
-                // Keep quantity selector visible but disable the input when checkbox is unchecked
-                if (quantitySelector) {
-                    quantitySelector.style.display = 'block'; // Keep visible
-                    if (quantityInput) {
-                        quantityInput.required = false;
-                        quantityInput.disabled = true;
-                        quantityInput.value = 1;
-                    }
-                    // Disable buttons
-                    if (decrementBtn) decrementBtn.disabled = true;
-                    if (incrementBtn) incrementBtn.disabled = true;
-                }
-                if (exchangeSizeSelect) {
-                    exchangeSizeSelect.disabled = true;
-                    exchangeSizeSelect.value = '';
-                }
-            }
-        }
-        
-        function incrementQuantity(itemId, maxQty) {
-            const quantityInput = document.getElementById(`quantity-${itemId}`);
-            if (quantityInput && !quantityInput.disabled) {
-                let currentValue = parseInt(quantityInput.value) || 1;
-                if (currentValue < maxQty) {
-                    quantityInput.value = currentValue + 1;
-                    validateQuantity(itemId, maxQty);
-                }
-            }
-        }
-        
-        function decrementQuantity(itemId, maxQty) {
-            const quantityInput = document.getElementById(`quantity-${itemId}`);
-            if (quantityInput && !quantityInput.disabled) {
-                let currentValue = parseInt(quantityInput.value) || 1;
-                if (currentValue > 1) {
-                    quantityInput.value = currentValue - 1;
-                    validateQuantity(itemId, maxQty);
-                }
-            }
-        }
-        
-        function validateQuantity(itemId, maxQuantity) {
-            const quantityInput = document.getElementById(`quantity-${itemId}`);
-            const errorElement = document.getElementById(`quantity-error-${itemId}`);
-            const value = parseInt(quantityInput.value) || 0;
-            
-            if (value < 1) {
-                quantityInput.value = 1;
-                errorElement.textContent = 'Quantity must be at least 1';
-                errorElement.classList.remove('d-none');
-                return false;
-            } else if (value > maxQuantity) {
-                quantityInput.value = maxQuantity;
-                errorElement.textContent = `Maximum quantity is ${maxQuantity}`;
-                errorElement.classList.remove('d-none');
-                return false;
-            } else {
-                errorElement.classList.add('d-none');
-                return true;
-            }
-        }
-        
-        // Form submission validation
-        document.querySelector('form').addEventListener('submit', function(e) {
+    });
+
+    // Initialize state
+    itemCheckboxes.forEach(cb => toggleQuantityInput(cb.value));
+    updateSubmit();
+
+    /* ------------------------------
+       FORM SUBMISSION VALIDATION
+    ------------------------------ */
+
+    if (returnForm) {
+        returnForm.addEventListener('submit', function(e) {
+
             const checkedBoxes = document.querySelectorAll('.item-checkbox:checked');
+
+            if (checkedBoxes.length === 0) {
+                e.preventDefault();
+                alert('Please select at least one item to exchange.');
+                return;
+            }
+
+            // Handle reason
+            const reasonSelect = document.getElementById('reason-select');
+            const hiddenReason = document.getElementById('reason-hidden');
+            const otherTextarea = document.getElementById('other-reason-text');
+
+            if (reasonSelect.value === 'OTHER') {
+                const otherText = otherTextarea ? otherTextarea.value.trim() : '';
+                if (!otherText) {
+                    e.preventDefault();
+                    otherTextarea.focus();
+                    otherTextarea.style.borderColor = '#dc3545';
+                    alert('Please describe your reason before submitting.');
+                    return;
+                }
+                hiddenReason.value = otherText;
+            } else {
+                hiddenReason.value = reasonSelect.value;
+            }
+
             let isValid = true;
-            
+
             checkedBoxes.forEach(checkbox => {
                 const itemId = checkbox.value;
                 const quantityInput = document.getElementById(`quantity-${itemId}`);
                 const maxQty = parseInt(checkbox.getAttribute('data-available-qty')) || 1;
-                
+
                 if (quantityInput) {
                     const value = parseInt(quantityInput.value) || 0;
                     if (value < 1 || value > maxQty) {
@@ -753,105 +707,129 @@
                     }
                 }
             });
-            
+
             if (!isValid) {
                 e.preventDefault();
                 alert('Please correct the quantity values before submitting.');
             }
         });
-        
-        // Multiple Photo Upload Preview
-        const photoInput = document.getElementById('photo-input');
-        const photoPreviewContainer = document.getElementById('photo-preview-container');
-        const photoPreviewList = document.getElementById('photo-preview-list');
-        let selectedPhotos = [];
-        
-        if (photoInput) {
-            photoInput.addEventListener('change', function(e) {
-                const files = Array.from(e.target.files);
-                selectedPhotos = [];
-                photoPreviewList.innerHTML = '';
-                
-                files.forEach((file, index) => {
-                    if (file.type.startsWith('image/')) {
-                        selectedPhotos.push(file);
-                        const reader = new FileReader();
-                        
-                        reader.onload = function(e) {
-                            const previewDiv = document.createElement('div');
-                            previewDiv.className = 'position-relative';
-                            previewDiv.style.cssText = 'width: 100px; height: 100px; border: 1px solid #ddd; border-radius: 8px; overflow: hidden;';
-                            
-                            const img = document.createElement('img');
-                            img.src = e.target.result;
-                            img.style.cssText = 'width: 100%; height: 100%; object-fit: cover;';
-                            
-                            const removeBtn = document.createElement('button');
-                            removeBtn.type = 'button';
-                            removeBtn.className = 'btn btn-sm btn-danger position-absolute';
-                            removeBtn.style.cssText = 'top: 2px; right: 2px; padding: 2px 6px; font-size: 12px; line-height: 1;';
-                            removeBtn.innerHTML = '<i class="fas fa-times"></i>';
-                            removeBtn.onclick = function() {
-                                removePhoto(index);
-                            };
-                            
-                            previewDiv.appendChild(img);
-                            previewDiv.appendChild(removeBtn);
-                            photoPreviewList.appendChild(previewDiv);
-                        };
-                        
-                        reader.readAsDataURL(file);
-                    }
-                });
-                
-                if (selectedPhotos.length > 0) {
-                    photoPreviewContainer.style.display = 'block';
-                } else {
-                    photoPreviewContainer.style.display = 'none';
-                }
-            });
-        }
-        
-        function removePhoto(index) {
-            selectedPhotos.splice(index, 1);
-            
-            // Update file input
-            const dt = new DataTransfer();
-            selectedPhotos.forEach(file => dt.items.add(file));
-            photoInput.files = dt.files;
-            
-            // Re-render preview
-            photoPreviewList.innerHTML = '';
-            selectedPhotos.forEach((file, newIndex) => {
-                const reader = new FileReader();
-                reader.onload = function(e) {
-                    const previewDiv = document.createElement('div');
-                    previewDiv.className = 'position-relative';
-                    previewDiv.style.cssText = 'width: 100px; height: 100px; border: 1px solid #ddd; border-radius: 8px; overflow: hidden;';
-                    
-                    const img = document.createElement('img');
-                    img.src = e.target.result;
-                    img.style.cssText = 'width: 100%; height: 100%; object-fit: cover;';
-                    
-                    const removeBtn = document.createElement('button');
-                    removeBtn.type = 'button';
-                    removeBtn.className = 'btn btn-sm btn-danger position-absolute';
-                    removeBtn.style.cssText = 'top: 2px; right: 2px; padding: 2px 6px; font-size: 12px; line-height: 1;';
-                    removeBtn.innerHTML = '<i class="fas fa-times"></i>';
-                    removeBtn.onclick = function() {
-                        removePhoto(newIndex);
-                    };
-                    
-                    previewDiv.appendChild(img);
-                    previewDiv.appendChild(removeBtn);
-                    photoPreviewList.appendChild(previewDiv);
-                };
-                reader.readAsDataURL(file);
-            });
-            
-            if (selectedPhotos.length === 0) {
-                photoPreviewContainer.style.display = 'none';
+    }
+
+});
+
+/* ------------------------------
+   QUANTITY CONTROL
+------------------------------ */
+
+function toggleQuantityInput(itemId) {
+    const checkbox = document.querySelector(`input[value="${itemId}"].item-checkbox`);
+    const quantitySelector = document.getElementById(`quantity-selector-${itemId}`);
+    const quantityInput = document.getElementById(`quantity-${itemId}`);
+    const decrementBtn = document.getElementById(`decrement-${itemId}`);
+    const incrementBtn = document.getElementById(`increment-${itemId}`);
+    const exchangeSizeSelect = document.getElementById(`exchange-size-${itemId}`);
+
+    if (checkbox && checkbox.checked) {
+
+        if (quantitySelector) {
+            quantitySelector.style.display = 'block';
+            if (quantityInput) {
+                quantityInput.required = true;
+                quantityInput.disabled = false;
+                const maxQty = parseInt(checkbox.getAttribute('data-available-qty')) || 1;
+                quantityInput.max = maxQty;
             }
+            if (decrementBtn) decrementBtn.disabled = false;
+            if (incrementBtn) incrementBtn.disabled = false;
         }
-    </script>
+
+        if (exchangeSizeSelect) {
+            exchangeSizeSelect.disabled = false;
+        }
+
+    } else {
+
+        if (quantitySelector) {
+            quantitySelector.style.display = 'block';
+            if (quantityInput) {
+                quantityInput.required = false;
+                quantityInput.disabled = true;
+                quantityInput.value = 1;
+            }
+            if (decrementBtn) decrementBtn.disabled = true;
+            if (incrementBtn) incrementBtn.disabled = true;
+        }
+
+        if (exchangeSizeSelect) {
+            exchangeSizeSelect.disabled = true;
+            exchangeSizeSelect.value = '';
+        }
+    }
+}
+
+function incrementQuantity(itemId, maxQty) {
+    const quantityInput = document.getElementById(`quantity-${itemId}`);
+    if (quantityInput && !quantityInput.disabled) {
+        let currentValue = parseInt(quantityInput.value) || 1;
+        if (currentValue < maxQty) {
+            quantityInput.value = currentValue + 1;
+            validateQuantity(itemId, maxQty);
+        }
+    }
+}
+
+function decrementQuantity(itemId, maxQty) {
+    const quantityInput = document.getElementById(`quantity-${itemId}`);
+    if (quantityInput && !quantityInput.disabled) {
+        let currentValue = parseInt(quantityInput.value) || 1;
+        if (currentValue > 1) {
+            quantityInput.value = currentValue - 1;
+            validateQuantity(itemId, maxQty);
+        }
+    }
+}
+
+function validateQuantity(itemId, maxQuantity) {
+    const quantityInput = document.getElementById(`quantity-${itemId}`);
+    const errorElement = document.getElementById(`quantity-error-${itemId}`);
+    const value = parseInt(quantityInput.value) || 0;
+
+    if (value < 1) {
+        quantityInput.value = 1;
+        errorElement.textContent = 'Quantity must be at least 1';
+        errorElement.classList.remove('d-none');
+        return false;
+    } else if (value > maxQuantity) {
+        quantityInput.value = maxQuantity;
+        errorElement.textContent = `Maximum quantity is ${maxQuantity}`;
+        errorElement.classList.remove('d-none');
+        return false;
+    } else {
+        errorElement.classList.add('d-none');
+        return true;
+    }
+}
+
+/* ------------------------------
+   OTHER REASON TOGGLE
+------------------------------ */
+
+function toggleOtherReason(select) {
+    const box = document.getElementById('other-reason-box');
+    const textarea = document.getElementById('other-reason-text');
+    const hiddenReason = document.getElementById('reason-hidden');
+
+    if (select.value === 'OTHER') {
+        box.style.display = 'block';
+        textarea.required = true;
+        hiddenReason.value = '';
+    } else {
+        box.style.display = 'none';
+        textarea.required = false;
+        textarea.value = '';
+        hiddenReason.value = select.value;
+    }
+}
+</script>
     @endsection
+

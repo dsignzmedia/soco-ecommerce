@@ -51,9 +51,9 @@ class School extends Model
         return $this->hasMany(Grade::class)->orderBy('display_order');
     }
 
-    public function productMappings(): BelongsToMany
+    public function productMappings(): HasMany
     {
-        return $this->belongsToMany(ProductMapping::class, 'product_mapping_school');
+        return $this->hasMany(ProductMapping::class);
     }
 
     public function shippingZone(): BelongsTo

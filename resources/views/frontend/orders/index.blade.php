@@ -80,10 +80,14 @@
 
                                             <!-- Order Details -->
                                             <div class="col" style="min-width: 0; padding-right: 30px;">
-                                                <div class="mb-1">
-                                                    <span class="text-muted small" style="font-weight: 500;">{{ $item['order_number'] ?? ('SOCO-' . $order['id']) }}</span>
-                                                </div>
-                                                
+                                                <!-- Exchange Order Badge - Mobile Responsive -->
+                                                @if(isset($item['is_exchange_order']) && $item['is_exchange_order'])
+                                                    <div class="mb-2">
+                                                        <span class="badge exchange-badge" style="background-color: #28a745; color: white; padding: 4px 10px; border-radius: 6px; font-size: 0.7rem; font-weight: 600; display: inline-block; position: relative;">
+                                                            <i class="fas fa-exchange-alt me-1"></i> Exchange
+                                                        </span>
+                                                    </div>
+                                                @endif
                                                 
                                                 <!-- Status Badge (Commented out in original) -->
                                                 @php

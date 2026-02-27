@@ -66,9 +66,9 @@ class ProductMapping extends Model
         static::addGlobalScope('activeSchool', function (Builder $builder) {
             $builder->where(function($q) {
                 // Allow products that are not linked to any school (Global/Merchandise)
-                $q->whereDoesntHave('schools')
+                $q->whereNull('school_id')
                   // OR products linked to an active school
-                  ->orWhereHas('schools', function ($query) {
+                  ->orWhereHas('school', function ($query) {
                       // School model's global scope will automatically filter has_deleted = 0
                   });
             });
@@ -100,9 +100,9 @@ class ProductMapping extends Model
             $prefix = 'BTS';
         } elseif ($product->product_type === 'merchandised') {
             $prefix = 'MER';
-        } elseif ($product->schools()->exists()) {
+        } elseif ($product->school_id) {
             // Get school name and extract first 3 letters
-            $school = $product->schools()->withoutGlobalScopes()->first();
+            $school = $product->school()->withoutGlobalScopes()->first();
             if ($school && $school->name) {
                 $schoolName = $school->name;
                 // Remove special characters and spaces, convert to uppercase
@@ -171,10 +171,6 @@ class ProductMapping extends Model
         return $this->belongsTo(School::class);
     }
 
-    public function schools(): BelongsToMany
-    {
-        return $this->belongsToMany(School::class, 'product_mapping_school', 'product_mapping_id', 'school_id');
-    }
 
     public function grade(): BelongsTo
     {

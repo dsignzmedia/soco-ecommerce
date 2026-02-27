@@ -18,7 +18,7 @@
                 <li><a href="{{ route('frontend.index') }}">Home</a></li>
                 <li><a href="{{ route('frontend.parent.dashboard') }}">Parent Dashboard</a></li>
                 <li><a href="{{ route('frontend.parent.orders') }}">My Orders</a></li>
-                <li>Order #{{ $order['order_number'] ?? ('SOCO-' . $order['id']) }}</li>
+                <li>Order #{{ $order['id'] }}</li>
             </ul>
         </div>
     </div>
@@ -28,8 +28,7 @@
     <div class="container">
         <div class="row">
             @php
-                $hasPendingExchangeOrderGeneration = isset($returnRequests) && $returnRequests->where('type', 'exchange')->whereIn('status', ['approved', 'received_restocked', 'received_discarded'])->whereNull('new_order_id')->count() > 0;
-                $hasExchangeOrders = (isset($exchangeOrdersFormatted) && count($exchangeOrdersFormatted) > 0) || $hasPendingExchangeOrderGeneration;
+                $hasExchangeOrders = isset($exchangeOrdersFormatted) && count($exchangeOrdersFormatted) > 0;
                 $contentColumnClass = $hasExchangeOrders ? 'col-lg-12' : 'col-lg-9';
                 $sidebarColumnClass = $hasExchangeOrders ? 'd-none' : 'col-lg-3';
             @endphp
@@ -55,7 +54,7 @@
                 <!-- Order ID Header -->
                 <div class="d-flex align-items-center justify-content-between mb-3">
                     <div>
-                        <span class="text-muted small">Order #{{ $order['order_number'] ?? ('SOCO-' . $order['id']) }}</span>
+                        <span class="text-muted small">Order #{{ $order['id'] }}</span>
                     </div>
                     <button class="btn btn-sm btn-link p-0" onclick="copyOrderId()" style="color: #490D59; text-decoration: none; font-weight: 500;">
                         <i class="fas fa-copy me-1"></i> Copy
@@ -194,10 +193,20 @@
                                             @endphp
                                             @if($itemReturnRequest && $itemReturnRequest->status != 'pending')
                                                 <div class="mb-4">
-                                                    @if(in_array($itemReturnRequest->status, ['approved', 'received_restocked', 'received_discarded', 'completed']))
+                                                    @if($itemReturnRequest->status == 'approved')
+                                                        <div class="p-3 rounded" style="background-color: #ecfdf5; border: 1px solid #dcfce7; color: #065f46;">
+                                                            <i class="fas fa-check-circle me-2"></i> 
+                                                            <strong>{{ ucfirst($itemReturnRequest->type) }} Request Approved</strong>
+                                                        </div>
+                                                    @elseif(in_array($itemReturnRequest->status, ['received_restocked', 'received_discarded']))
+                                                        <div class="p-3 rounded" style="background-color: #eff6ff; border: 1px solid #dbeafe; color: #1e40af;">
+                                                            <i class="fas fa-box-open me-2"></i> 
+                                                            <strong>Item Received</strong>
+                                                        </div>
+                                                    @elseif($itemReturnRequest->status == 'completed')
                                                         <div class="p-3 rounded" style="background-color: #f0f9ff; border: 1px solid #e0f2fe; color: #0369a1;">
                                                             <i class="fas fa-check-double me-2"></i> 
-                                                            <strong>{{ ucfirst($itemReturnRequest->type) }} Request Approved</strong>
+                                                            <strong>Exchange Request Approved</strong>
                                                         </div>
                                                     @elseif($itemReturnRequest->status == 'rejected')
                                                         <div class="p-3 rounded" style="background-color: #fef2f2; border: 1px solid #fee2e2; color: #991b1b;">
@@ -208,14 +217,15 @@
                                                 </div>
                                             @else
                                                 <div class="mb-4">
-                                                    @if($itemReturnRequest && $itemReturnRequest->status == 'pending')
-                                                        <div class="mt-2 text-warning small" style="font-weight: 600;">
-                                                            <i class="fas fa-clock me-1"></i> Request Pending Approval
-                                                        </div>
-                                                    @elseif(!in_array($item['product_type'] ?? '', ['back_to_school', 'merchandised']))
+                                                    @if(!in_array($item['product_type'] ?? '', ['back_to_school', 'merchandised']))
                                                         <a href="{{ route('frontend.parent.return-exchange', ['orderId' => $order['id'], 'itemId' => $item['id']]) }}" class="btn btn-outline-danger btn-sm" style="border-radius: 8px; font-weight: 600;">
                                                             Proceed to Exchange
                                                         </a>
+                                                    @endif
+                                                    @if($itemReturnRequest && $itemReturnRequest->status == 'pending')
+                                                        <div class="mt-2 text-warning small">
+                                                            <i class="fas fa-clock me-1"></i> Request Pending Approval
+                                                        </div>
                                                     @endif
                                                 </div>
                                             @endif
@@ -379,92 +389,6 @@
                                 </div>
                             @endforeach
                         @endif
-
-                        @if(isset($returnRequests))
-                            @foreach($returnRequests->where('type', 'exchange')->whereIn('status', ['approved', 'received_restocked', 'received_discarded'])->whereNull('new_order_id') as $pendingExchange)
-                                @php
-                                    $originalItem = collect($order['items'])->firstWhere('id', $pendingExchange->order_id);
-                                @endphp
-                                @if($originalItem)
-                                    <div class="card shadow-sm border-0 mb-4" style="border-radius: 16px; overflow: hidden; background-color: #f8f9ff; width: 100%;">
-                                        <div class="card-body p-4" style="width: 100%;">
-                                            <!-- Exchange Order Header -->
-                                            <div class="mb-3 pb-2 border-bottom" style="border-color: #e0e0e0 !important;">
-                                                <h5 class="mb-0" style="font-weight: 600; color: #490D59;">
-                                                    <i class="fas fa-exchange-alt me-2"></i>Exchange Order Tracking
-                                                </h5>
-                                                <span class="text-muted small">Order #Pending Generation</span>
-                                            </div>
-
-                                            <div class="d-flex gap-3 mb-4">
-                                                <div class="flex-shrink-0">
-                                                    @if(isset($originalItem['image']) && $originalItem['image'])
-                                                        <img src="{{ $originalItem['image'] }}" alt="{{ $originalItem['name'] }}" 
-                                                            style="width: 80px; height: 80px; object-fit: cover; border-radius: 8px; border: 1px solid #e0e0e0;">
-                                                    @else
-                                                        <div class="bg-light rounded d-flex align-items-center justify-content-center" 
-                                                            style="width: 80px; height: 80px; border: 1px solid #e0e0e0;">
-                                                            <i class="fas fa-image text-muted fa-2x"></i>
-                                                        </div>
-                                                    @endif
-                                                </div>
-
-                                                <div class="flex-grow-1">
-                                                    <h6 class="mb-2" style="font-weight: 600; color: #333; font-size: 1rem;">
-                                                        {{ !empty($originalItem['name']) ? $originalItem['name'] : 'Product Name Unavailable' }}
-                                                    </h6>
-                                                    <div class="d-flex gap-3 mt-2">
-                                                        <span class="text-muted small">Size: <strong>{{ $originalItem['size'] ?? 'N/A' }}</strong></span>
-                                                        <span class="text-muted small">Qty: <strong>{{ $originalItem['quantity'] }}</strong></span>
-                                                    </div>
-                                                </div>
-                                            </div>
-
-                                            <h5 class="mb-4" style="font-weight: 600; color: #333;">Order Placed</h5>
-
-                                            <div class="position-relative" style="padding-left: 40px;">
-                                                @foreach($statuses as $index => $status)
-                                                    @php
-                                                        $isCompleted = $index === 0;
-                                                        $isCurrent = $index === 0;
-                                                        $circleColor = $isCompleted ? '#28a745' : '#e0e0e0';
-                                                    @endphp
-                                                    
-                                                    <div class="mb-4 position-relative">
-                                                        @if(!$loop->last)
-                                                            <div style="position: absolute; left: -28px; top: 20px; bottom: -24px; width: 2px; background-color: {{ $isCompleted ? '#28a745' : '#e0e0e0' }};"></div>
-                                                        @endif
-                                                        
-                                                        <div style="position: absolute; left: -35px; top: 0; width: 16px; height: 16px; border-radius: 50%; background-color: {{ $circleColor }}; border: 3px solid #ffffff; box-shadow: 0 0 0 2px {{ $circleColor }};"></div>
-                                                        
-                                                        <div>
-                                                            <h6 class="mb-1" style="font-weight: 600; color: {{ $isCompleted ? '#333' : '#999' }};">
-                                                                @php
-                                                                    $icon = 'fa-circle';
-                                                                    $desc = '';
-                                                                    switch(strtolower($status['label'])) {
-                                                                        case 'order placed': $icon = 'fa-clipboard-check'; $desc = 'We have received your exchange order'; break;
-                                                                        case 'processing': $icon = 'fa-cog'; $desc = 'We are preparing your exchange order'; break;
-                                                                        case 'packed': $icon = 'fa-box-open'; $desc = 'Your exchange order is packed and ready'; break;
-                                                                        case 'shipped': $icon = 'fa-shipping-fast'; $desc = 'Your exchange order is on the way'; break;
-                                                                        case 'delivered': $icon = 'fa-home'; $desc = 'Exchange package delivered'; break;
-                                                                    }
-                                                                @endphp
-                                                                <i class="fas {{ $icon }} me-2"></i> {{ $status['label'] }}
-                                                            </h6>
-                                                            <p class="text-muted small mb-1" style="font-size: 0.85rem;">{{ $desc }}</p>
-                                                            @if($isCurrent)
-                                                                <p class="text-muted small mb-0">{{ date('D M d') }}</p>
-                                                            @endif
-                                                        </div>
-                                                    </div>
-                                                @endforeach
-                                            </div>
-                                        </div>
-                                    </div>
-                                @endif
-                            @endforeach
-                        @endif
                     </div>
                 </div>
 
@@ -522,17 +446,12 @@
                                 
                                 <div class="d-flex justify-content-between mb-2">
                                     <span class="text-muted">Order ID</span>
-                                    <span style="font-weight: 500;">#{{ $order['order_number'] ?? ('SOCO-' . $order['id']) }}</span>
+                                    <span style="font-weight: 500;">#{{ $order['id'] }}</span>
                                 </div>
 
                                 <div class="d-flex justify-content-between mb-2">
-                                    <span class="text-muted">Listing price</span>
+                                    <span class="text-muted">Subtotal (Inc. Tax)</span>
                                     <span style="font-weight: 500;">&#8377;{{ number_format($order['subtotal'] ?? $order['total']) }}</span>
-                                </div>
-
-                                <div class="d-flex justify-content-between mb-2">
-                                    <span class="text-muted">Tax</span>
-                                    <span style="font-weight: 500;">&#8377;{{ number_format($order['tax'] ?? 0) }}</span>
                                 </div>
                                 
                                 <hr style="margin: 10px 0; border-color: #e0e0e0;">
@@ -562,7 +481,7 @@
 
 <script>
 function copyOrderId() {
-    const orderId = '{{ $order["order_number"] ?? ("SOCO-" . $order["id"]) }}';
+    const orderId = 'SOCO-{{ $order["id"] }}';
     navigator.clipboard.writeText(orderId).then(() => {
         alert('Order ID copied to clipboard!');
     });

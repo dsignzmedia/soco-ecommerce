@@ -24,9 +24,7 @@ class ProductController extends Controller
         }
         
         if ($request->filled('school_id')) {
-            $query->whereHas('schools', function($q) use ($request) {
-                $q->where('schools.id', $request->school_id);
-            });
+            $query->where('school_id', $request->school_id);
         }
 
         // Apply other filters if needed (grade, category, etc.)
@@ -72,9 +70,7 @@ class ProductController extends Controller
         }
         
         if ($request->filled('school_id')) {
-            $query->whereHas('schools', function($q) use ($request) {
-                $q->where('schools.id', $request->school_id);
-            });
+            $query->where('school_id', $request->school_id);
         }
 
         if ($request->filled('grade')) {
@@ -813,7 +809,7 @@ class ProductController extends Controller
             'grades' => $grades,
             'categories' => $categories,
             'productTypes' => $productTypes,
-            'selectedSchoolIds' => old('school_ids', []),
+            'selectedSchoolId' => old('school_id', null),
             'allSchoolsCount' => $schools->count()
         ]);
     }
@@ -826,9 +822,7 @@ class ProductController extends Controller
         // Simplified validation for School products
         $validationRules = [
             'product_name' => 'required|string|max:255',
-            'school_ids' => 'nullable|array',
-            'school_ids.*' => 'exists:schools,id',
-            'school_id' => 'nullable', // Legacy
+            'school_id' => 'nullable|exists:schools,id',
             'grade' => 'nullable|string',
             'category' => 'nullable|string', // Made nullable
             'product_type' => 'nullable|string', 
@@ -983,14 +977,6 @@ class ProductController extends Controller
             $this->saveVariants($product, $request->input('variants'));
         }
 
-        // Handle Schools
-        if ($request->has('school_ids')) {
-            $product->schools()->sync($request->school_ids);
-            // Update legacy school_id
-            $firstSchool = $request->input('school_ids')[0] ?? null;
-            $product->school_id = $firstSchool;
-            $product->saveQuietly();
-        }
 
         return redirect()->route('admin.back_to_school.products.index')->with('success', 'Product created successfully.');
     }
@@ -1045,7 +1031,7 @@ class ProductController extends Controller
             'grades' => $grades,
             'categories' => $categories,
             'productTypes' => $productTypes,
-            'selectedSchoolIds' => old('school_ids', $product->schools->pluck('id')->toArray()),
+            'selectedSchoolId' => old('school_id', $product->school_id),
             'allSchoolsCount' => $schools->count()
         ]);
     }
@@ -1059,9 +1045,7 @@ class ProductController extends Controller
 
         $validationRules = [
             'product_name' => 'required|string|max:255',
-            'school_ids' => 'nullable|array',
-            'school_ids.*' => 'exists:schools,id',
-            'school_id' => 'nullable', // Legacy
+            'school_id' => 'nullable|exists:schools,id',
             'grade' => 'nullable|string',
             'category' => 'nullable|string', // Made nullable
             'product_type' => 'nullable|string', 
@@ -1240,14 +1224,6 @@ class ProductController extends Controller
             $this->saveVariants($product, $request->input('variants'));
         }
 
-        // Handle Schools
-        if ($request->has('school_ids')) {
-            $product->schools()->sync($request->school_ids);
-            // Update legacy school_id
-            $firstSchool = $request->input('school_ids')[0] ?? null;
-            $product->school_id = $firstSchool;
-            $product->saveQuietly();
-        }
 
         return redirect()->route('admin.back_to_school.products.index')->with('success', 'Product updated successfully.');
     }
